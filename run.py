@@ -1,4 +1,4 @@
-from flashkanji.server import run
+from flashkanji.desktop import run_desktop
 
 if __name__ == '__main__':
-    run()
+    run_desktop()

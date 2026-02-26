@@ -1,6 +1,8 @@
-from datetime import datetime, timedelta, date
+from __future__ import annotations
+
+from datetime import date, datetime, timedelta
 import re
-from .constants import INTERVALS, LEARN_THRESHOLD
+from .constants import DAILY_STREAK_VIEW_TARGET, INTERVALS, LEARN_THRESHOLD
 
 
 def next_interval_days(streak: int) -> int:
@@ -28,25 +30,41 @@ def apply_left_swipe(card: dict, mode: str, value: int, now: datetime) -> dict:
     return out
 
 
-def update_daily_streak(profile: dict, today: date):
-    out = dict(profile)
-    if not out['last_active_date']:
-      out['daily_streak_count'] = 1
-      out['last_active_date'] = today.isoformat()
-      out['streak_message'] = None
-      return out
-    last = date.fromisoformat(out['last_active_date'])
-    delta = (today - last).days
-    out['last_active_date'] = today.isoformat()
-    if delta <= 0:
-      out['streak_message'] = None
-      return out
+def _calc_streak_count(last_active_date: str | None, streak_count: int, today: date):
+    if not last_active_date:
+        return 1, None
+    delta = (today - date.fromisoformat(last_active_date)).days
     if delta == 1:
-      out['daily_streak_count'] += 1
-      out['streak_message'] = None
-      return out
-    out['daily_streak_count'] = 1
-    out['streak_message'] = 'Серия прервалась, но новый старт уже сделан 🔥'
+        return streak_count + 1, None
+    if delta <= 0:
+        return streak_count, None
+    return 1, 'Серия прервалась, но новый старт уже сделан 🔥'
+
+
+def register_card_view(profile: dict, today: date):
+    """Засчитывает просмотр карточки и при достижении 10 в день обновляет streak."""
+    out = dict(profile)
+    today_iso = today.isoformat()
+
+    if out.get('view_count_date') != today_iso:
+        out['today_viewed'] = 0
+        out['view_count_date'] = today_iso
+
+    out['today_viewed'] += 1
+    out['streak_message'] = None
+
+    if out.get('streak_credited_date') == today_iso:
+        return out
+
+    if out['today_viewed'] >= DAILY_STREAK_VIEW_TARGET:
+        out['daily_streak_count'], out['streak_message'] = _calc_streak_count(
+            out.get('last_active_date'),
+            out['daily_streak_count'],
+            today,
+        )
+        out['last_active_date'] = today_iso
+        out['streak_credited_date'] = today_iso
+
     return out
 
 
@@ -75,7 +93,11 @@ class LaterQueue:
 
 def build_exercise(batch_kanji: list[str]):
     text = 'きょうは{K1}ようび。{K2}がきれい。{K3}があるいている。'
-    targets = [{'slot': 'K1', 'kanji': batch_kanji[0]}, {'slot': 'K2', 'kanji': batch_kanji[1]}, {'slot': 'K3', 'kanji': batch_kanji[2]}]
+    targets = [
+        {'slot': 'K1', 'kanji': batch_kanji[0]},
+        {'slot': 'K2', 'kanji': batch_kanji[1]},
+        {'slot': 'K3', 'kanji': batch_kanji[2]},
+    ]
     return {'template_id': 't1', 'text_hira': text, 'targets': targets}
 
 
@@ -92,4 +114,8 @@ def grade_exercise(exercise: dict, answers: dict):
             correct += 1
         else:
             wrong.append(target['kanji'])
-    return {'score': round(correct / len(exercise['targets']) * 100), 'wrongTargets': wrong, 'passed': len(wrong) == 0}
+    return {
+        'score': round(correct / len(exercise['targets']) * 100),
+        'wrongTargets': wrong,
+        'passed': len(wrong) == 0,
+    }
