@@ -57,76 +57,144 @@ KV = '''
 #:import dp kivy.metrics.dp
 <RootView>:
     orientation: 'vertical'
-    padding: dp(10)
-    spacing: dp(8)
-
-    Image:
-        source: root.logo_path
-        size_hint_y: None
-        height: dp(80) if root.logo_exists else 0
-
-    Label:
-        text: root.top_text
-        size_hint_y: None
-        height: dp(45)
-        text_size: self.width, None
-        halign: 'center'
-
-    Label:
-        text: root.queue_text
-        size_hint_y: None
-        height: dp(24)
+    padding: dp(12)
+    spacing: dp(10)
+    canvas.before:
+        Color:
+            rgba: (0.06, 0.04, 0.08, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
     BoxLayout:
-        id: card_box
-        size_hint_y: 0.48
-        padding: dp(8)
+        size_hint_y: None
+        height: dp(58)
+        padding: dp(12), dp(8)
         canvas.before:
             Color:
-                rgba: (0.11, 0.15, 0.22, 1)
+                rgba: (0.17, 0.12, 0.20, 0.96)
             RoundedRectangle:
                 pos: self.pos
                 size: self.size
                 radius: [18, 18, 18, 18]
         Label:
+            text: root.top_text
+            color: (1, 0.95, 0.84, 1)
+            bold: True
+            text_size: self.width, None
+            halign: 'center'
+            valign: 'middle'
+
+    Image:
+        source: root.logo_path
+        size_hint_y: None
+        height: dp(92) if root.logo_exists else 0
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(46)
+        padding: dp(6), dp(6)
+        spacing: dp(8)
+        canvas.before:
+            Color:
+                rgba: (0.95, 0.89, 0.77, 1)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [16, 16, 16, 16]
+        Label:
+            text: root.queue_text
+            color: (0.28, 0.19, 0.11, 1)
+            bold: True
+        Label:
+            text: 'Повтор после'
+            color: (0.44, 0.31, 0.16, 1)
+
+    BoxLayout:
+        id: card_box
+        size_hint_y: 0.52
+        padding: dp(14)
+        canvas.before:
+            Color:
+                rgba: (0.97, 0.92, 0.83, 1)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [28, 28, 28, 28]
+            Color:
+                rgba: (0.83, 0.70, 0.50, 0.32)
+            Line:
+                rounded_rectangle: [self.x + dp(2), self.y + dp(2), self.width - dp(4), self.height - dp(4), dp(26)]
+                width: dp(1.3)
+        Label:
             id: card_label
             text: root.card_text
             markup: True
             font_size: root.card_font
+            color: (0.18, 0.12, 0.10, 1)
             halign: 'center'
             valign: 'middle'
             text_size: self.size
 
     BoxLayout:
         size_hint_y: None
-        height: dp(46)
+        height: dp(58)
         spacing: dp(8)
         Button:
             text: 'Не помню'
+            bold: True
+            background_normal: ''
+            background_color: (0.90, 0.24, 0.18, 1)
+            color: (1, 1, 1, 1)
             on_release: root.swipe_left()
         Button:
             text: 'Перевернуть'
+            bold: True
+            background_normal: ''
+            background_color: (0.87, 0.58, 0.14, 1)
+            color: (0.14, 0.09, 0.05, 1)
             on_release: root.flip_card()
         Button:
             text: 'Помню'
+            bold: True
+            background_normal: ''
+            background_color: (0.28, 0.70, 0.20, 1)
+            color: (1, 1, 1, 1)
             on_release: root.swipe_right()
-
-    Label:
-        text: root.stats_text
-        size_hint_y: None
-        height: dp(48)
-        text_size: self.width, None
-        halign: 'center'
 
     BoxLayout:
         size_hint_y: None
-        height: dp(42)
+        height: dp(76)
+        padding: dp(10), dp(8)
+        canvas.before:
+            Color:
+                rgba: (0.21, 0.14, 0.19, 0.95)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [18, 18, 18, 18]
+        Label:
+            text: root.stats_text
+            color: (1, 0.96, 0.90, 1)
+            text_size: self.width, None
+            halign: 'center'
+            valign: 'middle'
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(52)
         spacing: dp(8)
         Button:
             text: 'Undo'
+            background_normal: ''
+            background_color: (0.30, 0.23, 0.22, 1)
+            color: (1, 0.95, 0.86, 1)
             on_release: root.undo_action()
         Button:
             text: 'Сброс'
+            background_normal: ''
+            background_color: (0.30, 0.23, 0.22, 1)
+            color: (1, 0.95, 0.86, 1)
             on_release: root.reset_progress()
 '''
 
