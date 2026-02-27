@@ -109,8 +109,8 @@ class RootView(BoxLayout):
     cards = ListProperty([])
     current_card = DictProperty({})
 
-    def __init__(self, **kwargs):
-        self.conn = get_conn()
+    def __init__(self, conn, **kwargs):
+        self.conn = conn
         self.queue = LaterQueue()
         self.last_action = None
         super().__init__(**kwargs)
@@ -339,9 +339,17 @@ class RootView(BoxLayout):
 
 
 class FlashKanjiKivyApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.conn = get_conn()
+
     def build(self):
         Builder.load_string(KV)
-        return RootView()
+        return RootView(conn=self.conn)
+
+    def on_stop(self):
+        if self.conn:
+            self.conn.close()
 
 
 def run_mobile_app():
