@@ -1,0 +1,465 @@
+from __future__ import annotations
+
+import json
+import os
+import random
+from datetime import date, datetime, timezone
+from pathlib import Path
+
+from kivy.app import App
+from kivy.core.text import LabelBase
+from kivy.lang import Builder
+from kivy.properties import BooleanProperty, DictProperty, ListProperty, NumericProperty, StringProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.textinput import TextInput
+
+from .constants import DAILY_STREAK_VIEW_TARGET, LEARNED_BATCH_SIZE
+from .db import get_conn
+from .logic import LaterQueue, apply_left_swipe, apply_right_swipe, build_exercise, grade_exercise, register_card_view
+
+
+def _pick_cjk_font_path() -> str | None:
+    env_font = os.getenv('FLASHKANJI_FONT')
+    candidates = [
+        env_font,
+        'assets/fonts/NotoSansJP-Regular.ttf',
+        'assets/fonts/NotoSansCJKjp-Regular.otf',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJKjp-Regular.otf',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansJP-Regular.otf',
+        'C:/Windows/Fonts/msgothic.ttc',
+        'C:/Windows/Fonts/meiryo.ttc',
+        'C:/Windows/Fonts/YuGothM.ttc',
+        '/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc',
+        '/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc',
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return str(Path(candidate))
+    return None
+
+
+def _configure_fonts() -> tuple[str, str]:
+    """Return (ui_font, cjk_font)."""
+    ui_font = 'Roboto'
+    font_path = _pick_cjk_font_path()
+    if font_path:
+        LabelBase.register(name='FlashKanjiCJK', fn_regular=font_path)
+        return ui_font, 'FlashKanjiCJK'
+    return ui_font, ui_font
+
+
+KV = '''
+#:import dp kivy.metrics.dp
+<RootView>:
+    orientation: 'vertical'
+    padding: dp(12)
+    spacing: dp(10)
+    canvas.before:
+        Color:
+            rgba: (0.06, 0.04, 0.08, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(58)
+        padding: dp(12), dp(8)
+        canvas.before:
+            Color:
+                rgba: (0.17, 0.12, 0.20, 0.96)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [18, 18, 18, 18]
+        Label:
+            text: root.top_text
+            color: (1, 0.95, 0.84, 1)
+            bold: True
+            text_size: self.width, None
+            halign: 'center'
+            valign: 'middle'
+
+    Image:
+        source: root.logo_path
+        size_hint_y: None
+        height: dp(92) if root.logo_exists else 0
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(46)
+        padding: dp(6), dp(6)
+        spacing: dp(8)
+        canvas.before:
+            Color:
+                rgba: (0.95, 0.89, 0.77, 1)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [16, 16, 16, 16]
+        Label:
+            text: root.queue_text
+            color: (0.28, 0.19, 0.11, 1)
+            bold: True
+        Label:
+            text: 'Повтор после'
+            color: (0.44, 0.31, 0.16, 1)
+
+    BoxLayout:
+        id: card_box
+        size_hint_y: 0.52
+        padding: dp(14)
+        canvas.before:
+            Color:
+                rgba: (0.97, 0.92, 0.83, 1)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [28, 28, 28, 28]
+            Color:
+                rgba: (0.83, 0.70, 0.50, 0.32)
+            Line:
+                rounded_rectangle: [self.x + dp(2), self.y + dp(2), self.width - dp(4), self.height - dp(4), dp(26)]
+                width: dp(1.3)
+        Label:
+            id: card_label
+            text: root.card_text
+            markup: True
+            font_size: root.card_font
+            color: (0.18, 0.12, 0.10, 1)
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(58)
+        spacing: dp(8)
+        Button:
+            text: 'Не помню'
+            bold: True
+            background_normal: ''
+            background_color: (0.90, 0.24, 0.18, 1)
+            color: (1, 1, 1, 1)
+            on_release: root.swipe_left()
+        Button:
+            text: 'Перевернуть'
+            bold: True
+            background_normal: ''
+            background_color: (0.87, 0.58, 0.14, 1)
+            color: (0.14, 0.09, 0.05, 1)
+            on_release: root.flip_card()
+        Button:
+            text: 'Помню'
+            bold: True
+            background_normal: ''
+            background_color: (0.28, 0.70, 0.20, 1)
+            color: (1, 1, 1, 1)
+            on_release: root.swipe_right()
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(76)
+        padding: dp(10), dp(8)
+        canvas.before:
+            Color:
+                rgba: (0.21, 0.14, 0.19, 0.95)
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [18, 18, 18, 18]
+        Label:
+            text: root.stats_text
+            color: (1, 0.96, 0.90, 1)
+            text_size: self.width, None
+            halign: 'center'
+            valign: 'middle'
+
+    BoxLayout:
+        size_hint_y: None
+        height: dp(52)
+        spacing: dp(8)
+        Button:
+            text: 'Undo'
+            background_normal: ''
+            background_color: (0.30, 0.23, 0.22, 1)
+            color: (1, 0.95, 0.86, 1)
+            on_release: root.undo_action()
+        Button:
+            text: 'Сброс'
+            background_normal: ''
+            background_color: (0.30, 0.23, 0.22, 1)
+            color: (1, 0.95, 0.86, 1)
+            on_release: root.reset_progress()
+'''
+
+
+class RootView(BoxLayout):
+    top_text = StringProperty('')
+    queue_text = StringProperty('Очередь: Сейчас')
+    card_text = StringProperty('')
+    card_font = NumericProperty(96)
+    stats_text = StringProperty('')
+    ui_font = StringProperty('Roboto')
+    cjk_font = StringProperty('Roboto')
+
+    logo_path = StringProperty('')
+    logo_exists = BooleanProperty(False)
+
+    flipped = BooleanProperty(False)
+    cards = ListProperty([])
+    current_card = DictProperty({})
+
+    def __init__(self, conn, ui_font='Roboto', cjk_font='Roboto', **kwargs):
+        self.conn = conn
+        self.queue = LaterQueue()
+        self.ui_font = ui_font
+        self.cjk_font = cjk_font
+        self.last_action = None
+        super().__init__(**kwargs)
+        logo = Path('assets/logo.png')
+        self.logo_exists = logo.exists()
+        self.logo_path = str(logo) if self.logo_exists else ''
+
+    def on_kv_post(self, base_widget):
+        self.ids.card_box.bind(on_touch_down=self._on_card_touch_down, on_touch_up=self._on_card_touch_up)
+        self._touch_start_x = None
+        self.load_session()
+
+    def _fetch_profile(self):
+        return dict(self.conn.execute('SELECT * FROM profile WHERE id=1').fetchone())
+
+    def _persist_profile(self, p):
+        self.conn.execute(
+            '''UPDATE profile SET daily_streak_count=?,last_active_date=?,streak_credited_date=?,today_completed=?,today_viewed=?,view_count_date=?,daily_goal=?,requeue_mode=?,requeue_value=? WHERE id=1''',
+            (
+                p['daily_streak_count'], p.get('last_active_date'), p.get('streak_credited_date'), p['today_completed'],
+                p.get('today_viewed', 0), p.get('view_count_date'), p['daily_goal'], p['requeue_mode'], p['requeue_value'],
+            ),
+        )
+        self.conn.commit()
+
+    def _on_card_touch_down(self, _widget, touch):
+        if self.ids.card_box.collide_point(*touch.pos):
+            self._touch_start_x = touch.x
+        return False
+
+    def _on_card_touch_up(self, _widget, touch):
+        if self._touch_start_x is None:
+            return False
+        dx = touch.x - self._touch_start_x
+        self._touch_start_x = None
+        if dx > 60:
+            self.swipe_right()
+        elif dx < -60:
+            self.swipe_left()
+        else:
+            self.flip_card()
+        return False
+
+    def load_session(self):
+        self.cards = [
+            dict(r) for r in self.conn.execute(
+                'SELECT * FROM cards WHERE next_due <= ? ORDER BY priority_boost DESC, next_due ASC',
+                (datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),),
+            )
+        ]
+        self.current_card = self.cards[0] if self.cards else {}
+        self.flipped = False
+        self.render('Сейчас')
+
+    def render(self, queue_state):
+        p = self._fetch_profile()
+        self.top_text = f'Сегодня просмотрено: {p.get("today_viewed", 0)}/{DAILY_STREAK_VIEW_TARGET} | Streak: {p["daily_streak_count"]}'
+        self.queue_text = f'Очередь: {queue_state}'
+
+        stats = self.conn.execute(
+            "SELECT (SELECT COUNT(*) FROM cards WHERE learned=1),"
+            "(SELECT COUNT(*) FROM reviews WHERE action='left' AND created_at >= datetime('now','-7 day'))," 
+            "(SELECT COUNT(*) FROM exercises)"
+        ).fetchone()
+        self.stats_text = f'Решено сегодня: {p["today_completed"]} | Выучено: {stats[0]} | Ошибки 7д: {stats[1]} | Тесты: {stats[2]}'
+
+        if not self.current_card:
+            self.card_text = 'Готово на сейчас 🎉'
+            self.card_font = 28
+            return
+
+        if self.flipped:
+            self.card_font = 24
+            self.card_text = (
+                f"[font={self.cjk_font}]{self.current_card['reading']}[/font]\n{self.current_card['meaning']}\n"
+                f"[font={self.cjk_font}]例: {self.current_card['examples']}[/font]\nПеревод: {self.current_card.get('example_translation','')}"
+            )
+        else:
+            self.card_font = 100
+            self.card_text = f"[font={self.cjk_font}]{self.current_card['kanji']}[/font]"
+
+    def flip_card(self):
+        if not self.current_card:
+            return
+        self.flipped = not self.flipped
+        profile = register_card_view(self._fetch_profile(), date.today())
+        self._persist_profile(profile)
+        if profile.get('streak_message'):
+            self._popup('Day streak', profile['streak_message'])
+        self.render(self.queue_text.replace('Очередь: ', ''))
+
+    def _swipe(self, direction):
+        if not self.current_card:
+            return
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        p = self._fetch_profile()
+        card = dict(self.current_card)
+
+        updated = apply_right_swipe(card, now) if direction == 'right' else apply_left_swipe(card, p['requeue_mode'], p['requeue_value'], now)
+        self.conn.execute('INSERT INTO reviews(card_id, action, created_at) VALUES (?,?,?)', (card['id'], direction, now.isoformat()))
+        if direction == 'left':
+            self.queue.push(card['id'], p['requeue_mode'], p['requeue_value'], now)
+
+        self.conn.execute(
+            'UPDATE cards SET streak=?,lapses=?,last_seen=?,next_due=?,learned=?,learned_at=? WHERE id=?',
+            (updated['streak'], updated['lapses'], updated['last_seen'], updated['next_due'], updated['learned'], updated['learned_at'], updated['id']),
+        )
+        self.conn.commit()
+
+        self.last_action = card
+        self.queue.increment_seen()
+        p['today_completed'] += 1
+        self._persist_profile(p)
+
+        self.cards = [c for c in self.cards if c['id'] != card['id']]
+        queue_state = 'Сейчас'
+        ready_id = self.queue.pop_ready(now)
+        if ready_id:
+            row = self.conn.execute('SELECT * FROM cards WHERE id=?', (ready_id,)).fetchone()
+            if row:
+                self.cards.append(dict(row))
+                queue_state = 'Повтор позже'
+
+        self.current_card = self.cards[0] if self.cards else {}
+        self.flipped = False
+        self.render(queue_state)
+        self._maybe_offer_test()
+
+    def swipe_left(self):
+        self._swipe('left')
+
+    def swipe_right(self):
+        self._swipe('right')
+
+    def _maybe_offer_test(self):
+        learned_ids = [r[0] for r in self.conn.execute('SELECT id FROM cards WHERE learned=1 ORDER BY learned_at ASC')]
+        used = [i for r in self.conn.execute('SELECT card_ids FROM learned_batches') for i in json.loads(r[0])]
+        unbatched = [cid for cid in learned_ids if cid not in used]
+        if len(unbatched) < LEARNED_BATCH_SIZE:
+            return
+
+        batch_ids = unbatched[:LEARNED_BATCH_SIZE]
+        self.conn.execute('INSERT INTO learned_batches(created_at, card_ids) VALUES (?, ?)', (datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), json.dumps(batch_ids, ensure_ascii=False)))
+        batch_id = self.conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+        self.conn.commit()
+
+        chosen = random.sample(batch_ids, 3)
+        kanji = [self.conn.execute('SELECT kanji FROM cards WHERE id=?', (cid,)).fetchone()[0] for cid in chosen]
+        ex = build_exercise(kanji)
+        self._show_test_popup(batch_id, ex)
+
+    def _show_test_popup(self, batch_id, exercise):
+        box = BoxLayout(orientation='vertical', spacing=6, padding=8)
+        box.add_widget(Label(text='Небольшой тест: вставь изученные кандзи в пропуски.'))
+        box.add_widget(Label(text=f'[font={self.cjk_font}]'+exercise['text_hira']+'[/font]', markup=True))
+        entries = {}
+        for t in exercise['targets']:
+            row = BoxLayout(size_hint_y=None, height=40)
+            row.add_widget(Label(text=t['slot'], size_hint_x=0.25))
+            ti = TextInput(multiline=False, font_name=self.cjk_font)
+            row.add_widget(ti)
+            entries[t['slot']] = ti
+            box.add_widget(row)
+
+        chips = '  '.join([t['kanji'] for t in exercise['targets']])
+        box.add_widget(Label(text=f"Доступные кандзи: [font={self.cjk_font}]" + chips + '[/font]', markup=True))
+
+        popup = Popup(title='Тест по изученным кандзи', content=box, size_hint=(0.95, 0.85))
+
+        def submit(_):
+            answers = {slot: ti.text.strip() for slot, ti in entries.items()}
+            result = grade_exercise({'targets': exercise['targets']}, answers)
+            self.conn.execute(
+                'INSERT INTO exercises(batch_id,template_id,exercise_completed_at,exercise_score,wrong_targets) VALUES (?,?,?,?,?)',
+                (batch_id, exercise['template_id'], datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), result['score'], json.dumps(result['wrongTargets'], ensure_ascii=False)),
+            )
+            for k in result['wrongTargets']:
+                self.conn.execute('UPDATE cards SET priority_boost = priority_boost + 1 WHERE kanji=?', (k,))
+            self.conn.commit()
+
+            p = self._fetch_profile()
+            p['today_completed'] += 1
+            self._persist_profile(p)
+            popup.dismiss()
+            self._popup('Результат теста', f"Score: {result['score']}%")
+            self.render(self.queue_text.replace('Очередь: ', ''))
+
+        btn = Button(text='Проверить', size_hint_y=None, height=44)
+        btn.bind(on_release=submit)
+        box.add_widget(btn)
+        popup.open()
+
+    def undo_action(self):
+        if not self.last_action:
+            return
+        c = self.last_action
+        self.conn.execute(
+            'UPDATE cards SET streak=?,lapses=?,last_seen=?,next_due=?,learned=?,learned_at=? WHERE id=?',
+            (c['streak'], c['lapses'], c['last_seen'], c['next_due'], c['learned'], c['learned_at'], c['id']),
+        )
+        self.conn.commit()
+        self.last_action = None
+        self.load_session()
+
+    def reset_progress(self):
+        self.conn.executescript(
+            '''
+            UPDATE cards SET streak=0,lapses=0,last_seen=NULL,next_due=datetime('now'),learned=0,learned_at=NULL,priority_boost=0;
+            DELETE FROM reviews;
+            DELETE FROM learned_batches;
+            DELETE FROM exercises;
+            UPDATE profile SET daily_streak_count=0,last_active_date=NULL,streak_credited_date=NULL,today_completed=0,today_viewed=0,view_count_date=NULL;
+            '''
+        )
+        self.conn.commit()
+        self.load_session()
+
+    def _popup(self, title, text):
+        content = BoxLayout(orientation='vertical', padding=8, spacing=8)
+        content.add_widget(Label(text=text))
+        btn = Button(text='OK', size_hint_y=None, height=40)
+        pop = Popup(title=title, content=content, size_hint=(0.8, 0.4))
+        btn.bind(on_release=lambda *_: pop.dismiss())
+        content.add_widget(btn)
+        pop.open()
+
+
+class FlashKanjiKivyApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.conn = get_conn()
+        self.ui_font, self.cjk_font = _configure_fonts()
+
+    def build(self):
+        Builder.load_string(KV)
+        return RootView(conn=self.conn, ui_font=self.ui_font, cjk_font=self.cjk_font)
+
+    def on_stop(self):
+        if self.conn:
+            self.conn.close()
+
+
+def run_mobile_app():
+    FlashKanjiKivyApp().run()
