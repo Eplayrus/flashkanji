@@ -43,12 +43,14 @@ def _pick_cjk_font_path() -> str | None:
     return None
 
 
-def _configure_fonts() -> str:
+def _configure_fonts() -> tuple[str, str]:
+    """Return (ui_font, cjk_font)."""
+    ui_font = 'Roboto'
     font_path = _pick_cjk_font_path()
     if font_path:
-        LabelBase.register(name='FlashKanjiUIFont', fn_regular=font_path)
-        return 'FlashKanjiUIFont'
-    return 'Roboto'
+        LabelBase.register(name='FlashKanjiCJK', fn_regular=font_path)
+        return ui_font, 'FlashKanjiCJK'
+    return ui_font, ui_font
 
 
 KV = '''
@@ -65,7 +67,6 @@ KV = '''
 
     Label:
         text: root.top_text
-        font_name: root.ui_font
         size_hint_y: None
         height: dp(45)
         text_size: self.width, None
@@ -73,7 +74,6 @@ KV = '''
 
     Label:
         text: root.queue_text
-        font_name: root.ui_font
         size_hint_y: None
         height: dp(24)
 
@@ -91,7 +91,7 @@ KV = '''
         Label:
             id: card_label
             text: root.card_text
-            font_name: root.ui_font
+            markup: True
             font_size: root.card_font
             halign: 'center'
             valign: 'middle'
@@ -103,20 +103,16 @@ KV = '''
         spacing: dp(8)
         Button:
             text: 'Не помню'
-            font_name: root.ui_font
             on_release: root.swipe_left()
         Button:
             text: 'Перевернуть'
-            font_name: root.ui_font
             on_release: root.flip_card()
         Button:
             text: 'Помню'
-            font_name: root.ui_font
             on_release: root.swipe_right()
 
     Label:
         text: root.stats_text
-        font_name: root.ui_font
         size_hint_y: None
         height: dp(48)
         text_size: self.width, None
@@ -128,11 +124,9 @@ KV = '''
         spacing: dp(8)
         Button:
             text: 'Undo'
-            font_name: root.ui_font
             on_release: root.undo_action()
         Button:
             text: 'Сброс'
-            font_name: root.ui_font
             on_release: root.reset_progress()
 '''
 
@@ -144,6 +138,7 @@ class RootView(BoxLayout):
     card_font = NumericProperty(96)
     stats_text = StringProperty('')
     ui_font = StringProperty('Roboto')
+    cjk_font = StringProperty('Roboto')
 
     logo_path = StringProperty('')
     logo_exists = BooleanProperty(False)
@@ -152,10 +147,11 @@ class RootView(BoxLayout):
     cards = ListProperty([])
     current_card = DictProperty({})
 
-    def __init__(self, conn, ui_font='Roboto', **kwargs):
+    def __init__(self, conn, ui_font='Roboto', cjk_font='Roboto', **kwargs):
         self.conn = conn
         self.queue = LaterQueue()
         self.ui_font = ui_font
+        self.cjk_font = cjk_font
         self.last_action = None
         super().__init__(**kwargs)
         logo = Path('assets/logo.png')
@@ -229,12 +225,12 @@ class RootView(BoxLayout):
         if self.flipped:
             self.card_font = 24
             self.card_text = (
-                f"{self.current_card['reading']}\n{self.current_card['meaning']}\n"
-                f"例: {self.current_card['examples']}\nПеревод: {self.current_card.get('example_translation','')}"
+                f"[font={self.cjk_font}]{self.current_card['reading']}[/font]\n{self.current_card['meaning']}\n"
+                f"[font={self.cjk_font}]例: {self.current_card['examples']}[/font]\nПеревод: {self.current_card.get('example_translation','')}"
             )
         else:
             self.card_font = 100
-            self.card_text = self.current_card['kanji']
+            self.card_text = f"[font={self.cjk_font}]{self.current_card['kanji']}[/font]"
 
     def flip_card(self):
         if not self.current_card:
@@ -308,19 +304,19 @@ class RootView(BoxLayout):
 
     def _show_test_popup(self, batch_id, exercise):
         box = BoxLayout(orientation='vertical', spacing=6, padding=8)
-        box.add_widget(Label(text='Небольшой тест: вставь изученные кандзи в пропуски.', font_name=self.ui_font))
-        box.add_widget(Label(text=exercise['text_hira'], font_name=self.ui_font))
+        box.add_widget(Label(text='Небольшой тест: вставь изученные кандзи в пропуски.'))
+        box.add_widget(Label(text=f'[font={self.cjk_font}]'+exercise['text_hira']+'[/font]', markup=True))
         entries = {}
         for t in exercise['targets']:
             row = BoxLayout(size_hint_y=None, height=40)
-            row.add_widget(Label(text=t['slot'], size_hint_x=0.25, font_name=self.ui_font))
-            ti = TextInput(multiline=False, font_name=self.ui_font)
+            row.add_widget(Label(text=t['slot'], size_hint_x=0.25))
+            ti = TextInput(multiline=False, font_name=self.cjk_font)
             row.add_widget(ti)
             entries[t['slot']] = ti
             box.add_widget(row)
 
         chips = '  '.join([t['kanji'] for t in exercise['targets']])
-        box.add_widget(Label(text=f'Доступные кандзи: {chips}', font_name=self.ui_font))
+        box.add_widget(Label(text=f"Доступные кандзи: [font={self.cjk_font}]" + chips + '[/font]', markup=True))
 
         popup = Popup(title='Тест по изученным кандзи', content=box, size_hint=(0.95, 0.85))
 
@@ -342,7 +338,7 @@ class RootView(BoxLayout):
             self._popup('Результат теста', f"Score: {result['score']}%")
             self.render(self.queue_text.replace('Очередь: ', ''))
 
-        btn = Button(text='Проверить', size_hint_y=None, height=44, font_name=self.ui_font)
+        btn = Button(text='Проверить', size_hint_y=None, height=44)
         btn.bind(on_release=submit)
         box.add_widget(btn)
         popup.open()
@@ -374,8 +370,8 @@ class RootView(BoxLayout):
 
     def _popup(self, title, text):
         content = BoxLayout(orientation='vertical', padding=8, spacing=8)
-        content.add_widget(Label(text=text, font_name=self.ui_font))
-        btn = Button(text='OK', size_hint_y=None, height=40, font_name=self.ui_font)
+        content.add_widget(Label(text=text))
+        btn = Button(text='OK', size_hint_y=None, height=40)
         pop = Popup(title=title, content=content, size_hint=(0.8, 0.4))
         btn.bind(on_release=lambda *_: pop.dismiss())
         content.add_widget(btn)
@@ -386,11 +382,11 @@ class FlashKanjiKivyApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.conn = get_conn()
-        self.ui_font = _configure_fonts()
+        self.ui_font, self.cjk_font = _configure_fonts()
 
     def build(self):
         Builder.load_string(KV)
-        return RootView(conn=self.conn, ui_font=self.ui_font)
+        return RootView(conn=self.conn, ui_font=self.ui_font, cjk_font=self.cjk_font)
 
     def on_stop(self):
         if self.conn:
