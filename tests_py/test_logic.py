@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from flashkanji.constants import DAILY_STREAK_VIEW_TARGET
 from flashkanji.logic import (
@@ -34,11 +34,11 @@ class LogicTests(unittest.TestCase):
 
     def test_later_queue(self):
         q = LaterQueue()
-        q.push(1, 'count', 2, datetime.utcnow())
+        q.push(1, 'count', 2, datetime.now(timezone.utc).replace(tzinfo=None))
         q.increment_seen()
-        self.assertIsNone(q.pop_ready(datetime.utcnow()))
+        self.assertIsNone(q.pop_ready(datetime.now(timezone.utc).replace(tzinfo=None)))
         q.increment_seen()
-        self.assertEqual(q.pop_ready(datetime.utcnow()), 1)
+        self.assertEqual(q.pop_ready(datetime.now(timezone.utc).replace(tzinfo=None)), 1)
 
     def test_exercise_slots(self):
         result = grade_exercise(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import random
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from kivy.app import App
@@ -29,8 +29,6 @@ KV = '''
         source: root.logo_path
         size_hint_y: None
         height: dp(80) if root.logo_exists else 0
-        allow_stretch: True
-        keep_ratio: True
 
     Label:
         text: root.top_text
@@ -112,10 +110,10 @@ class RootView(BoxLayout):
     current_card = DictProperty({})
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self.conn = get_conn()
         self.queue = LaterQueue()
         self.last_action = None
+        super().__init__(**kwargs)
         logo = Path('assets/logo.png')
         self.logo_exists = logo.exists()
         self.logo_path = str(logo) if self.logo_exists else ''
@@ -160,7 +158,7 @@ class RootView(BoxLayout):
         self.cards = [
             dict(r) for r in self.conn.execute(
                 'SELECT * FROM cards WHERE next_due <= ? ORDER BY priority_boost DESC, next_due ASC',
-                (datetime.utcnow().isoformat(),),
+                (datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),),
             )
         ]
         self.current_card = self.cards[0] if self.cards else {}
@@ -207,7 +205,7 @@ class RootView(BoxLayout):
     def _swipe(self, direction):
         if not self.current_card:
             return
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         p = self._fetch_profile()
         card = dict(self.current_card)
 
@@ -255,7 +253,7 @@ class RootView(BoxLayout):
             return
 
         batch_ids = unbatched[:LEARNED_BATCH_SIZE]
-        self.conn.execute('INSERT INTO learned_batches(created_at, card_ids) VALUES (?, ?)', (datetime.utcnow().isoformat(), json.dumps(batch_ids, ensure_ascii=False)))
+        self.conn.execute('INSERT INTO learned_batches(created_at, card_ids) VALUES (?, ?)', (datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), json.dumps(batch_ids, ensure_ascii=False)))
         batch_id = self.conn.execute('SELECT last_insert_rowid()').fetchone()[0]
         self.conn.commit()
 
@@ -287,7 +285,7 @@ class RootView(BoxLayout):
             result = grade_exercise({'targets': exercise['targets']}, answers)
             self.conn.execute(
                 'INSERT INTO exercises(batch_id,template_id,exercise_completed_at,exercise_score,wrong_targets) VALUES (?,?,?,?,?)',
-                (batch_id, exercise['template_id'], datetime.utcnow().isoformat(), result['score'], json.dumps(result['wrongTargets'], ensure_ascii=False)),
+                (batch_id, exercise['template_id'], datetime.now(timezone.utc).replace(tzinfo=None).isoformat(), result['score'], json.dumps(result['wrongTargets'], ensure_ascii=False)),
             )
             for k in result['wrongTargets']:
                 self.conn.execute('UPDATE cards SET priority_boost = priority_boost + 1 WHERE kanji=?', (k,))

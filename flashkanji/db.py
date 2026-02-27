@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 DB_PATH = Path('data/flashkanji.sqlite')
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -77,7 +77,7 @@ def get_conn():
     _ensure_column(conn, 'profile', 'view_count_date', 'view_count_date TEXT')
 
     if conn.execute('SELECT COUNT(*) FROM cards').fetchone()[0] == 0:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         conn.executemany(
             'INSERT INTO cards (kanji,reading,meaning,examples,example_translation,next_due) VALUES (?,?,?,?,?,?)',
             [(*s, now) for s in SEED],
