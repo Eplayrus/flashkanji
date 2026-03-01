@@ -136,9 +136,11 @@
         BoxLayout:
             size_hint_y: None
             height: dp(48)
-            MDRaisedButton:
-                text: "Назад"
+            MDButton:
+                style: "outlined"
                 on_release: root.go_home()
+                MDButtonText:
+                    text: "Назад"
 
 <ExerciseScreen>:
     name: "exercises"
