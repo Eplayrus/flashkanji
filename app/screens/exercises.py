@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from kivy.properties import ListProperty, StringProperty
 from kivy.uix.screenmanager import Screen
+from kivymd.uix.button import MDRaisedButton
 
 
 class ExerciseScreen(Screen):
@@ -49,11 +50,10 @@ class ExerciseScreen(Screen):
     def _render_choices(self) -> None:
         box = self.ids.choices_box
         box.clear_widgets()
-        from kivymd.uix.button import MDButton, MDButtonText
 
         for choice in self.exercise.choices:
-            btn = MDButton(style="outlined", on_release=lambda _btn, c=choice: self.fill_slot(c))
-            btn.add_widget(MDButtonText(text=choice))
+            btn = MDRaisedButton(text=choice)
+            btn.bind(on_release=lambda _btn, c=choice: self.fill_slot(c))
             box.add_widget(btn)
 
     def fill_slot(self, char: str) -> None:

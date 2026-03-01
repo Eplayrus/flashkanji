@@ -12,6 +12,8 @@ from app.screens.exercises import ExerciseScreen
 from app.screens.main_menu import MainMenuScreen
 from app.seed import seed_if_needed
 from app.stats import StatsService
+from app.widgets.flip_card import FlipCard  # noqa: F401
+from app.widgets.image_button import ImageButton  # noqa: F401
 
 
 class FlashKanjiApp(MDApp):
