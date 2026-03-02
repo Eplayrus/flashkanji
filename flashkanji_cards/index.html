@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Kanji – Тренировка</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <!--
+      Эта страница воспроизводит экран тренировки из приложения Flash Kanji.
+      Она не использует внешних библиотек и полностью автономна. Карточка
+      переворачивается по клику, а свайп влево/вправо запускает
+      соответствующее действие. Кнопки «Не помню» и «Помню» обновляют
+      сообщение обратной связи.
+    -->
+    <div class="app-wrapper">
+        <!-- Верхняя панель со счётчиком и серией -->
+        <div class="top-bar">
+            <div class="today">
+                <span class="today-label">Сегодня:</span> <span id="today-count">8</span>/<span id="today-total">15</span>
+            </div>
+            <div class="streak">
+                <span class="streak-label">Streak:</span> <span id="streak-count">4</span> дня <span class="streak-icon">🔥</span>
+            </div>
+        </div>
+
+        <!-- Переключатель текущего/повтор после -->
+        <div class="toggle-wrapper">
+            <button class="toggle-btn active" id="mode-now" type="button">Сейчас</button>
+            <button class="toggle-btn" id="mode-later" type="button">Повтор после</button>
+        </div>
+
+        <!-- Область карточки -->
+        <div class="card-area">
+            <div class="card" id="flash-card">
+                <div class="card-inner">
+                    <!-- Лицевая сторона -->
+                    <div class="card-face card-front">
+                        <img src="card.png" alt="Бэкграунд карточки" class="card-bg">
+                        <div class="card-content">
+                            <div class="kanji" id="kanji-char">木</div>
+                            <div class="reading"><ruby>き<rt>ki</rt></ruby></div>
+                            <div class="meaning">Дерево</div>
+                        </div>
+                    </div>
+                    <!-- Оборотная сторона -->
+                    <div class="card-face card-back">
+                        <img src="card.png" alt="Бэкграунд карточки" class="card-bg">
+                        <div class="card-content back-content">
+                            <div class="hiragana" id="hiragana">き</div>
+                            <div class="romaji" id="romaji">ki</div>
+                            <div class="sentence" id="sentence">きはたかいです。</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Ленты-стрелки по бокам -->
+                <div class="ribbon ribbon-left"><span class="arrow">←</span></div>
+                <div class="ribbon ribbon-right"><span class="arrow">→</span></div>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="actions">
+            <button class="action-btn not-remember" id="btn-not" type="button">
+                <span class="icon">✖</span>
+                <span class="label">Не помню</span>
+            </button>
+            <button class="action-btn remember" id="btn-yes" type="button">
+                <span class="icon">✔</span>
+                <span class="label">Помню</span>
+            </button>
+        </div>
+
+        <!-- Обратная связь -->
+        <div class="feedback" id="feedback">
+            <span id="feedback-text">Верно</span>
+        </div>
+    </div>
+</body>
+</html>
