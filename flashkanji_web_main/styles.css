@@ -1,0 +1,247 @@
+/*
+  Global stylesheet for the Flash Kanji demo page. Colours and sizing
+  reference the provided screenshot to give a similar tactile feel.
+  The layout is responsive up to a modest maximum width to mimic a
+  mobile screen. Feel free to adjust variables at the top to fine‑tune
+  the appearance.
+*/
+
+/* CSS custom properties for easy theming */
+:root {
+    --bg-colour-top: #f9f5e9;
+    --bg-colour-bottom: #f4d5a8;
+    --container-bg: #f9f3e4;
+    --container-border: #e0d4b7;
+    --text-primary: #2a1d0a;
+    --text-secondary: #6c5531;
+    --button-bg-cards: #2e5fff;
+    --button-bg-exercises: #8540d8;
+    --button-text-colour: #ffffff;
+    --progress-card-bg: #2c271c;
+    --list-item-bg: #2c271c;
+    --list-border-colour: #403a2a;
+    --progress-bar-bg: #3a3326;
+    --progress-fill-colour: #ed7d39;
+    --continue-gradient-start: #f7cf56;
+    --continue-gradient-end: #e97b2c;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(var(--bg-colour-top), var(--bg-colour-bottom));
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.app-wrapper {
+    background: var(--container-bg);
+    border: 1px solid var(--container-border);
+    border-radius: 20px;
+    padding: 1.25rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    margin-right: 0.75rem;
+    object-fit: contain;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.app-title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+/* Menu buttons */
+.menu {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.menu-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem 0.5rem;
+    border-radius: 16px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--button-text-colour);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s ease;
+}
+.menu-btn .menu-icon {
+    font-size: 1.6rem;
+    margin-bottom: 0.25rem;
+}
+.menu-btn.cards {
+    background: var(--button-bg-cards);
+}
+.menu-btn.exercises {
+    background: var(--button-bg-exercises);
+}
+.menu-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Daily progress section */
+.daily-progress {
+    display: flex;
+    justify-content: space-between;
+    background: var(--progress-card-bg);
+    border-radius: 16px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    color: #f0f0f0;
+    font-size: 0.95rem;
+}
+.daily-progress .progress-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+.daily-progress .progress-section + .progress-section {
+    border-left: 1px solid var(--list-border-colour);
+}
+.daily-progress .progress-label {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+.daily-progress .progress-value {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Stats list */
+.stats-list {
+    list-style: none;
+    margin-bottom: 1rem;
+    background: var(--list-item-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    color: #f5f5f5;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--list-border-colour);
+    font-size: 0.95rem;
+}
+.stat-item:last-child {
+    border-bottom: none;
+}
+.stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--icon-colour);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    margin-right: 0.75rem;
+}
+.stat-text {
+    flex: 1;
+}
+.stat-value {
+    font-weight: bold;
+}
+.stat-value small {
+    color: #9acdce;
+    margin-left: 0.25rem;
+    font-size: 0.8em;
+}
+
+/* Overall progress bar */
+.overall-progress {
+    background: var(--progress-card-bg);
+    border-radius: 16px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    color: #f5f5f5;
+}
+.overall-progress .progress-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--progress-bar-bg);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--continue-gradient-start), var(--continue-gradient-end));
+    border-radius: 6px;
+}
+
+/* Continue button */
+.continue-btn {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 18px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2d1c05;
+    background: linear-gradient(90deg, var(--continue-gradient-start), var(--continue-gradient-end));
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+.continue-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Responsive behaviour */
+@media (max-width: 420px) {
+    .app-wrapper {
+        border-radius: 12px;
+        padding: 0.8rem;
+    }
+    .logo {
+        width: 48px;
+        height: 48px;
+    }
+    .app-title {
+        font-size: 1.5rem;
+    }
+}

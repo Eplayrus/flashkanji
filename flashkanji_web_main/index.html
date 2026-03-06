@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Kanji</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <!--
+      This page is a lightweight recreation of the mobile app screen provided in
+      the task. It does not depend on any external fonts or libraries so it
+      functions offline. All colours and sizes were hand‑tuned to match the
+      look and feel of the original screenshot.
+    -->
+    <div class="app-wrapper">
+        <header class="app-header">
+            <img src="logo.png" alt="Flash Kanji logo" class="logo">
+            <h1 class="app-title">Flash Kanji</h1>
+        </header>
+
+        <!-- Main menu buttons -->
+        <div class="menu">
+            <button class="menu-btn cards">
+                <span class="menu-icon">🃏</span>
+                <span class="menu-label">Карточки</span>
+            </button>
+            <button class="menu-btn exercises">
+                <span class="menu-icon">📝</span>
+                <span class="menu-label">Упражнения</span>
+            </button>
+        </div>
+
+        <!-- Daily progress widget -->
+        <section class="daily-progress">
+            <div class="progress-section left">
+                <div class="progress-label">Выполнено</div>
+                <div class="progress-value"><span id="completed">15</span>/<span id="total">15</span></div>
+            </div>
+            <div class="progress-section right">
+                <div class="progress-label">След. урок</div>
+                <div class="progress-value">05.06.2024</div>
+            </div>
+        </section>
+
+        <!-- Summary statistics list -->
+        <ul class="stats-list">
+            <li class="stat-item">
+                <div class="stat-icon" style="--icon-colour:#46c1f6;">⭐</div>
+                <div class="stat-text">Лучшая треня</div>
+                <div class="stat-value">134 <small>+33</small></div>
+            </li>
+            <li class="stat-item">
+                <div class="stat-icon" style="--icon-colour:#facc15;">💡</div>
+                <div class="stat-text">Всего выучено</div>
+                <div class="stat-value">56 <small>+22</small></div>
+            </li>
+            <li class="stat-item">
+                <div class="stat-icon" style="--icon-colour:#f87171;">❗</div>
+                <div class="stat-text">С ошибкой</div>
+                <div class="stat-value">11 <small>+5</small></div>
+            </li>
+            <li class="stat-item">
+                <div class="stat-icon" style="--icon-colour:#34d399;">💪</div>
+                <div class="stat-text">Всего упражнений</div>
+                <div class="stat-value">233 <small>+33</small></div>
+            </li>
+        </ul>
+
+        <!-- Overall progress bar -->
+        <div class="overall-progress">
+            <div class="progress-info">
+                <span class="progress-total-label">Общий:</span>
+                <span class="progress-total-value">430</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:65%;"></div>
+            </div>
+        </div>
+
+        <button class="continue-btn">Продолжить</button>
+    </div>
+</body>
+</html>
