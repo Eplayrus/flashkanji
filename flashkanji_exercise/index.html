@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Kanji — Упражнение</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <!--
+        Страница упражнения по японским иероглифам. Задание:
+        в предложении пропущены кандзи. Необходимо выбрать их из списка
+        и вставить на место пропусков. Дизайн ориентирован на
+        представленный скрин и сохраняет его атмосферу и визуальный стиль.
+    -->
+    <div class="app-wrapper">
+        <!-- Верхняя панель с прогрессом -->
+        <div class="top-bar">
+            <div class="progress">
+                <span id="learned-count">0</span>/<span id="total-count">3</span> выучено!
+            </div>
+            <div class="score">
+                <span class="check-icon">✔</span>
+                <span id="score-detail">0+3</span>
+            </div>
+        </div>
+        <!-- Панель сегодняшнего прогресса и серии -->
+        <div class="stats-bar">
+            <span class="small-check">✔</span>
+            <span>Сегодня: <span id="today-count">0</span>/<span id="today-total">3</span></span>
+            <span>Streak: <span id="streak">0</span> дня</span>
+        </div>
+        <!-- Область упражнения -->
+        <div class="exercise-area">
+            <div class="sentence-container">
+                きょうは <span class="blank" data-answer="日"></span> ようび。
+            </div>
+            <div class="sentence-container">
+                <span class="blank" data-answer="月"></span> がきれい。 <span class="blank" data-answer="人"></span> があるいている。
+            </div>
+            <!-- Список кандзи для выбора -->
+            <div class="choices">
+                <div class="choice" data-value="日">日</div>
+                <div class="choice" data-value="月">月</div>
+                <div class="choice" data-value="人">人</div>
+            </div>
+        </div>
+        <!-- Кнопка проверки -->
+        <button class="check-btn" id="check-btn" type="button">Проверить</button>
+        <!-- Сообщение о результате -->
+        <div class="result" id="result-msg"></div>
+    </div>
+</body>
+</html>

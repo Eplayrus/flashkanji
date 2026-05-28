@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "dailyGoals": [10, 20, 50],
+  "levelCurve": {
+    "baseXp": 100,
+    "growth": 1.35
+  },
+  "lessonUnlocks": {
+    "lesson-1": 1,
+    "lesson-2": 2,
+    "lesson-3": 3,
+    "lesson-4": 5,
+    "lesson-5": 8
+  },
+  "rewards": {
+    "correctXp": 10,
+    "lessonCompleteXp": 50,
+    "comboXp": 15,
+    "dailyBonusXp": 20,
+    "correctCoins": 1,
+    "lessonCompleteCoins": 8,
+    "achievementCoins": 20,
+    "dailyBonusCoins": 5,
+    "streakCoins": 10
+  },
+  "shop": [
+    {
+      "id": "frame_moon",
+      "type": "profileFrame",
+      "name": {
+        "ru": "Лунная рамка",
+        "en": "Moon frame"
+      },
+      "cost": 80
+    },
+    {
+      "id": "theme_gold",
+      "type": "theme",
+      "name": {
+        "ru": "Золотой акцент",
+        "en": "Gold accent"
+      },
+      "cost": 120
+    },
+    {
+      "id": "background_midnight",
+      "type": "background",
+      "name": {
+        "ru": "Полночный фон",
+        "en": "Midnight background"
+      },
+      "cost": 150
+    }
+  ],
+  "achievements": [
+    {
+      "id": "first_lesson",
+      "name": {
+        "ru": "Первый урок",
+        "en": "First lesson"
+      },
+      "description": {
+        "ru": "Завершить первый урок.",
+        "en": "Complete the first lesson."
+      },
+      "kind": "lessonComplete",
+      "target": 1,
+      "xp": 50,
+      "coins": 20
+    },
+    {
+      "id": "hundred_correct",
+      "name": {
+        "ru": "100 правильных ответов",
+        "en": "100 correct answers"
+      },
+      "description": {
+        "ru": "Набрать 100 правильных ответов.",
+        "en": "Reach 100 correct answers."
+      },
+      "kind": "correct",
+      "target": 100,
+      "xp": 120,
+      "coins": 40
+    },
+    {
+      "id": "ten_kanji_learned",
+      "name": {
+        "ru": "10 изученных кандзи",
+        "en": "10 kanji learned"
+      },
+      "description": {
+        "ru": "Начать изучение 10 кандзи.",
+        "en": "Start learning 10 kanji."
+      },
+      "kind": "learned",
+      "target": 10,
+      "xp": 80,
+      "coins": 30
+    },
+    {
+      "id": "seven_day_streak",
+      "name": {
+        "ru": "7 дней подряд",
+        "en": "7-day streak"
+      },
+      "description": {
+        "ru": "Поддерживать серию 7 дней.",
+        "en": "Keep a streak for 7 days."
+      },
+      "kind": "streak",
+      "target": 7,
+      "xp": 100,
+      "coins": 35
+    },
+    {
+      "id": "jlpt_n5_done",
+      "name": {
+        "ru": "JLPT N5 завершён",
+        "en": "JLPT N5 complete"
+      },
+      "description": {
+        "ru": "Освоить все карточки N5.",
+        "en": "Master every N5 card."
+      },
+      "kind": "jlpt",
+      "jlpt": "N5",
+      "target": 1,
+      "xp": 180,
+      "coins": 60
+    },
+    {
+      "id": "hundred_reviews",
+      "name": {
+        "ru": "100 повторений",
+        "en": "100 reviews"
+      },
+      "description": {
+        "ru": "Завершить 100 повторений.",
+        "en": "Complete 100 reviews."
+      },
+      "kind": "reviews",
+      "target": 100,
+      "xp": 150,
+      "coins": 55
+    }
+  ]
+}

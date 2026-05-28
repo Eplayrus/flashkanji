@@ -1,0 +1,269 @@
+/*
+  Стили для страницы тренировки Flash Kanji.
+  Основываясь на предоставленном скриншоте, использованы мягкие
+  пастельные цвета и плавные тени для имитации дизайна мобильного
+  приложения. Карточка реализована с помощью 3D‑трансформаций и
+  имеет две стороны. Ленты по бокам указывают направление свайпа.
+*/
+
+/* Переменные для цветов */
+:root {
+    --bg-top: #f5e8d6;
+    --bg-bottom: #f0d8b4;
+    --container-bg: #f9f5ec;
+    --container-border: #e0d7c8;
+    --text-dark: #2f1d0b;
+    --text-muted: #725744;
+    --bar-start: #342348;
+    --bar-end: #523964;
+    --toggle-bg: #eadfcd;
+    --toggle-active-bg: #fff8ee;
+    --toggle-dot: #79c54a;
+    --action-no-start: #e46868;
+    --action-no-end: #cf2f2f;
+    --action-yes-start: #7dcf7d;
+    --action-yes-end: #4aa96c;
+    --feedback-start: #523964;
+    --feedback-end: #392449;
+    --ribbon-left: #64c05a;
+    --ribbon-right: #f9c14d;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(var(--bg-top), var(--bg-bottom));
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1.5rem 0;
+    color: var(--text-dark);
+}
+
+.app-wrapper {
+    background: var(--container-bg);
+    border: 1px solid var(--container-border);
+    border-radius: 24px;
+    padding: 1rem 1rem 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* Верхняя панель */
+.top-bar {
+    background: linear-gradient(90deg, var(--bar-start), var(--bar-end));
+    color: #fefcfb;
+    padding: 0.6rem 1rem;
+    border-radius: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 0.8rem;
+}
+.top-bar .streak-icon {
+    margin-left: 0.3rem;
+}
+
+/* Переключатель */
+.toggle-wrapper {
+    display: flex;
+    background: var(--toggle-bg);
+    border-radius: 20px;
+    padding: 3px;
+    margin-bottom: 1rem;
+}
+.toggle-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    border-radius: 16px;
+    color: var(--text-dark);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.toggle-btn.active {
+    background: var(--toggle-active-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+.toggle-btn.active::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--toggle-dot);
+    border-radius: 50%;
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Карточка */
+.card-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    position: relative;
+}
+.card {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    height: 260px;
+    perspective: 1000px;
+}
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+.card-face {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.card-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+.card-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 0 1rem;
+    color: var(--text-dark);
+}
+.card-front .kanji {
+    font-size: 4rem;
+    font-weight: bold;
+    margin-bottom: 0.4rem;
+}
+.card-front .reading {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+}
+.card-front .meaning {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+}
+.card-back {
+    transform: rotateY(180deg);
+}
+.card-back .hiragana {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.4rem;
+}
+.card-back .romaji {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+.card-back .sentence {
+    font-size: 1rem;
+    color: var(--text-muted);
+}
+
+/* Ленты */
+.ribbon {
+    position: absolute;
+    top: 30%;
+    width: 56px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: bold;
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.ribbon-left {
+    left: -28px;
+    transform: rotate(-12deg);
+    background: var(--ribbon-left);
+}
+.ribbon-right {
+    right: -28px;
+    transform: rotate(12deg);
+    background: var(--ribbon-right);
+}
+
+/* Кнопки */
+.actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+.action-btn {
+    flex: 1;
+    border: none;
+    border-radius: 16px;
+    padding: 0.8rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fefdfb;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s ease;
+}
+.action-btn .icon {
+    margin-right: 0.45rem;
+    font-size: 1.2rem;
+}
+.action-btn.not-remember {
+    background: linear-gradient(var(--action-no-start), var(--action-no-end));
+}
+.action-btn.remember {
+    background: linear-gradient(var(--action-yes-start), var(--action-yes-end));
+}
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Блок обратной связи */
+.feedback {
+    background: linear-gradient(var(--feedback-start), var(--feedback-end));
+    color: #f5f4f2;
+    padding: 0.9rem 1rem;
+    border-radius: 18px;
+    text-align: center;
+    font-size: 1.1rem;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
