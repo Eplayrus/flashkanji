@@ -1010,12 +1010,22 @@ textarea:focus-visible {
   text-align: center;
 }
 
+.reward-logo {
+  display: block;
+  width: min(220px, 72%);
+  max-height: 78px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+  filter: drop-shadow(0 10px 24px rgba(255, 225, 90, 0.18));
+}
+
 .reward-modal h2 {
   margin: 10px 0 6px;
 }
 
 .reward-values {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
   margin: 12px 0;
@@ -1027,6 +1037,14 @@ textarea:focus-visible {
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent-2), transparent 82%);
   font-weight: 900;
+}
+
+.share-btn {
+  width: 100%;
+  margin: 4px 0 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-2), #ffffff 10%), var(--accent));
+  color: #111014;
 }
 
 .confetti {

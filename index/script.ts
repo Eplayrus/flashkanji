@@ -40,6 +40,7 @@
     revealed: false,
     detailCardId: null,
     rewardModal: null,
+    rewardQueue: [],
     charts: [],
     filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" }
   };
@@ -274,12 +275,14 @@
     if (action === "export") exportProgress();
     if (action === "import") importInput.click();
     if (action === "reset") resetProgress();
+    if (action === "share-achievement") shareAchievement().catch(() => toast(t("shareFallback")));
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "clear-writing") clearWritingCanvas();
     if (action === "replay-writing") replayStrokeAnimation();
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
-      state.rewardModal = null;
+      state.rewardModal = state.rewardQueue.shift() || null;
+      if (state.rewardModal) showConfetti();
       render();
     }
     if (action === "set-goal") {
@@ -947,16 +950,25 @@
   function renderRewardModal() {
     if (!state.rewardModal) return "";
     const reward = state.rewardModal;
+    const isLevel = reward.type === "level";
+    const message = isLevel
+      ? `${t("level")} ${state.progress.level} - ${state.progress.xp} XP - ${state.progress.moonFragments} ${t("coins")}`
+      : reward.message;
     return `
       <div class="reward-backdrop">
         <article class="reward-modal">
+          ${isLevel ? `<img class="reward-logo" src="assets/logo.png" alt="Flash Kanji" />` : ""}
           ${renderMascot(reward.mascot || "eva", reward.mood || "happy", reward.dialog || "achievement", "reward-mascot")}
           <h2>${escapeHtml(reward.title)}</h2>
-          <p>${escapeHtml(reward.message)}</p>
+          <p>${escapeHtml(message)}</p>
           <div class="reward-values">
+            ${isLevel ? `<span>${escapeHtml(t("level"))} ${state.progress.level}</span>` : ""}
             ${reward.xp ? `<span>+${reward.xp} XP</span>` : ""}
-            ${reward.coins ? `<span>+${reward.coins} ◐</span>` : ""}
+            ${isLevel ? `<span>${state.progress.xp} XP</span>` : ""}
+            ${reward.coins ? `<span>+${reward.coins} ${escapeHtml(t("coins"))}</span>` : ""}
+            ${isLevel ? `<span>${state.progress.moonFragments} ${escapeHtml(t("coins"))}</span>` : ""}
           </div>
+          ${isLevel ? `<button class="btn primary share-btn" type="button" data-action="share-achievement">${escapeHtml(t("shareAchievement"))}</button>` : ""}
           <button class="btn primary" type="button" data-action="close-reward">OK</button>
         </article>
       </div>
@@ -1170,10 +1182,17 @@
     if (!state.rewardModal) {
       state.rewardModal = reward;
       showConfetti();
+      return;
     }
+    if (reward.type === "level") {
+      state.rewardQueue.unshift(reward);
+      return;
+    }
+    state.rewardQueue.push(reward);
   }
 
   function addReward(xp, coins, reason = "reward") {
+    const previousLevel = state.progress.level || calculateLevel(state.progress.xp);
     state.progress.xp += xp;
     state.progress.moonFragments += coins;
     state.progress.level = calculateLevel(state.progress.xp);
@@ -1186,6 +1205,21 @@
         balance: state.progress.moonFragments
       });
       state.progress.transactions = state.progress.transactions.slice(0, 80);
+    }
+    if (state.progress.level > previousLevel) {
+      queueReward({
+        type: "level",
+        title: t("levelUp"),
+        message: `${t("level")} ${state.progress.level} - ${state.progress.xp} XP - ${state.progress.moonFragments} ${t("coins")}`,
+        xp: 0,
+        coins: 0,
+        mascot: state.progress.level % 2 === 0 ? "leya" : "eva",
+        mood: "happy",
+        dialog: "achievement",
+        level: state.progress.level,
+        totalXp: state.progress.xp,
+        moonFragments: state.progress.moonFragments
+      });
     }
   }
 
@@ -1624,6 +1658,191 @@
     link.remove();
     URL.revokeObjectURL(url);
     toast(t("export"));
+  }
+
+  async function shareAchievement() {
+    const reward = state.rewardModal || {};
+    const text = achievementShareText(reward);
+    const url = appShareUrl();
+
+    if (!navigator.share) {
+      await copyShareFallback(text, url);
+      return;
+    }
+
+    try {
+      const imageBlob = await createAchievementCardBlob(reward);
+      if (imageBlob && typeof File !== "undefined") {
+        const file = new File([imageBlob], `flash-kanji-level-${state.progress.level}.png`, { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            title: "Flash Kanji",
+            text,
+            url,
+            files: [file]
+          });
+          return;
+        }
+      }
+
+      await navigator.share({
+        title: "Flash Kanji",
+        text,
+        url
+      });
+    } catch (error) {
+      if (error && error.name === "AbortError") return;
+      try {
+        await navigator.share({ title: "Flash Kanji", text, url });
+        return;
+      } catch (shareError) {
+        if (shareError && shareError.name === "AbortError") return;
+      }
+      await copyShareFallback(text, url);
+    }
+  }
+
+  function achievementShareText(reward = {}) {
+    const prefix = t("shareFallback");
+    const level = reward.level || state.progress.level;
+    const xp = reward.type === "level" ? state.progress.xp : reward.totalXp || state.progress.xp;
+    const coins = reward.type === "level" ? state.progress.moonFragments : reward.moonFragments || state.progress.moonFragments;
+    return `${prefix}: ${t("level")} ${level}, ${xp} XP, ${coins} Moon Fragments.`;
+  }
+
+  function appShareUrl() {
+    const url = new URL(location.href);
+    url.search = "";
+    url.hash = "home";
+    return url.href;
+  }
+
+  async function createAchievementCardBlob(reward = {}) {
+    const width = 1200;
+    const height = 630;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+
+    drawAchievementCardBackground(context, width, height);
+    const cardLevel = reward.level || state.progress.level;
+    const cardXp = reward.type === "level" ? state.progress.xp : reward.totalXp || state.progress.xp;
+    const cardFragments = reward.type === "level" ? state.progress.moonFragments : reward.moonFragments || state.progress.moonFragments;
+
+    const mascotKey = reward.mascot || (state.progress.level % 2 === 0 ? "leya" : "eva");
+    const mascot = getMascot(mascotKey);
+    const mascotSrc = mascot.sprites?.[reward.mood || "happy"] || Object.values(mascot.sprites || {})[0];
+    const [logoImage, mascotImage] = await Promise.all([
+      loadCanvasImage("assets/logo.png"),
+      mascotSrc ? loadCanvasImage(mascotSrc) : Promise.resolve(null)
+    ]);
+
+    if (logoImage) drawContainedImage(context, logoImage, 58, 48, 330, 116);
+    if (mascotImage) drawContainedImage(context, mascotImage, 780, 95, 330, 450);
+
+    context.fillStyle = "#f7f4ee";
+    context.font = "900 58px system-ui, sans-serif";
+    context.fillText(t("levelUp"), 64, 230);
+
+    context.font = "900 110px 'Yu Mincho', serif";
+    context.fillStyle = "#ffe15a";
+    context.fillText(`${t("level")} ${cardLevel}`, 64, 340);
+
+    context.font = "800 38px system-ui, sans-serif";
+    context.fillStyle = "#f7f4ee";
+    context.fillText(`${cardXp} XP`, 70, 425);
+    context.fillText(`${cardFragments} Moon Fragments`, 70, 482);
+
+    context.fillStyle = "rgba(255,255,255,0.74)";
+    context.font = "700 28px system-ui, sans-serif";
+    context.fillText("Flash Kanji | SRS Japanese learning", 70, 558);
+
+    context.strokeStyle = "rgba(255, 225, 90, 0.7)";
+    context.lineWidth = 3;
+    context.strokeRect(34, 30, width - 68, height - 60);
+
+    return canvasToBlob(canvas);
+  }
+
+  function drawAchievementCardBackground(context, width, height) {
+    const gradient = context.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#08080c");
+    gradient.addColorStop(0.45, "#1c1018");
+    gradient.addColorStop(1, "#071a18");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+
+    context.fillStyle = "rgba(255, 56, 92, 0.22)";
+    context.beginPath();
+    context.moveTo(0, 70);
+    context.lineTo(720, 0);
+    context.lineTo(560, 630);
+    context.lineTo(0, 630);
+    context.closePath();
+    context.fill();
+
+    context.strokeStyle = "rgba(255,255,255,0.08)";
+    context.lineWidth = 1;
+    for (let x = -width; x < width * 2; x += 38) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x + width, height);
+      context.stroke();
+    }
+  }
+
+  function loadCanvasImage(src) {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => resolve(null);
+      image.src = new URL(src, location.href).href;
+    });
+  }
+
+  function drawContainedImage(context, image, x, y, width, height) {
+    const ratio = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+    const drawWidth = image.naturalWidth * ratio;
+    const drawHeight = image.naturalHeight * ratio;
+    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+  }
+
+  function canvasToBlob(canvas) {
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
+  }
+
+  async function copyShareFallback(text, url) {
+    const copied = await copyShareText(`${text}\n${url}`);
+    toast(copied ? t("shareCopied") : text);
+  }
+
+  async function copyShareText(text) {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Browsers can deny Clipboard API writes even from a user gesture.
+      }
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.append(textarea);
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+    try {
+      return document.execCommand("copy");
+    } catch {
+      return false;
+    } finally {
+      textarea.remove();
+    }
   }
 
   async function handleImportFile(event) {
