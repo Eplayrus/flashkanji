@@ -46,6 +46,8 @@
   };
 
   let audioContext = null;
+  let activeKanjiAudio = null;
+  let lastAutoAudioKey = "";
   let toastTimer = 0;
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -279,6 +281,10 @@
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "clear-writing") clearWritingCanvas();
     if (action === "replay-writing") replayStrokeAnimation();
+    if (action === "play-kanji-audio") {
+      const card = findCard(id) || findCard(state.activeCardId);
+      if (card) playKanjiAudio(card);
+    }
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
       state.rewardModal = state.rewardQueue.shift() || null;
@@ -362,8 +368,14 @@
     syncChrome();
 
     if (state.route === "home") app.innerHTML = renderHome();
-    if (state.route === "learn") app.innerHTML = renderLearn();
-    if (state.route === "review") app.innerHTML = renderReview();
+    if (state.route === "learn") {
+      app.innerHTML = renderLearn();
+      requestAnimationFrame(autoPlayActiveKanjiAudio);
+    }
+    if (state.route === "review") {
+      app.innerHTML = renderReview();
+      requestAnimationFrame(autoPlayActiveKanjiAudio);
+    }
     if (state.route === "dictionary") app.innerHTML = renderDictionary();
     if (state.route === "writing") {
       app.innerHTML = renderWriting();
@@ -576,14 +588,25 @@
     `;
   }
 
+  function renderKanjiAudioButton(card) {
+    const audio = getKanjiAudioPath(card);
+    if (!audio) return "";
+    return `
+      <button class="audio-trigger" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}" aria-label="${escapeAttr(lang() === "ru" ? "Проиграть озвучку кандзи" : "Play kanji audio")}" title="${escapeAttr(lang() === "ru" ? "Озвучка" : "Audio")}">🔊</button>
+    `;
+  }
+
   function renderStudyCard(card) {
     const progress = getCardProgress(card.id);
     const visible = state.revealed;
     return `
       <article class="study-card">
         <div class="study-topline">
-          <span class="pill">${escapeHtml(lessonTitleById(card.lessonId))}</span>
-          ${renderStatePill(progress.state)}
+          <div class="tag-row compact-tags">
+            <span class="pill">${escapeHtml(lessonTitleById(card.lessonId))}</span>
+            ${renderStatePill(progress.state)}
+          </div>
+          ${renderKanjiAudioButton(card)}
         </div>
         <div class="kanji-focus" aria-label="${escapeAttr(card.kanji)}">${escapeHtml(card.kanji)}</div>
         <h2>${visible ? escapeHtml(cardMeaning(card)) : escapeHtml(t("question"))}</h2>
@@ -836,17 +859,14 @@
   }
 
   function renderAudioPlayer(card) {
-    const audio = cardMeta(card.id).audio || {};
-    const rows = [
-      ["pronunciation", "Kanji"],
-      ["eva", "Eva"],
-      ["leya", "Leya"]
-    ];
+    const audio = getKanjiAudioPath(card);
     return `
       <section class="audio-panel">
         <h3>${escapeHtml(t("audio"))}</h3>
         <div class="actions">
-          ${rows.map(([key, label]) => `<button class="btn ghost" type="button" data-action="play-audio" data-audio="${escapeAttr(audio[key] || "")}" data-label="${escapeAttr(label)}">▶ ${escapeHtml(label)}</button>`).join("")}
+          ${audio
+            ? `<button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 Kanji</button>`
+            : `<span class="label">${escapeHtml(lang() === "ru" ? "Озвучка для этой карточки пока не найдена." : "Audio for this card is not available yet.")}</span>`}
         </div>
       </section>
     `;
@@ -1577,6 +1597,74 @@
     else state.progress.favorites[id] = new Date().toISOString();
     saveProgress();
     render();
+  }
+
+  function getKanjiAudioPath(card) {
+    if (!card) return "";
+    const explicit = card.audioSrc || card.audio || "";
+    return normalizeAudioPath(explicit);
+  }
+
+  function expectedKanjiAudioPath(card) {
+    if (!card?.id || !card?.jlpt || !card?.lessonId) return "";
+    const slug = audioSlug(card.romaji);
+    if (!slug) return "";
+    return `./audio/kanji/${String(card.jlpt).toLowerCase()}/${card.lessonId}/${card.id}-${slug}.mp3`;
+  }
+
+  function normalizeAudioPath(path) {
+    if (!path) return "";
+    if (path.startsWith("./") || path.startsWith("http")) return path;
+    if (path.startsWith("/")) return `.${path}`;
+    return `./${path}`;
+  }
+
+  function audioSlug(romaji) {
+    return String(romaji || "")
+      .split("/")[0]
+      .trim()
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function autoPlayActiveKanjiAudio() {
+    if (state.route !== "learn" && state.route !== "review") return;
+    const card = findCard(state.activeCardId);
+    const audio = getKanjiAudioPath(card);
+    if (!card || !audio) return;
+    const key = `${state.route}:${card.id}:${audio}`;
+    if (key === lastAutoAudioKey) return;
+    lastAutoAudioKey = key;
+    playKanjiAudio(card, { silent: true });
+  }
+
+  function playKanjiAudio(card, options = {}) {
+    const audio = getKanjiAudioPath(card);
+    if (!audio) {
+      if (!options.silent) console.warn("Kanji audio is not available for this card.", { id: card?.id, expected: expectedKanjiAudioPath(card) });
+      return Promise.resolve(false);
+    }
+
+    if (activeKanjiAudio) {
+      activeKanjiAudio.pause();
+      activeKanjiAudio.currentTime = 0;
+    }
+
+    activeKanjiAudio = new Audio(audio);
+    activeKanjiAudio.preload = "auto";
+    activeKanjiAudio.onerror = () => {
+      if (!options.silent) console.warn("Kanji audio file could not be loaded.", { id: card?.id, audio });
+    };
+
+    return activeKanjiAudio.play()
+      .then(() => true)
+      .catch((error) => {
+        if (!options.silent) console.warn("Kanji audio playback was blocked or failed.", { id: card?.id, audio, error });
+        return false;
+      });
   }
 
   function playAudioPlaceholder(url, label) {

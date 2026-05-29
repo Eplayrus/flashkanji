@@ -444,6 +444,7 @@ export async function generateKanjiCourse(rootDir) {
   const selectedSet = new Set(selected.map((item) => item.kanji));
   const { singleEntries, examplesByKanji } = indexDictionary(dictionary, selectedSet);
 
+  const audioFiles = await scanAudioFiles(rootDir);
   const generatedCards = selected.map((entry, index) =>
     buildCard({
       entry,
@@ -454,7 +455,7 @@ export async function generateKanjiCourse(rootDir) {
     })
   );
 
-  const generatedLessons = buildLessons(generatedCards);
+  const generatedLessons = buildLessons(generatedCards, audioFiles, rootDir);
   const finalLessons = mergeManifest(manualManifestLessons, generatedLessons);
   const generatedLessonIds = new Set(generatedLessons.map((lesson) => lesson.id));
 
@@ -640,18 +641,20 @@ function buildCard({ entry, sourceMeta, singleEntry, examples, id }) {
   };
 }
 
-function buildLessons(cards) {
+function buildLessons(cards, audioFiles, rootDir) {
   const lessons = [];
   let order = 6;
   for (const level of LEVEL_ORDER) {
     const levelCards = cards.filter((card) => card.jlpt === level);
     for (let offset = 0; offset < levelCards.length; offset += CARDS_PER_LESSON) {
       const lessonNumber = Math.floor(offset / CARDS_PER_LESSON) + 1;
-      const lessonCards = levelCards.slice(offset, offset + CARDS_PER_LESSON).map(stripGeneratedFields);
       const padded = String(lessonNumber).padStart(2, "0");
       const id = `bulk-${level.toLowerCase()}-${padded}`;
       const title = `${level}: ${LEVEL_LABELS_RU[level]} ${padded}`;
       const titleEn = `${level}: ${LEVEL_LABELS_EN[level]} ${padded}`;
+      const lessonCards = levelCards
+        .slice(offset, offset + CARDS_PER_LESSON)
+        .map((card) => attachAudioToCard(stripGeneratedFields(card), { id, jlpt: level }, audioFiles, rootDir));
       lessons.push({
         id,
         file: `data/lessons/${GENERATED_DIR}/${id}.json`,
@@ -805,6 +808,54 @@ async function updateServiceWorker(rootDir, lessons, generatedLessonIds) {
 function stripGeneratedFields(card) {
   const { meta, hint, translation, ...item } = card;
   return item;
+}
+
+async function scanAudioFiles(rootDir) {
+  const files = new Set();
+  const audioDir = path.join(rootDir, "audio", "kanji");
+
+  async function walk(dir) {
+    let entries = [];
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) await walk(fullPath);
+      else if (entry.isFile() && entry.name.toLowerCase().endsWith(".mp3")) {
+        files.add(fullPath.replaceAll("\\", "/"));
+      }
+    }
+  }
+
+  await walk(audioDir);
+  return files;
+}
+
+function attachAudioToCard(card, lesson, audioFiles, rootDir) {
+  const relativePath = expectedKanjiAudioPath(card, lesson);
+  const absolutePath = path.join(rootDir, relativePath.replace(/^\.\//, "")).replaceAll("\\", "/");
+  return audioFiles.has(absolutePath) ? { ...card, audio: relativePath } : card;
+}
+
+function expectedKanjiAudioPath(card, lesson) {
+  const jlpt = String(card.jlpt || lesson.jlpt || "").toLowerCase();
+  const slug = audioSlug(card.romaji);
+  return `./audio/kanji/${jlpt}/${lesson.id}/${card.id}-${slug}.mp3`;
+}
+
+function audioSlug(romaji) {
+  return String(romaji || "")
+    .split("/")[0]
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function cleanGloss(value) {

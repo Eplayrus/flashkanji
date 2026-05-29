@@ -629,6 +629,35 @@ textarea:focus-visible {
   align-items: center;
 }
 
+.compact-tags {
+  margin-top: 0;
+}
+
+.audio-trigger {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 225, 90, 0.34), transparent 40%),
+    color-mix(in srgb, var(--surface-2), var(--accent) 12%);
+  color: var(--text);
+  box-shadow: 0 12px 28px var(--shadow);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.audio-trigger:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-2);
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 225, 90, 0.48), transparent 42%),
+    color-mix(in srgb, var(--surface-2), var(--accent-2) 18%);
+}
+
 .kanji-focus {
   display: grid;
   place-items: center;

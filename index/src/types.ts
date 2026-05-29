@@ -26,6 +26,8 @@ export interface KanjiCard {
   examples: KanjiExample[];
   apps: string[];
   interface_use: string;
+  audio?: string;
+  audioSrc?: string;
 }
 
 export interface KanjiAudioSources {
