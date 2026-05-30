@@ -1,4 +1,4 @@
-const CACHE_NAME = "flash-kanji-cache-v10";
+const CACHE_NAME = "flash-kanji-cache-v15";
 
 const PRECACHE_URLS = [
   "./",

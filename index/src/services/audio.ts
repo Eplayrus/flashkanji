@@ -14,23 +14,43 @@ export function kanjiAudioTracks(audio: KanjiAudioSources = {}): AudioTrack[] {
   ];
 }
 
-export function getKanjiAudioPath(card?: Pick<KanjiCard, "audio" | "audioSrc">): string {
+type KanjiAudioLookup = Pick<KanjiCard, "audio" | "audioSrc" | "id" | "jlpt" | "lessonId" | "romaji"> &
+  Partial<Pick<KanjiCard, "onyomi_romaji" | "kunyomi_romaji">>;
+
+export function getKanjiAudioPath(card?: Partial<KanjiAudioLookup>): string {
   const explicit = card?.audioSrc || card?.audio || "";
-  if (!explicit) return "";
   if (explicit.startsWith("./") || explicit.startsWith("http")) return explicit;
   if (explicit.startsWith("/")) return `.${explicit}`;
-  return `./${explicit}`;
+  if (explicit) return `./${explicit}`;
+  return expectedKanjiAudioPath(card);
 }
 
-export function expectedKanjiAudioPath(card: Pick<KanjiCard, "id" | "jlpt" | "lessonId" | "romaji">): string {
-  const slug = audioSlug(card.romaji);
+export function expectedKanjiAudioPath(card: Partial<KanjiAudioLookup>): string {
+  const slug = kanjiAudioSlugs(card)[0] || "";
   if (!card.id || !card.jlpt || !card.lessonId || !slug) return "";
   return `./audio/kanji/${String(card.jlpt).toLowerCase()}/${card.lessonId}/${card.id}-${slug}.mp3`;
 }
 
+export function kanjiAudioSlugs(card: Partial<Pick<KanjiCard, "romaji" | "onyomi_romaji" | "kunyomi_romaji">>): string[] {
+  return [
+    ...splitRomaji(card.romaji),
+    ...splitRomaji(card.onyomi_romaji),
+    ...splitRomaji(card.kunyomi_romaji)
+  ]
+    .map(audioSlug)
+    .filter(Boolean)
+    .filter((slug, index, slugs) => slugs.indexOf(slug) === index);
+}
+
+function splitRomaji(value?: string): string[] {
+  return String(value || "")
+    .split("/")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 export function audioSlug(romaji: string): string {
   return String(romaji || "")
-    .split("/")[0]
     .trim()
     .toLowerCase()
     .normalize("NFKD")

@@ -42,13 +42,23 @@
     rewardModal: null,
     rewardQueue: [],
     charts: [],
-    filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" }
+    filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" },
+    readingCheck: { cardId: null, value: "", status: null, message: "" },
+    writingStep: 0
   };
 
   let audioContext = null;
   let activeKanjiAudio = null;
   let lastAutoAudioKey = "";
   let toastTimer = 0;
+  const writingSession = {
+    cardId: null,
+    strokes: [],
+    currentStroke: [],
+    drawing: false,
+    activePointerId: null,
+    demoAnimationId: 0
+  };
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -57,6 +67,7 @@
 
   document.addEventListener("click", handleClick);
   document.addEventListener("input", handleInput);
+  document.addEventListener("keydown", handleKeydown);
   importInput.addEventListener("change", handleImportFile);
   window.addEventListener("hashchange", () => {
     const route = readRouteHash();
@@ -64,6 +75,7 @@
       state.route = route;
       state.detailCardId = null;
       state.revealed = false;
+      resetReadingCheck();
       render();
     }
   });
@@ -261,6 +273,12 @@
   }
 
   function handleClick(event) {
+    if (event.target.classList?.contains("detail-backdrop")) {
+      state.detailCardId = null;
+      render();
+      return;
+    }
+
     const target = event.target.closest("[data-action]");
     if (!target) return;
 
@@ -280,7 +298,13 @@
     if (action === "share-achievement") shareAchievement().catch(() => toast(t("shareFallback")));
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "clear-writing") clearWritingCanvas();
+    if (action === "undo-writing") undoWritingStroke();
+    if (action === "check-writing") checkWritingPractice(true);
     if (action === "replay-writing") replayStrokeAnimation();
+    if (action === "play-writing-step") playWritingStep();
+    if (action === "writing-step-prev") changeWritingStep(-1);
+    if (action === "writing-step-next") changeWritingStep(1);
+    if (action === "select-writing-step") selectWritingStep(Number(target.dataset.index || 0), true);
     if (action === "play-kanji-audio") {
       const card = findCard(id) || findCard(state.activeCardId);
       if (card) playKanjiAudio(card);
@@ -311,12 +335,22 @@
       state.activeLessonId = id;
       state.activeCardId = null;
       state.revealed = false;
+      resetReadingCheck();
       if (action === "start-lesson") setRoute("learn");
       else render();
     }
     if (action === "show-answer") {
       state.revealed = true;
+      resetReadingCheck();
       render();
+    }
+    if (action === "check-reading") {
+      const input = document.getElementById(`readingCheck-${id || state.activeCardId}`);
+      if (input) {
+        state.readingCheck.value = input.value;
+        state.readingCheck.cardId = id || state.activeCardId;
+      }
+      checkActiveCardReading();
     }
     if (action === "rate") rateActiveCard(target.dataset.rating);
     if (action === "open-card") {
@@ -333,12 +367,24 @@
       state.activeLessonId = card.lessonId;
       state.activeCardId = card.id;
       state.revealed = false;
+      resetReadingCheck(card.id);
       state.detailCardId = null;
       setRoute("learn");
     }
   }
 
   function handleInput(event) {
+    const readingInput = event.target.closest("[data-reading-input]");
+    if (readingInput) {
+      state.readingCheck = {
+        cardId: readingInput.dataset.id || state.activeCardId,
+        value: readingInput.value,
+        status: null,
+        message: ""
+      };
+      return;
+    }
+
     const input = event.target.closest("[data-filter]");
     if (!input) return;
     const key = input.dataset.filter;
@@ -355,11 +401,28 @@
     });
   }
 
+  function handleKeydown(event) {
+    if (event.key === "Escape" && (state.detailCardId || state.rewardModal)) {
+      state.detailCardId = null;
+      state.rewardModal = null;
+      render();
+      return;
+    }
+
+    const readingInput = event.target.closest?.("[data-reading-input]");
+    if (!readingInput || event.key !== "Enter") return;
+    event.preventDefault();
+    state.readingCheck.value = readingInput.value;
+    state.readingCheck.cardId = readingInput.dataset.id || state.activeCardId;
+    checkActiveCardReading();
+  }
+
   function setRoute(route) {
     state.route = routes.includes(route) ? route : "home";
     if (location.hash !== `#${state.route}`) history.replaceState(null, "", `#${state.route}`);
     state.detailCardId = null;
     state.revealed = false;
+    resetReadingCheck();
     render();
   }
 
@@ -367,24 +430,32 @@
     destroyCharts();
     syncChrome();
 
-    if (state.route === "home") app.innerHTML = renderHome();
+    let html = "";
+    if (state.route === "home") html = renderHome();
     if (state.route === "learn") {
-      app.innerHTML = renderLearn();
+      html = renderLearn();
       requestAnimationFrame(autoPlayActiveKanjiAudio);
     }
     if (state.route === "review") {
-      app.innerHTML = renderReview();
+      html = renderReview();
       requestAnimationFrame(autoPlayActiveKanjiAudio);
     }
-    if (state.route === "dictionary") app.innerHTML = renderDictionary();
+    if (state.route === "dictionary") html = renderDictionary();
     if (state.route === "writing") {
-      app.innerHTML = renderWriting();
+      html = renderWriting();
       requestAnimationFrame(setupWritingCanvas);
     }
     if (state.route === "stats") {
-      app.innerHTML = renderStats();
+      html = renderStats();
       requestAnimationFrame(renderCharts);
     }
+    app.innerHTML = `${html}${renderGlobalOverlays()}`;
+    document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal));
+  }
+
+  function renderGlobalOverlays() {
+    const overlays = `${renderDetailModal()}${renderRewardModal()}`;
+    return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
   }
 
   function syncChrome() {
@@ -460,7 +531,6 @@
 
         ${featured ? renderFeaturedCard(featured) : ""}
         ${renderAchievementsPreview()}
-        ${renderRewardModal()}
       </section>
     `;
   }
@@ -562,7 +632,6 @@
           ${card ? renderStudyCard(card) : renderLessonDone(lesson)}
           ${renderStudySidePanel(card, candidates.length)}
         </div>
-        ${renderRewardModal()}
       </section>
     `;
   }
@@ -583,22 +652,41 @@
           ${card ? renderStudyCard(card) : renderNoReview()}
           ${renderStudySidePanel(card, due.length)}
         </div>
-        ${renderRewardModal()}
       </section>
     `;
   }
 
   function renderKanjiAudioButton(card) {
-    const audio = getKanjiAudioPath(card);
-    if (!audio) return "";
+    if (!canPlayKanjiAudio(card)) return "";
     return `
       <button class="audio-trigger" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}" aria-label="${escapeAttr(lang() === "ru" ? "Проиграть озвучку кандзи" : "Play kanji audio")}" title="${escapeAttr(lang() === "ru" ? "Озвучка" : "Audio")}">🔊</button>
+    `;
+  }
+
+  function renderReadingGrid(card) {
+    const readings = cardReadings(card);
+    return `
+      <div class="reading-row reading-split">
+        ${renderReadingBox(readingLabel("onyomi"), readings.onyomi.kana, readings.onyomi.romaji)}
+        ${renderReadingBox(readingLabel("kunyomi"), readings.kunyomi.kana, readings.kunyomi.romaji)}
+      </div>
+    `;
+  }
+
+  function renderReadingBox(label, kana, romaji) {
+    return `
+      <div class="reading-box">
+        <span class="label">${escapeHtml(label)}</span>
+        <strong>${escapeHtml(kana || "—")}</strong>
+        <small>${escapeHtml(romaji || "—")}</small>
+      </div>
     `;
   }
 
   function renderStudyCard(card) {
     const progress = getCardProgress(card.id);
     const visible = state.revealed;
+    syncReadingCheckCard(card.id);
     return `
       <article class="study-card">
         <div class="study-topline">
@@ -612,23 +700,38 @@
         <h2>${visible ? escapeHtml(cardMeaning(card)) : escapeHtml(t("question"))}</h2>
         <p class="label">${escapeHtml(card.jlpt)} · ${card.strokes} ${escapeHtml(t("strokes"))} · ${escapeHtml(formatDue(progress.dueAt))}</p>
         ${visible ? renderAnswer(card) : `
+          ${renderReadingCheck(card)}
           <div class="actions">
             <button class="btn primary" type="button" data-action="show-answer">${escapeHtml(t("showAnswer"))}</button>
             <button class="btn" type="button" data-action="open-card" data-id="${escapeAttr(card.id)}">典 ${escapeHtml(t("details"))}</button>
           </div>
         `}
       </article>
-      ${renderDetailModal()}
+    `;
+  }
+
+  function renderReadingCheck(card) {
+    const check = state.readingCheck.cardId === card.id ? state.readingCheck : { value: "", status: null, message: "" };
+    const statusClass = check.status ? ` is-${check.status}` : "";
+    const helper = check.message || (lang() === "ru"
+      ? "Напиши любое чтение этого кандзи хираганой или катаканой."
+      : "Type any reading for this kanji in hiragana or katakana.");
+    return `
+      <section class="reading-check${statusClass}" aria-live="polite">
+        <label class="label" for="readingCheck-${escapeAttr(card.id)}">${escapeHtml(lang() === "ru" ? "Проверка чтения" : "Reading check")}</label>
+        <div class="reading-check-row">
+          <input id="readingCheck-${escapeAttr(card.id)}" data-reading-input data-id="${escapeAttr(card.id)}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${escapeAttr(check.value)}" placeholder="${escapeAttr(lang() === "ru" ? "Например: にち или ニチ" : "Example: にち or ニチ")}" />
+          <button class="btn ghost" type="button" data-action="check-reading" data-id="${escapeAttr(card.id)}">${escapeHtml(lang() === "ru" ? "Проверить" : "Check")}</button>
+        </div>
+        <p>${escapeHtml(helper)}</p>
+      </section>
     `;
   }
 
   function renderAnswer(card) {
     return `
       <div class="answer-section">
-        <div class="reading-row">
-          <div class="reading-box"><span class="label">${escapeHtml(t("hiragana"))}</span><strong>${escapeHtml(card.hiragana)}</strong></div>
-          <div class="reading-box"><span class="label">Romaji</span><strong>${escapeHtml(card.romaji)}</strong></div>
-        </div>
+        ${renderReadingGrid(card)}
         <strong>${escapeHtml(t("examples"))}</strong>
         <ul class="example-list">
           ${card.examples.map((example) => `
@@ -737,7 +840,6 @@
           </div>
         </div>
         <div class="dictionary-grid" style="margin-top:12px">${cards.map(renderDictionaryTile).join("") || renderDictionaryEmpty()}</div>
-        ${renderDetailModal()}
       </section>
     `;
   }
@@ -767,7 +869,7 @@
         <span class="kanji-char">${escapeHtml(card.kanji)}</span>
         <span>
           <h3>${escapeHtml(cardMeaning(card))}</h3>
-          <p>${escapeHtml(card.hiragana)} · ${escapeHtml(card.romaji)}</p>
+          <p>${escapeHtml(readingSummaryText(card))}</p>
           <span class="label">${escapeHtml(lessonTitleById(card.lessonId))}</span>
         </span>
       </span>
@@ -783,7 +885,11 @@
     if (card) {
       state.activeCardId = card.id;
       state.activeLessonId = card.lessonId;
+      state.writingStep = clamp(state.writingStep, 0, Math.max(0, card.strokes - 1));
     }
+    const stepCount = Math.max(1, card?.strokes || 1);
+    const stepLabel = lang() === "ru" ? "Шаг" : "Step";
+    const practiceLabel = lang() === "ru" ? "Проверка черт" : "Stroke check";
     return `
       <section class="page">
         <div class="section-head">
@@ -795,17 +901,29 @@
         <div class="writing-layout">
           <article class="writing-card">
             <div class="kanji-focus writing-focus">${escapeHtml(card?.kanji || "文")}</div>
+            ${card ? renderReadingGrid(card) : ""}
+            ${card ? `<div class="actions"><button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 ${escapeHtml(t("audio"))}</button></div>` : ""}
             <div class="stroke-demo">
               <canvas id="strokeCanvas" width="520" height="280" aria-label="stroke order animation"></canvas>
             </div>
+            <div class="writing-step-panel">
+              <div class="writing-step-head">
+                <span class="pill" id="writingStepCounter">${stepLabel} ${state.writingStep + 1}/${stepCount}</span>
+                <span class="label">${escapeHtml(card?.stroke_order?.[state.writingStep] || "")}</span>
+              </div>
+              <div class="writing-step-actions">
+                <button class="btn" type="button" data-action="writing-step-prev">←</button>
+                <button class="btn primary" type="button" data-action="play-writing-step">${escapeHtml(lang() === "ru" ? "Показать шаг" : "Show step")}</button>
+                <button class="btn" type="button" data-action="writing-step-next">→</button>
+              </div>
+            </div>
             <div class="actions">
               <button class="btn primary" type="button" data-action="replay-writing">${escapeHtml(t("replay"))}</button>
-              <button class="btn" type="button" data-action="clear-writing">${escapeHtml(t("clear"))}</button>
             </div>
           </article>
           <article class="writing-card">
             <h3>${escapeHtml(t("strokeOrder"))}</h3>
-            <ol class="stroke-list">${(card?.stroke_order || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
+            ${card ? renderWritingStepList(card) : ""}
             <h3>${escapeHtml(t("hint"))}</h3>
             <p>${escapeHtml(kanjiHint(card?.id).hint)}</p>
             <h3>${escapeHtml(t("mnemonic"))}</h3>
@@ -813,10 +931,39 @@
           </article>
           <article class="writing-card writing-practice">
             <h3>${escapeHtml(lang() === "ru" ? "Поле письма" : "Writing area")}</h3>
+            <div class="writing-practice-head">
+              <span class="pill" id="writingStrokeCounter">0/${stepCount}</span>
+            </div>
+            <div class="writing-score" id="writingScore">
+              <span>0%</span>
+              <i style="width:0%"></i>
+            </div>
             <canvas id="practiceCanvas" width="520" height="360" aria-label="writing canvas"></canvas>
+            <div class="actions writing-practice-actions">
+              <button class="btn primary" type="button" data-action="check-writing">${escapeHtml(practiceLabel)}</button>
+              <button class="btn" type="button" data-action="undo-writing">${escapeHtml(lang() === "ru" ? "Отменить черту" : "Undo stroke")}</button>
+              <button class="btn" type="button" data-action="clear-writing">${escapeHtml(t("clear"))}</button>
+            </div>
+            <div class="writing-feedback" id="writingFeedback">${escapeHtml(lang() === "ru" ? "Напиши кандзи отдельными чертами." : "Write the kanji stroke by stroke.")}</div>
           </article>
         </div>
       </section>
+    `;
+  }
+
+  function renderWritingStepList(card) {
+    const steps = normalizeStrokeDescriptions(card);
+    return `
+      <ol class="stroke-list writing-guide-list">
+        ${steps.map((step, index) => `
+          <li class="${index === state.writingStep ? "is-active" : ""}">
+            <button type="button" data-action="select-writing-step" data-index="${index}">
+              <b>${index + 1}</b>
+              <span>${escapeHtml(step)}</span>
+            </button>
+          </li>
+        `).join("")}
+      </ol>
     `;
   }
 
@@ -835,10 +982,11 @@
             <div>
               <span class="pill">${escapeHtml(card.jlpt)}</span> ${renderStatePill(progress.state)}
               <h2>${escapeHtml(cardMeaning(card))}</h2>
-              <p>${escapeHtml(card.hiragana)} · ${escapeHtml(card.romaji)} · ${card.strokes} ${escapeHtml(t("strokes"))}</p>
+              <p>${escapeHtml(readingSummaryText(card))} · ${card.strokes} ${escapeHtml(t("strokes"))}</p>
               <p><span class="pill">${escapeHtml(t("radical"))}: ${escapeHtml(meta.radical || "-")} ${escapeHtml(localized(meta.radicalMeaning || {}))}</span></p>
             </div>
           </div>
+          ${renderReadingGrid(card)}
           ${renderAudioPlayer(card)}
           <h3>${escapeHtml(t("strokeOrder"))}</h3>
           <ol class="stroke-list">${card.stroke_order.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
@@ -860,12 +1008,13 @@
 
   function renderAudioPlayer(card) {
     const audio = getKanjiAudioPath(card);
+    const fallback = !audio && getKanjiSpeechText(card);
     return `
       <section class="audio-panel">
         <h3>${escapeHtml(t("audio"))}</h3>
         <div class="actions">
-          ${audio
-            ? `<button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 Kanji</button>`
+          ${audio || fallback
+            ? `<button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 Kanji${fallback ? " TTS" : ""}</button>`
             : `<span class="label">${escapeHtml(lang() === "ru" ? "Озвучка для этой карточки пока не найдена." : "Audio for this card is not available yet.")}</span>`}
         </div>
       </section>
@@ -908,7 +1057,6 @@
             </div>
           </article>
         </div>
-        ${renderRewardModal()}
       </section>
     `;
   }
@@ -1057,6 +1205,7 @@
     saveProgress();
     state.revealed = false;
     state.activeCardId = null;
+    resetReadingCheck();
     render();
   }
 
@@ -1334,87 +1483,350 @@
   }
 
   function setupWritingCanvas() {
+    const card = currentWritingCard();
+    if (card) {
+      state.activeCardId = card.id;
+      state.activeLessonId = card.lessonId;
+      state.writingStep = clamp(state.writingStep, 0, Math.max(0, card.strokes - 1));
+      if (writingSession.cardId !== String(card.id)) resetWritingSession(card);
+    }
     setupPracticeCanvas();
-    replayStrokeAnimation();
+    drawWritingGuideFrame();
+    updateWritingStepUi();
+    updateWritingFeedback(evaluateWritingPractice(false));
+    window.setTimeout(replayStrokeAnimation, 120);
+  }
+
+  function currentWritingCard() {
+    return findCard(state.activeCardId) || getTodayCards()[0] || state.cards[0] || null;
+  }
+
+  function resetWritingSession(card) {
+    writingSession.cardId = String(card?.id || "");
+    writingSession.strokes = [];
+    writingSession.currentStroke = [];
+    writingSession.drawing = false;
+    writingSession.activePointerId = null;
   }
 
   function setupPracticeCanvas() {
     const canvas = document.getElementById("practiceCanvas");
     if (!canvas) return;
-    const context = canvas.getContext("2d");
-    clearCanvas(context, canvas);
-    let drawing = false;
-    const point = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      const source = event.touches ? event.touches[0] : event;
-      return {
-        x: (source.clientX - rect.left) * (canvas.width / rect.width),
-        y: (source.clientY - rect.top) * (canvas.height / rect.height)
-      };
-    };
+    redrawPracticeCanvas();
     const start = (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
       event.preventDefault();
-      drawing = true;
-      const p = point(event);
-      context.beginPath();
-      context.moveTo(p.x, p.y);
+      canvas.setPointerCapture?.(event.pointerId);
+      writingSession.drawing = true;
+      writingSession.activePointerId = event.pointerId;
+      writingSession.currentStroke = [canvasPoint(canvas, event)];
+      redrawPracticeCanvas();
     };
     const move = (event) => {
-      if (!drawing) return;
+      if (!writingSession.drawing || event.pointerId !== writingSession.activePointerId) return;
       event.preventDefault();
-      const p = point(event);
-      context.lineTo(p.x, p.y);
-      context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
-      context.lineWidth = 12;
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      context.stroke();
+      const point = canvasPoint(canvas, event);
+      const last = writingSession.currentStroke[writingSession.currentStroke.length - 1];
+      if (!last || distance(last, point) > 1.4) {
+        writingSession.currentStroke.push(point);
+        redrawPracticeCanvas();
+      }
     };
-    const end = () => { drawing = false; };
+    const end = (event) => {
+      if (!writingSession.drawing || event.pointerId !== writingSession.activePointerId) return;
+      event.preventDefault();
+      const stroke = simplifyStroke(writingSession.currentStroke);
+      if (stroke.length) writingSession.strokes.push(stroke);
+      writingSession.currentStroke = [];
+      writingSession.drawing = false;
+      writingSession.activePointerId = null;
+      redrawPracticeCanvas();
+      updateWritingFeedback(evaluateWritingPractice(false));
+    };
     canvas.onpointerdown = start;
     canvas.onpointermove = move;
     canvas.onpointerup = end;
+    canvas.onpointercancel = end;
     canvas.onpointerleave = end;
-    canvas.ontouchstart = start;
-    canvas.ontouchmove = move;
-    canvas.ontouchend = end;
+    canvas.oncontextmenu = (event) => event.preventDefault();
+  }
+
+  function canvasPoint(canvas, event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: clamp((event.clientX - rect.left) * (canvas.width / rect.width), 0, canvas.width),
+      y: clamp((event.clientY - rect.top) * (canvas.height / rect.height), 0, canvas.height),
+      pressure: event.pressure || 0.5,
+      time: performance.now()
+    };
+  }
+
+  function simplifyStroke(points) {
+    if (!points.length) return [];
+    const result = [points[0]];
+    points.slice(1).forEach((point) => {
+      if (distance(result[result.length - 1], point) >= 2.6) result.push(point);
+    });
+    return result.length === 1 ? [result[0], { ...result[0], x: result[0].x + 0.1, y: result[0].y + 0.1 }] : result;
+  }
+
+  function redrawPracticeCanvas() {
+    const canvas = document.getElementById("practiceCanvas");
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    const card = currentWritingCard();
+    clearCanvas(context, canvas);
+    if (card) drawExpectedGuide(context, canvas, card);
+    writingSession.strokes.forEach((stroke, index) => drawSmoothStroke(context, stroke, {
+      color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(),
+      width: 13,
+      shadow: index === writingSession.strokes.length - 1
+    }));
+    if (writingSession.currentStroke.length) {
+      drawSmoothStroke(context, writingSession.currentStroke, {
+        color: getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim(),
+        width: 13,
+        shadow: true
+      });
+    }
   }
 
   function clearWritingCanvas() {
+    writingSession.strokes = [];
+    writingSession.currentStroke = [];
+    writingSession.drawing = false;
+    redrawPracticeCanvas();
+    updateWritingFeedback(evaluateWritingPractice(false));
+  }
+
+  function undoWritingStroke() {
+    writingSession.strokes.pop();
+    writingSession.currentStroke = [];
+    redrawPracticeCanvas();
+    updateWritingFeedback(evaluateWritingPractice(false));
+  }
+
+  function checkWritingPractice(final = false) {
+    const result = evaluateWritingPractice(true);
+    updateWritingFeedback(result);
+    if (final) {
+      playTone(result.success ? "good" : "again");
+      toast(result.message);
+    }
+  }
+
+  function evaluateWritingPractice(final) {
     const canvas = document.getElementById("practiceCanvas");
-    if (!canvas) return;
-    clearCanvas(canvas.getContext("2d"), canvas);
+    const card = currentWritingCard();
+    const expectedCount = Math.max(1, card?.strokes || 1);
+    if (!canvas || !card) {
+      return { score: 0, success: false, expectedCount, message: "" };
+    }
+    const expected = makeStrokePaths(expectedCount, canvas.width, canvas.height, card);
+    const actual = writingSession.strokes;
+    if (!actual.length) {
+      return {
+        score: 0,
+        success: false,
+        expectedCount,
+        message: lang() === "ru" ? "Начни с первой черты." : "Start with the first stroke."
+      };
+    }
+    const comparisons = expected.map((stroke, index) => actual[index] ? compareStroke(actual[index], stroke, canvas) : null);
+    const readyComparisons = comparisons.filter(Boolean);
+    const averageStrokeScore = readyComparisons.length
+      ? readyComparisons.reduce((sum, item) => sum + item.score, 0) / readyComparisons.length
+      : 0;
+    const countPenalty = Math.min(42, Math.abs(actual.length - expected.length) * 14);
+    const completionPenalty = Math.max(0, expected.length - actual.length) * 10;
+    const score = clamp(Math.round(averageStrokeScore - countPenalty - completionPenalty), 0, 100);
+    const firstWeak = comparisons.findIndex((item) => item && (!item.directionOk || !item.positionOk));
+    const success = actual.length === expected.length && score >= 72 && firstWeak === -1;
+    let message = lang() === "ru"
+      ? `Черты: ${actual.length}/${expected.length}. Точность ${score}%.`
+      : `Strokes: ${actual.length}/${expected.length}. Accuracy ${score}%.`;
+    if (actual.length < expected.length) {
+      message = lang() === "ru"
+        ? `Черта ${actual.length + 1}/${expected.length}: продолжай по примеру.`
+        : `Stroke ${actual.length + 1}/${expected.length}: keep following the guide.`;
+    } else if (actual.length > expected.length) {
+      message = lang() === "ru"
+        ? `Лишние черты: нужно ${expected.length}, сейчас ${actual.length}.`
+        : `Extra strokes: expected ${expected.length}, got ${actual.length}.`;
+    } else if (firstWeak >= 0) {
+      const weak = comparisons[firstWeak];
+      message = weak.directionOk
+        ? (lang() === "ru" ? `Черта ${firstWeak + 1}: ближе к форме примера.` : `Stroke ${firstWeak + 1}: stay closer to the guide.`)
+        : (lang() === "ru" ? `Черта ${firstWeak + 1}: проверь направление.` : `Stroke ${firstWeak + 1}: check the direction.`);
+    } else if (success) {
+      message = lang() === "ru" ? "Отлично. Черты похожи на пример." : "Great. The strokes match the guide.";
+    }
+    return { score, success, expectedCount, message };
   }
 
   function replayStrokeAnimation() {
     const canvas = document.getElementById("strokeCanvas");
-    const card = findCard(state.activeCardId) || getTodayCards()[0] || state.cards[0];
+    const card = currentWritingCard();
+    if (!canvas || !card) return;
+    cancelAnimationFrame(writingSession.demoAnimationId);
+    const strokes = makeStrokePaths(card.strokes, canvas.width, canvas.height, card);
+    const duration = 460;
+    const startedAt = performance.now();
+    const frame = (now) => {
+      const elapsed = now - startedAt;
+      const index = clamp(Math.floor(elapsed / duration), 0, strokes.length - 1);
+      const progress = clamp((elapsed - index * duration) / duration, 0, 1);
+      state.writingStep = index;
+      drawWritingGuideFrame(index, progress);
+      updateWritingStepUi();
+      if (elapsed < strokes.length * duration) {
+        writingSession.demoAnimationId = requestAnimationFrame(frame);
+      } else {
+        state.writingStep = strokes.length - 1;
+        drawWritingGuideFrame(state.writingStep, 1);
+        updateWritingStepUi();
+      }
+    };
+    writingSession.demoAnimationId = requestAnimationFrame(frame);
+  }
+
+  function playWritingStep() {
+    const canvas = document.getElementById("strokeCanvas");
+    const card = currentWritingCard();
+    if (!canvas || !card) return;
+    cancelAnimationFrame(writingSession.demoAnimationId);
+    const startedAt = performance.now();
+    const duration = 520;
+    const step = clamp(state.writingStep, 0, Math.max(0, card.strokes - 1));
+    const frame = (now) => {
+      const progress = clamp((now - startedAt) / duration, 0, 1);
+      drawWritingGuideFrame(step, progress);
+      if (progress < 1) writingSession.demoAnimationId = requestAnimationFrame(frame);
+    };
+    writingSession.demoAnimationId = requestAnimationFrame(frame);
+  }
+
+  function changeWritingStep(delta) {
+    selectWritingStep(state.writingStep + delta, false);
+  }
+
+  function selectWritingStep(index, animate) {
+    const card = currentWritingCard();
+    if (!card) return;
+    state.writingStep = clamp(index, 0, Math.max(0, card.strokes - 1));
+    updateWritingStepUi();
+    if (animate) playWritingStep();
+    else drawWritingGuideFrame(state.writingStep, 1);
+  }
+
+  function updateWritingStepUi() {
+    const card = currentWritingCard();
+    if (!card) return;
+    const steps = normalizeStrokeDescriptions(card);
+    const label = lang() === "ru" ? "Шаг" : "Step";
+    const counter = document.getElementById("writingStepCounter");
+    if (counter) counter.textContent = `${label} ${state.writingStep + 1}/${Math.max(1, card.strokes)}`;
+    const stepText = document.querySelector(".writing-step-head .label");
+    if (stepText) stepText.textContent = steps[state.writingStep] || "";
+    $$(".writing-guide-list li").forEach((item, index) => item.classList.toggle("is-active", index === state.writingStep));
+  }
+
+  function drawWritingGuideFrame(activeIndex = state.writingStep, progress = 1) {
+    const canvas = document.getElementById("strokeCanvas");
+    const card = currentWritingCard();
     if (!canvas || !card) return;
     const context = canvas.getContext("2d");
-    const strokes = makeStrokePaths(card.strokes);
-    let index = 0;
-    const drawNext = () => {
-      clearCanvas(context, canvas);
-      drawGrid(context, canvas);
-      context.lineWidth = 12;
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      strokes.slice(0, index + 1).forEach((stroke, strokeIndex) => {
-        context.strokeStyle = strokeIndex === index
+    const strokes = makeStrokePaths(card.strokes, canvas.width, canvas.height, card);
+    clearCanvas(context, canvas);
+    strokes.forEach((stroke, index) => {
+      const isPast = index < activeIndex;
+      const isActive = index === activeIndex;
+      context.save();
+      context.globalAlpha = isPast || isActive ? 1 : 0.2;
+      drawSmoothStroke(context, isActive ? clipPolyline(stroke, progress) : stroke, {
+        color: isActive
           ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
-          : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-        context.beginPath();
-        context.moveTo(stroke[0][0], stroke[0][1]);
-        stroke.slice(1).forEach(([x, y]) => context.lineTo(x, y));
-        context.stroke();
+          : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+        width: isActive ? 15 : 11,
+        shadow: isActive
       });
-      context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
-      context.font = "700 18px system-ui";
-      context.fillText(`${index + 1}/${strokes.length}`, 18, 28);
-      index += 1;
-      if (index < strokes.length) window.setTimeout(drawNext, 420);
-    };
-    drawNext();
+      drawStrokeNumber(context, stroke, index + 1, isActive);
+      context.restore();
+    });
+  }
+
+  function drawExpectedGuide(context, canvas, card) {
+    const strokes = makeStrokePaths(card.strokes, canvas.width, canvas.height, card);
+    context.save();
+    context.globalAlpha = 0.2;
+    context.setLineDash([10, 11]);
+    strokes.forEach((stroke, index) => {
+      drawSmoothStroke(context, stroke, {
+        color: index === state.writingStep
+          ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
+          : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+        width: index === state.writingStep ? 10 : 7,
+        shadow: false
+      });
+    });
+    context.restore();
+  }
+
+  function drawSmoothStroke(context, rawPoints, options = {}) {
+    const points = rawPoints.map(toCanvasPoint).filter(Boolean);
+    if (!context || !points.length) return;
+    context.save();
+    context.strokeStyle = options.color || getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    context.lineWidth = options.width || 12;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.imageSmoothingEnabled = true;
+    if (options.shadow) {
+      context.shadowColor = "rgba(255, 48, 92, 0.36)";
+      context.shadowBlur = 12;
+    }
+    context.beginPath();
+    context.moveTo(points[0].x, points[0].y);
+    if (points.length === 1) {
+      context.arc(points[0].x, points[0].y, context.lineWidth / 2, 0, Math.PI * 2);
+      context.fillStyle = context.strokeStyle;
+      context.fill();
+      context.restore();
+      return;
+    }
+    if (points.length === 2) {
+      context.lineTo(points[1].x, points[1].y);
+    } else {
+      for (let index = 1; index < points.length - 1; index += 1) {
+        const mid = midpoint(points[index], points[index + 1]);
+        context.quadraticCurveTo(points[index].x, points[index].y, mid.x, mid.y);
+      }
+      const last = points[points.length - 1];
+      context.lineTo(last.x, last.y);
+    }
+    context.stroke();
+    context.restore();
+  }
+
+  function drawStrokeNumber(context, stroke, number, active) {
+    const first = toCanvasPoint(stroke[0]);
+    if (!first) return;
+    context.save();
+    context.fillStyle = active
+      ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
+      : getComputedStyle(document.documentElement).getPropertyValue("--surface-2").trim();
+    context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line-strong").trim();
+    context.lineWidth = 1;
+    context.beginPath();
+    context.arc(first.x, first.y, active ? 13 : 10, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.fillStyle = active ? "#111014" : getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    context.font = "800 12px system-ui";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(String(number), first.x, first.y + 0.5);
+    context.restore();
   }
 
   function clearCanvas(context, canvas) {
@@ -1435,24 +1847,204 @@
     context.lineTo(canvas.width / 2, canvas.height);
     context.moveTo(0, canvas.height / 2);
     context.lineTo(canvas.width, canvas.height / 2);
+    context.moveTo(0, 0);
+    context.lineTo(canvas.width, canvas.height);
+    context.moveTo(canvas.width, 0);
+    context.lineTo(0, canvas.height);
     context.stroke();
+    context.setLineDash([]);
+    context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line-strong").trim();
+    context.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
     context.restore();
   }
 
-  function makeStrokePaths(count) {
-    const templates = [
-      [[90, 70], [430, 70]],
-      [[105, 70], [105, 220]],
-      [[430, 70], [430, 220]],
-      [[95, 220], [435, 220]],
-      [[140, 145], [380, 145]],
-      [[260, 50], [260, 245]],
-      [[125, 235], [225, 105]],
-      [[395, 235], [295, 105]],
-      [[150, 95], [220, 155], [150, 220]],
-      [[370, 95], [300, 155], [370, 220]]
-    ];
+  function makeStrokePaths(count, width = 520, height = 280, card = null) {
+    const known = makeKnownKanjiStrokePaths(card?.kanji, width, height);
+    if (known && known.length === count) return known;
+    const templates = makeGenericStrokeTemplates(width, height);
     return Array.from({ length: Math.max(1, count) }, (_, index) => templates[index % templates.length]);
+  }
+
+  function makeKnownKanjiStrokePaths(kanji, width, height) {
+    const x1 = width * 0.24;
+    const x2 = width * 0.76;
+    const y1 = height * 0.18;
+    const y2 = height * 0.82;
+    const xm = width * 0.5;
+    const ym = height * 0.5;
+    const shapes = {
+      "日": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, ym], [x2, ym]], [[x1, y2], [x2, y2]]],
+      "月": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, y1 + (y2 - y1) * 0.36], [x2, y1 + (y2 - y1) * 0.36]], [[x1, y1 + (y2 - y1) * 0.68], [x2, y1 + (y2 - y1) * 0.68]]],
+      "一": [[[width * 0.18, ym], [width * 0.82, ym]]],
+      "二": [[[width * 0.25, height * 0.34], [width * 0.75, height * 0.34]], [[width * 0.16, height * 0.68], [width * 0.84, height * 0.68]]],
+      "三": [[[width * 0.26, height * 0.28], [width * 0.74, height * 0.28]], [[width * 0.22, ym], [width * 0.78, ym]], [[width * 0.15, height * 0.74], [width * 0.85, height * 0.74]]],
+      "人": [[[width * 0.46, height * 0.2], [width * 0.38, height * 0.46], [width * 0.2, height * 0.8]], [[width * 0.48, height * 0.25], [width * 0.66, height * 0.55], [width * 0.82, height * 0.8]]],
+      "大": [[[width * 0.22, height * 0.36], [width * 0.78, height * 0.36]], [[width * 0.5, height * 0.18], [width * 0.42, height * 0.5], [width * 0.23, height * 0.82]], [[width * 0.51, height * 0.42], [width * 0.67, height * 0.63], [width * 0.82, height * 0.82]]],
+      "十": [[[width * 0.22, ym], [width * 0.78, ym]], [[xm, height * 0.18], [xm, height * 0.84]]],
+      "口": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, y2], [x2, y2]]],
+      "中": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, ym], [x2, ym]], [[xm, height * 0.1], [xm, height * 0.9]]],
+      "木": [[[width * 0.2, height * 0.36], [width * 0.8, height * 0.36]], [[xm, height * 0.14], [xm, height * 0.86]], [[xm, height * 0.43], [width * 0.22, height * 0.82]], [[xm, height * 0.44], [width * 0.8, height * 0.82]]],
+      "本": [[[width * 0.2, height * 0.34], [width * 0.8, height * 0.34]], [[xm, height * 0.12], [xm, height * 0.86]], [[xm, height * 0.42], [width * 0.22, height * 0.8]], [[xm, height * 0.43], [width * 0.8, height * 0.8]], [[width * 0.32, height * 0.7], [width * 0.68, height * 0.7]]],
+      "川": [[[width * 0.28, height * 0.22], [width * 0.24, height * 0.82]], [[xm, height * 0.16], [xm, height * 0.86]], [[width * 0.72, height * 0.22], [width * 0.76, height * 0.82]]],
+      "山": [[[xm, height * 0.14], [xm, height * 0.78]], [[width * 0.25, height * 0.4], [width * 0.25, height * 0.8], [width * 0.75, height * 0.8]], [[width * 0.75, height * 0.4], [width * 0.75, height * 0.8]]],
+      "小": [[[xm, height * 0.18], [xm, height * 0.84]], [[width * 0.34, height * 0.45], [width * 0.2, height * 0.72]], [[width * 0.66, height * 0.45], [width * 0.82, height * 0.72]]]
+    };
+    return shapes[kanji] || null;
+  }
+
+  function makeGenericStrokeTemplates(width, height) {
+    const point = (x, y) => [width * x, height * y];
+    return [
+      [point(0.18, 0.24), point(0.82, 0.24)],
+      [point(0.23, 0.22), point(0.23, 0.78)],
+      [point(0.77, 0.22), point(0.77, 0.78)],
+      [point(0.18, 0.78), point(0.82, 0.78)],
+      [point(0.24, 0.5), point(0.76, 0.5)],
+      [point(0.5, 0.16), point(0.5, 0.84)],
+      [point(0.3, 0.78), point(0.45, 0.52), point(0.5, 0.24)],
+      [point(0.5, 0.42), point(0.66, 0.62), point(0.82, 0.8)],
+      [point(0.3, 0.3), point(0.42, 0.5), point(0.3, 0.7)],
+      [point(0.7, 0.3), point(0.58, 0.5), point(0.7, 0.7)]
+    ];
+  }
+
+  function normalizeStrokeDescriptions(card) {
+    const paths = makeStrokePaths(card.strokes, 520, 280, card);
+    const source = Array.isArray(card.stroke_order) ? card.stroke_order : [];
+    return Array.from({ length: Math.max(1, card.strokes) }, (_, index) => source[index] || describeStrokePath(paths[index], index));
+  }
+
+  function describeStrokePath(path, index) {
+    const points = path.map(toCanvasPoint);
+    const start = points[0];
+    const end = points[points.length - 1];
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const vertical = Math.abs(dy) > Math.abs(dx) * 1.35;
+    const horizontal = Math.abs(dx) > Math.abs(dy) * 1.35;
+    if (lang() !== "ru") {
+      if (horizontal) return `Stroke ${index + 1}: horizontal ${dx >= 0 ? "left to right" : "right to left"}.`;
+      if (vertical) return `Stroke ${index + 1}: vertical ${dy >= 0 ? "top to bottom" : "bottom to top"}.`;
+      return `Stroke ${index + 1}: diagonal ${dx >= 0 ? "to the right" : "to the left"}.`;
+    }
+    if (horizontal) return `Черта ${index + 1}: горизонталь ${dx >= 0 ? "слева направо" : "справа налево"}.`;
+    if (vertical) return `Черта ${index + 1}: вертикаль ${dy >= 0 ? "сверху вниз" : "снизу вверх"}.`;
+    return `Черта ${index + 1}: диагональ ${dx >= 0 ? "вправо" : "влево"}.`;
+  }
+
+  function compareStroke(actualStroke, expectedStroke, canvas) {
+    const expected = expectedStroke.map(toCanvasPoint);
+    const actual = actualStroke.map(toCanvasPoint);
+    const expectedSamples = samplePolyline(expected, 18);
+    const actualSamples = samplePolyline(actual, 26);
+    const diagonal = Math.hypot(canvas.width, canvas.height);
+    const averageDistance = expectedSamples.reduce((sum, point) => sum + minDistance(point, actualSamples), 0) / expectedSamples.length;
+    const distanceScore = clamp(100 - (averageDistance / diagonal) * 310, 0, 100);
+    const startScore = clamp(100 - (distance(actual[0], expected[0]) / diagonal) * 260, 0, 100);
+    const endScore = clamp(100 - (distance(actual[actual.length - 1], expected[expected.length - 1]) / diagonal) * 260, 0, 100);
+    const directionScore = directionSimilarity(actual, expected);
+    const lengthRatio = pathLength(actual) / Math.max(1, pathLength(expected));
+    const lengthScore = clamp(100 - Math.abs(Math.log(Math.max(0.08, lengthRatio))) * 58, 0, 100);
+    const score = Math.round(distanceScore * 0.45 + ((startScore + endScore) / 2) * 0.22 + directionScore * 0.23 + lengthScore * 0.1);
+    return {
+      score,
+      directionOk: directionScore >= 46,
+      positionOk: distanceScore >= 44
+    };
+  }
+
+  function updateWritingFeedback(result) {
+    const counter = document.getElementById("writingStrokeCounter");
+    if (counter) counter.textContent = `${writingSession.strokes.length}/${result.expectedCount}`;
+    const score = document.getElementById("writingScore");
+    if (score) {
+      score.querySelector("span").textContent = `${result.score}%`;
+      score.querySelector("i").style.width = `${result.score}%`;
+    }
+    const feedback = document.getElementById("writingFeedback");
+    if (feedback) {
+      feedback.textContent = result.message;
+      feedback.classList.toggle("is-good", result.success);
+      feedback.classList.toggle("is-warning", !result.success && result.score > 0);
+    }
+  }
+
+  function toCanvasPoint(point) {
+    if (!point) return null;
+    if (Array.isArray(point)) return { x: point[0], y: point[1] };
+    return { x: point.x, y: point.y };
+  }
+
+  function midpoint(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  function distance(a, b) {
+    return Math.hypot((a?.x || 0) - (b?.x || 0), (a?.y || 0) - (b?.y || 0));
+  }
+
+  function minDistance(point, points) {
+    return points.reduce((best, item) => Math.min(best, distance(point, item)), Infinity);
+  }
+
+  function pathLength(points) {
+    return points.slice(1).reduce((sum, point, index) => sum + distance(points[index], point), 0);
+  }
+
+  function samplePolyline(points, count) {
+    const length = pathLength(points);
+    if (!length) return [points[0]];
+    return Array.from({ length: count }, (_, index) => pointAtLength(points, (length * index) / Math.max(1, count - 1)));
+  }
+
+  function pointAtLength(points, target) {
+    let traveled = 0;
+    for (let index = 1; index < points.length; index += 1) {
+      const start = points[index - 1];
+      const end = points[index];
+      const segment = distance(start, end);
+      if (traveled + segment >= target) {
+        const ratio = segment ? (target - traveled) / segment : 0;
+        return { x: start.x + (end.x - start.x) * ratio, y: start.y + (end.y - start.y) * ratio };
+      }
+      traveled += segment;
+    }
+    return points[points.length - 1];
+  }
+
+  function clipPolyline(rawPoints, progress) {
+    const points = rawPoints.map(toCanvasPoint);
+    const target = pathLength(points) * clamp(progress, 0.02, 1);
+    const clipped = [points[0]];
+    let traveled = 0;
+    for (let index = 1; index < points.length; index += 1) {
+      const start = points[index - 1];
+      const end = points[index];
+      const segment = distance(start, end);
+      if (traveled + segment < target) {
+        clipped.push(end);
+        traveled += segment;
+      } else {
+        clipped.push(pointAtLength([start, end], target - traveled));
+        break;
+      }
+    }
+    return clipped;
+  }
+
+  function directionSimilarity(actual, expected) {
+    const av = vector(actual);
+    const ev = vector(expected);
+    const dot = av.x * ev.x + av.y * ev.y;
+    const length = Math.hypot(av.x, av.y) * Math.hypot(ev.x, ev.y);
+    if (!length) return 100;
+    return clamp(((dot / length) + 1) * 50, 0, 100);
+  }
+
+  function vector(points) {
+    const first = points[0];
+    const last = points[points.length - 1];
+    return { x: last.x - first.x, y: last.y - first.y };
   }
 
   function destroyCharts() {
@@ -1501,7 +2093,7 @@
     return state.cards.filter((card) => {
       const meta = cardMeta(card.id);
       const haystack = [
-        card.kanji, cardMeaning(card), card.meaning_ru, card.hiragana, card.romaji, card.jlpt, lessonTitleById(card.lessonId), cardInterface(card), meta.radical, localized(meta.radicalMeaning || {}),
+        card.kanji, cardMeaning(card), card.meaning_ru, card.hiragana, card.romaji, card.onyomi, card.onyomi_romaji, card.kunyomi, card.kunyomi_romaji, readingSummaryText(card), card.jlpt, lessonTitleById(card.lessonId), cardInterface(card), meta.radical, localized(meta.radicalMeaning || {}),
         ...card.apps, ...card.examples.flatMap((example) => [example.word, example.reading, example.romaji, example.translation])
       ].join(" ").toLocaleLowerCase(lang() === "ru" ? "ru-RU" : "en-US");
       return (!query || haystack.includes(query))
@@ -1599,10 +2191,151 @@
     render();
   }
 
+  function resetReadingCheck(cardId = null) {
+    state.readingCheck = { cardId: cardId ? String(cardId) : null, value: "", status: null, message: "" };
+  }
+
+  function syncReadingCheckCard(cardId) {
+    const id = String(cardId || "");
+    if (state.readingCheck.cardId !== id) resetReadingCheck(id);
+  }
+
+  function checkActiveCardReading() {
+    const card = findCard(state.readingCheck.cardId || state.activeCardId);
+    if (!card) return;
+
+    const tokens = normalizeKanaTokens(state.readingCheck.value);
+    const accepted = acceptedKanaReadings(card);
+    const matched = tokens.some((token) => accepted.normalized.has(token));
+    const hasValue = tokens.length > 0;
+    const status = hasValue && matched ? "correct" : "wrong";
+    const message = !hasValue
+      ? (lang() === "ru" ? "Сначала напиши чтение хираганой или катаканой." : "Type a reading in hiragana or katakana first.")
+      : matched
+        ? (lang() === "ru" ? "Верно. Это чтение есть у карточки." : "Correct. This reading belongs to the card.")
+        : (lang() === "ru" ? "Почти. Попробуй другое онъёми или кунъёми." : "Almost. Try another on'yomi or kun'yomi.");
+
+    state.readingCheck = {
+      cardId: card.id,
+      value: state.readingCheck.value,
+      status,
+      message
+    };
+    render();
+    requestAnimationFrame(() => {
+      const input = document.getElementById(`readingCheck-${card.id}`);
+      if (!input) return;
+      input.focus();
+      if ("setSelectionRange" in input) input.setSelectionRange(input.value.length, input.value.length);
+    });
+  }
+
+  function acceptedKanaReadings(card) {
+    const readings = cardReadings(card);
+    const raw = [
+      ...splitReadingText(readings.onyomi.kana),
+      ...splitReadingText(readings.kunyomi.kana),
+      ...splitReadingText(card.hiragana)
+    ].filter(Boolean);
+    const unique = raw.filter((value, index) => raw.indexOf(value) === index);
+    return {
+      normalized: new Set(unique.map(normalizeKanaToken).filter(Boolean))
+    };
+  }
+
+  function normalizeKanaTokens(value) {
+    return String(value || "")
+      .split(/[\/,、，\s]+/u)
+      .map(normalizeKanaToken)
+      .filter(Boolean);
+  }
+
+  function normalizeKanaToken(value) {
+    const kana = kataToHira(String(value || "").normalize("NFKC"))
+      .replace(/[・･.\-]/gu, "")
+      .replace(/\s+/gu, "");
+    return expandKanaLongVowels(kana).trim();
+  }
+
+  function kataToHira(value) {
+    return [...String(value || "")]
+      .map((char) => {
+        const code = char.charCodeAt(0);
+        return code >= 0x30a1 && code <= 0x30f6 ? String.fromCharCode(code - 0x60) : char;
+      })
+      .join("");
+  }
+
+  function expandKanaLongVowels(value) {
+    let output = "";
+    for (const char of String(value || "")) {
+      if (char === "ー") {
+        output += kanaVowel(output.slice(-1));
+        continue;
+      }
+      output += char;
+    }
+    return output;
+  }
+
+  function kanaVowel(char) {
+    if ("あかさたなはまやらわがざだばぱゃぁ".includes(char)) return "あ";
+    if ("いきしちにひみりぎじぢびぴぃ".includes(char)) return "い";
+    if ("うくすつぬふむゆるぐずづぶぷゅぅ".includes(char)) return "う";
+    if ("えけせてねへめれげぜでべぺぇ".includes(char)) return "え";
+    if ("おこそとのほもよろをごぞどぼぽょぉ".includes(char)) return "お";
+    return "";
+  }
+
+  function cardReadings(card) {
+    const onyomiKana = card?.onyomi || "";
+    const onyomiRomaji = card?.onyomi_romaji || "";
+    const kunyomiKana = card?.kunyomi || "";
+    const kunyomiRomaji = card?.kunyomi_romaji || "";
+    if (onyomiKana || kunyomiKana || onyomiRomaji || kunyomiRomaji) {
+      return {
+        onyomi: { kana: onyomiKana, romaji: onyomiRomaji },
+        kunyomi: { kana: kunyomiKana, romaji: kunyomiRomaji }
+      };
+    }
+
+    const kana = splitReadingText(card?.hiragana);
+    const romaji = splitReadingText(card?.romaji);
+    return {
+      onyomi: { kana: kana[0] || "", romaji: romaji[0] || "" },
+      kunyomi: { kana: kana.slice(1).join(" / "), romaji: romaji.slice(1).join(" / ") }
+    };
+  }
+
+  function splitReadingText(value) {
+    return String(value || "")
+      .split("/")
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  function readingLabel(kind) {
+    if (kind === "onyomi") return lang() === "ru" ? "\u041e\u043d\u044a\u0451\u043c\u0438" : "On'yomi";
+    return lang() === "ru" ? "\u041a\u0443\u043d\u044a\u0451\u043c\u0438" : "Kun'yomi";
+  }
+
+  function readingShortLabel(kind) {
+    if (kind === "onyomi") return lang() === "ru" ? "\u041e\u043d" : "On";
+    return lang() === "ru" ? "\u041a\u0443\u043d" : "Kun";
+  }
+
+  function readingSummaryText(card) {
+    const readings = cardReadings(card);
+    return [
+      `${readingShortLabel("onyomi")}: ${readings.onyomi.kana || "—"} (${readings.onyomi.romaji || "—"})`,
+      `${readingShortLabel("kunyomi")}: ${readings.kunyomi.kana || "—"} (${readings.kunyomi.romaji || "—"})`
+    ].join(" · ");
+  }
+
   function getKanjiAudioPath(card) {
     if (!card) return "";
     const explicit = card.audioSrc || card.audio || "";
-    return normalizeAudioPath(explicit);
+    return normalizeAudioPath(explicit) || expectedKanjiAudioPath(card);
   }
 
   function expectedKanjiAudioPath(card) {
@@ -1630,10 +2363,24 @@
       .replace(/^-+|-+$/g, "");
   }
 
+  function canPlayKanjiAudio(card) {
+    return Boolean(getKanjiAudioPath(card) || getKanjiSpeechText(card));
+  }
+
+  function getKanjiSpeechText(card) {
+    if (!card) return "";
+    const readings = cardReadings(card);
+    return readings.onyomi.kana || readings.kunyomi.kana || card.hiragana || card.kanji || "";
+  }
+
+  function firstReading(value) {
+    return splitReadingText(value)[0] || String(value || "").trim();
+  }
+
   function autoPlayActiveKanjiAudio() {
     if (state.route !== "learn" && state.route !== "review") return;
     const card = findCard(state.activeCardId);
-    const audio = getKanjiAudioPath(card);
+    const audio = normalizeAudioPath(card?.audioSrc || card?.audio || "");
     if (!card || !audio) return;
     const key = `${state.route}:${card.id}:${audio}`;
     if (key === lastAutoAudioKey) return;
@@ -1644,8 +2391,7 @@
   function playKanjiAudio(card, options = {}) {
     const audio = getKanjiAudioPath(card);
     if (!audio) {
-      if (!options.silent) console.warn("Kanji audio is not available for this card.", { id: card?.id, expected: expectedKanjiAudioPath(card) });
-      return Promise.resolve(false);
+      return Promise.resolve(options.silent ? false : speakKanjiAudio(card));
     }
 
     if (activeKanjiAudio) {
@@ -1662,9 +2408,25 @@
     return activeKanjiAudio.play()
       .then(() => true)
       .catch((error) => {
+        if (!options.silent && speakKanjiAudio(card)) return true;
         if (!options.silent) console.warn("Kanji audio playback was blocked or failed.", { id: card?.id, audio, error });
         return false;
       });
+  }
+
+  function speakKanjiAudio(card) {
+    const text = firstReading(getKanjiSpeechText(card));
+    if (!text || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+      console.warn("Kanji audio is not available for this card.", { id: card?.id, expected: expectedKanjiAudioPath(card) });
+      return false;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ja-JP";
+    utterance.rate = 0.92;
+    window.speechSynthesis.speak(utterance);
+    return true;
   }
 
   function playAudioPlaceholder(url, label) {

@@ -402,6 +402,9 @@ const ROMAJI = {
   じゃ: "ja",
   じゅ: "ju",
   じょ: "jo",
+  ぢゃ: "ja",
+  ぢゅ: "ju",
+  ぢょ: "jo",
   びゃ: "bya",
   びゅ: "byu",
   びょ: "byo",
@@ -592,7 +595,8 @@ function selectKanji(kanjiDataset, existingKanji, needed) {
 function buildCard({ entry, sourceMeta, singleEntry, examples, id }) {
   const level = entry.jlptLabel;
   const meaningRu = buildMeaningRu(entry, singleEntry);
-  const hiragana = buildReading(entry, singleEntry);
+  const readings = buildReadingGroups(entry);
+  const hiragana = buildReading(entry, singleEntry, readings);
   const exampleItems = buildExamples(entry, singleEntry, examples);
   const apps = APP_POOLS[level] || APP_POOLS.N3;
   const meaningEn = entry.meanings.slice(0, 4).join(", ");
@@ -605,6 +609,10 @@ function buildCard({ entry, sourceMeta, singleEntry, examples, id }) {
     meaning_ru: meaningRu,
     hiragana,
     romaji: romanizeReading(hiragana),
+    onyomi: readings.onyomi,
+    onyomi_romaji: readings.onyomi_romaji,
+    kunyomi: readings.kunyomi,
+    kunyomi_romaji: readings.kunyomi_romaji,
     jlpt: level,
     strokes: entry.stroke_count || sourceMeta?.strokes || 1,
     stroke_order: genericStrokeOrder(entry.stroke_count || sourceMeta?.strokes || 1),
@@ -733,13 +741,30 @@ function buildMeaningRu(entry, singleEntry) {
   return translated.join(", ");
 }
 
-function buildReading(entry, singleEntry) {
+function buildReading(entry, singleEntry, readings = buildReadingGroups(entry)) {
+  const grouped = [readings.onyomi, readings.kunyomi].filter(Boolean).join(" / ");
+  if (grouped) return grouped;
   if (singleEntry?.reading) return cleanReading(singleEntry.reading);
-  const readings = [...entry.kun_readings, ...entry.on_readings]
+  const fallbackReadings = [...entry.kun_readings, ...entry.on_readings]
     .map(cleanReading)
     .filter(Boolean)
     .slice(0, 3);
-  return readings.join(" / ") || "—";
+  return fallbackReadings.join(" / ") || "—";
+}
+
+function buildReadingGroups(entry) {
+  const onyomi = [...new Set((entry.on_readings || []).map(cleanReading).filter(Boolean))]
+    .slice(0, 5)
+    .join(" / ");
+  const kunyomi = [...new Set((entry.kun_readings || []).map(cleanReading).filter(Boolean))]
+    .slice(0, 5)
+    .join(" / ");
+  return {
+    onyomi,
+    onyomi_romaji: romanizeReading(onyomi),
+    kunyomi,
+    kunyomi_romaji: romanizeReading(kunyomi)
+  };
 }
 
 function buildExamples(entry, singleEntry, examples) {
@@ -836,20 +861,39 @@ async function scanAudioFiles(rootDir) {
 }
 
 function attachAudioToCard(card, lesson, audioFiles, rootDir) {
-  const relativePath = expectedKanjiAudioPath(card, lesson);
-  const absolutePath = path.join(rootDir, relativePath.replace(/^\.\//, "")).replaceAll("\\", "/");
-  return audioFiles.has(absolutePath) ? { ...card, audio: relativePath } : card;
+  for (const slug of audioSlugs(card)) {
+    const relativePath = expectedKanjiAudioPath(card, lesson, slug);
+    const absolutePath = path.join(rootDir, relativePath.replace(/^\.\//, "")).replaceAll("\\", "/");
+    if (audioFiles.has(absolutePath)) return { ...card, audio: relativePath };
+  }
+  return card;
 }
 
-function expectedKanjiAudioPath(card, lesson) {
+function expectedKanjiAudioPath(card, lesson, slug = audioSlug(card.romaji)) {
   const jlpt = String(card.jlpt || lesson.jlpt || "").toLowerCase();
-  const slug = audioSlug(card.romaji);
   return `./audio/kanji/${jlpt}/${lesson.id}/${card.id}-${slug}.mp3`;
+}
+
+function audioSlugs(card) {
+  return [
+    ...splitRomaji(card.romaji),
+    ...splitRomaji(card.onyomi_romaji),
+    ...splitRomaji(card.kunyomi_romaji)
+  ]
+    .map(audioSlug)
+    .filter(Boolean)
+    .filter((slug, index, slugs) => slugs.indexOf(slug) === index);
+}
+
+function splitRomaji(value) {
+  return String(value || "")
+    .split("/")
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
 function audioSlug(romaji) {
   return String(romaji || "")
-    .split("/")[0]
     .trim()
     .toLowerCase()
     .normalize("NFKD")
@@ -910,6 +954,10 @@ function romanizeKana(value) {
     if (char === "っ" && next) {
       const nextRomaji = ROMAJI[text.slice(i + 1, i + 3)] || ROMAJI[next] || "";
       output += nextRomaji[0] || "";
+      continue;
+    }
+    if (char === "っ") {
+      output += "tsu";
       continue;
     }
     if (char === "ー") {

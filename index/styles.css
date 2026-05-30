@@ -57,6 +57,21 @@ body {
   overflow-x: hidden;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.modal-layer > * {
+  pointer-events: auto;
+}
+
 button,
 input,
 select,
@@ -695,6 +710,72 @@ textarea:focus-visible {
   margin-top: 3px;
 }
 
+.reading-box small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.reading-split {
+  align-items: stretch;
+}
+
+.reading-check {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-4), transparent 90%), transparent 46%),
+    color-mix(in srgb, var(--text), transparent 95%);
+}
+
+.reading-check-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.reading-check input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg), var(--surface-2) 42%);
+  color: var(--text);
+  padding: 10px 12px;
+}
+
+.reading-check p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.reading-check.is-correct {
+  border-color: color-mix(in srgb, var(--success), white 10%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--success), transparent 82%), transparent 52%),
+    color-mix(in srgb, var(--text), transparent 95%);
+}
+
+.reading-check.is-correct p {
+  color: var(--success);
+}
+
+.reading-check.is-wrong {
+  border-color: color-mix(in srgb, var(--danger), white 8%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--danger), transparent 82%), transparent 52%),
+    color-mix(in srgb, var(--text), transparent 95%);
+}
+
+.reading-check.is-wrong p {
+  color: color-mix(in srgb, var(--danger), white 12%);
+}
+
 .answer-section {
   animation: answer-in 0.2s ease both;
 }
@@ -857,22 +938,49 @@ textarea:focus-visible {
 .detail-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 1;
   display: grid;
-  place-items: end center;
-  padding: 16px;
+  place-items: center;
+  min-height: 100dvh;
+  padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.62);
+  overscroll-behavior: contain;
+  animation: modal-fade 0.16s ease both;
 }
 
 .detail-sheet {
   width: min(100%, 760px);
-  max-height: min(86svh, 860px);
+  max-height: min(88dvh, 860px);
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-2);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: modal-pop 0.18s ease both;
+}
+
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .detail-title {
@@ -919,6 +1027,136 @@ textarea:focus-visible {
   border-radius: 8px;
   background: var(--surface);
   touch-action: none;
+}
+
+.writing-step-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text), transparent 95%);
+}
+
+.writing-step-head {
+  display: grid;
+  gap: 6px;
+}
+
+.writing-step-head .label {
+  white-space: normal;
+}
+
+.writing-step-actions,
+.writing-practice-actions {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+}
+
+.writing-guide-list {
+  display: grid;
+  gap: 7px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.writing-guide-list li {
+  margin: 0;
+}
+
+.writing-guide-list button {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 8px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text), transparent 95%);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.writing-guide-list b {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent), transparent 80%);
+  color: var(--text);
+}
+
+.writing-guide-list .is-active button {
+  border-color: color-mix(in srgb, var(--accent-2), transparent 28%);
+  background: color-mix(in srgb, var(--accent-2), transparent 86%);
+}
+
+.writing-guide-list .is-active b {
+  background: var(--accent-2);
+  color: #111014;
+}
+
+.writing-practice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.writing-score {
+  position: relative;
+  height: 34px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text), transparent 94%);
+}
+
+.writing-score i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  width: 0%;
+  background:
+    linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
+  transition: width 0.22s ease;
+}
+
+.writing-score span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--text);
+  font-weight: 900;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+.writing-feedback {
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-2), transparent 92%);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.writing-feedback.is-warning {
+  border-color: color-mix(in srgb, var(--accent-2), transparent 42%);
+  color: var(--text);
+}
+
+.writing-feedback.is-good {
+  border-color: color-mix(in srgb, var(--accent-3), transparent 28%);
+  background: color-mix(in srgb, var(--accent-3), transparent 84%);
+  color: var(--text);
 }
 
 .transaction-list {
@@ -1020,11 +1258,14 @@ textarea:focus-visible {
 .reward-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: 2;
   display: grid;
   place-items: center;
-  padding: 16px;
+  min-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   background: rgba(0, 0, 0, 0.66);
+  overscroll-behavior: contain;
+  animation: modal-fade 0.16s ease both;
 }
 
 .reward-modal {
@@ -1244,7 +1485,10 @@ textarea:focus-visible {
 
   .metric-grid,
   .reading-row,
+  .reading-check-row,
   .rating-grid,
+  .writing-step-actions,
+  .writing-practice-actions,
   .mini-stat-row,
   .achievement-grid {
     grid-template-columns: 1fr;

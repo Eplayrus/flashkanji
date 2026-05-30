@@ -20,6 +20,10 @@ export interface KanjiCard {
   meaning_ru: string;
   hiragana: string;
   romaji: string;
+  onyomi?: string;
+  onyomi_romaji?: string;
+  kunyomi?: string;
+  kunyomi_romaji?: string;
   jlpt: JLPTLevel;
   strokes: number;
   stroke_order: string[];
