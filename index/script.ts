@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = "flashKanji.progress.v2";
   const LEGACY_STORAGE_KEY = "flashKanji.progress.v1";
+  const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v1";
   const APP_VERSION = 2;
   const DATA_URLS = {
     lessons: "data/lessons.json",
@@ -14,12 +15,15 @@
     kanjiTranslations: "data/kanji/translations.json",
     lessonTranslations: "data/lessons/translations.json",
     vocabulary: "data/vocabulary/index.json",
+    sentences: "data/sentences/index.json",
+    achievements: "data/achievements/index.json",
     monetization: "data/monetization/catalog.json"
   };
 
   const ratingLabels = { again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
   const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
-  const routes = ["home", "learn", "review", "dictionary", "writing", "stats"];
+  const sentenceRewardFallback = { xp: 12, coins: 2 };
+  const routes = ["home", "learn", "review", "dictionary", "writing", "stats", "achievements"];
 
   const state = {
     route: readRouteHash(),
@@ -33,6 +37,9 @@
     kanjiTranslations: {},
     lessonTranslations: {},
     vocabulary: [],
+    sentenceExercises: [],
+    achievements: [],
+    achievementCategories: [],
     monetization: null,
     progress: null,
     activeLessonId: null,
@@ -43,20 +50,24 @@
     rewardQueue: [],
     charts: [],
     filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" },
+    sentencePractice: { activeId: null, selected: [], checked: false, result: null, tileKeys: [] },
     readingCheck: { cardId: null, value: "", status: null, message: "" },
-    writingStep: 0
+    writingStep: 0,
+    pwaInstallPrompt: loadPwaInstallPromptState()
   };
 
   let audioContext = null;
   let activeKanjiAudio = null;
   let lastAutoAudioKey = "";
   let toastTimer = 0;
+  let deferredPwaInstallPrompt = null;
   const writingSession = {
     cardId: null,
     strokes: [],
     currentStroke: [],
     drawing: false,
     activePointerId: null,
+    completed: false,
     demoAnimationId: 0
   };
 
@@ -69,6 +80,8 @@
   document.addEventListener("input", handleInput);
   document.addEventListener("keydown", handleKeydown);
   importInput.addEventListener("change", handleImportFile);
+  window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  window.addEventListener("appinstalled", handlePwaInstallAccepted);
   window.addEventListener("hashchange", () => {
     const route = readRouteHash();
     if (route !== state.route) {
@@ -88,7 +101,7 @@
     applyTheme();
 
     try {
-      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, monetization] = await Promise.all([
+      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, sentences, achievements, monetization] = await Promise.all([
         loadCourse(),
         fetchJson(DATA_URLS.i18n),
         fetchJson(DATA_URLS.dialogues),
@@ -98,20 +111,29 @@
         fetchJson(DATA_URLS.kanjiTranslations),
         fetchJson(DATA_URLS.lessonTranslations),
         fetchJson(DATA_URLS.vocabulary),
+        fetchJson(DATA_URLS.sentences),
+        fetchJson(DATA_URLS.achievements),
         fetchJson(DATA_URLS.monetization)
       ]);
+      const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
       state.lessons = course.lessons;
       state.cards = course.cards;
       state.i18n = i18n;
       state.dialogues = dialogues;
       state.rewards = rewards;
+      state.achievements = achievementBundle.items;
+      state.achievementCategories = achievementBundle.categories;
+      state.rewards.achievements = state.achievements;
       state.kanjiMeta = kanjiMeta.items || {};
       state.kanjiHints = kanjiHints.items || {};
       state.kanjiTranslations = kanjiTranslations.items || {};
       state.lessonTranslations = lessonTranslations.items || {};
       state.vocabulary = vocabulary.items || [];
+      state.sentenceExercises = sentences.items || [];
       state.monetization = monetization;
       hydrateProgress();
+      syncPwaInstallInstalledFlag();
+      recordAppOpen();
       claimDailyBonus();
       evaluateAchievements();
       saveProgress();
@@ -163,6 +185,43 @@
     };
   }
 
+  function normalizeAchievementData(payload, fallback = []) {
+    const rawItems = Array.isArray(payload?.achievements) && payload.achievements.length ? payload.achievements : fallback;
+    const categories = Array.isArray(payload?.categories) ? payload.categories.map((category) => ({
+      id: String(category.id),
+      title: category.title || { ru: category.id, en: category.id },
+      icon: category.icon || "moon"
+    })) : [];
+    const items = rawItems.map((item) => normalizeAchievement(item));
+    const known = new Set(categories.map((category) => category.id));
+    items.forEach((item) => {
+      if (!known.has(item.category)) {
+        known.add(item.category);
+        categories.push({ id: item.category, title: { ru: item.category, en: item.category }, icon: item.icon || "moon" });
+      }
+    });
+    return { categories, items };
+  }
+
+  function normalizeAchievement(item) {
+    const rewardXp = Number(item.rewardXp ?? item.xp ?? 0);
+    const rewardFragments = Number(item.rewardFragments ?? item.coins ?? 0);
+    return {
+      ...item,
+      id: String(item.id),
+      category: item.category || item.kind || "learning",
+      title: item.title || item.name || { ru: item.id, en: item.id },
+      description: item.description || { ru: "", en: "" },
+      icon: item.icon || "moon",
+      kind: item.kind || "learned",
+      target: Number(item.target || 1),
+      rewardXp,
+      rewardFragments,
+      unlocked: Boolean(item.unlocked),
+      secret: Boolean(item.secret)
+    };
+  }
+
   function defaultProgress() {
     const theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     return {
@@ -177,6 +236,8 @@
       totalWrong: 0,
       correctCombo: 0,
       bestCorrectCombo: 0,
+      appOpens: 0,
+      totalMoonFragmentsEarned: 0,
       cards: {},
       daily: {},
       favorites: {},
@@ -186,6 +247,9 @@
       lessonCompletions: {},
       achievements: {},
       dailyBonuses: {},
+      writingPractice: { completed: 0, cards: {} },
+      secrets: { evaClicks: 0, nightVisit: false },
+      sentencePractice: { activeId: null, selected: [], checked: false, result: null, tileKeys: [], completed: {}, attempts: 0, recentIds: [], recentAnswers: [] },
       shop: { owned: [], equipped: {} }
     };
   }
@@ -218,10 +282,27 @@
       lessonCompletions: { ...base.lessonCompletions, ...(saved.lessonCompletions || {}) },
       achievements: { ...base.achievements, ...(saved.achievements || {}) },
       dailyBonuses: { ...base.dailyBonuses, ...(saved.dailyBonuses || {}) },
+      appOpens: Number(saved.appOpens || base.appOpens),
+      totalMoonFragmentsEarned: Number(saved.totalMoonFragmentsEarned || base.totalMoonFragmentsEarned),
+      writingPractice: { ...base.writingPractice, ...(saved.writingPractice || {}) },
+      secrets: { ...base.secrets, ...(saved.secrets || {}) },
+      sentencePractice: mergeSentencePractice(base.sentencePractice, saved.sentencePractice || {}),
       shop: {
         owned: [...new Set([...(base.shop.owned || []), ...((saved.shop && saved.shop.owned) || [])])],
         equipped: { ...base.shop.equipped, ...((saved.shop && saved.shop.equipped) || {}) }
       }
+    };
+  }
+
+  function mergeSentencePractice(base, saved) {
+    return {
+      ...base,
+      ...saved,
+      selected: Array.isArray(saved.selected) ? saved.selected : base.selected,
+      tileKeys: Array.isArray(saved.tileKeys) ? saved.tileKeys : base.tileKeys,
+      recentIds: Array.isArray(saved.recentIds) ? saved.recentIds : base.recentIds,
+      recentAnswers: Array.isArray(saved.recentAnswers) ? saved.recentAnswers : base.recentAnswers,
+      completed: { ...base.completed, ...(saved.completed || {}) }
     };
   }
 
@@ -234,6 +315,11 @@
   function hydrateProgress() {
     state.cards.forEach((card) => getCardProgress(card.id));
     state.progress.level = calculateLevel(state.progress.xp);
+    state.progress.totalMoonFragmentsEarned = Math.max(
+      Number(state.progress.totalMoonFragmentsEarned || 0),
+      Number(state.progress.moonFragments || 0),
+      totalPositiveFragmentsFromHistory()
+    );
     const firstUnlocked = state.lessons.find((lesson) => isLessonUnlocked(lesson));
     if (!state.activeLessonId) state.activeLessonId = firstUnlocked?.id || state.lessons[0]?.id || null;
   }
@@ -296,6 +382,9 @@
     if (action === "import") importInput.click();
     if (action === "reset") resetProgress();
     if (action === "share-achievement") shareAchievement().catch(() => toast(t("shareFallback")));
+    if (action === "pwa-install") handlePwaInstallRequest();
+    if (action === "pwa-later") handlePwaInstallDeclined();
+    if (action === "mascot-click") handleMascotClick(target.dataset.character);
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "clear-writing") clearWritingCanvas();
     if (action === "undo-writing") undoWritingStroke();
@@ -305,6 +394,11 @@
     if (action === "writing-step-prev") changeWritingStep(-1);
     if (action === "writing-step-next") changeWritingStep(1);
     if (action === "select-writing-step") selectWritingStep(Number(target.dataset.index || 0), true);
+    if (action === "insert-sentence-tile") insertSentenceTile(Number(target.dataset.index));
+    if (action === "undo-sentence-tile") undoSentenceTile();
+    if (action === "clear-sentence") clearSentencePractice();
+    if (action === "check-sentence") checkSentencePractice();
+    if (action === "next-sentence") nextSentencePractice();
     if (action === "play-kanji-audio") {
       const card = findCard(id) || findCard(state.activeCardId);
       if (card) playKanjiAudio(card);
@@ -312,7 +406,7 @@
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
       state.rewardModal = state.rewardQueue.shift() || null;
-      if (state.rewardModal) showConfetti();
+      if (state.rewardModal) showRewardFeedback(state.rewardModal);
       render();
     }
     if (action === "set-goal") {
@@ -449,12 +543,13 @@
       html = renderStats();
       requestAnimationFrame(renderCharts);
     }
+    if (state.route === "achievements") html = renderAchievementsPage();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
     document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal));
   }
 
   function renderGlobalOverlays() {
-    const overlays = `${renderDetailModal()}${renderRewardModal()}`;
+    const overlays = `${renderDetailModal()}${renderRewardModal()}${renderPwaInstallBanner()}`;
     return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
   }
 
@@ -652,8 +747,438 @@
           ${card ? renderStudyCard(card) : renderNoReview()}
           ${renderStudySidePanel(card, due.length)}
         </div>
+        ${renderSentencePractice()}
       </section>
     `;
+  }
+
+  function renderSentencePractice() {
+    const learned = getLearnedSentenceCards();
+    const available = getAvailableSentenceExercises(learned);
+    const labels = sentencePracticeLabels();
+
+    if (!learned.length) {
+      return `
+        <article class="sentence-practice empty-state">
+          <span class="kanji-char">文</span>
+          <h2>${escapeHtml(labels.title)}</h2>
+          <p>${escapeHtml(labels.noLearned)}</p>
+          <button class="btn primary" type="button" data-action="route" data-route="learn">▶ ${escapeHtml(t("learn"))}</button>
+        </article>
+      `;
+    }
+
+    if (learned.length < 4) {
+      return `
+        <article class="sentence-practice empty-state">
+          <span class="kanji-char">文</span>
+          <h2>${escapeHtml(labels.title)}</h2>
+          <p>${escapeHtml(labels.notEnough.replace("{count}", learned.length))}</p>
+        </article>
+      `;
+    }
+
+    if (!available.length) {
+      return `
+        <article class="sentence-practice empty-state">
+          <span class="kanji-char">文</span>
+          <h2>${escapeHtml(labels.title)}</h2>
+          <p>${escapeHtml(labels.noExercise)}</p>
+        </article>
+      `;
+    }
+
+    const prepared = ensureSentencePractice(available, learned);
+    if (!prepared) return "";
+    const { exercise, tiles, selectedTiles, answerFlat, wrongIndexes, complete, awarded } = prepared;
+    const selectedSet = new Set(state.progress.sentencePractice.selected);
+    const result = state.progress.sentencePractice.result || {};
+    const statusClass = state.progress.sentencePractice.checked ? (complete ? " is-success" : " is-error") : "";
+    return `
+      <article class="sentence-practice${statusClass}" aria-live="polite">
+        <div class="section-head sentence-head">
+          <div>
+            <h2>${escapeHtml(labels.title)}</h2>
+            <p>${escapeHtml(labels.subtitle.replace("{learned}", learned.length).replace("{total}", state.cards.length))}</p>
+          </div>
+          <div class="tag-row">
+            <span class="pill">${escapeHtml(exercise.jlpt)}</span>
+            <span class="pill">${escapeHtml(labels.progress.replace("{done}", Object.keys(state.progress.sentencePractice.completed || {}).length).replace("{total}", available.length))}</span>
+          </div>
+        </div>
+        <div class="sentence-card">
+          <div class="sentence-line">${renderSentenceLine(exercise, selectedTiles, wrongIndexes)}</div>
+          <p class="sentence-reading">${escapeHtml(exercise.reading || "")}</p>
+          <p class="sentence-translation">${escapeHtml(localizedSentenceTranslation(exercise))}</p>
+        </div>
+        <div class="sentence-tiles">
+          ${tiles.map((tile, index) => {
+            const used = selectedSet.has(index);
+            const wrong = wrongIndexes.includes(state.progress.sentencePractice.selected.indexOf(index));
+            return `
+              <button class="sentence-tile ${used ? "is-used" : ""} ${wrong ? "is-wrong" : ""}" type="button" data-action="insert-sentence-tile" data-index="${index}" ${used || complete ? "disabled" : ""}>
+                <span>${escapeHtml(tile.reading)}</span>
+                <strong>${escapeHtml(tile.kanji)}</strong>
+              </button>
+            `;
+          }).join("")}
+        </div>
+        <div class="sentence-feedback">
+          ${escapeHtml(result.message || labels.tip.replace("{count}", answerFlat.length))}
+          ${complete && !awarded ? `<small>${escapeHtml(labels.completedBefore)}</small>` : ""}
+        </div>
+        <div class="actions sentence-actions">
+          <button class="btn primary" type="button" data-action="check-sentence">${escapeHtml(labels.check)}</button>
+          <button class="btn" type="button" data-action="undo-sentence-tile" ${!state.progress.sentencePractice.selected.length || complete ? "disabled" : ""}>${escapeHtml(labels.undo)}</button>
+          <button class="btn" type="button" data-action="clear-sentence" ${!state.progress.sentencePractice.selected.length || complete ? "disabled" : ""}>${escapeHtml(labels.clear)}</button>
+          <button class="btn ghost" type="button" data-action="next-sentence">${escapeHtml(labels.next)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function sentencePracticeLabels() {
+    return lang() === "ru"
+      ? {
+          title: "Практика предложений",
+          subtitle: "Только из изученных кандзи: {learned}/{total}",
+          progress: "{done}/{total} готово",
+          noLearned: "Сначала изучи несколько кандзи в уроках или повторении. После этого появятся предложения.",
+          notEnough: "Изучено {count} кандзи. Для упражнения нужно минимум 4 изученных кандзи, чтобы собрать варианты.",
+          noExercise: "Изученные кандзи пока не складываются в доступные предложения. Продолжай уроки, и блок откроется.",
+          tip: "Заполни {count} пропуск(а) плитками по порядку.",
+          check: "Проверить",
+          clear: "Очистить",
+          next: "Следующее",
+          undo: "Убрать",
+          completedBefore: "Награда за это предложение уже получена.",
+          fillAll: "Заполни все пропуски перед проверкой.",
+          correct: "Верно. Предложение собрано правильно.",
+          wrong: "Проверь красные места и попробуй ещё раз.",
+          full: "Все пропуски уже заполнены.",
+          inserted: "Плитка вставлена.",
+          removed: "Последняя плитка убрана."
+        }
+      : {
+          title: "Sentence practice",
+          subtitle: "Only learned kanji: {learned}/{total}",
+          progress: "{done}/{total} done",
+          noLearned: "Study a few kanji first. Sentence practice will unlock after that.",
+          notEnough: "{count} kanji learned. You need at least 4 learned kanji for tile choices.",
+          noExercise: "Your learned kanji do not form an available sentence yet. Continue lessons to unlock this block.",
+          tip: "Fill {count} blank slot(s) with tiles in order.",
+          check: "Check",
+          clear: "Clear",
+          next: "Next",
+          undo: "Undo",
+          completedBefore: "Reward for this sentence was already claimed.",
+          fillAll: "Fill every blank before checking.",
+          correct: "Correct. The sentence is complete.",
+          wrong: "Check the red slots and try again.",
+          full: "All blank slots are already filled.",
+          inserted: "Tile inserted.",
+          removed: "Last tile removed."
+        };
+  }
+
+  function localizedSentenceTranslation(exercise) {
+    return lang() === "en" ? exercise.translationEn || exercise.translationRu || "" : exercise.translationRu || exercise.translationEn || "";
+  }
+
+  function renderSentenceLine(exercise, selectedTiles, wrongIndexes) {
+    const blanks = exercise.blanks || [];
+    const parts = String(exercise.sentence || "").split("___");
+    let selectedOffset = 0;
+    return parts.map((part, index) => {
+      const blank = blanks[index];
+      if (!blank) return escapeHtml(part);
+      const slots = blank.answer || [];
+      const slotHtml = slots.map((_, slotIndex) => {
+        const globalIndex = selectedOffset + slotIndex;
+        const tile = selectedTiles[globalIndex];
+        const wrong = wrongIndexes.includes(globalIndex);
+        return `<span class="sentence-slot ${tile ? "is-filled" : ""} ${wrong ? "is-wrong" : ""}">${tile ? escapeHtml(tile.kanji) : ""}</span>`;
+      }).join("");
+      selectedOffset += slots.length;
+      return `${escapeHtml(part)}<span class="sentence-blank">${slotHtml}</span>`;
+    }).join("");
+  }
+
+  function ensureSentencePractice(available = getAvailableSentenceExercises(), learned = getLearnedSentenceCards()) {
+    const practice = sentencePracticeProgress();
+    const validIds = new Set(available.map((exercise) => exercise.id));
+    if (!validIds.has(practice.activeId)) resetSentencePractice(chooseSentenceExercise(available)?.id || null);
+    const exercise = available.find((item) => item.id === state.progress.sentencePractice.activeId) || available[0];
+    if (!exercise) return null;
+
+    const answerFlat = flatSentenceAnswer(exercise);
+    if (!state.progress.sentencePractice.tileKeys?.length) {
+      state.progress.sentencePractice.tileKeys = buildSentenceTiles(exercise, learned).map(sentenceTileKey);
+    }
+
+    let tiles = state.progress.sentencePractice.tileKeys.map(parseSentenceTileKey).filter(Boolean);
+    const hasEveryAnswer = () => answerFlat.every((answer) => tiles.some((tile) => tile.kanji === answer.kanji));
+    if (tiles.length < Math.max(4, answerFlat.length) || !hasEveryAnswer()) {
+      tiles = buildSentenceTiles(exercise, learned);
+      state.progress.sentencePractice.tileKeys = tiles.map(sentenceTileKey);
+      state.progress.sentencePractice.selected = [];
+      state.progress.sentencePractice.checked = false;
+      state.progress.sentencePractice.result = null;
+    }
+
+    state.progress.sentencePractice.selected = (state.progress.sentencePractice.selected || [])
+      .filter((index, position, items) => Number.isInteger(index) && index >= 0 && index < tiles.length && items.indexOf(index) === position)
+      .slice(0, answerFlat.length);
+
+    const selectedTiles = state.progress.sentencePractice.selected.map((index) => tiles[index]).filter(Boolean);
+    const wrongIndexes = state.progress.sentencePractice.checked && state.progress.sentencePractice.result
+      ? state.progress.sentencePractice.result.wrongIndexes || []
+      : [];
+
+    return {
+      exercise,
+      tiles,
+      selectedTiles,
+      answerFlat,
+      wrongIndexes,
+      complete: Boolean(state.progress.sentencePractice.checked && state.progress.sentencePractice.result?.correct),
+      awarded: Boolean(state.progress.sentencePractice.completed?.[exercise.id])
+    };
+  }
+
+  function sentencePracticeProgress() {
+    state.progress.sentencePractice = mergeSentencePractice(defaultProgress().sentencePractice, state.progress.sentencePractice || {});
+    return state.progress.sentencePractice;
+  }
+
+  function resetSentencePractice(activeId) {
+    state.progress.sentencePractice = {
+      ...sentencePracticeProgress(),
+      activeId,
+      selected: [],
+      checked: false,
+      result: null,
+      tileKeys: []
+    };
+    const exercise = state.sentenceExercises.find((item) => item.id === activeId);
+    if (exercise) rememberSentenceExercise(exercise);
+  }
+
+  function getLearnedSentenceCards() {
+    return state.cards.filter((card) => {
+      const lesson = state.lessons.find((item) => item.id === card.lessonId);
+      if (lesson && !isLessonUnlocked(lesson)) return false;
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" || progress.reviewCount > 0 || progress.lastReview || state.progress.lessonCompletions[card.lessonId];
+    });
+  }
+
+  function getAvailableSentenceExercises(learned = getLearnedSentenceCards()) {
+    const learnedKanji = new Set(learned.map((card) => card.kanji));
+    return state.sentenceExercises.filter((exercise) => {
+      const answer = flatSentenceAnswer(exercise);
+      if (!answer.length || answer.some((item) => !learnedKanji.has(item.kanji))) return false;
+      return buildSentenceTiles(exercise, learned).length >= Math.max(4, answer.length);
+    });
+  }
+
+  function flatSentenceAnswer(exercise) {
+    return (exercise.blanks || []).flatMap((blank) => (blank.answer || []).map((kanji, index) => ({
+      kanji,
+      reading: blank.reading?.[index] || ""
+    })));
+  }
+
+  function sentenceAnswerKey(exercise) {
+    return flatSentenceAnswer(exercise).map((item) => item.kanji).join("");
+  }
+
+  function buildSentenceTiles(exercise, learned) {
+    const answer = flatSentenceAnswer(exercise);
+    const answerKanji = new Set(answer.map((item) => item.kanji));
+    const learnedKanji = new Set(learned.map((card) => card.kanji));
+    const preferred = new Map();
+    [...(exercise.tiles || []), ...answer].forEach((tile) => {
+      if (tile?.kanji && tile?.reading) preferred.set(tile.kanji, tile.reading);
+    });
+    const answerTiles = answer.map((tile) => ({ kanji: tile.kanji, reading: tile.reading || preferred.get(tile.kanji) || sentenceReadingFromCard(tile.kanji) }));
+    const exerciseDistractors = (exercise.tiles || [])
+      .filter((tile) => tile?.kanji && !answerKanji.has(tile.kanji) && learnedKanji.has(tile.kanji))
+      .map((tile) => ({ kanji: tile.kanji, reading: tile.reading || sentenceReadingFromCard(tile.kanji) }))
+      .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index);
+    const learnedDistractors = learned
+      .filter((card) => card.kanji && !answerKanji.has(card.kanji))
+      .map((card) => ({ kanji: card.kanji, reading: preferred.get(card.kanji) || sentenceReadingFromCard(card.kanji, card) }))
+      .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index)
+      .sort((a, b) => stableHash(`${exercise.id}:${a.kanji}`) - stableHash(`${exercise.id}:${b.kanji}`));
+    const distractors = [...exerciseDistractors, ...learnedDistractors]
+      .filter((tile) => !answerKanji.has(tile.kanji))
+      .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index);
+    const targetCount = Math.max(4, answerTiles.length);
+    return shuffleStable([...answerTiles, ...distractors.slice(0, targetCount - answerTiles.length)], exercise.id);
+  }
+
+  function sentenceReadingFromCard(kanji, card = state.cards.find((item) => item.kanji === kanji)) {
+    const reading = card?.onyomi || card?.kunyomi || card?.hiragana || "";
+    return String(reading).split("/")[0].trim() || "かな";
+  }
+
+  function sentenceTileKey(tile) {
+    return `${tile.kanji}\t${tile.reading || ""}`;
+  }
+
+  function parseSentenceTileKey(key) {
+    const [kanji, reading] = String(key || "").split("\t");
+    return kanji ? { kanji, reading: reading || sentenceReadingFromCard(kanji) } : null;
+  }
+
+  function insertSentenceTile(index) {
+    const prepared = ensureSentencePractice();
+    if (!prepared || !Number.isInteger(index)) return;
+    const labels = sentencePracticeLabels();
+    const practice = state.progress.sentencePractice;
+    if (practice.result?.correct || practice.selected.includes(index)) return;
+    if (practice.selected.length >= prepared.answerFlat.length) {
+      toast(labels.full);
+      return;
+    }
+    practice.selected.push(index);
+    practice.checked = false;
+    practice.result = { correct: false, message: labels.inserted, wrongIndexes: [] };
+    saveProgress();
+    render();
+  }
+
+  function undoSentenceTile() {
+    const practice = sentencePracticeProgress();
+    if (!practice.selected.length || practice.result?.correct) return;
+    practice.selected.pop();
+    practice.checked = false;
+    practice.result = { correct: false, message: sentencePracticeLabels().removed, wrongIndexes: [] };
+    saveProgress();
+    render();
+  }
+
+  function clearSentencePractice() {
+    const practice = sentencePracticeProgress();
+    if (practice.result?.correct) return;
+    practice.selected = [];
+    practice.checked = false;
+    practice.result = null;
+    saveProgress();
+    render();
+  }
+
+  function checkSentencePractice() {
+    const prepared = ensureSentencePractice();
+    if (!prepared) return;
+    const labels = sentencePracticeLabels();
+    const practice = state.progress.sentencePractice;
+    if (practice.selected.length < prepared.answerFlat.length) {
+      practice.checked = true;
+      practice.result = { correct: false, message: labels.fillAll, wrongIndexes: [] };
+      saveProgress();
+      render();
+      return;
+    }
+
+    const wrongIndexes = prepared.answerFlat
+      .map((answer, index) => prepared.selectedTiles[index]?.kanji === answer.kanji ? -1 : index)
+      .filter((index) => index >= 0);
+    const correct = wrongIndexes.length === 0;
+    practice.checked = true;
+    practice.attempts = (practice.attempts || 0) + 1;
+    practice.result = {
+      correct,
+      wrongIndexes,
+      message: correct ? labels.correct : labels.wrong
+    };
+
+    if (correct) {
+      awardSentencePractice(prepared.exercise);
+      playTone("ok");
+    } else {
+      state.progress.totalWrong += 1;
+      state.progress.correctCombo = 0;
+      const today = todayStats();
+      today.mistakes += 1;
+      state.progress.daily[todayKey()] = today;
+      playTone("again");
+    }
+
+    saveProgress();
+    render();
+  }
+
+  function awardSentencePractice(exercise) {
+    const practice = sentencePracticeProgress();
+    if (practice.completed[exercise.id]) return;
+    const rewards = state.rewards?.rewards || {};
+    const xp = rewards.sentencePracticeXp || sentenceRewardFallback.xp;
+    const coins = rewards.sentencePracticeCoins || sentenceRewardFallback.coins;
+    practice.completed[exercise.id] = new Date().toISOString();
+    state.progress.totalCorrect += 1;
+    state.progress.correctCombo += 1;
+    state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
+    const today = todayStats();
+    today.reviews += 1;
+    today.minutes = round((today.minutes || 0) + 0.8, 1);
+    state.progress.daily[todayKey()] = today;
+    addReward(xp, coins, `sentence:${exercise.id}`);
+    updateStreak();
+    checkDailyGoal();
+    evaluateAchievements();
+  }
+
+  function nextSentencePractice() {
+    const learned = getLearnedSentenceCards();
+    const available = getAvailableSentenceExercises(learned);
+    if (!available.length) return;
+    const currentId = state.progress.sentencePractice?.activeId;
+    const current = available.find((exercise) => exercise.id === currentId);
+    if (current) rememberSentenceExercise(current);
+    const next = chooseSentenceExercise(available, { excludeCurrent: true, preferUncompleted: true });
+    resetSentencePractice(next.id);
+    state.progress.sentencePractice.tileKeys = buildSentenceTiles(next, learned).map(sentenceTileKey);
+    saveProgress();
+    render();
+  }
+
+  function chooseSentenceExercise(available, options = {}) {
+    if (!available.length) return null;
+    const practice = sentencePracticeProgress();
+    const currentId = practice.activeId;
+    const recentIds = new Set(practice.recentIds || []);
+    const recentAnswers = new Set(practice.recentAnswers || []);
+    const isNotCurrent = (exercise) => !options.excludeCurrent || available.length === 1 || exercise.id !== currentId;
+    const isUncompleted = (exercise) => !options.preferUncompleted || !practice.completed?.[exercise.id];
+    const hasFreshAnswer = (exercise) => !recentAnswers.has(sentenceAnswerKey(exercise));
+    const hasFreshId = (exercise) => !recentIds.has(exercise.id);
+    const pools = [
+      available.filter(isNotCurrent).filter(isUncompleted).filter(hasFreshAnswer).filter(hasFreshId),
+      available.filter(isNotCurrent).filter(isUncompleted).filter(hasFreshAnswer),
+      available.filter(isNotCurrent).filter(hasFreshAnswer).filter(hasFreshId),
+      available.filter(isNotCurrent).filter(hasFreshId),
+      available.filter(isNotCurrent),
+      available
+    ];
+    const pool = pools.find((items) => items.length) || available;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function rememberSentenceExercise(exercise) {
+    const practice = sentencePracticeProgress();
+    const answerKey = sentenceAnswerKey(exercise);
+    practice.recentIds = [exercise.id, ...(practice.recentIds || []).filter((id) => id !== exercise.id)].slice(0, 14);
+    practice.recentAnswers = [answerKey, ...(practice.recentAnswers || []).filter((key) => key !== answerKey)].slice(0, 8);
+  }
+
+  function stableHash(value) {
+    return String(value).split("").reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0) >>> 0;
+  }
+
+  function shuffleStable(items, seed) {
+    return [...items].sort((a, b) => stableHash(`${seed}:${a.kanji}:${a.reading}`) - stableHash(`${seed}:${b.kanji}:${b.reading}`));
   }
 
   function renderKanjiAudioButton(card) {
@@ -1031,6 +1556,7 @@
             <h1>${escapeHtml(t("stats"))}</h1>
             <p>${escapeHtml(t("xp"))} · ${escapeHtml(t("level"))} · ${escapeHtml(t("coins"))}</p>
           </div>
+          <button class="btn primary" type="button" data-action="route" data-route="achievements">◐ ${escapeHtml(t("achievements"))}</button>
         </div>
         <div class="metric-grid">
           ${renderMetric(t("xp"), state.progress.xp, `${t("level")} ${state.progress.level}`, getLevelInfo().percent)}
@@ -1061,25 +1587,118 @@
     `;
   }
 
+  function achievementList() {
+    return state.achievements?.length ? state.achievements : state.rewards?.achievements || [];
+  }
+
+  function achievementCategoryList() {
+    if (state.achievementCategories?.length) return state.achievementCategories;
+    const ids = [...new Set(achievementList().map((item) => item.category || "learning"))];
+    return ids.map((id) => ({ id, title: { ru: id, en: id }, icon: "moon" }));
+  }
+
+  function achievementTitle(item) {
+    return localized(item.title || item.name || { ru: item.id, en: item.id });
+  }
+
+  function achievementDescription(item) {
+    return localized(item.description || {});
+  }
+
+  function achievementIcon(icon) {
+    const icons = {
+      moon: "月",
+      book: "書",
+      memory: "記",
+      flame: "火",
+      star: "星",
+      brush: "筆",
+      text: "文",
+      lock: "鍵",
+      eye: "眼"
+    };
+    return icons[icon] || "◆";
+  }
+
   function renderAchievementsPreview() {
+    const items = achievementList();
     return `
       <div class="section-head">
-        <div><h2>${escapeHtml(t("achievements"))}</h2><p>${unlockedAchievementCount()}/${state.rewards.achievements.length}</p></div>
+        <div><h2>${escapeHtml(t("achievements"))}</h2><p>${unlockedAchievementCount()}/${items.length}</p></div>
+        <button class="btn ghost" type="button" data-action="route" data-route="achievements">${escapeHtml(lang() === "ru" ? "Все" : "All")}</button>
       </div>
-      <div class="achievement-grid">${state.rewards.achievements.slice(0, 4).map(renderAchievement).join("")}</div>
+      <div class="achievement-grid">${items.slice(0, 4).map(renderAchievement).join("")}</div>
     `;
   }
 
   function renderAchievementsList() {
-    return `<h3>${escapeHtml(t("achievements"))}</h3><div class="achievement-grid compact">${state.rewards.achievements.map(renderAchievement).join("")}</div>`;
+    return `<h3>${escapeHtml(t("achievements"))}</h3><div class="achievement-grid compact">${achievementList().slice(0, 8).map(renderAchievement).join("")}</div>`;
   }
 
-  function renderAchievement(item) {
-    const unlocked = Boolean(state.progress.achievements[item.id]);
+  function renderAchievementsPage() {
+    const items = achievementList();
+    const unlocked = unlockedAchievementCount();
+    const totalRewards = items.reduce((sum, item) => ({
+      xp: sum.xp + (item.rewardXp || 0),
+      coins: sum.coins + (item.rewardFragments || 0)
+    }), { xp: 0, coins: 0 });
     return `
-      <div class="achievement ${unlocked ? "is-unlocked" : ""}">
-        <strong>${unlocked ? "◆" : "◇"} ${escapeHtml(localized(item.name))}</strong>
-        <small>${escapeHtml(localized(item.description))}</small>
+      <section class="page achievements-page">
+        <div class="section-head">
+          <div>
+            <h1>${escapeHtml(t("achievements"))}</h1>
+            <p>${escapeHtml(lang() === "ru" ? "Лунные цели, секреты Евы и Леи, награды за прогресс." : "Moon goals, Eva and Leya secrets, and progress rewards.")}</p>
+          </div>
+          <button class="btn" type="button" data-action="route" data-route="stats">▥ ${escapeHtml(t("stats"))}</button>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(t("achievements"), `${unlocked}/${items.length}`, lang() === "ru" ? "открыто" : "unlocked", progressWidth(unlocked, items.length))}
+          ${renderMetric("XP", totalRewards.xp, lang() === "ru" ? "в наградах" : "in rewards", progressWidth(unlocked, items.length))}
+          ${renderMetric(t("coins"), totalRewards.coins, lang() === "ru" ? "в наградах" : "in rewards", progressWidth(unlocked, items.length))}
+          ${renderMetric(lang() === "ru" ? "Секреты" : "Secrets", `${items.filter((item) => item.secret && isAchievementUnlocked(item.id)).length}/${items.filter((item) => item.secret).length}`, "Eva · Leya", progressWidth(items.filter((item) => item.secret && isAchievementUnlocked(item.id)).length, Math.max(1, items.filter((item) => item.secret).length)))}
+        </div>
+        <div class="achievement-category-list">
+          ${achievementCategoryList().map((category) => {
+            const categoryItems = items.filter((item) => item.category === category.id);
+            if (!categoryItems.length) return "";
+            const done = categoryItems.filter((item) => isAchievementUnlocked(item.id)).length;
+            return `
+              <section class="achievement-category">
+                <div class="section-head compact-head">
+                  <div>
+                    <h2>${achievementIcon(category.icon)} ${escapeHtml(localized(category.title))}</h2>
+                    <p>${done}/${categoryItems.length}</p>
+                  </div>
+                  <span class="pill">${progressWidth(done, categoryItems.length)}%</span>
+                </div>
+                <div class="achievement-grid expanded">${categoryItems.map((item) => renderAchievement(item, true)).join("")}</div>
+              </section>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderAchievement(item, detailed = false) {
+    const unlocked = isAchievementUnlocked(item.id);
+    const current = achievementValue(item);
+    const target = Math.max(1, Number(item.target || 1));
+    const percent = progressWidth(current, target);
+    const displayCurrent = Math.min(current, target);
+    const title = item.secret && !unlocked && !detailed
+      ? (lang() === "ru" ? "Секретное достижение" : "Secret achievement")
+      : achievementTitle(item);
+    const description = item.secret && !unlocked && !detailed
+      ? (lang() === "ru" ? "Откроется при необычном действии." : "Unlocked by an unusual action.")
+      : achievementDescription(item);
+    return `
+      <div class="achievement ${unlocked ? "is-unlocked" : ""} ${item.secret ? "is-secret" : ""}">
+        <span class="achievement-icon">${achievementIcon(item.icon)}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <small>${escapeHtml(description)}</small>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${displayCurrent}/${target}`)}"><i style="width:${percent}%"></i></div>
+        <small class="achievement-reward">+${item.rewardXp || 0} XP · +${item.rewardFragments || 0} ${escapeHtml(t("coins"))}</small>
       </div>
     `;
   }
@@ -1119,13 +1738,15 @@
     if (!state.rewardModal) return "";
     const reward = state.rewardModal;
     const isLevel = reward.type === "level";
+    const isAchievement = reward.type === "achievement";
     const message = isLevel
       ? `${t("level")} ${state.progress.level} - ${state.progress.xp} XP - ${state.progress.moonFragments} ${t("coins")}`
       : reward.message;
     return `
       <div class="reward-backdrop">
-        <article class="reward-modal">
+        <article class="reward-modal ${isAchievement ? "is-achievement" : ""}">
           ${isLevel ? `<img class="reward-logo" src="assets/logo.png" alt="Flash Kanji" />` : ""}
+          ${isAchievement ? `<div class="reward-achievement-icon">${achievementIcon(reward.icon)}</div>` : ""}
           ${renderMascot(reward.mascot || "eva", reward.mood || "happy", reward.dialog || "achievement", "reward-mascot")}
           <h2>${escapeHtml(reward.title)}</h2>
           <p>${escapeHtml(message)}</p>
@@ -1143,10 +1764,32 @@
     `;
   }
 
+  function renderPwaInstallBanner() {
+    if (!canShowPwaInstallPrompt()) return "";
+    if (state.detailCardId || state.rewardModal) return "";
+    const copy = pwaInstallCopy();
+    const isInstruction = !deferredPwaInstallPrompt && isIosSafari();
+    return `
+      <aside class="pwa-install-banner" role="dialog" aria-modal="false" aria-label="${escapeAttr(copy.title)}">
+        <div class="pwa-install-logo"><img src="assets/logo.png" alt="Flash Kanji" /></div>
+        <div class="pwa-install-copy">
+          <span class="pill">${escapeHtml(copy.badge)}</span>
+          <h2>${escapeHtml(copy.title)}</h2>
+          <p>${escapeHtml(copy.description)}</p>
+          ${isInstruction ? `<p class="pwa-install-instruction">${escapeHtml(copy.iosInstruction)}</p>` : ""}
+        </div>
+        <div class="pwa-install-actions">
+          <button class="btn primary" type="button" data-action="pwa-install">${escapeHtml(copy.install)}</button>
+          <button class="btn ghost" type="button" data-action="pwa-later">${escapeHtml(copy.later)}</button>
+        </div>
+      </aside>
+    `;
+  }
+
   function renderMascotPanel(character, mood, category) {
     const mascot = getMascot(character);
     return `
-      <article class="sidekick mascot-${character} mood-${mood}">
+      <article class="sidekick mascot-${character} mood-${mood}" data-action="mascot-click" data-character="${escapeAttr(character)}">
         <img src="${escapeAttr(mascot.sprites[mood] || Object.values(mascot.sprites)[0])}" alt="${escapeAttr(localized(mascot.name))}" />
         <div><strong>${escapeHtml(localized(mascot.name))}</strong><p>${escapeHtml(dialogueText(character, category))}</p></div>
       </article>
@@ -1156,7 +1799,7 @@
   function renderMascot(character, mood, category, className) {
     const mascot = getMascot(character);
     return `
-      <div class="${className} mascot-${character} mood-${mood}">
+      <div class="${className} mascot-${character} mood-${mood}" data-action="mascot-click" data-character="${escapeAttr(character)}">
         <img src="${escapeAttr(mascot.sprites[mood] || Object.values(mascot.sprites)[0])}" alt="${escapeAttr(localized(mascot.name))}" />
         <div class="speech">${escapeHtml(dialogueText(character, category))}</div>
       </div>
@@ -1299,6 +1942,36 @@
     state.progress.daily[key] = today;
   }
 
+  function recordAppOpen() {
+    state.progress.appOpens = Number(state.progress.appOpens || 0) + 1;
+    const hour = new Date().getHours();
+    if (hour >= 22 || hour < 5) state.progress.secrets.nightVisit = true;
+  }
+
+  function handleMascotClick(character) {
+    if (character === "eva") {
+      state.progress.secrets.evaClicks = Number(state.progress.secrets.evaClicks || 0) + 1;
+      toast(dialogueText("eva", "welcome"));
+      evaluateAchievements();
+      saveProgress();
+      render();
+      return;
+    }
+    if (character === "leya") toast(dialogueText("leya", "combo"));
+  }
+
+  function recordWritingPracticeComplete() {
+    if (writingSession.completed) return;
+    writingSession.completed = true;
+    state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+    if (writingSession.cardId) {
+      state.progress.writingPractice.cards[writingSession.cardId] = (state.progress.writingPractice.cards[writingSession.cardId] || 0) + 1;
+    }
+    const unlocked = evaluateAchievements();
+    saveProgress();
+    if (unlocked) render();
+  }
+
   function claimDailyBonus() {
     const key = todayKey();
     if (state.progress.dailyBonuses[key]) return;
@@ -1316,41 +1989,64 @@
   }
 
   function evaluateAchievements() {
-    if (!state.rewards?.achievements) return;
-    state.rewards.achievements.forEach((achievement) => {
-      if (state.progress.achievements[achievement.id]) return;
+    if (!achievementList().length) return 0;
+    let unlockedCount = 0;
+    achievementList().forEach((achievement) => {
+      if (isAchievementUnlocked(achievement.id)) return;
       if (!achievementMet(achievement)) return;
-      state.progress.achievements[achievement.id] = new Date().toISOString();
-      addReward(achievement.xp || 0, achievement.coins || 0, `achievement:${achievement.id}`);
+      unlockedCount += 1;
+      const xp = achievement.rewardXp || 0;
+      const coins = achievement.rewardFragments || 0;
+      state.progress.achievements[achievement.id] = {
+        unlockedAt: new Date().toISOString(),
+        rewardXp: xp,
+        rewardFragments: coins
+      };
       queueReward({
-        title: localized(achievement.name),
-        message: dialogueText("eva", "achievement"),
-        xp: achievement.xp || 0,
-        coins: achievement.coins || 0,
+        type: "achievement",
+        title: achievementTitle(achievement),
+        message: achievementDescription(achievement),
+        xp,
+        coins,
+        icon: achievement.icon,
         mascot: "eva",
         mood: "happy",
         dialog: "achievement"
       });
+      addReward(xp, coins, `achievement:${achievement.id}`);
     });
+    return unlockedCount;
   }
 
   function achievementMet(achievement) {
-    if (achievement.kind === "lessonComplete") return Object.keys(state.progress.lessonCompletions).length >= achievement.target;
-    if (achievement.kind === "correct") return state.progress.totalCorrect >= achievement.target;
-    if (achievement.kind === "learned") return getSummary().learned >= achievement.target;
-    if (achievement.kind === "reviews") return totalReviews() >= achievement.target;
-    if (achievement.kind === "streak") return state.progress.streak.current >= achievement.target;
+    return achievementValue(achievement) >= Number(achievement.target || 1);
+  }
+
+  function achievementValue(achievement) {
+    if (achievement.kind === "lessonComplete") return Object.keys(state.progress.lessonCompletions).length;
+    if (achievement.kind === "correct") return state.progress.totalCorrect;
+    if (achievement.kind === "learned") return getSummary().learned;
+    if (achievement.kind === "reviews") return totalReviews();
+    if (achievement.kind === "streak") return Math.max(state.progress.streak.current || 0, state.progress.streak.best || 0);
+    if (achievement.kind === "level") return state.progress.level || 1;
+    if (achievement.kind === "moonFragments") return state.progress.totalMoonFragmentsEarned || 0;
+    if (achievement.kind === "writing") return state.progress.writingPractice?.completed || 0;
+    if (achievement.kind === "sentence") return Object.keys(state.progress.sentencePractice?.completed || {}).length;
+    if (achievement.kind === "evaClicks") return state.progress.secrets?.evaClicks || 0;
+    if (achievement.kind === "nightVisit") return state.progress.secrets?.nightVisit ? 1 : 0;
+    if (achievement.kind === "appOpens") return state.progress.appOpens || 0;
+    if (achievement.kind === "shopComplete") return state.rewards?.shop?.length && state.rewards.shop.every((item) => state.progress.shop.owned.includes(item.id)) ? 1 : 0;
     if (achievement.kind === "jlpt") {
       const cards = state.cards.filter((card) => card.jlpt === achievement.jlpt);
-      return cards.length > 0 && cards.every((card) => getCardProgress(card.id).state === "Mastered");
+      return cards.length > 0 && cards.every((card) => getCardProgress(card.id).state === "Mastered") ? 1 : 0;
     }
-    return false;
+    return 0;
   }
 
   function queueReward(reward) {
     if (!state.rewardModal) {
       state.rewardModal = reward;
-      showConfetti();
+      showRewardFeedback(reward);
       return;
     }
     if (reward.type === "level") {
@@ -1360,10 +2056,16 @@
     state.rewardQueue.push(reward);
   }
 
+  function showRewardFeedback(reward) {
+    showConfetti();
+    if (reward?.type === "achievement") playAchievementSound();
+  }
+
   function addReward(xp, coins, reason = "reward") {
     const previousLevel = state.progress.level || calculateLevel(state.progress.xp);
     state.progress.xp += xp;
     state.progress.moonFragments += coins;
+    if (coins > 0) state.progress.totalMoonFragmentsEarned = Number(state.progress.totalMoonFragmentsEarned || 0) + coins;
     state.progress.level = calculateLevel(state.progress.xp);
     if (xp || coins) {
       state.progress.transactions.unshift({
@@ -1507,6 +2209,7 @@
     writingSession.currentStroke = [];
     writingSession.drawing = false;
     writingSession.activePointerId = null;
+    writingSession.completed = false;
   }
 
   function setupPracticeCanvas() {
@@ -1520,6 +2223,7 @@
       writingSession.drawing = true;
       writingSession.activePointerId = event.pointerId;
       writingSession.currentStroke = [canvasPoint(canvas, event)];
+      writingSession.completed = false;
       redrawPracticeCanvas();
     };
     const move = (event) => {
@@ -1595,6 +2299,7 @@
     writingSession.strokes = [];
     writingSession.currentStroke = [];
     writingSession.drawing = false;
+    writingSession.completed = false;
     redrawPracticeCanvas();
     updateWritingFeedback(evaluateWritingPractice(false));
   }
@@ -1602,6 +2307,7 @@
   function undoWritingStroke() {
     writingSession.strokes.pop();
     writingSession.currentStroke = [];
+    writingSession.completed = false;
     redrawPracticeCanvas();
     updateWritingFeedback(evaluateWritingPractice(false));
   }
@@ -1612,6 +2318,7 @@
     if (final) {
       playTone(result.success ? "good" : "again");
       toast(result.message);
+      if (result.success) recordWritingPracticeComplete();
     }
   }
 
@@ -2122,6 +2829,10 @@
     return Object.values(state.progress.cards).reduce((sum, progress) => sum + (progress.reviewCount || progress.reviews || 0), 0);
   }
 
+  function totalPositiveFragmentsFromHistory() {
+    return (state.progress.transactions || []).reduce((sum, item) => sum + Math.max(0, Number(item.coins || 0)), 0);
+  }
+
   function overallSuccessRate() {
     const total = state.progress.totalCorrect + state.progress.totalWrong;
     return total ? Math.round((state.progress.totalCorrect / total) * 100) : 0;
@@ -2451,7 +3162,7 @@
     const curve = state.rewards?.levelCurve || { baseXp: 100, growth: 1.35 };
     let level = 1;
     let remaining = xp;
-    while (remaining >= xpForLevel(level, curve) && level < 99) {
+    while (remaining >= xpForLevel(level, curve) && level < 100) {
       remaining -= xpForLevel(level, curve);
       level += 1;
     }
@@ -2462,7 +3173,7 @@
     const curve = state.rewards?.levelCurve || { baseXp: 100, growth: 1.35 };
     let level = 1;
     let remaining = state.progress.xp;
-    while (remaining >= xpForLevel(level, curve) && level < 99) {
+    while (remaining >= xpForLevel(level, curve) && level < 100) {
       remaining -= xpForLevel(level, curve);
       level += 1;
     }
@@ -2491,6 +3202,7 @@
     });
     state.progress.transactions = state.progress.transactions.slice(0, 80);
     state.progress.shop.owned.push(id);
+    evaluateAchievements();
     saveProgress();
     toast(localized(item.name));
     render();
@@ -2862,6 +3574,29 @@
     }
   }
 
+  function playAchievementSound() {
+    if (!state.progress.settings.sound) return;
+    try {
+      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioContext.currentTime;
+      [523.25, 659.25, 783.99].forEach((frequency, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
+        const start = now + index * 0.08;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.26);
+      });
+    } catch (error) {
+      console.warn("Achievement sound unavailable.", error);
+    }
+  }
+
   function showConfetti() {
     const wrap = document.createElement("div");
     wrap.className = "confetti";
@@ -2889,6 +3624,157 @@
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
     window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js").catch(console.warn));
+  }
+
+  function loadPwaInstallPromptState() {
+    const base = { declineCount: 0, nextShowAt: 0, neverShow: false, installed: false };
+    try {
+      const raw = localStorage.getItem(PWA_INSTALL_STORAGE_KEY);
+      if (!raw) return base;
+      const saved = JSON.parse(raw);
+      return {
+        ...base,
+        ...saved,
+        declineCount: Number(saved.declineCount || 0),
+        nextShowAt: Number(saved.nextShowAt || 0),
+        neverShow: Boolean(saved.neverShow),
+        installed: Boolean(saved.installed)
+      };
+    } catch (error) {
+      console.warn("PWA install prompt state reset.", error);
+      return base;
+    }
+  }
+
+  function savePwaInstallPromptState() {
+    try {
+      localStorage.setItem(PWA_INSTALL_STORAGE_KEY, JSON.stringify(state.pwaInstallPrompt));
+    } catch (error) {
+      console.warn("Cannot save PWA install prompt state.", error);
+    }
+  }
+
+  function handleBeforeInstallPrompt(event) {
+    event.preventDefault();
+    deferredPwaInstallPrompt = event;
+    if (state.progress && state.i18n) showPwaInstallBanner();
+  }
+
+  async function handlePwaInstallRequest() {
+    if (isPwaInstalled()) {
+      handlePwaInstallAccepted();
+      return;
+    }
+
+    if (!deferredPwaInstallPrompt) {
+      if (isIosSafari()) toast(pwaInstallCopy().iosInstruction);
+      return;
+    }
+
+    const promptEvent = deferredPwaInstallPrompt;
+    deferredPwaInstallPrompt = null;
+    try {
+      await promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      if (choice?.outcome === "accepted") {
+        handlePwaInstallAccepted();
+        return;
+      }
+      handlePwaInstallDeclined();
+    } catch (error) {
+      console.warn("PWA install prompt failed.", error);
+      handlePwaInstallDeclined();
+    }
+  }
+
+  function isPwaInstalled() {
+    const standaloneDisplay = ["standalone", "fullscreen", "minimal-ui"].some((mode) =>
+      window.matchMedia?.(`(display-mode: ${mode})`)?.matches
+    );
+    return standaloneDisplay || Reflect.get(navigator, "standalone") === true;
+  }
+
+  function canShowPwaInstallPrompt() {
+    const promptState = state.pwaInstallPrompt || loadPwaInstallPromptState();
+    if (isPwaInstalled() || promptState.installed || promptState.neverShow) return false;
+    if (Date.now() < Number(promptState.nextShowAt || 0)) return false;
+    return Boolean(deferredPwaInstallPrompt) || isIosSafari();
+  }
+
+  function showPwaInstallBanner() {
+    if (canShowPwaInstallPrompt()) render();
+  }
+
+  function handlePwaInstallAccepted() {
+    state.pwaInstallPrompt = {
+      ...loadPwaInstallPromptState(),
+      ...state.pwaInstallPrompt,
+      installed: true,
+      neverShow: true,
+      nextShowAt: 0
+    };
+    savePwaInstallPromptState();
+    if (state.progress && state.i18n) render();
+  }
+
+  function handlePwaInstallDeclined() {
+    const current = state.pwaInstallPrompt || loadPwaInstallPromptState();
+    const declineCount = Math.min(Number(current.declineCount || 0) + 1, 5);
+    state.pwaInstallPrompt = {
+      ...current,
+      declineCount,
+      nextShowAt: scheduleNextPwaPrompt(declineCount),
+      neverShow: declineCount >= 5,
+      installed: false
+    };
+    savePwaInstallPromptState();
+    render();
+  }
+
+  function scheduleNextPwaPrompt(declineCount) {
+    const hour = 60 * 60 * 1000;
+    const day = 24 * hour;
+    const delays = {
+      1: 12 * hour,
+      2: 48 * hour,
+      3: 7 * day,
+      4: 30 * day
+    };
+    return declineCount >= 5 ? 0 : Date.now() + (delays[declineCount] || 12 * hour);
+  }
+
+  function syncPwaInstallInstalledFlag() {
+    if (!isPwaInstalled() || state.pwaInstallPrompt.installed) return;
+    state.pwaInstallPrompt = { ...state.pwaInstallPrompt, installed: true, neverShow: true, nextShowAt: 0 };
+    savePwaInstallPromptState();
+  }
+
+  function isIosSafari() {
+    const ua = navigator.userAgent || "";
+    const isIos = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isSafari = /safari/i.test(ua) && !/(crios|fxios|edgios|opios|chrome|android)/i.test(ua);
+    return isIos && isSafari;
+  }
+
+  function pwaInstallCopy() {
+    if (lang() === "en") {
+      return {
+        badge: "Offline PWA",
+        title: "Install Flash Kanji on your home screen?",
+        description: "Your progress, lessons and reviews will open like a real app.",
+        iosInstruction: "Tap Share -> Add to Home Screen.",
+        install: "Install",
+        later: "Later"
+      };
+    }
+    return {
+      badge: "Offline PWA",
+      title: "Установить Flash Kanji на главный экран?",
+      description: "Так прогресс, уроки и повторения будут открываться как приложение.",
+      iosInstruction: "Нажмите Поделиться → На экран Домой.",
+      install: "Установить",
+      later: "Позже"
+    };
   }
 
   function cloneProgress(progress) {
@@ -2969,7 +3855,12 @@
   }
 
   function unlockedAchievementCount() {
-    return Object.keys(state.progress.achievements).length;
+    return achievementList().filter((item) => isAchievementUnlocked(item.id)).length;
+  }
+
+  function isAchievementUnlocked(id) {
+    const value = state.progress?.achievements?.[id];
+    return Boolean(value && (value === true || typeof value === "string" || value.unlockedAt || value.rewardXp !== undefined));
   }
 
   function escapeHtml(value) {

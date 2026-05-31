@@ -1,4 +1,4 @@
-const CACHE_NAME = "flash-kanji-cache-v15";
+const CACHE_NAME = "flash-kanji-cache-v20";
 
 const PRECACHE_URLS = [
   "./",
@@ -100,6 +100,7 @@ const PRECACHE_URLS = [
 
   "./data/lessons/translations.json",
   "./data/rewards.json",
+  "./data/sentences/index.json",
   "./data/vocabulary/index.json",
   "./data/achievements/index.json",
   "./data/monetization/catalog.json",

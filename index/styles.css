@@ -339,7 +339,8 @@ textarea:focus-visible {
   bottom: -8px;
   width: min(58vw, 300px);
   height: 330px;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .hero-mascot img {
@@ -507,6 +508,7 @@ textarea:focus-visible {
 .chart-panel,
 .empty-state,
 .study-card,
+.sentence-practice,
 .daily-lesson-card,
 .writing-card,
 .audio-panel {
@@ -522,6 +524,162 @@ textarea:focus-visible {
   align-items: center;
   margin: 12px 0 4px;
   padding: 14px;
+}
+
+.sentence-practice {
+  margin-top: 14px;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.sentence-practice.is-success {
+  border-color: color-mix(in srgb, var(--success), transparent 28%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--success), transparent 84%), transparent 50%),
+    var(--surface);
+}
+
+.sentence-practice.is-error {
+  border-color: color-mix(in srgb, var(--danger), transparent 30%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--danger), transparent 86%), transparent 50%),
+    var(--surface);
+}
+
+.sentence-head {
+  margin-top: 0;
+}
+
+.sentence-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, transparent 0 48%, color-mix(in srgb, var(--accent), transparent 82%) 48% 52%, transparent 52%),
+    color-mix(in srgb, var(--text), transparent 95%);
+}
+
+.sentence-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--kanji-font);
+  font-size: clamp(1.45rem, 7vw, 2.5rem);
+  line-height: 1.35;
+}
+
+.sentence-blank {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 50px;
+  padding: 5px;
+  border: 1px dashed color-mix(in srgb, var(--accent-2), transparent 24%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-2), transparent 91%);
+  vertical-align: middle;
+}
+
+.sentence-slot {
+  display: grid;
+  place-items: center;
+  width: clamp(42px, 11vw, 54px);
+  height: clamp(42px, 11vw, 54px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg), transparent 30%);
+  color: transparent;
+}
+
+.sentence-slot.is-filled {
+  color: var(--text);
+  background: var(--surface-2);
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--accent), transparent 20%);
+}
+
+.sentence-slot.is-wrong {
+  border-color: color-mix(in srgb, var(--danger), white 8%);
+  background: color-mix(in srgb, var(--danger), transparent 78%);
+}
+
+.sentence-reading,
+.sentence-translation {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sentence-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sentence-tile {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 30% 18%, color-mix(in srgb, var(--accent-2), transparent 70%), transparent 34%),
+    color-mix(in srgb, var(--surface-2), var(--accent) 7%);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.sentence-tile span {
+  color: var(--accent-2);
+  font-weight: 900;
+}
+
+.sentence-tile strong {
+  font-family: var(--kanji-font);
+  font-size: clamp(2.2rem, 13vw, 4.1rem);
+  line-height: 1;
+  text-shadow: 3px 3px 0 color-mix(in srgb, var(--accent), transparent 24%);
+}
+
+.sentence-tile:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-2);
+}
+
+.sentence-tile.is-used {
+  opacity: 0.46;
+}
+
+.sentence-tile.is-wrong {
+  border-color: color-mix(in srgb, var(--danger), white 10%);
+  background: color-mix(in srgb, var(--danger), transparent 78%);
+  opacity: 1;
+}
+
+.sentence-feedback {
+  display: grid;
+  gap: 4px;
+  min-height: 44px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text), transparent 95%);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sentence-feedback small {
+  color: var(--accent-2);
+}
+
+.sentence-actions {
+  margin-top: 10px;
 }
 
 .daily-lesson-card h2 {
@@ -852,6 +1010,7 @@ textarea:focus-visible {
   border-radius: 8px;
   background: var(--surface-3);
   box-shadow: 0 18px 42px var(--shadow);
+  cursor: pointer;
 }
 
 .sidekick img {
@@ -1191,6 +1350,10 @@ textarea:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.achievement-grid.expanded {
+  grid-template-columns: 1fr;
+}
+
 .achievement-grid.compact {
   grid-template-columns: 1fr;
 }
@@ -1207,14 +1370,108 @@ textarea:focus-visible {
   text-align: left;
 }
 
+.achievement {
+  position: relative;
+  overflow: hidden;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  opacity: 0.72;
+}
+
+.achievement::after {
+  content: "";
+  position: absolute;
+  inset: auto -20% -45% 25%;
+  height: 80%;
+  background: linear-gradient(135deg, transparent, color-mix(in srgb, var(--accent), transparent 78%));
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+
+.achievement strong,
+.achievement small,
+.achievement-progress {
+  position: relative;
+  z-index: 1;
+}
+
+.achievement strong,
+.achievement small,
+.achievement-progress,
+.achievement-reward {
+  grid-column: 2;
+}
+
+.achievement-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-row: 1 / span 4;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-2), transparent 88%);
+  color: var(--accent-2);
+  font-family: var(--kanji-font);
+  font-size: 1.35rem;
+}
+
 .achievement small,
 .shop-item small {
   color: var(--muted);
 }
 
 .achievement.is-unlocked {
+  opacity: 1;
   border-color: color-mix(in srgb, var(--accent-2), transparent 20%);
   background: color-mix(in srgb, var(--accent-2), transparent 86%);
+}
+
+.achievement.is-secret:not(.is-unlocked) {
+  border-style: dashed;
+}
+
+.achievement-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text), transparent 88%);
+}
+
+.achievement-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.achievement-reward {
+  color: var(--accent-2);
+  font-weight: 900;
+}
+
+.achievement-category-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.achievement-category {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 18px 42px var(--shadow);
+}
+
+.compact-head {
+  margin-top: 0;
+}
+
+.compact-head h2 {
+  font-size: clamp(1.25rem, 5vw, 2rem);
 }
 
 .shop-item {
@@ -1309,12 +1566,109 @@ textarea:focus-visible {
   font-weight: 900;
 }
 
+.reward-modal.is-achievement {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent-2), transparent 78%), transparent 52%),
+    linear-gradient(35deg, color-mix(in srgb, var(--accent), transparent 84%), transparent 62%),
+    var(--surface-2);
+}
+
+.reward-achievement-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 6px;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 30%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-2), transparent 82%);
+  color: var(--accent-2);
+  font-family: var(--kanji-font);
+  font-size: 2.1rem;
+  box-shadow: 0 0 34px color-mix(in srgb, var(--accent-2), transparent 74%);
+}
+
 .share-btn {
   width: 100%;
   margin: 4px 0 8px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent-2), #ffffff 10%), var(--accent));
   color: #111014;
+}
+
+.pwa-install-banner {
+  position: fixed;
+  right: 12px;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: min(calc(100% - 24px), 760px);
+  margin: 0 auto;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent), transparent 82%), transparent 58%),
+    color-mix(in srgb, var(--bg), transparent 5%);
+  box-shadow: 0 18px 54px var(--shadow);
+  backdrop-filter: blur(18px);
+  animation: modal-pop 0.18s ease both;
+}
+
+.pwa-install-logo {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  min-width: 78px;
+  min-height: 70px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-2), transparent 88%);
+}
+
+.pwa-install-logo img {
+  width: 64px;
+  max-height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(255, 225, 90, 0.18));
+}
+
+.pwa-install-copy {
+  min-width: 0;
+}
+
+.pwa-install-copy h2 {
+  margin: 5px 0 2px;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+  line-height: 1.15;
+}
+
+.pwa-install-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pwa-install-copy .pwa-install-instruction {
+  margin-top: 6px;
+  color: var(--accent-2);
+  font-weight: 800;
+}
+
+.pwa-install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pwa-install-actions .btn {
+  min-height: 42px;
+  white-space: nowrap;
 }
 
 .confetti {
@@ -1457,6 +1811,49 @@ textarea:focus-visible {
   font-size: 1.5rem;
 }
 
+@media (max-width: 620px) {
+  .pwa-install-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    padding: 10px;
+  }
+
+  .pwa-install-logo {
+    width: 62px;
+    min-width: 62px;
+    min-height: 62px;
+  }
+
+  .pwa-install-logo img {
+    width: 52px;
+  }
+
+  .pwa-install-copy h2 {
+    margin-top: 4px;
+    font-size: 1rem;
+  }
+
+  .pwa-install-copy p {
+    font-size: 0.84rem;
+  }
+
+  .pwa-install-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .pwa-install-actions .btn {
+    width: 100%;
+    min-width: 0;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}
+
 @media (max-width: 370px) {
   .app-main {
     padding-right: 10px;
@@ -1487,6 +1884,7 @@ textarea:focus-visible {
   .reading-row,
   .reading-check-row,
   .rating-grid,
+  .sentence-tiles,
   .writing-step-actions,
   .writing-practice-actions,
   .mini-stat-row,
@@ -1517,6 +1915,10 @@ textarea:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .sentence-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .filters {
     grid-template-columns: 2fr repeat(4, minmax(120px, 1fr));
     align-items: end;
@@ -1528,6 +1930,10 @@ textarea:focus-visible {
   }
 
   .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .achievement-grid.expanded {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
