@@ -569,6 +569,62 @@ textarea:focus-visible {
   padding: 14px;
 }
 
+.eva-room-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0 4px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 48%);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-2), transparent 84%), transparent 48%),
+    var(--surface);
+  box-shadow: 0 18px 42px var(--shadow);
+}
+
+.eva-room-entry::after {
+  position: absolute;
+  inset: auto -18px -34px auto;
+  width: 170px;
+  height: 170px;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-2), transparent 58%), transparent 68%);
+  content: "";
+  pointer-events: none;
+}
+
+.eva-room-entry-bg {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  aspect-ratio: 9 / 14;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.eva-room-entry-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eva-room-entry > div:not(.eva-room-entry-bg),
+.eva-room-entry .btn {
+  position: relative;
+  z-index: 1;
+}
+
+.eva-room-entry h2,
+.eva-room-entry p {
+  margin: 4px 0;
+}
+
 .sentence-practice {
   margin-top: 14px;
   padding: 14px;
@@ -591,6 +647,66 @@ textarea:focus-visible {
 
 .sentence-head {
   margin-top: 0;
+}
+
+.sentence-builder {
+  margin: 10px 0 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg), transparent 38%);
+}
+
+.sentence-builder summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sentence-builder summary small {
+  color: var(--accent-2);
+  font-size: 0.78rem;
+}
+
+.sentence-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sentence-builder-wide {
+  grid-column: 1 / -1;
+}
+
+.sentence-builder textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.sentence-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.sentence-builder-message {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sentence-builder-message.is-success {
+  color: var(--success);
+}
+
+.sentence-builder-message.is-error {
+  color: var(--danger);
 }
 
 .sentence-card {
@@ -1092,7 +1208,8 @@ textarea:focus-visible {
   gap: 5px;
 }
 
-.field label {
+.field label,
+.field > span {
   color: var(--muted);
   font-size: 0.74rem;
   font-weight: 800;
@@ -1101,7 +1218,8 @@ textarea:focus-visible {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   width: 100%;
   min-height: 42px;
   padding: 9px 10px;
@@ -1991,7 +2109,354 @@ textarea:focus-visible {
   font-size: 1.5rem;
 }
 
+.eva-room-page {
+  display: grid;
+  gap: 12px;
+  padding-bottom: calc(98px + env(safe-area-inset-bottom));
+}
+
+.eva-room-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+}
+
+.eva-room-currency {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 46%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-2), transparent 88%);
+}
+
+.eva-room-currency strong {
+  color: var(--accent-2);
+  font-size: 1.2rem;
+}
+
+.eva-room-currency small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.eva-vn-scene {
+  position: relative;
+  min-height: min(72svh, 760px);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #09090d;
+  box-shadow: 0 24px 70px var(--shadow);
+  isolation: isolate;
+}
+
+.eva-vn-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.46)),
+    var(--eva-bg) center / cover no-repeat,
+    linear-gradient(135deg, var(--surface-2), var(--bg));
+}
+
+.eva-vn-bg::after {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.14), transparent 30%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.35), transparent 22%, transparent 72%, rgba(0, 0, 0, 0.32));
+  content: "";
+}
+
+.eva-vn-sprite {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: clamp(128px, 19svh, 188px);
+  width: min(56vw, 420px);
+  max-height: 70%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 24px 28px rgba(0, 0, 0, 0.58));
+  transform: translateX(-50%);
+}
+
+.eva-relationship-panel {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 46%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg), transparent 18%);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+}
+
+.eva-relationship-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eva-relationship-head span,
+.eva-relationship-stat span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.eva-relationship-head strong {
+  color: var(--accent-2);
+  font-size: 0.88rem;
+}
+
+.eva-relationship-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.eva-relationship-stat {
+  display: grid;
+  gap: 4px;
+}
+
+.eva-relationship-stat div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.eva-relationship-stat strong {
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.eva-relationship-stat i {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line), transparent 12%);
+}
+
+.eva-relationship-stat b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.eva-dialogue-box {
+  position: absolute;
+  z-index: 2;
+  right: clamp(10px, 3vw, 28px);
+  bottom: clamp(10px, 3vw, 28px);
+  left: clamp(10px, 3vw, 28px);
+  display: grid;
+  gap: 10px;
+  max-height: min(42svh, 330px);
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 34%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg), transparent 12%);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+}
+
+.eva-dialogue-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eva-dialogue-meta strong {
+  color: var(--accent-2);
+  font-size: 1.08rem;
+}
+
+.eva-dialogue-meta span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.eva-dialogue-box p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text);
+  font-size: clamp(1rem, 2.6vw, 1.25rem);
+  font-weight: 800;
+}
+
+.eva-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.eva-room-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eva-shop-panel {
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 18px 42px var(--shadow);
+}
+
+.eva-shop-head {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.eva-shop-head h2,
+.eva-shop-head p {
+  margin: 4px 0;
+}
+
+.eva-bg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.eva-bg-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.eva-bg-card.is-selected {
+  border-color: color-mix(in srgb, var(--accent-3), transparent 22%);
+  background: color-mix(in srgb, var(--accent-3), transparent 88%);
+}
+
+.eva-bg-card.is-missing {
+  border-color: color-mix(in srgb, var(--danger), transparent 30%);
+}
+
+.eva-bg-card img {
+  width: 100%;
+  aspect-ratio: 9 / 14;
+  overflow: hidden;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--surface);
+}
+
+.eva-bg-card strong,
+.eva-bg-card small {
+  display: block;
+}
+
+.eva-bg-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 @media (max-width: 620px) {
+  .eva-room-entry {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .eva-room-entry .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .eva-room-entry-bg {
+    width: 76px;
+  }
+
+  .eva-room-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .eva-room-toolbar .btn,
+  .eva-room-currency {
+    width: 100%;
+  }
+
+  .eva-vn-scene {
+    min-height: 0;
+    padding-top: min(58svh, 430px);
+    overflow: visible;
+  }
+
+  .eva-vn-bg {
+    bottom: auto;
+    height: min(58svh, 430px);
+    border-radius: inherit;
+  }
+
+  .eva-vn-sprite {
+    top: 14px;
+    bottom: auto;
+    width: min(90vw, 390px);
+    height: min(55svh, 408px);
+    max-height: none;
+  }
+
+  .eva-relationship-panel {
+    padding: 10px;
+  }
+
+  .eva-relationship-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .eva-dialogue-box {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    max-height: none;
+    margin: -28px 10px 10px;
+    padding: 12px;
+  }
+
+  .eva-dialogue-box p {
+    font-size: 0.98rem;
+  }
+
+  .eva-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sentence-builder-grid {
+    grid-template-columns: 1fr;
+  }
+
   .pwa-install-banner {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: start;

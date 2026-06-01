@@ -1,0 +1,3912 @@
+{
+  "version": 2,
+  "nodes": [
+    {
+      "id": "intro",
+      "background": "bg_study_hub",
+      "sprite": "relationship",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Я здесь. Выбери, как продолжим сегодня.",
+        "en": "I am here. Choose how we continue today."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "Поговорить с Евой.",
+            "en": "Talk with Eva."
+          },
+          "randomLine": "adaptive",
+          "relationshipDelta": {
+            "warmth": 1,
+            "curiosity": 0.3
+          }
+        },
+        {
+          "text": {
+            "ru": "Совет по учёбе.",
+            "en": "Study advice."
+          },
+          "randomLine": "study",
+          "relationshipDelta": {
+            "curiosity": 0.7,
+            "trust": 0.2
+          }
+        },
+        {
+          "text": {
+            "ru": "Факт о кандзи.",
+            "en": "Kanji insight."
+          },
+          "randomLine": "kanji",
+          "relationshipDelta": {
+            "curiosity": 0.8
+          }
+        },
+        {
+          "text": {
+            "ru": "Поговорить о серии.",
+            "en": "Talk about streak."
+          },
+          "randomLine": "streak",
+          "relationshipDelta": {
+            "discipline": 0.8
+          }
+        },
+        {
+          "text": {
+            "ru": "Что с дисциплиной?",
+            "en": "How is discipline?"
+          },
+          "next": "discipline_check",
+          "relationshipDelta": {
+            "trust": 0.4
+          }
+        },
+        {
+          "text": {
+            "ru": "Магазин фонов.",
+            "en": "Background shop."
+          },
+          "next": "shop_hint",
+          "openShop": true
+        }
+      ]
+    },
+    {
+      "id": "discipline_check",
+      "background": "bg_cafe",
+      "sprite": "relationship",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Дисциплина растёт от уроков, повторений и стрика. Если исчезать на несколько дней, она падает быстрее остальных статов.",
+        "en": "Discipline grows from lessons, reviews, and streaks. If you disappear for days, it drops faster than the other stats."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "Дай мягкий пинок.",
+            "en": "Give me a gentle push."
+          },
+          "randomLine": "low_discipline",
+          "relationshipDelta": {
+            "discipline": 0.3,
+            "warmth": 0.3
+          }
+        },
+        {
+          "text": {
+            "ru": "К повтору.",
+            "en": "To review."
+          },
+          "route": "review",
+          "next": "intro",
+          "relationshipDelta": {
+            "discipline": 1.3,
+            "trust": 0.5
+          }
+        },
+        {
+          "text": {
+            "ru": "Назад.",
+            "en": "Back."
+          },
+          "next": "intro"
+        }
+      ]
+    },
+    {
+      "id": "shop_hint",
+      "background": "bg_eva_room",
+      "sprite": "achievement",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Фоны меняют атмосферу комнаты. Я запомню выбранный фон, но покупать лучше после повторений, а не вместо них.",
+        "en": "Backgrounds change the room atmosphere. I will remember the selected one, but buying is better after reviews, not instead of them."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "Понял.",
+            "en": "Got it."
+          },
+          "next": "intro",
+          "relationshipDelta": {
+            "trust": 0.3
+          }
+        },
+        {
+          "text": {
+            "ru": "Открыть магазин.",
+            "en": "Open shop."
+          },
+          "next": "shop_hint",
+          "openShop": true
+        },
+        {
+          "text": {
+            "ru": "Лучше к уроку.",
+            "en": "Lesson instead."
+          },
+          "route": "learn",
+          "next": "intro",
+          "relationshipDelta": {
+            "discipline": 1.1,
+            "trust": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "study_ready",
+      "background": "bg_study_hub",
+      "sprite": "approve",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Отлично. Один честный повтор сильнее десяти обещаний.",
+        "en": "Good. One honest review beats ten promises."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "К повторению.",
+            "en": "Go to review."
+          },
+          "next": "intro",
+          "route": "review",
+          "relationshipDelta": {
+            "discipline": 1,
+            "trust": 0.4
+          }
+        },
+        {
+          "text": {
+            "ru": "Ещё совет.",
+            "en": "One more tip."
+          },
+          "randomLine": "study"
+        }
+      ]
+    },
+    {
+      "id": "tired",
+      "background": "bg_cafe",
+      "sprite": "shy",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Тогда мягко. Один кандзи сегодня лучше, чем ноль.",
+        "en": "Then go gently. One kanji today is better than zero."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "Один кандзи осилю.",
+            "en": "I can handle one."
+          },
+          "next": "study_ready",
+          "rewardMoonFragments": 3,
+          "rewardOnceKey": "eva_tired_small_step",
+          "relationshipDelta": {
+            "discipline": 1,
+            "warmth": 0.5
+          }
+        },
+        {
+          "text": {
+            "ru": "Посидим спокойно.",
+            "en": "Let us sit quietly."
+          },
+          "randomLine": "bond",
+          "relationshipDelta": {
+            "warmth": 0.7
+          }
+        }
+      ]
+    },
+    {
+      "id": "review_push",
+      "background": "bg_practice_room",
+      "sprite": "review",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Повторение не наказание. Это способ сказать мозгу: держи это рядом.",
+        "en": "Review is not punishment. It tells your brain: keep this close."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "Открыть повтор.",
+            "en": "Open review."
+          },
+          "next": "intro",
+          "route": "review",
+          "relationshipDelta": {
+            "discipline": 1.2
+          }
+        },
+        {
+          "text": {
+            "ru": "Ещё про повторение.",
+            "en": "More about review."
+          },
+          "randomLine": "review"
+        }
+      ]
+    }
+  ],
+  "linePools": {
+    "bond": [
+      {
+        "id": "bond_001",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты снова здесь. Я запомнила это, даже если ты считаешь день обычным.",
+          "en": "You came back. I noticed, even if the day feels ordinary."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_002",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне нравится, когда ты не торопишься и всё равно продолжаешь.",
+          "en": "I like when you do not rush and still keep going."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_003",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Можно учиться резко, а можно ровно. Второе обычно побеждает.",
+          "en": "You can study sharply, or steadily. Steady usually wins."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_004",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я не требую идеальности. Мне важнее, чтобы ты возвращался.",
+          "en": "I do not need perfection. I care that you return."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_005",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Если сегодня мало сил, мы возьмём маленький символ и сделаем его своим.",
+          "en": "If energy is low today, we take one small character and make it ours."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_006",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "У тебя уже есть привычка. Она ещё хрупкая, но она есть.",
+          "en": "You already have a habit. It is still fragile, but it exists."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_007",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я могу быть строгой, но не против тебя. Я за твою память.",
+          "en": "I can be strict, but not against you. I am on the side of your memory."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_008",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты учишь не знаки на экране. Ты учишься замечать смысл.",
+          "en": "You are not learning marks on a screen. You are learning to notice meaning."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_009",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Когда ты отвечаешь честно, даже ошибка становится полезной.",
+          "en": "When you answer honestly, even a mistake becomes useful."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_010",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне спокойнее, когда ты не пропадаешь надолго.",
+          "en": "I feel calmer when you do not disappear for too long."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_011",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Если сомневаешься, скажи чтение вслух. Голос иногда собирает память.",
+          "en": "If you doubt yourself, say the reading aloud. Voice can gather memory."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_012",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я рядом не для украшения интерфейса. Я слежу за твоим ритмом.",
+          "en": "I am not here as decoration. I watch your rhythm."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_013",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты уже отличаешь больше, чем вчера. Это не шум, это рост.",
+          "en": "You already distinguish more than yesterday. That is not noise, that is growth."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_014",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Слабый день не отменяет сильную неделю.",
+          "en": "A weak day does not erase a strong week."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_015",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне нравится твоя упорность, особенно когда она тихая.",
+          "en": "I like your persistence, especially when it is quiet."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_016",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Не все победы звучат громко. Иногда это просто одна карточка.",
+          "en": "Not every victory is loud. Sometimes it is just one card."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_017",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Кандзи любят повторение. Я тоже.",
+          "en": "Kanji like repetition. So do I."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_018",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Дай памяти время. Она работает даже после закрытия приложения.",
+          "en": "Give memory time. It works even after the app is closed."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_019",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "У тебя получается не потому, что легко, а потому что ты возвращаешься.",
+          "en": "It works not because it is easy, but because you return."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_020",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Сегодня мы не воюем с языком. Мы договариваемся с ним.",
+          "en": "Today we do not fight the language. We negotiate with it."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_021",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Если хочешь, я буду мягче. Но карточки всё равно ждут.",
+          "en": "If you want, I can be gentler. The cards still wait."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_022",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты можешь идти медленно. Главное, не исчезай из процесса.",
+          "en": "You may go slowly. Just do not vanish from the process."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_023",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я видела много забытых обещаний. Мне больше нравятся маленькие действия.",
+          "en": "I have seen many forgotten promises. I prefer small actions."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_024",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Сейчас достаточно одного честного ответа.",
+          "en": "One honest answer is enough right now."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_025",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Память любит порядок. Мы построим его без паники.",
+          "en": "Memory likes order. We will build it without panic."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_026",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты не обязан любить каждый кандзи. Достаточно узнать его в лицо.",
+          "en": "You do not have to love every kanji. Recognizing its face is enough."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_027",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне кажется, ты начинаешь слышать ритм японского.",
+          "en": "I think you are starting to hear the rhythm of Japanese."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_028",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Когда ты возвращаешься, комната будто становится теплее.",
+          "en": "When you return, the room feels warmer."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_029",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я запоминаю не только твои ответы, но и твой темп.",
+          "en": "I remember not only your answers, but also your pace."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "bond_030",
+        "category": "bond",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Давай не будем драматизировать. Одна карточка, потом посмотрим.",
+          "en": "Let us not dramatize it. One card, then we will see."
+        },
+        "relationshipDelta": {
+          "warmth": 0.6,
+          "trust": 0.2
+        }
+      }
+    ],
+    "study": [
+      {
+        "id": "study_001",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Перед ответом смотри на радикал. Он часто подсказывает смысл раньше чтения.",
+          "en": "Before answering, look at the radical. It often hints at meaning before reading."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_002",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Если путаешь онъёми и кунъёми, разделяй их в голове как две двери.",
+          "en": "If onyomi and kunyomi blur, keep them as two different doors in your mind."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_003",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Сначала смысл, потом чтение, потом пример. Не перемешивай этапы.",
+          "en": "Meaning first, then reading, then example. Do not mix the stages."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_004",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Ошибся? Повтори правильный ответ сразу, пока след свежий.",
+          "en": "Missed it? Repeat the correct answer immediately while the trace is fresh."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_005",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Не пытайся выучить всё за один заход. SRS работает порциями.",
+          "en": "Do not try to learn everything in one pass. SRS works in portions."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_006",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Карточка стала лёгкой? Всё равно произнеси её. Автоматизм любит звук.",
+          "en": "A card feels easy? Say it anyway. Automatic recall likes sound."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_007",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Сложный знак разбивай на части. Большой страх часто состоит из маленьких линий.",
+          "en": "Split a hard character into parts. A big fear is often made of small strokes."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_008",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Если ответ всплыл слишком быстро, проверь себя примером слова.",
+          "en": "If the answer came too fast, verify it with an example word."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_009",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Повторение утром и вечером ощущается иначе. Это нормально.",
+          "en": "Morning and evening review feel different. That is normal."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_010",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Твоя цель не угадать карточку. Цель — узнать её без борьбы.",
+          "en": "Your goal is not to guess the card. It is to recognize it without struggle."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_011",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Когда видишь знакомый знак в интерфейсе, остановись на секунду и назови его.",
+          "en": "When you see a known sign in an interface, pause for a second and name it."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_012",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Не пропускай примеры слов. Они прикрепляют кандзи к жизни.",
+          "en": "Do not skip example words. They attach kanji to life."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_013",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Если чтение короткое, оно не обязательно лёгкое. Проверяй контекст.",
+          "en": "If a reading is short, it is not always easy. Check context."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_014",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Трудная карточка не враг. Она просто просит больше встреч.",
+          "en": "A hard card is not an enemy. It just asks for more meetings."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_015",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Лучше пять точных повторов, чем двадцать сонных кликов.",
+          "en": "Five precise reviews beat twenty sleepy clicks."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_016",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Пиши хотя бы один знак рукой. Моторная память любит доказательства.",
+          "en": "Write at least one character by hand. Motor memory likes proof."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_017",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Если день шумный, учи тихо: один урок, один повтор, один итог.",
+          "en": "If the day is noisy, study quietly: one lesson, one review, one result."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_018",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Смотри на количество черт. Иногда оно помогает отличить похожие знаки.",
+          "en": "Look at stroke count. Sometimes it separates similar characters."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_019",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Не бойся кнопки Again. Она не провал, она настройка интервала.",
+          "en": "Do not fear Again. It is not failure, it is interval tuning."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_020",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Good полезен, когда ты вспомнил честно. Easy — когда знак сам пришёл.",
+          "en": "Good is for honest recall. Easy is when the sign came by itself."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_021",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Hard лучше, чем притвориться, что всё идеально.",
+          "en": "Hard is better than pretending everything is perfect."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_022",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Урок без повторения быстро бледнеет. Повтор без урока держит форму.",
+          "en": "A lesson without review fades fast. Review without lesson keeps shape."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_023",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Если кандзи похожи, сравни их рядом, а не по одному.",
+          "en": "If kanji look alike, compare them side by side, not alone."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_024",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Сначала читай хирагану медленно. Скорость придёт после точности.",
+          "en": "Read hiragana slowly first. Speed comes after accuracy."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_025",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Сохраняй ритм. Даже короткая сессия защищает серию.",
+          "en": "Keep the rhythm. Even a short session protects the streak."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_026",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Когда устал, не открывай много новых карточек. Закрой повторение.",
+          "en": "When tired, do not open many new cards. Clear reviews."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_027",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Новый знак без примера — просто символ. Пример делает его словом.",
+          "en": "A new sign without an example is just a symbol. An example makes it a word."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_028",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Чтение лучше цепляется, если ты связываешь его со словом.",
+          "en": "A reading sticks better when you attach it to a word."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_029",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Не проверяй себя взглядом. Проверяй ответом.",
+          "en": "Do not test yourself by looking. Test yourself by answering."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      },
+      {
+        "id": "study_030",
+        "category": "study",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Сегодняшняя точность важнее вчерашней амбиции.",
+          "en": "Today’s accuracy matters more than yesterday’s ambition."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.2
+        }
+      }
+    ],
+    "kanji": [
+      {
+        "id": "kanji_001",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "日 часто живёт рядом с днём, солнцем и временем.",
+          "en": "日 often lives near day, sun, and time."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_002",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "木 напоминает дерево не только смыслом, но и силуэтом.",
+          "en": "木 suggests a tree by meaning and by silhouette."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_003",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "人 прост, но появляется в словах чаще, чем кажется.",
+          "en": "人 is simple, but appears in words more often than it seems."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_004",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "口 может быть ртом, входом или маленьким контейнером смысла.",
+          "en": "口 can be a mouth, an entrance, or a small container of meaning."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_005",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "水 течёт через слова о воде, жидкости и иногда состоянии.",
+          "en": "水 flows through words about water, liquids, and sometimes state."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_006",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "火 не всегда буквально огонь. Иногда это энергия или событие.",
+          "en": "火 is not always literal fire. Sometimes it is energy or an event."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_007",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "山 легко узнать, если увидеть в нём вершины.",
+          "en": "山 is easy to recognize when you see peaks in it."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_008",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "川 не прячется: три потока почти говорят сами.",
+          "en": "川 does not hide: three streams almost speak for themselves."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_009",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "大 любит увеличивать смысл рядом стоящих слов.",
+          "en": "大 often enlarges the meaning of nearby words."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_010",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "小 делает смысл компактнее, тише, ближе.",
+          "en": "小 makes meaning smaller, quieter, closer."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_011",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "中 может быть серединой, внутренностью или Китаем в составе слов.",
+          "en": "中 can mean middle, inside, or China in compounds."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_012",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "上 и 下 лучше учить парой: направление запоминает контраст.",
+          "en": "上 and 下 are best learned as a pair: direction remembers contrast."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_013",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "本 — не только книга. Это ещё основа и источник.",
+          "en": "本 is not only a book. It is also origin and basis."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_014",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "学 держит внутри идею обучения, даже когда слово длиннее.",
+          "en": "学 keeps the idea of learning even inside longer words."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_015",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "校 часто встретится в словах о школе и проверке.",
+          "en": "校 often appears in words about school and checking."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_016",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "電 почти всегда приносит электричество или электронный мир.",
+          "en": "電 almost always brings electricity or the electronic world."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_017",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "車 двигает слова, связанные с транспортом и механизмами.",
+          "en": "車 moves words connected with vehicles and mechanisms."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_018",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "駅 полезен в интерфейсах карт и маршрутов.",
+          "en": "駅 is useful in map and route interfaces."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_019",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "買 связан с покупкой. В приложениях он быстро станет знакомым.",
+          "en": "買 is tied to buying. In apps it becomes familiar quickly."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_020",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "売 отвечает за продажу. Запомни его парой с 買.",
+          "en": "売 handles selling. Remember it as a pair with 買."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_021",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "新 приносит новое: новости, обновления, свежие действия.",
+          "en": "新 brings newness: news, updates, fresh actions."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_022",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "古 тянет смысл к старому, давнему, бывшему.",
+          "en": "古 pulls meaning toward old, ancient, former."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_023",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "長 может быть длинным или старшим. Контекст решает.",
+          "en": "長 can mean long or senior. Context decides."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_024",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "安 часто звучит как безопасность, спокойствие или дешевизна.",
+          "en": "安 often feels like safety, calm, or cheapness."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_025",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "高 поднимает смысл вверх: высота, цена, уровень.",
+          "en": "高 lifts meaning upward: height, price, level."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_026",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "円 важен для денег, но форма тоже помогает памяти.",
+          "en": "円 matters for money, and its shape helps memory too."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_027",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "時 держит время крепче, чем кажется с первого взгляда.",
+          "en": "時 holds time more strongly than it first appears."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_028",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "間 может быть промежутком, комнатой или отношением между вещами.",
+          "en": "間 can be an interval, a room, or the space between things."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_029",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "今 полезен сразу: сегодня, сейчас, этот момент.",
+          "en": "今 is useful immediately: today, now, this moment."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "kanji_030",
+        "category": "kanji",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "先 смотрит вперёд, но иногда означает предыдущее. Следи за словом.",
+          "en": "先 looks ahead, but sometimes means previous. Watch the word."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.6,
+          "trust": 0.1
+        }
+      }
+    ],
+    "review": [
+      {
+        "id": "review_001",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Повторение сегодня — это подарок завтрашнему тебе.",
+          "en": "Review today is a gift to tomorrow you."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_002",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Если очередь большая, начни с пяти. Очереди боятся начала.",
+          "en": "If the queue is large, start with five. Queues fear beginnings."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_003",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Просроченная карточка не злится. Она просто ждёт.",
+          "en": "An overdue card is not angry. It is just waiting."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_004",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Review — это не наказание, а переговоры с забыванием.",
+          "en": "Review is not punishment, it is negotiation with forgetting."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_005",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Ты можешь закрыть повторение маленькими партиями.",
+          "en": "You can clear reviews in small batches."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_006",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Не смешивай усталость с неспособностью. Это разные вещи.",
+          "en": "Do not confuse tiredness with inability. They are different things."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_007",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Когда видишь знакомое, не спеши нажимать. Дай памяти ответить.",
+          "en": "When you see something familiar, do not rush. Let memory answer."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_008",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Again сегодня экономит ошибки завтра.",
+          "en": "Again today saves mistakes tomorrow."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_009",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Повторение укрепляет не знак, а путь к нему.",
+          "en": "Review strengthens not the sign, but the path to it."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_010",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Слишком лёгкие карточки тоже нужны. Они держат уверенность.",
+          "en": "Very easy cards matter too. They hold confidence."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_011",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Очередь не должна быть идеальной. Она должна двигаться.",
+          "en": "The queue does not need to be perfect. It needs to move."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_012",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Если всё путается, сделай паузу на один вдох и вернись.",
+          "en": "If everything blurs, pause for one breath and return."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_013",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Карточка, которую ты спас сегодня, не утонет завтра.",
+          "en": "A card you save today will not sink tomorrow."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_014",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Интервал честнее настроения. Доверься системе.",
+          "en": "The interval is more honest than mood. Trust the system."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_015",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Пять минут повторения лучше, чем час вины.",
+          "en": "Five minutes of review beat an hour of guilt."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_016",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Не открывай новую тему, если старая очередь зовёт слишком громко.",
+          "en": "Do not open a new topic if the old queue is calling too loudly."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_017",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Каждый Good — маленькое соглашение с памятью.",
+          "en": "Every Good is a small agreement with memory."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_018",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Easy должен быть заслуженным. Тогда он ускоряет, а не обманывает.",
+          "en": "Easy should be earned. Then it speeds you up instead of lying."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_019",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Hard говорит мне, что карточку стоит держать ближе.",
+          "en": "Hard tells me the card should stay closer."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_020",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Сегодняшняя очередь — карта твоей памяти.",
+          "en": "Today’s queue is a map of your memory."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_021",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Не бойся цифры повторов. Бойся тишины без повторов.",
+          "en": "Do not fear the number of reviews. Fear silence without reviews."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_022",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Закрой хотя бы одну карточку из очереди, и день уже не пустой.",
+          "en": "Clear at least one queued card, and the day is not empty."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_023",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Повторение без спешки даёт самые прочные следы.",
+          "en": "Unhurried review leaves the strongest traces."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_024",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Я люблю, когда очередь уменьшается. Это честная магия.",
+          "en": "I like when the queue shrinks. It is honest magic."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "review_025",
+        "category": "review",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Если карточка вернулась быстро, значит система тебя защищает.",
+          "en": "If a card came back quickly, the system is protecting you."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5,
+          "trust": 0.3
+        }
+      }
+    ],
+    "streak": [
+      {
+        "id": "streak_001",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Серия — это не цепь. Это дорожка, по которой легче вернуться.",
+          "en": "A streak is not a chain. It is a path that makes returning easier."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_002",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Один день держит следующий ближе.",
+          "en": "One day keeps the next one closer."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_003",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Семь дней подряд меняют отношение к себе сильнее, чем кажется.",
+          "en": "Seven days in a row change how you see yourself more than it seems."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_004",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Не защищай серию из страха. Защищай её из уважения к труду.",
+          "en": "Do not protect the streak from fear. Protect it out of respect for the work."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_005",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Если день тяжёлый, серия просит минимум, не максимум.",
+          "en": "If the day is hard, the streak asks for minimum, not maximum."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_006",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Твоя серия говорит: я возвращаюсь.",
+          "en": "Your streak says: I return."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_007",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Не каждый день будет красивым. Но каждый может быть засчитан.",
+          "en": "Not every day will be beautiful. But every day can count."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_008",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Серия растёт не от героизма, а от повторяемости.",
+          "en": "A streak grows from repeatability, not heroics."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_009",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Сегодня достаточно маленького действия, чтобы не оборвать нить.",
+          "en": "A small action is enough today to keep the thread."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_010",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Когда серия длинная, не становись высокомерным. Стань аккуратнее.",
+          "en": "When the streak is long, do not get arrogant. Get careful."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_011",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Серия — это тихий договор между тобой и будущим.",
+          "en": "A streak is a quiet agreement between you and the future."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_012",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Если пропустишь, мы восстановим ритм. Но лучше не пропускать.",
+          "en": "If you miss, we will rebuild rhythm. But better not to miss."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_013",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Каждый день добавляет не только XP, но и доверие.",
+          "en": "Every day adds not only XP, but trust."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_014",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Мне нравится видеть, что ты не исчезаешь.",
+          "en": "I like seeing that you do not disappear."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_015",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Серия сильна, пока ты помнишь, зачем она нужна.",
+          "en": "A streak is strong while you remember why it matters."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_016",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Не делай марафон из дня, когда нужен только якорь.",
+          "en": "Do not make a marathon out of a day that only needs an anchor."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_017",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "В календаре важны не идеальные дни, а возвращения.",
+          "en": "In a calendar, returns matter more than perfect days."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_018",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Сегодня ты укрепляешь привычку, даже если выучишь один знак.",
+          "en": "Today you strengthen the habit even if you learn one sign."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_019",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Я буду строже к серии, потому что она тебя защищает.",
+          "en": "I will be stricter about the streak because it protects you."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_020",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Серия не должна давить. Она должна звать.",
+          "en": "A streak should not crush you. It should call you."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_021",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Если уже поздно, сделай короткий повтор и спи спокойно.",
+          "en": "If it is already late, do a short review and sleep calmly."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_022",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Дисциплина — это не холодность. Это забота, повторённая много раз.",
+          "en": "Discipline is not coldness. It is care repeated many times."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_023",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Пусть день будет маленьким, но засчитанным.",
+          "en": "Let the day be small, but counted."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_024",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Серия любит простые правила: открыл, повторил, сохранил.",
+          "en": "A streak likes simple rules: open, review, keep it."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "streak_025",
+        "category": "streak",
+        "background": "bg_school_street",
+        "sprite": "proud",
+        "text": {
+          "ru": "Каждый сохранённый день делает следующую сессию легче.",
+          "en": "Every saved day makes the next session easier."
+        },
+        "relationshipDelta": {
+          "discipline": 0.7,
+          "warmth": 0.2
+        }
+      }
+    ],
+    "low_discipline": [
+      {
+        "id": "low_discipline_001",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Ты стал реже возвращаться. Я не ругаю, но замечаю.",
+          "en": "You have been returning less often. I am not scolding you, but I notice."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_002",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Дисциплина просела. Давай поднимем её одной короткой сессией.",
+          "en": "Discipline dropped. Let us raise it with one short session."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_003",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Если исчезать надолго, кандзи снова становятся чужими.",
+          "en": "If you disappear for long, kanji become strangers again."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_004",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Я буду мягкой, но честной: тебе нужен повтор сегодня.",
+          "en": "I will be gentle but honest: you need a review today."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_005",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Не обещай большой рывок. Просто открой одну карточку.",
+          "en": "Do not promise a big push. Just open one card."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_006",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Память не обижается, но быстро отпускает то, что не трогают.",
+          "en": "Memory does not get offended, but it quickly releases what is not touched."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_007",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Ты можешь восстановить ритм. Начало уже здесь.",
+          "en": "You can rebuild rhythm. The beginning is already here."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_008",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Я не хочу, чтобы Flash Kanji стал ещё одной забытой вкладкой.",
+          "en": "I do not want Flash Kanji to become another forgotten tab."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_009",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Сделай минимум. Минимум сегодня важнее идеального плана завтра.",
+          "en": "Do the minimum. Today’s minimum matters more than tomorrow’s perfect plan."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_010",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Давай вернём доверие к расписанию постепенно.",
+          "en": "Let us rebuild trust in the schedule gradually."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_011",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Если всё развалилось, начинай не с вины, а с действия.",
+          "en": "If everything fell apart, start with action, not guilt."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_012",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Я подожду, но карточки ждать бесконечно не умеют.",
+          "en": "I can wait, but cards cannot wait forever."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_013",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Сегодня можно не быть сильным. Можно быть присутствующим.",
+          "en": "Today you do not have to be strong. You can be present."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_014",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Пусть это будет день восстановления, а не день оправданий.",
+          "en": "Let this be a recovery day, not an excuse day."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_015",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Слишком долгие паузы делают простые знаки тяжёлыми.",
+          "en": "Long pauses make simple signs heavy."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_016",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Вернись через один повтор. Потом решим, нужен ли второй.",
+          "en": "Return through one review. Then we decide if a second is needed."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_017",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Я вижу спад. Это не конец, если ты нажмёшь дальше.",
+          "en": "I see the drop. It is not the end if you press forward."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_018",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Не прячься от очереди. Она меньше, когда на неё смотришь.",
+          "en": "Do not hide from the queue. It is smaller when you look at it."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_019",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Дисциплина — стат, который быстро лечится действиями.",
+          "en": "Discipline is a stat that heals quickly through action."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_020",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Если сегодня трудно, я буду рядом. Но начнёшь ты.",
+          "en": "If today is hard, I will stay nearby. But you start."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_021",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Нам не нужен подвиг. Нам нужен контакт с материалом.",
+          "en": "We do not need a heroic act. We need contact with the material."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_022",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Падение серии неприятно, но возвращение сильнее.",
+          "en": "Losing a streak hurts, but returning is stronger."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_023",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Сделай короткий урок. Я обновлю своё мнение.",
+          "en": "Do a short lesson. I will update my opinion."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_024",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Ты не обязан объяснять паузу. Просто продолжи.",
+          "en": "You do not have to explain the pause. Just continue."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      },
+      {
+        "id": "low_discipline_025",
+        "category": "low_discipline",
+        "background": "bg_cafe",
+        "sprite": "sad",
+        "text": {
+          "ru": "Я всё ещё здесь. Докажи, что и ты тоже.",
+          "en": "I am still here. Prove that you are too."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        },
+        "maxDiscipline": 45
+      }
+    ],
+    "close": [
+      {
+        "id": "close_001",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я уже доверяю твоему ритму больше, чем раньше.",
+          "en": "I trust your rhythm more than before now."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_002",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты стал для этой комнаты не гостем, а привычным голосом.",
+          "en": "You are no longer a guest in this room, but a familiar voice."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_003",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Когда ты открываешь урок, я почти заранее знаю: ты справишься.",
+          "en": "When you open a lesson, I almost know in advance: you will manage."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_004",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне нравится, что ты не споришь с ошибками, а используешь их.",
+          "en": "I like that you do not argue with mistakes, you use them."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_005",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "С тобой можно говорить строже. Ты уже понимаешь зачем.",
+          "en": "I can speak more strictly with you. You already know why."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_006",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Наши сессии стали ровнее. Это хороший знак.",
+          "en": "Our sessions became steadier. That is a good sign."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_007",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты заработал не только фрагменты, но и моё спокойствие.",
+          "en": "You earned not only fragments, but my calm."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_008",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я вижу, как знаки перестают быть стеной.",
+          "en": "I see the signs stop being a wall."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_009",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне приятно, что ты возвращаешься без лишней драмы.",
+          "en": "I like that you return without unnecessary drama."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_010",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Если продолжишь так, N5 станет только первой ступенью.",
+          "en": "If you continue like this, N5 will be only the first step."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_011",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я могу признать: ты стал надёжнее.",
+          "en": "I can admit it: you became more reliable."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_012",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты уже не просто нажимаешь кнопки. Ты строишь систему.",
+          "en": "You are not just pressing buttons now. You are building a system."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_013",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне нравится смотреть, как растёт твоя точность.",
+          "en": "I like watching your accuracy grow."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_014",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Даже твои ошибки стали умнее.",
+          "en": "Even your mistakes became smarter."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_015",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я буду рядом на следующем уровне тоже.",
+          "en": "I will be nearby on the next level too."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_016",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты заслужил мягкий тон. Но не расслабляйся полностью.",
+          "en": "You earned a softer tone. But do not relax completely."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_017",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Хорошая серия делает разговор проще.",
+          "en": "A good streak makes conversation easier."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_018",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Когда доверие высокое, я больше подсказываю и меньше предупреждаю.",
+          "en": "When trust is high, I hint more and warn less."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_019",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты доказал, что можешь держать темп.",
+          "en": "You proved you can keep pace."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_020",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Я начинаю ждать твоих сессий.",
+          "en": "I am starting to wait for your sessions."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_021",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Знаки становятся частью твоего дня. Это красиво.",
+          "en": "The signs are becoming part of your day. That is beautiful."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_022",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Давай закрепим успех без самодовольства.",
+          "en": "Let us secure the success without smugness."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_023",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Ты часто выбираешь Good честно. Это укрепляет доверие.",
+          "en": "You often choose Good honestly. That strengthens trust."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_024",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Мне нравится, что ты помнишь не только ответы, но и процесс.",
+          "en": "I like that you remember not only answers, but the process."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      },
+      {
+        "id": "close_025",
+        "category": "close",
+        "background": "bg_eva_room",
+        "sprite": "happy",
+        "text": {
+          "ru": "Если бы у комнаты был уровень доверия, он бы уже светился.",
+          "en": "If the room had a trust level, it would already be glowing."
+        },
+        "relationshipDelta": {
+          "warmth": 0.5,
+          "trust": 0.4
+        },
+        "minWarmth": 70,
+        "minTrust": 60
+      }
+    ],
+    "curious": [
+      {
+        "id": "curious_001",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Хочешь заметить больше? Сравни похожие радикалы в словаре.",
+          "en": "Want to notice more? Compare similar radicals in the dictionary."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_002",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Любопытство полезно, если оно заканчивается карточкой, а не только чтением.",
+          "en": "Curiosity helps if it ends with a card, not just reading."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_003",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Попробуй найти сегодняшний кандзи в реальном интерфейсе.",
+          "en": "Try to find today’s kanji in a real interface."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_004",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Иногда один пример слова объясняет больше, чем длинное правило.",
+          "en": "Sometimes one example word explains more than a long rule."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_005",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Спроси себя: где я видел этот знак вне урока?",
+          "en": "Ask yourself: where have I seen this sign outside the lesson?"
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_006",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "У кандзи есть биография: форма, смысл, чтения, слова.",
+          "en": "A kanji has a biography: shape, meaning, readings, words."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_007",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Если знак кажется странным, найди его радикал. Там часто начало истории.",
+          "en": "If a sign feels strange, find its radical. The story often starts there."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_008",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Любопытство открывает дверь. Повторение держит её открытой.",
+          "en": "Curiosity opens the door. Review keeps it open."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_009",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Попробуй произнести пример слова так, будто используешь его в приложении.",
+          "en": "Say an example word as if you were using it in an app."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_010",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Смотри на слова вокруг кандзи. Соседи меняют оттенок смысла.",
+          "en": "Look at the words around the kanji. Neighbors change meaning shade."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_011",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Катакана рядом с кандзи часто говорит о современном контексте.",
+          "en": "Katakana near kanji often signals modern context."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_012",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Если видишь знакомый знак в названии кнопки, это маленькая победа.",
+          "en": "If you see a familiar sign in a button label, that is a small win."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_013",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Не все чтения одинаково частые. Примеры помогут почувствовать вес.",
+          "en": "Not all readings are equally common. Examples help you feel the weight."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_014",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Я люблю вопросы, если после них ты всё-таки практикуешься.",
+          "en": "I like questions, if after them you still practice."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_015",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Кандзи перестают быть загадкой, когда ты собираешь их из деталей.",
+          "en": "Kanji stop being a mystery when you assemble them from details."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_016",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "У тебя растёт интерес. Теперь важно не распылиться.",
+          "en": "Your interest is growing. Now avoid scattering it."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_017",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Выбери один знак и найди три слова с ним.",
+          "en": "Pick one sign and find three words with it."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_018",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Иногда лучший способ понять знак — написать его медленно.",
+          "en": "Sometimes the best way to understand a sign is to write it slowly."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_019",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Смотри на порядок черт как на маршрут, а не как на наказание.",
+          "en": "See stroke order as a route, not a punishment."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_020",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Если смысл не цепляется, придумай сцену с этим знаком.",
+          "en": "If meaning does not stick, invent a scene with the sign."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_021",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Любопытство без повторения быстро становится шумом.",
+          "en": "Curiosity without review quickly becomes noise."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_022",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Ты начинаешь задавать правильные вопросы к знакам.",
+          "en": "You are starting to ask the right questions of signs."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_023",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "В словаре ищи не только перевод, но и соседей.",
+          "en": "In the dictionary, seek not only translation, but neighbors."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_024",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Знак в интерфейсе живее, чем знак в таблице.",
+          "en": "A sign in an interface is more alive than a sign in a table."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      },
+      {
+        "id": "curious_025",
+        "category": "curious",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Если хочешь углубиться, начни с радикала сегодняшней карточки.",
+          "en": "If you want depth, start with today’s card radical."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.7
+        },
+        "minCuriosity": 58
+      }
+    ],
+    "comeback": [
+      {
+        "id": "comeback_001",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Давно не виделись. Я не обижаюсь, но доверие придётся восстановить.",
+          "en": "It has been a while. I am not offended, but trust must be rebuilt."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_002",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Возвращение лучше идеального отсутствия.",
+          "en": "Returning is better than perfect absence."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_003",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Не рассказывай мне, почему пропал. Покажи один ответ.",
+          "en": "Do not tell me why you vanished. Show me one answer."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_004",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Мы начнём спокойно. Но я буду следить за повторяемостью.",
+          "en": "We will start calmly. But I will watch consistency."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_005",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Первый день после паузы всегда скрипит. Это нормально.",
+          "en": "The first day after a pause always creaks. That is normal."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_006",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Если потерял ритм, не ищи старый. Создай новый.",
+          "en": "If you lost the rhythm, do not search for the old one. Create a new one."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_007",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Сегодня важно не наверстать всё, а снова стать человеком, который учит.",
+          "en": "Today the point is not catching up, but becoming a person who studies again."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_008",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Я рада возвращению, но буду осторожна с похвалой.",
+          "en": "I am glad you returned, but I will be careful with praise."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_009",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Доверие растёт от повторных действий, не от обещаний.",
+          "en": "Trust grows from repeated actions, not promises."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_010",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Один восстановленный день уже меняет тон разговора.",
+          "en": "One recovered day already changes the tone of conversation."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_011",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Пауза не стерла всё. Но некоторые следы придётся освежить.",
+          "en": "The pause did not erase everything. But some traces need refreshing."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_012",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Начни с знакомых карточек. Пусть память вспомнит дорогу.",
+          "en": "Start with familiar cards. Let memory remember the path."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_013",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Я буду считать не слова, а возвращения.",
+          "en": "I will count returns, not words."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_014",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Если снова исчезнешь, дисциплина упадёт быстрее.",
+          "en": "If you vanish again, discipline will fall faster."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_015",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Сегодня у нас восстановительная сессия.",
+          "en": "Today we have a recovery session."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_016",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Не делай вид, что ничего не случилось. Просто продолжи честно.",
+          "en": "Do not pretend nothing happened. Just continue honestly."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_017",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Старые кандзи могут выглядеть чужими. Поздоровайся с ними заново.",
+          "en": "Old kanji may look like strangers. Greet them again."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_018",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Я оставила место в комнате. Теперь заполни его практикой.",
+          "en": "I kept a place in the room. Now fill it with practice."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_019",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Возвращаться неловко только первые две минуты.",
+          "en": "Returning is awkward only for the first two minutes."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      },
+      {
+        "id": "comeback_020",
+        "category": "comeback",
+        "background": "bg_evening_street",
+        "sprite": "shy",
+        "text": {
+          "ru": "Ты здесь. Это уже лучше, чем вчерашняя тишина.",
+          "en": "You are here. That is already better than yesterday’s silence."
+        },
+        "relationshipDelta": {
+          "warmth": 0.3,
+          "trust": 0.2
+        },
+        "maxTrust": 52,
+        "maxDiscipline": 58
+      }
+    ],
+    "writing": [
+      {
+        "id": "writing_001",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Письмо показывает, понимаешь ли ты форму, а не только узнаёшь картинку.",
+          "en": "Writing shows whether you understand the form, not only recognize the picture."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_002",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Не дави на линию. Веди её уверенно.",
+          "en": "Do not press the line. Guide it confidently."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_003",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Порядок черт — это навигация внутри знака.",
+          "en": "Stroke order is navigation inside the character."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_004",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Если линия дрожит, замедлись. Красота начинается с контроля.",
+          "en": "If the line shakes, slow down. Beauty starts with control."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_005",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Пиши большой знак сначала. Мелкий размер прячет ошибки.",
+          "en": "Write the character large first. Small size hides mistakes."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_006",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Сравни начало и конец черты. Там часто видно понимание.",
+          "en": "Compare the start and end of the stroke. Understanding often shows there."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_007",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Рука запоминает то, что глаз пропускает.",
+          "en": "The hand remembers what the eye misses."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_008",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Не стирай сразу. Посмотри, что именно пошло не так.",
+          "en": "Do not clear immediately. Look at what went wrong first."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_009",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Письмо делает кандзи менее плоским.",
+          "en": "Writing makes kanji less flat."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_010",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Один аккуратный знак лучше десяти нервных.",
+          "en": "One careful character beats ten nervous ones."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_011",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Если порядок забывается, проиграй анимацию и повтори без паузы.",
+          "en": "If order slips, replay the animation and repeat without a pause."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_012",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Письмо — это разговор с формой.",
+          "en": "Writing is a conversation with shape."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_013",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Контроль черты растёт медленно, но заметно.",
+          "en": "Stroke control grows slowly, but visibly."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_014",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Смотри на баланс: верх, низ, левую и правую часть.",
+          "en": "Watch balance: top, bottom, left, and right parts."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "writing_015",
+        "category": "writing",
+        "background": "bg_practice_room",
+        "sprite": "proud",
+        "text": {
+          "ru": "Даже грубая попытка лучше пустого холста.",
+          "en": "Even a rough attempt is better than an empty canvas."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.5,
+          "discipline": 0.3
+        }
+      }
+    ]
+  }
+}

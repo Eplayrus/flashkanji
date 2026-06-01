@@ -18,13 +18,16 @@
     vocabulary: "data/vocabulary/index.json",
     sentences: "data/sentences/index.json",
     achievements: "data/achievements/index.json",
-    monetization: "data/monetization/catalog.json"
+    monetization: "data/monetization/catalog.json",
+    evaBackgrounds: "data/eva-backgrounds.json",
+    evaSprites: "data/eva-sprites.json",
+    evaRoomDialogues: "data/eva-room-dialogues.json"
   };
 
   const ratingLabels = { again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
   const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
   const sentenceRewardFallback = { xp: 12, coins: 2 };
-  const routes = ["home", "learn", "review", "dictionary", "writing", "stats", "achievements"];
+  const routes = ["home", "learn", "review", "dictionary", "writing", "stats", "achievements", "eva-room"];
 
   const state = {
     route: readRouteHash(),
@@ -42,6 +45,11 @@
     achievements: [],
     achievementCategories: [],
     monetization: null,
+    evaBackgrounds: [],
+    evaSprites: {},
+    evaRoomDialogues: [],
+    evaRoomLines: [],
+    evaRoomShopOpen: false,
     progress: null,
     activeLessonId: null,
     activeCardId: null,
@@ -102,6 +110,7 @@
       state.revealed = false;
       state.navMenu = null;
       state.pendingFocus = null;
+      if (route !== "eva-room") state.evaRoomShopOpen = false;
       resetReadingCheck();
       render();
     }
@@ -117,7 +126,7 @@
     applyTheme();
 
     try {
-      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, sentences, achievements, monetization] = await Promise.all([
+      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, sentences, achievements, monetization, evaBackgrounds, evaSprites, evaRoomDialogues] = await Promise.all([
         loadCourse(),
         fetchJson(DATA_URLS.i18n),
         fetchJson(DATA_URLS.dialogues),
@@ -129,7 +138,10 @@
         fetchJson(DATA_URLS.vocabulary),
         fetchJson(DATA_URLS.sentences),
         fetchJson(DATA_URLS.achievements),
-        fetchJson(DATA_URLS.monetization)
+        fetchJson(DATA_URLS.monetization),
+        fetchJson(DATA_URLS.evaBackgrounds),
+        fetchJson(DATA_URLS.evaSprites),
+        fetchJson(DATA_URLS.evaRoomDialogues)
       ]);
       const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
       state.lessons = course.lessons;
@@ -147,6 +159,11 @@
       state.vocabulary = vocabulary.items || [];
       state.sentenceExercises = sentences.items || [];
       state.monetization = monetization;
+      const evaRoomData = normalizeEvaRoomDialogueData(evaRoomDialogues);
+      state.evaBackgrounds = Array.isArray(evaBackgrounds) ? evaBackgrounds : [];
+      state.evaSprites = evaSprites || {};
+      state.evaRoomDialogues = evaRoomData.nodes;
+      state.evaRoomLines = evaRoomData.lines;
       hydrateProgress();
       syncPwaInstallInstalledFlag();
       recordAppOpen();
@@ -276,7 +293,25 @@
       dailyBonuses: {},
       writingPractice: { completed: 0, cards: {} },
       secrets: { evaClicks: 0, nightVisit: false },
-      sentencePractice: { activeId: null, selected: [], checked: false, result: null, tileKeys: [], completed: {}, attempts: 0, recentIds: [], recentAnswers: [] },
+      sentencePractice: {
+        activeId: null,
+        selected: [],
+        checked: false,
+        result: null,
+        tileKeys: [],
+        completed: {},
+        attempts: 0,
+        recentIds: [],
+        recentAnswers: [],
+        custom: [],
+        customDraft: { sentence: "", reading: "", translationRu: "", translationEn: "" },
+        customMessage: "",
+        customStatus: ""
+      },
+      unlockedBackgrounds: ["bg_study_hub"],
+      selectedEvaRoomBackground: "bg_study_hub",
+      evaRoomDialogueProgress: { currentNode: "intro", rewardsClaimed: {}, visited: {}, lineHistory: [] },
+      evaRelationship: defaultEvaRelationship(),
       shop: { owned: [], equipped: {} }
     };
   }
@@ -315,6 +350,16 @@
       writingPractice: { ...base.writingPractice, ...(saved.writingPractice || {}) },
       secrets: { ...base.secrets, ...(saved.secrets || {}) },
       sentencePractice: mergeSentencePractice(base.sentencePractice, saved.sentencePractice || {}),
+      unlockedBackgrounds: [...new Set([...(base.unlockedBackgrounds || []), ...((saved.unlockedBackgrounds) || [])])],
+      selectedEvaRoomBackground: saved.selectedEvaRoomBackground || base.selectedEvaRoomBackground,
+      evaRoomDialogueProgress: {
+        ...base.evaRoomDialogueProgress,
+        ...(saved.evaRoomDialogueProgress || {}),
+        rewardsClaimed: { ...base.evaRoomDialogueProgress.rewardsClaimed, ...((saved.evaRoomDialogueProgress && saved.evaRoomDialogueProgress.rewardsClaimed) || {}) },
+        visited: { ...base.evaRoomDialogueProgress.visited, ...((saved.evaRoomDialogueProgress && saved.evaRoomDialogueProgress.visited) || {}) },
+        lineHistory: Array.isArray(saved.evaRoomDialogueProgress?.lineHistory) ? saved.evaRoomDialogueProgress.lineHistory : base.evaRoomDialogueProgress.lineHistory || []
+      },
+      evaRelationship: mergeEvaRelationship(base.evaRelationship, saved.evaRelationship || {}),
       shop: {
         owned: [...new Set([...(base.shop.owned || []), ...((saved.shop && saved.shop.owned) || [])])],
         equipped: { ...base.shop.equipped, ...((saved.shop && saved.shop.equipped) || {}) }
@@ -330,8 +375,77 @@
       tileKeys: Array.isArray(saved.tileKeys) ? saved.tileKeys : base.tileKeys,
       recentIds: Array.isArray(saved.recentIds) ? saved.recentIds : base.recentIds,
       recentAnswers: Array.isArray(saved.recentAnswers) ? saved.recentAnswers : base.recentAnswers,
-      completed: { ...base.completed, ...(saved.completed || {}) }
+      completed: { ...base.completed, ...(saved.completed || {}) },
+      custom: Array.isArray(saved.custom) ? saved.custom.slice(0, 80) : base.custom,
+      customDraft: { ...base.customDraft, ...(saved.customDraft || {}) },
+      customMessage: typeof saved.customMessage === "string" ? saved.customMessage : base.customMessage,
+      customStatus: typeof saved.customStatus === "string" ? saved.customStatus : base.customStatus
     };
+  }
+
+  function defaultEvaRelationship() {
+    return {
+      warmth: 44,
+      trust: 40,
+      discipline: 35,
+      curiosity: 42,
+      mood: "neutral",
+      conversationCount: 0,
+      totalDialogueChoices: 0,
+      lastInteractionAt: null,
+      lastInteractionDate: null,
+      lastDecayDate: todayKey(),
+      lastKnown: {
+        learned: 0,
+        mastered: 0,
+        reviews: 0,
+        lessons: 0,
+        streak: 0,
+        wrong: 0,
+        writing: 0,
+        sentence: 0
+      },
+      history: []
+    };
+  }
+
+  function mergeEvaRelationship(base, saved) {
+    return {
+      ...base,
+      ...saved,
+      warmth: clamp(Number(saved.warmth ?? base.warmth), 0, 100),
+      trust: clamp(Number(saved.trust ?? base.trust), 0, 100),
+      discipline: clamp(Number(saved.discipline ?? base.discipline), 0, 100),
+      curiosity: clamp(Number(saved.curiosity ?? base.curiosity), 0, 100),
+      lastKnown: { ...base.lastKnown, ...(saved.lastKnown || {}) },
+      history: Array.isArray(saved.history) ? saved.history.slice(0, 40) : base.history
+    };
+  }
+
+  function normalizeEvaRoomDialogueData(payload) {
+    if (Array.isArray(payload)) return { nodes: payload, lines: [] };
+    const nodes = Array.isArray(payload?.nodes) ? payload.nodes : [];
+    const lines = [];
+    if (Array.isArray(payload?.lines)) lines.push(...payload.lines);
+    Object.entries(payload?.linePools || {}).forEach(([category, items]) => {
+      if (!Array.isArray(items)) return;
+      items.forEach((item, index) => {
+        if (typeof item === "string") {
+          lines.push({
+            id: `${category}_${index + 1}`,
+            category,
+            text: { ru: item, en: item }
+          });
+          return;
+        }
+        lines.push({
+          category,
+          ...item,
+          id: item.id || `${category}_${index + 1}`
+        });
+      });
+    });
+    return { nodes, lines };
   }
 
   function saveProgress() {
@@ -348,6 +462,8 @@
       Number(state.progress.moonFragments || 0),
       totalPositiveFragmentsFromHistory()
     );
+    ensureEvaRoomProgress();
+    syncEvaRelationshipFromProgress();
     const firstUnlocked = state.lessons.find((lesson) => isLessonUnlocked(lesson));
     if (!state.activeLessonId) state.activeLessonId = firstUnlocked?.id || state.lessons[0]?.id || null;
   }
@@ -442,6 +558,18 @@
     if (action === "notification-later") handleNotificationPermissionDeclined();
     if (action === "mascot-click") handleMascotClick(target.dataset.character);
     if (action === "toggle-favorite") toggleFavorite(id);
+    if (action === "eva-room-choice") handleEvaRoomChoice(target);
+    if (action === "eva-room-reset") resetEvaRoomDialogue();
+    if (action === "eva-room-shop-open") {
+      state.evaRoomShopOpen = true;
+      render();
+    }
+    if (action === "eva-room-shop-close") {
+      state.evaRoomShopOpen = false;
+      render();
+    }
+    if (action === "eva-bg-buy") buyEvaRoomBackground(id);
+    if (action === "eva-bg-select") selectEvaRoomBackground(id);
     if (action === "clear-writing") clearWritingCanvas();
     if (action === "undo-writing") undoWritingStroke();
     if (action === "check-writing") checkWritingPractice(true);
@@ -455,6 +583,7 @@
     if (action === "clear-sentence") clearSentencePractice();
     if (action === "check-sentence") checkSentencePractice();
     if (action === "next-sentence") nextSentencePractice();
+    if (action === "add-custom-sentence") addCustomSentenceExercise();
     if (action === "play-kanji-audio") {
       const card = findCard(id) || findCard(state.activeCardId);
       if (card) playKanjiAudio(card);
@@ -526,6 +655,15 @@
   function playActionSound(action, target) {
     if (!action || target?.disabled) return;
     if (isStudyCardAction(action, target)) return;
+    if (["eva-room-choice", "eva-bg-buy", "eva-bg-select"].includes(action)) return;
+    if (action === "eva-room-shop-open") {
+      playUxSound("menu_open");
+      return;
+    }
+    if (action === "eva-room-shop-close") {
+      playUxSound("menu_close");
+      return;
+    }
     if (action === "route") {
       if (target?.closest(".bottom-nav") && hasNavMenu(target.dataset.route)) {
         playUxSound(state.navMenu === target.dataset.route ? "menu_close" : "menu_open");
@@ -595,6 +733,19 @@
       return;
     }
 
+    const sentenceDraftInput = event.target.closest("[data-sentence-draft]");
+    if (sentenceDraftInput) {
+      const practice = sentencePracticeProgress();
+      const field = sentenceDraftInput.dataset.sentenceDraft;
+      if (field && practice.customDraft && Object.prototype.hasOwnProperty.call(practice.customDraft, field)) {
+        practice.customDraft[field] = sentenceDraftInput.value;
+        practice.customMessage = "";
+        practice.customStatus = "";
+        saveProgress();
+      }
+      return;
+    }
+
     const input = event.target.closest("[data-filter]");
     if (!input) return;
     const key = input.dataset.filter;
@@ -635,6 +786,7 @@
     state.revealed = false;
     state.navMenu = null;
     state.pendingFocus = focus;
+    if (state.route !== "eva-room") state.evaRoomShopOpen = false;
     resetReadingCheck();
     render();
   }
@@ -663,6 +815,7 @@
       requestAnimationFrame(renderCharts);
     }
     if (state.route === "achievements") html = renderAchievementsPage();
+    if (state.route === "eva-room") html = renderEvaRoom();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
     document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal));
     requestAnimationFrame(applyPendingFocus);
@@ -814,6 +967,8 @@
           <button class="btn primary" type="button" data-action="start-lesson" data-id="${escapeAttr(daily?.id || "")}">▶ ${escapeHtml(t("study"))}</button>
         </article>
 
+        ${renderEvaRoomEntry()}
+
         <div class="goal-strip">
           ${state.rewards.dailyGoals.map((goal) => `
             <button class="btn ${goal === state.progress.settings.dailyGoal ? "primary" : "ghost"}" type="button" data-action="set-goal" data-goal="${goal}">
@@ -847,6 +1002,566 @@
         </div>
       </article>
     `;
+  }
+
+  function renderEvaRoomEntry() {
+    const bg = currentEvaRoomBackground();
+    const node = currentEvaRoomNode();
+    const label = lang() === "ru"
+      ? { title: "Комната Евы", text: "Мини-новелла, разговоры и уютные фоны за Moon Fragments.", action: "Войти" }
+      : { title: "Eva Room", text: "A cozy mini visual novel with backgrounds and Moon Fragments.", action: "Enter" };
+    return `
+      <article class="eva-room-entry">
+        <div class="eva-room-entry-bg">
+          <img src="${escapeAttr(bg.file)}" alt="" loading="lazy" onerror="this.hidden=true" />
+        </div>
+        <div>
+          <span class="pill">Eva Room</span>
+          <h2>${escapeHtml(label.title)}</h2>
+          <p>${escapeHtml(label.text)}</p>
+          <div class="tag-row">
+            <span class="pill">Moon ${state.progress.moonFragments}</span>
+            <span class="pill">${escapeHtml(localized(bg.title))}</span>
+            <span class="pill">${escapeHtml(localized(node.speaker || { ru: "Ева", en: "Eva" }))}</span>
+          </div>
+        </div>
+        <button class="btn primary" type="button" data-action="route" data-route="eva-room">Eva · ${escapeHtml(label.action)}</button>
+      </article>
+    `;
+  }
+
+  function renderEvaRoom() {
+    ensureEvaRoomProgress();
+    syncEvaRelationshipFromProgress();
+    const node = currentEvaRoomNode();
+    const bg = getEvaRoomBackground(node.background) || currentEvaRoomBackground();
+    const selectedBg = currentEvaRoomBackground();
+    const sprite = evaSpritePath(resolveEvaSprite(node.sprite));
+    const labels = evaRoomLabels();
+    const choices = Array.isArray(node.choices) ? node.choices : [];
+    return `
+      <section class="page eva-room-page">
+        <div class="eva-room-toolbar">
+          <button class="btn ghost" type="button" data-action="route" data-route="home">← ${escapeHtml(labels.back)}</button>
+          <div class="eva-room-currency">
+            <span>Moon</span>
+            <strong>${state.progress.moonFragments}</strong>
+            <small>Moon Fragments</small>
+          </div>
+          <button class="btn primary" type="button" data-action="eva-room-shop-open">Shop · ${escapeHtml(labels.shop)}</button>
+        </div>
+
+        ${renderEvaRelationshipStats()}
+        <article class="eva-vn-scene" style="--eva-bg:url('${escapeAttr(selectedBg.file || bg.file)}')">
+          <div class="eva-vn-bg" aria-hidden="true"></div>
+          <img class="eva-vn-sprite" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.png'" />
+          <div class="eva-dialogue-box">
+            <div class="eva-dialogue-meta">
+              <strong>${escapeHtml(localized(node.speaker || { ru: "Ева", en: "Eva" }))}</strong>
+              <span>${escapeHtml(localized(bg.title || selectedBg.title || {}))}</span>
+            </div>
+            <p>${escapeHtml(localized(node.text || {}))}</p>
+            <div class="eva-choice-grid">
+              ${choices.map((choice, index) => `
+                <button class="btn ${index === 0 ? "primary" : "ghost"}" type="button" data-action="eva-room-choice" data-index="${index}">
+                  ${escapeHtml(localized(choice.text || {}))}
+                  ${choice.rewardMoonFragments ? `<small>+${choice.rewardMoonFragments} Moon</small>` : ""}
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </article>
+
+        <div class="eva-room-footer-actions">
+          <button class="btn" type="button" data-action="eva-room-reset">${escapeHtml(labels.restart)}</button>
+          <button class="btn" type="button" data-action="route" data-route="learn">${escapeHtml(labels.study)}</button>
+          <button class="btn" type="button" data-action="route" data-route="review">${escapeHtml(labels.review)}</button>
+        </div>
+
+        ${state.evaRoomShopOpen ? renderEvaRoomShop() : ""}
+      </section>
+    `;
+  }
+
+  function renderEvaRoomShop() {
+    const labels = evaRoomLabels();
+    const unlocked = new Set(state.progress.unlockedBackgrounds || []);
+    const selected = state.progress.selectedEvaRoomBackground || "bg_study_hub";
+    return `
+      <aside class="eva-shop-panel" role="dialog" aria-label="${escapeAttr(labels.shop)}">
+        <div class="eva-shop-head">
+          <div>
+            <span class="pill">Moon ${state.progress.moonFragments}</span>
+            <h2>${escapeHtml(labels.shop)}</h2>
+            <p>${escapeHtml(labels.shopHint)}</p>
+          </div>
+          <button class="icon-btn" type="button" data-action="eva-room-shop-close" aria-label="${escapeAttr(labels.close)}">×</button>
+        </div>
+        <div class="eva-bg-grid">
+          ${evaRoomBackgrounds().map((bg) => {
+            const isUnlocked = unlocked.has(bg.id) || bg.defaultUnlocked || bg.price === 0;
+            const isSelected = selected === bg.id;
+            return `
+              <article class="eva-bg-card ${isSelected ? "is-selected" : ""}">
+                <img src="${escapeAttr(bg.file)}" alt="${escapeAttr(localized(bg.title))}" loading="lazy" onerror="this.closest('.eva-bg-card').classList.add('is-missing')" />
+                <div>
+                  <strong>${escapeHtml(localized(bg.title))}</strong>
+                  <small>${bg.price ? `${bg.price} Moon Fragments` : labels.free}</small>
+                </div>
+                ${isSelected
+                  ? `<button class="btn success" type="button" disabled>${escapeHtml(labels.selected)}</button>`
+                  : isUnlocked
+                    ? `<button class="btn" type="button" data-action="eva-bg-select" data-id="${escapeAttr(bg.id)}">${escapeHtml(labels.select)}</button>`
+                    : `<button class="btn primary" type="button" data-action="eva-bg-buy" data-id="${escapeAttr(bg.id)}">${escapeHtml(labels.buy)}</button>`}
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </aside>
+    `;
+  }
+
+  function renderEvaRelationshipStats() {
+    const rel = evaRelationship();
+    const labels = evaRoomLabels();
+    const moodLabel = labels.moods[rel.mood] || labels.moods.neutral;
+    const stats = [
+      ["warmth", labels.warmth, rel.warmth],
+      ["trust", labels.trust, rel.trust],
+      ["discipline", labels.discipline, rel.discipline],
+      ["curiosity", labels.curiosity, rel.curiosity]
+    ];
+    return `
+      <aside class="eva-relationship-panel" aria-label="${escapeAttr(labels.relationship)}">
+        <div class="eva-relationship-head">
+          <span>${escapeHtml(labels.relationship)}</span>
+          <strong>${escapeHtml(moodLabel)}</strong>
+        </div>
+        <div class="eva-relationship-grid">
+          ${stats.map(([key, label, value]) => `
+            <div class="eva-relationship-stat eva-stat-${key}">
+              <div><span>${escapeHtml(label)}</span><strong>${Math.round(value)}</strong></div>
+              <i><b style="width:${clamp(value, 0, 100)}%"></b></i>
+            </div>
+          `).join("")}
+        </div>
+      </aside>
+    `;
+  }
+
+  function evaRoomLabels() {
+    return lang() === "ru"
+      ? {
+        back: "На главную",
+        shop: "Магазин фонов",
+        close: "Закрыть",
+        shopHint: "Покупай и выбирай фоны для комнаты Евы.",
+        buy: "Купить",
+        select: "Выбрать",
+        selected: "Выбран",
+        free: "Открыто",
+        restart: "Начать диалог заново",
+        study: "К уроку",
+        review: "К повтору",
+        notEnough: "Не хватает Moon Fragments.",
+        bought: "Фон открыт.",
+        selectedToast: "Фон выбран.",
+        reward: "Ева дала Moon Fragments.",
+        relationship: "Отношения с Евой",
+        warmth: "Тепло",
+        trust: "Доверие",
+        discipline: "Дисциплина",
+        curiosity: "Интерес",
+        moreTalk: "Ещё реплика",
+        anotherTalk: "Другая тема",
+        moods: {
+          neutral: "Ровное настроение",
+          close: "Близость",
+          proud: "Гордится тобой",
+          curious: "Заинтересована",
+          worried: "Беспокоится",
+          reserved: "Держит дистанцию"
+        }
+      }
+      : {
+        back: "Home",
+        shop: "Background Shop",
+        close: "Close",
+        shopHint: "Buy and select backgrounds for Eva Room.",
+        buy: "Buy",
+        select: "Select",
+        selected: "Selected",
+        free: "Unlocked",
+        restart: "Restart dialogue",
+        study: "Study",
+        review: "Review",
+        notEnough: "Not enough Moon Fragments.",
+        bought: "Background unlocked.",
+        selectedToast: "Background selected.",
+        reward: "Eva gave you Moon Fragments.",
+        relationship: "Relationship with Eva",
+        warmth: "Warmth",
+        trust: "Trust",
+        discipline: "Discipline",
+        curiosity: "Interest",
+        moreTalk: "Another line",
+        anotherTalk: "Different topic",
+        moods: {
+          neutral: "Steady mood",
+          close: "Close",
+          proud: "Proud of you",
+          curious: "Interested",
+          worried: "Worried",
+          reserved: "Reserved"
+        }
+      };
+  }
+
+  function ensureEvaRoomProgress() {
+    state.progress.unlockedBackgrounds ||= ["bg_study_hub"];
+    if (!state.progress.unlockedBackgrounds.includes("bg_study_hub")) state.progress.unlockedBackgrounds.unshift("bg_study_hub");
+    state.progress.selectedEvaRoomBackground ||= "bg_study_hub";
+    state.progress.evaRoomDialogueProgress ||= { currentNode: "intro", rewardsClaimed: {}, visited: {}, lineHistory: [] };
+    state.progress.evaRoomDialogueProgress.currentNode ||= "intro";
+    state.progress.evaRoomDialogueProgress.rewardsClaimed ||= {};
+    state.progress.evaRoomDialogueProgress.visited ||= {};
+    state.progress.evaRoomDialogueProgress.lineHistory = Array.isArray(state.progress.evaRoomDialogueProgress.lineHistory)
+      ? state.progress.evaRoomDialogueProgress.lineHistory.slice(-24)
+      : [];
+    if (!state.progress.evaRelationship) {
+      state.progress.evaRelationship = defaultEvaRelationship();
+    } else {
+      const normalized = mergeEvaRelationship(defaultEvaRelationship(), state.progress.evaRelationship);
+      Object.keys(state.progress.evaRelationship).forEach((key) => delete state.progress.evaRelationship[key]);
+      Object.assign(state.progress.evaRelationship, normalized);
+    }
+  }
+
+  function evaRelationship() {
+    ensureEvaRoomProgress();
+    return state.progress.evaRelationship;
+  }
+
+  function syncEvaRelationshipFromProgress() {
+    if (!state.progress || !state.cards.length) return false;
+    ensureEvaRoomProgress();
+    const rel = state.progress.evaRelationship;
+    let changed = false;
+    const today = todayKey();
+    const lastDecayDate = rel.lastDecayDate || today;
+    const daysSinceDecay = Math.max(0, dayDifference(lastDecayDate, today));
+    if (daysSinceDecay > 0) {
+      const lastStudy = state.progress.streak?.lastStudyDate;
+      const studyGap = lastStudy ? dayDifference(lastStudy, today) : daysSinceDecay + 1;
+      if (!lastStudy || studyGap > 1) {
+        adjustEvaRelationship({
+          warmth: -Math.min(10, daysSinceDecay * 1.2),
+          trust: -Math.min(14, daysSinceDecay * 1.6),
+          discipline: -Math.min(22, daysSinceDecay * 3.4)
+        }, "study_gap", { silent: true });
+        changed = true;
+      } else if ((state.progress.streak?.current || 0) > 0) {
+        adjustEvaRelationship({ discipline: 0.8, trust: 0.4 }, "streak_kept", { silent: true });
+        changed = true;
+      }
+      rel.lastDecayDate = today;
+    }
+
+    const summary = getSummary();
+    const snapshot = {
+      learned: summary.learned,
+      mastered: summary.mastered,
+      reviews: totalReviews(),
+      lessons: Object.keys(state.progress.lessonCompletions || {}).length,
+      streak: Math.max(state.progress.streak?.current || 0, state.progress.streak?.best || 0),
+      wrong: state.progress.totalWrong || 0,
+      writing: state.progress.writingPractice?.completed || 0,
+      sentence: Object.keys(state.progress.sentencePractice?.completed || {}).length
+    };
+    const known = rel.lastKnown || {};
+    const delta = (key) => Math.max(0, Number(snapshot[key] || 0) - Number(known[key] || 0));
+    const relationshipDelta = {};
+    const reviews = delta("reviews");
+    const learned = delta("learned");
+    const mastered = delta("mastered");
+    const lessons = delta("lessons");
+    const streak = delta("streak");
+    const wrong = delta("wrong");
+    const writing = delta("writing");
+    const sentence = delta("sentence");
+
+    if (reviews) {
+      relationshipDelta.discipline = (relationshipDelta.discipline || 0) + Math.min(18, reviews * 0.08);
+      relationshipDelta.trust = (relationshipDelta.trust || 0) + Math.min(10, reviews * 0.04);
+    }
+    if (learned) {
+      relationshipDelta.trust = (relationshipDelta.trust || 0) + Math.min(20, learned * 0.5);
+      relationshipDelta.curiosity = (relationshipDelta.curiosity || 0) + Math.min(16, learned * 0.35);
+    }
+    if (mastered) {
+      relationshipDelta.trust = (relationshipDelta.trust || 0) + Math.min(16, mastered * 1.2);
+      relationshipDelta.warmth = (relationshipDelta.warmth || 0) + Math.min(8, mastered * 0.5);
+    }
+    if (lessons) {
+      relationshipDelta.warmth = (relationshipDelta.warmth || 0) + Math.min(12, lessons * 2);
+      relationshipDelta.discipline = (relationshipDelta.discipline || 0) + Math.min(10, lessons * 1.5);
+    }
+    if (streak) {
+      relationshipDelta.discipline = (relationshipDelta.discipline || 0) + Math.min(15, streak * 3);
+      relationshipDelta.warmth = (relationshipDelta.warmth || 0) + Math.min(8, streak);
+    }
+    if (writing) relationshipDelta.curiosity = (relationshipDelta.curiosity || 0) + Math.min(10, writing * 0.8);
+    if (sentence) relationshipDelta.trust = (relationshipDelta.trust || 0) + Math.min(10, sentence * 0.8);
+    if (wrong) relationshipDelta.discipline = (relationshipDelta.discipline || 0) - Math.min(6, wrong * 0.12);
+
+    if (Object.keys(relationshipDelta).length) {
+      adjustEvaRelationship(relationshipDelta, "learning_progress", { silent: true });
+      changed = true;
+    }
+    rel.lastKnown = snapshot;
+    updateEvaRelationshipMood();
+    return changed;
+  }
+
+  function adjustEvaRelationship(delta = {}, reason = "relationship", options = {}) {
+    ensureEvaRoomProgress();
+    const rel = state.progress.evaRelationship;
+    ["warmth", "trust", "discipline", "curiosity"].forEach((key) => {
+      if (typeof delta[key] === "undefined") return;
+      rel[key] = round(clamp(Number(rel[key] || 0) + Number(delta[key] || 0), 0, 100), 1);
+    });
+    updateEvaRelationshipMood();
+    if (!options.silent) {
+      rel.history.unshift({ at: new Date().toISOString(), reason, delta });
+      rel.history = rel.history.slice(0, 40);
+    }
+    return rel;
+  }
+
+  function updateEvaRelationshipMood() {
+    const rel = state.progress.evaRelationship;
+    if (rel.discipline < 25) rel.mood = "worried";
+    else if (rel.trust < 30) rel.mood = "reserved";
+    else if (rel.warmth >= 76 && rel.trust >= 68) rel.mood = "close";
+    else if ((state.progress.streak?.current || 0) >= 7 && rel.discipline >= 58) rel.mood = "proud";
+    else if (rel.curiosity >= 68) rel.mood = "curious";
+    else rel.mood = "neutral";
+    return rel.mood;
+  }
+
+  function resolveEvaSprite(sprite) {
+    if (sprite && sprite !== "relationship") return sprite;
+    const mood = evaRelationship().mood;
+    return {
+      close: "happy",
+      proud: "proud",
+      curious: "think",
+      worried: "sad",
+      reserved: "idle",
+      neutral: "idle"
+    }[mood] || "idle";
+  }
+
+  function evaRoomBackgrounds() {
+    return state.evaBackgrounds?.length ? state.evaBackgrounds : [{
+      id: "bg_study_hub",
+      title: { ru: "Учебная комната", en: "Study Hub" },
+      file: "assets/bg/bg_study_hub.png",
+      price: 0,
+      defaultUnlocked: true
+    }];
+  }
+
+  function getEvaRoomBackground(id) {
+    return evaRoomBackgrounds().find((item) => item.id === id) || evaRoomBackgrounds()[0];
+  }
+
+  function currentEvaRoomBackground() {
+    ensureEvaRoomProgress();
+    const selected = state.progress.selectedEvaRoomBackground;
+    return getEvaRoomBackground(selected) || getEvaRoomBackground("bg_study_hub");
+  }
+
+  function evaRoomNodeById(id) {
+    if (id === "generated_line") return generatedEvaRoomNode();
+    return state.evaRoomDialogues.find((item) => item.id === id) || state.evaRoomDialogues[0] || {
+      id: "intro",
+      background: "bg_study_hub",
+      sprite: "relationship",
+      speaker: { ru: "Ева", en: "Eva" },
+      text: { ru: "С возвращением.", en: "Welcome back." },
+      choices: []
+    };
+  }
+
+  function generatedEvaRoomNode() {
+    ensureEvaRoomProgress();
+    const labels = evaRoomLabels();
+    const generated = state.progress.evaRoomDialogueProgress.generatedLine || pickEvaRoomLine("adaptive");
+    state.progress.evaRoomDialogueProgress.generatedLine = generated;
+    return {
+      id: "generated_line",
+      background: generated.background || currentEvaRoomBackground().id || "bg_study_hub",
+      sprite: generated.sprite || "relationship",
+      speaker: { ru: "Ева", en: "Eva" },
+      text: generated.text,
+      choices: [
+        { text: { ru: labels.moreTalk, en: labels.moreTalk }, randomLine: generated.category || "adaptive", relationshipDelta: { warmth: 0.6, curiosity: 0.4 } },
+        { text: { ru: labels.anotherTalk, en: labels.anotherTalk }, next: "intro", relationshipDelta: { warmth: 0.2 } },
+        { text: { ru: labels.study, en: labels.study }, next: "intro", route: "learn", relationshipDelta: { discipline: 1.2, trust: 0.5 } }
+      ]
+    };
+  }
+
+  function evaRoomLines() {
+    return Array.isArray(state.evaRoomLines) ? state.evaRoomLines : [];
+  }
+
+  function pickEvaRoomLine(category = "adaptive") {
+    ensureEvaRoomProgress();
+    syncEvaRelationshipFromProgress();
+    const rel = evaRelationship();
+    const recent = new Set(state.progress.evaRoomDialogueProgress.lineHistory || []);
+    const eligible = evaRoomLines().filter((line) => {
+      const tags = Array.isArray(line.tags) ? line.tags : [];
+      const categoryMatch = category === "adaptive" || line.category === category || tags.includes(category);
+      if (!categoryMatch) return false;
+      if (!evaLineMeetsRelationship(line, rel)) return false;
+      return !recent.has(line.id);
+    });
+    const fallback = evaRoomLines().filter((line) => category === "adaptive" || line.category === category || (line.tags || []).includes(category));
+    const pool = eligible.length ? eligible : fallback.length ? fallback : evaRoomLines();
+    const line = sample(pool) || {
+      id: "fallback",
+      category: "adaptive",
+      text: { ru: "Я рядом. Давай сделаем хотя бы один честный шаг.", en: "I'm here. Let's make one honest step." },
+      sprite: "relationship",
+      background: currentEvaRoomBackground().id
+    };
+    const lineHistory = state.progress.evaRoomDialogueProgress.lineHistory || [];
+    state.progress.evaRoomDialogueProgress.lineHistory = [line.id, ...lineHistory.filter((item) => item !== line.id)].slice(0, 24);
+    return {
+      id: line.id,
+      category: line.category || category,
+      text: line.text || { ru: String(line.ru || ""), en: String(line.en || line.ru || "") },
+      sprite: line.sprite || "relationship",
+      background: line.background || currentEvaRoomBackground().id,
+      relationshipDelta: line.relationshipDelta || {}
+    };
+  }
+
+  function evaLineMeetsRelationship(line, rel) {
+    const checks = [
+      ["minWarmth", rel.warmth, (actual, expected) => actual >= expected],
+      ["maxWarmth", rel.warmth, (actual, expected) => actual <= expected],
+      ["minTrust", rel.trust, (actual, expected) => actual >= expected],
+      ["maxTrust", rel.trust, (actual, expected) => actual <= expected],
+      ["minDiscipline", rel.discipline, (actual, expected) => actual >= expected],
+      ["maxDiscipline", rel.discipline, (actual, expected) => actual <= expected],
+      ["minCuriosity", rel.curiosity, (actual, expected) => actual >= expected],
+      ["maxCuriosity", rel.curiosity, (actual, expected) => actual <= expected]
+    ];
+    return checks.every(([key, actual, compare]) => typeof line[key] === "undefined" || compare(actual, Number(line[key])));
+  }
+
+  function currentEvaRoomNode() {
+    ensureEvaRoomProgress();
+    const node = evaRoomNodeById(state.progress.evaRoomDialogueProgress.currentNode);
+    state.progress.evaRoomDialogueProgress.visited[node.id] = new Date().toISOString();
+    return node;
+  }
+
+  function evaSpritePath(sprite) {
+    return state.evaSprites?.[sprite] || state.evaSprites?.default || "assets/mascots/eva_normal.png";
+  }
+
+  function handleEvaRoomChoice(target) {
+    const node = currentEvaRoomNode();
+    const choice = node.choices?.[Number(target.dataset.index || 0)];
+    if (!choice) return;
+    ensureEvaRoomProgress();
+    const rel = state.progress.evaRelationship;
+    rel.conversationCount = Number(rel.conversationCount || 0) + 1;
+    rel.totalDialogueChoices = Number(rel.totalDialogueChoices || 0) + 1;
+    rel.lastInteractionAt = new Date().toISOString();
+    rel.lastInteractionDate = todayKey();
+    adjustEvaRelationship(choice.relationshipDelta || { warmth: 0.4, curiosity: 0.2 }, "dialogue_choice");
+    const reward = Number(choice.rewardMoonFragments || 0);
+    const rewardKey = choice.rewardOnceKey;
+    if (reward > 0 && rewardKey && !state.progress.evaRoomDialogueProgress.rewardsClaimed[rewardKey]) {
+      state.progress.evaRoomDialogueProgress.rewardsClaimed[rewardKey] = new Date().toISOString();
+      addReward(0, reward, `eva_room:${rewardKey}`);
+      toast(evaRoomLabels().reward);
+    }
+    if (choice.randomLine) {
+      const generated = pickEvaRoomLine(choice.randomLine);
+      adjustEvaRelationship(generated.relationshipDelta || {}, `eva_line:${generated.id}`, { silent: true });
+      state.progress.evaRoomDialogueProgress.generatedLine = generated;
+      state.progress.evaRoomDialogueProgress.currentNode = "generated_line";
+    } else {
+      state.progress.evaRoomDialogueProgress.generatedLine = null;
+      state.progress.evaRoomDialogueProgress.currentNode = choice.next || "intro";
+    }
+    if (choice.openShop) state.evaRoomShopOpen = true;
+    saveProgress();
+    if (choice.route) {
+      setRoute(choice.route);
+      return;
+    }
+    playUxSound(choice.openShop ? "menu_open" : "page_turn");
+    render();
+  }
+
+  function resetEvaRoomDialogue() {
+    ensureEvaRoomProgress();
+    state.progress.evaRoomDialogueProgress.currentNode = "intro";
+    state.progress.evaRoomDialogueProgress.generatedLine = null;
+    saveProgress();
+    playUxSound("page_turn");
+    render();
+  }
+
+  function buyEvaRoomBackground(id) {
+    const bg = getEvaRoomBackground(id);
+    if (!bg) return;
+    ensureEvaRoomProgress();
+    if (state.progress.unlockedBackgrounds.includes(bg.id) || bg.defaultUnlocked || bg.price === 0) {
+      selectEvaRoomBackground(bg.id);
+      return;
+    }
+    if (state.progress.moonFragments < bg.price) {
+      playUxSound("purchase_failed");
+      toast(evaRoomLabels().notEnough);
+      return;
+    }
+    state.progress.moonFragments -= bg.price;
+    state.progress.unlockedBackgrounds.push(bg.id);
+    state.progress.transactions.unshift({
+      at: new Date().toISOString(),
+      reason: `eva_room_bg:${bg.id}`,
+      xp: 0,
+      coins: -bg.price,
+      balance: state.progress.moonFragments
+    });
+    state.progress.transactions = state.progress.transactions.slice(0, 80);
+    playUxSound("purchase_success");
+    playUxSound("item_unlock");
+    saveProgress();
+    toast(evaRoomLabels().bought);
+    render();
+  }
+
+  function selectEvaRoomBackground(id) {
+    const bg = getEvaRoomBackground(id);
+    if (!bg) return;
+    ensureEvaRoomProgress();
+    const unlocked = state.progress.unlockedBackgrounds.includes(bg.id) || bg.defaultUnlocked || bg.price === 0;
+    if (!unlocked) return;
+    state.progress.selectedEvaRoomBackground = bg.id;
+    saveProgress();
+    playUxSound("notification_soft");
+    toast(evaRoomLabels().selectedToast);
+    render();
   }
 
   function renderMetric(label, value, note, width) {
@@ -961,7 +1676,8 @@
   function renderSentencePractice() {
     const learned = getLearnedSentenceCards();
     const available = getAvailableSentenceExercises(learned);
-    const labels = sentencePracticeLabels();
+    const labels = { ...sentencePracticeLabels(), ...sentencePracticeCustomLabels() };
+    const builder = renderCustomSentenceBuilder(learned, labels);
 
     if (!learned.length) {
       return `
@@ -969,6 +1685,7 @@
           <span class="kanji-char">文</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.noLearned)}</p>
+          ${builder}
           <button class="btn primary" type="button" data-action="route" data-route="learn">▶ ${escapeHtml(t("learn"))}</button>
         </article>
       `;
@@ -980,6 +1697,7 @@
           <span class="kanji-char">文</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.notEnough.replace("{count}", learned.length))}</p>
+          ${builder}
         </article>
       `;
     }
@@ -990,6 +1708,7 @@
           <span class="kanji-char">文</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.noExercise)}</p>
+          ${builder}
         </article>
       `;
     }
@@ -1009,9 +1728,11 @@
           </div>
           <div class="tag-row">
             <span class="pill">${escapeHtml(exercise.jlpt)}</span>
+            ${exercise.source ? `<span class="pill">${escapeHtml(exercise.source === "custom" ? labels.customSource : labels.dynamicSource)}</span>` : ""}
             <span class="pill">${escapeHtml(labels.progress.replace("{done}", Object.keys(state.progress.sentencePractice.completed || {}).length).replace("{total}", available.length))}</span>
           </div>
         </div>
+        ${builder}
         <div class="sentence-card">
           <div class="sentence-line">${renderSentenceLine(exercise, selectedTiles, wrongIndexes)}</div>
           <p class="sentence-reading">${escapeHtml(exercise.reading || "")}</p>
@@ -1040,6 +1761,43 @@
           <button class="btn ghost" type="button" data-action="next-sentence">${escapeHtml(labels.next)}</button>
         </div>
       </article>
+    `;
+  }
+
+  function renderCustomSentenceBuilder(learned, labels) {
+    const practice = sentencePracticeProgress();
+    const draft = practice.customDraft || {};
+    const customCount = Array.isArray(practice.custom) ? practice.custom.length : 0;
+    const messageClass = practice.customStatus ? ` is-${practice.customStatus}` : "";
+    return `
+      <details class="sentence-builder">
+        <summary>
+          <span>${escapeHtml(labels.customTitle)}</span>
+          <small>${escapeHtml(labels.customCount.replace("{count}", customCount))}</small>
+        </summary>
+        <div class="sentence-builder-grid">
+          <label class="field sentence-builder-wide">
+            <span>${escapeHtml(labels.customSentence)}</span>
+            <textarea data-sentence-draft="sentence" rows="2" autocomplete="off" spellcheck="false" placeholder="${escapeAttr(labels.customSentencePlaceholder)}">${escapeHtml(draft.sentence || "")}</textarea>
+          </label>
+          <label class="field sentence-builder-wide">
+            <span>${escapeHtml(labels.customReading)}</span>
+            <input data-sentence-draft="reading" type="text" autocomplete="off" spellcheck="false" value="${escapeAttr(draft.reading || "")}" placeholder="${escapeAttr(labels.customReadingPlaceholder)}" />
+          </label>
+          <label class="field">
+            <span>${escapeHtml(labels.customTranslationRu)}</span>
+            <input data-sentence-draft="translationRu" type="text" value="${escapeAttr(draft.translationRu || "")}" placeholder="${escapeAttr(labels.customTranslationRuPlaceholder)}" />
+          </label>
+          <label class="field">
+            <span>${escapeHtml(labels.customTranslationEn)}</span>
+            <input data-sentence-draft="translationEn" type="text" value="${escapeAttr(draft.translationEn || "")}" placeholder="${escapeAttr(labels.customTranslationEnPlaceholder)}" />
+          </label>
+        </div>
+        <div class="sentence-builder-actions">
+          <button class="btn primary" type="button" data-action="add-custom-sentence">${escapeHtml(labels.addCustom)}</button>
+          <span class="sentence-builder-message${messageClass}">${escapeHtml(practice.customMessage || labels.customHelp.replace("{learned}", learned.length))}</span>
+        </div>
+      </details>
     `;
   }
 
@@ -1087,8 +1845,66 @@
         };
   }
 
+  function sentencePracticeCustomLabels() {
+    return lang() === "ru"
+      ? {
+          customTitle: "Своё предложение",
+          customCount: "Своих: {count}",
+          customSentence: "Японское предложение",
+          customSentencePlaceholder: "私は日本語を勉強します。",
+          customReading: "Чтение хираганой",
+          customReadingPlaceholder: "わたしは にほんごを べんきょうします。",
+          customTranslationRu: "Перевод RU",
+          customTranslationRuPlaceholder: "Я изучаю японский.",
+          customTranslationEn: "Translation EN",
+          customTranslationEnPlaceholder: "I study Japanese.",
+          addCustom: "Добавить",
+          customHelp: "Вставь фразу. Приложение спрячет только изученные кандзи: {learned}.",
+          customAdded: "Упражнение добавлено.",
+          customNoSentence: "Вставь японское предложение.",
+          customNoKnown: "В этом предложении нет изученных кандзи.",
+          customNoTiles: "Нужно минимум 4 изученных кандзи для вариантов.",
+          customDuplicate: "Такое упражнение уже есть.",
+          customSource: "Своё",
+          dynamicSource: "JSON"
+        }
+      : {
+          customTitle: "Custom sentence",
+          customCount: "Custom: {count}",
+          customSentence: "Japanese sentence",
+          customSentencePlaceholder: "私は日本語を勉強します。",
+          customReading: "Hiragana reading",
+          customReadingPlaceholder: "わたしは にほんごを べんきょうします。",
+          customTranslationRu: "Translation RU",
+          customTranslationRuPlaceholder: "Я изучаю японский.",
+          customTranslationEn: "Translation EN",
+          customTranslationEnPlaceholder: "I study Japanese.",
+          addCustom: "Add",
+          customHelp: "Paste a phrase. The app will hide only learned kanji: {learned}.",
+          customAdded: "Exercise added.",
+          customNoSentence: "Paste a Japanese sentence.",
+          customNoKnown: "No learned kanji found in this sentence.",
+          customNoTiles: "You need at least 4 learned kanji for tile choices.",
+          customDuplicate: "This exercise already exists.",
+          customSource: "Custom",
+          dynamicSource: "JSON"
+        };
+  }
+
   function localizedSentenceTranslation(exercise) {
     return lang() === "en" ? exercise.translationEn || exercise.translationRu || "" : exercise.translationRu || exercise.translationEn || "";
+  }
+
+  function allSentenceExercises(learned = getLearnedSentenceCards()) {
+    const practice = sentencePracticeProgress();
+    const custom = Array.isArray(practice.custom) ? practice.custom : [];
+    const dynamic = buildDynamicSentenceExercises(learned);
+    const seen = new Set();
+    return [...custom, ...dynamic, ...state.sentenceExercises].filter((exercise) => {
+      if (!exercise?.id || seen.has(exercise.id)) return false;
+      seen.add(exercise.id);
+      return true;
+    });
   }
 
   function renderSentenceLine(exercise, selectedTiles, wrongIndexes) {
@@ -1166,7 +1982,7 @@
       result: null,
       tileKeys: []
     };
-    const exercise = state.sentenceExercises.find((item) => item.id === activeId);
+    const exercise = allSentenceExercises(getLearnedSentenceCards()).find((item) => item.id === activeId);
     if (exercise) rememberSentenceExercise(exercise);
   }
 
@@ -1181,7 +1997,7 @@
 
   function getAvailableSentenceExercises(learned = getLearnedSentenceCards()) {
     const learnedKanji = new Set(learned.map((card) => card.kanji));
-    return state.sentenceExercises.filter((exercise) => {
+    return allSentenceExercises(learned).filter((exercise) => {
       const answer = flatSentenceAnswer(exercise);
       if (!answer.length || answer.some((item) => !learnedKanji.has(item.kanji))) return false;
       return buildSentenceTiles(exercise, learned).length >= Math.max(4, answer.length);
@@ -1220,8 +2036,260 @@
     const distractors = [...exerciseDistractors, ...learnedDistractors]
       .filter((tile) => !answerKanji.has(tile.kanji))
       .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index);
-    const targetCount = Math.max(4, answerTiles.length);
+    const targetCount = Math.min(Math.max(6, answerTiles.length + 2), answerTiles.length + distractors.length);
     return shuffleStable([...answerTiles, ...distractors.slice(0, targetCount - answerTiles.length)], exercise.id);
+  }
+
+  function buildDynamicSentenceExercises(learned) {
+    if (!learned.length) return [];
+    const learnedKanji = new Set(learned.map((card) => card.kanji));
+    const seenWords = new Set();
+    const exercises = [];
+    const examples = learned.flatMap((card) => (card.examples || []).map((example) => ({ ...example, card })));
+
+    examples.forEach((example, index) => {
+      const word = normalizeSentenceText(example.word || "");
+      if (!word || seenWords.has(word) || !containsKanji(word)) return;
+      if (extractKanjiChars(word).some((kanji) => !learnedKanji.has(kanji))) return;
+      seenWords.add(word);
+      const reading = toHiragana(example.reading || autoSentenceReading(word));
+      const translation = example.translation || word;
+      const templates = [
+        {
+          sentence: `今日は${word}をアプリで見ます。`,
+          reading: `きょうは ${reading}を あぷりで みます。`,
+          translationRu: `Сегодня я смотрю в приложении: ${translation}.`,
+          translationEn: `Today I check ${word} in an app.`
+        },
+        {
+          sentence: `駅で${word}について話します。`,
+          reading: `えきで ${reading}について はなします。`,
+          translationRu: `На станции говорю про: ${translation}.`,
+          translationEn: `At the station, I talk about ${word}.`
+        },
+        {
+          sentence: `メモに${word}を書きます。`,
+          reading: `めもに ${reading}を かきます。`,
+          translationRu: `Я записываю в заметку: ${translation}.`,
+          translationEn: `I write ${word} in a memo.`
+        }
+      ];
+      const template = templates[index % templates.length];
+      const exercise = createSentenceExerciseFromText({
+        id: `sentence-json-${stableHash(`${word}:${template.sentence}`).toString(36)}`,
+        jlpt: example.card?.jlpt || "N5",
+        sentence: template.sentence,
+        reading: template.reading,
+        translationRu: template.translationRu,
+        translationEn: template.translationEn,
+        source: "dynamic"
+      }, learned, { maxBlanks: 2, maxBlankChars: 4 });
+      if (exercise) exercises.push(exercise);
+    });
+
+    return exercises.slice(0, 160);
+  }
+
+  function addCustomSentenceExercise() {
+    const practice = sentencePracticeProgress();
+    const labels = { ...sentencePracticeLabels(), ...sentencePracticeCustomLabels() };
+    const draft = practice.customDraft || {};
+    const learned = getLearnedSentenceCards();
+    const sentence = normalizeSentenceText(draft.sentence || "");
+    if (!sentence) {
+      setCustomSentenceMessage(labels.customNoSentence, "error");
+      return;
+    }
+
+    const exercise = createSentenceExerciseFromText({
+      id: `sentence-custom-${Date.now().toString(36)}-${stableHash(sentence).toString(36)}`,
+      jlpt: bestJlptForCustomSentence(sentence, learned),
+      sentence,
+      reading: toHiragana(draft.reading || autoSentenceReading(sentence)),
+      translationRu: draft.translationRu || "",
+      translationEn: draft.translationEn || "",
+      source: "custom",
+      createdAt: new Date().toISOString()
+    }, learned, { maxBlanks: 3, maxBlankChars: 5 });
+
+    if (!exercise) {
+      setCustomSentenceMessage(labels.customNoKnown, "error");
+      return;
+    }
+    if (buildSentenceTiles(exercise, learned).length < Math.max(4, flatSentenceAnswer(exercise).length)) {
+      setCustomSentenceMessage(labels.customNoTiles, "error");
+      return;
+    }
+
+    const answerKey = sentenceAnswerKey(exercise);
+    const duplicate = allSentenceExercises(learned).some((item) => normalizeSentenceText(item.originalSentence || item.sentence || "") === sentence && sentenceAnswerKey(item) === answerKey);
+    if (duplicate) {
+      setCustomSentenceMessage(labels.customDuplicate, "error");
+      return;
+    }
+
+    practice.custom = [exercise, ...(practice.custom || [])].slice(0, 80);
+    practice.customDraft = { sentence: "", reading: "", translationRu: "", translationEn: "" };
+    setCustomSentenceMessage(labels.customAdded, "success", false);
+    resetSentencePractice(exercise.id);
+    state.progress.sentencePractice.tileKeys = buildSentenceTiles(exercise, learned).map(sentenceTileKey);
+    saveProgress();
+    render();
+  }
+
+  function setCustomSentenceMessage(message, status, shouldRender = true) {
+    const practice = sentencePracticeProgress();
+    practice.customMessage = message;
+    practice.customStatus = status;
+    saveProgress();
+    if (shouldRender) render();
+  }
+
+  function createSentenceExerciseFromText(input, learned, options = {}) {
+    const sentence = normalizeSentenceText(input.sentence || "");
+    const candidates = findLearnedKanjiSegments(sentence, learned)
+      .filter((segment) => segment.answer.length <= Number(options.maxBlankChars || 5));
+    if (!candidates.length) return null;
+    const selected = selectSentenceBlankSegments(candidates, sentence, options);
+    if (!selected.length) return null;
+
+    let output = "";
+    let cursor = 0;
+    const blanks = selected.map((segment) => {
+      output += sentence.slice(cursor, segment.start) + "___";
+      cursor = segment.end;
+      return {
+        answer: segment.answer,
+        reading: readingsForKanjiSegment(segment.text)
+      };
+    });
+    output += sentence.slice(cursor);
+
+    return {
+      id: input.id,
+      jlpt: input.jlpt || "N5",
+      sentence: output,
+      originalSentence: sentence,
+      reading: toHiragana(input.reading || autoSentenceReading(sentence)),
+      translationRu: input.translationRu || "",
+      translationEn: input.translationEn || "",
+      blanks,
+      tiles: blanks.flatMap((blank) => blank.answer.map((kanji, index) => ({ kanji, reading: blank.reading[index] || sentenceReadingFromCard(kanji) }))),
+      source: input.source || "custom",
+      createdAt: input.createdAt
+    };
+  }
+
+  function findLearnedKanjiSegments(sentence, learned) {
+    const learnedMap = new Map(learned.map((card) => [card.kanji, card]));
+    const segments = [];
+    let current = null;
+    Array.from(sentence).forEach((char, index) => {
+      if (isKanjiChar(char) && learnedMap.has(char)) {
+        current ||= { start: index, end: index, text: "", answer: [] };
+        current.end = index + 1;
+        current.text += char;
+        current.answer.push(char);
+        return;
+      }
+      if (current) segments.push(current);
+      current = null;
+    });
+    if (current) segments.push(current);
+    return segments;
+  }
+
+  function selectSentenceBlankSegments(candidates, sentence, options = {}) {
+    const maxBlanks = Number(options.maxBlanks || 2);
+    const maxChars = Number(options.maxBlankChars || 5);
+    const middle = candidates.filter((segment) => segment.start > 0 && segment.end < sentence.length);
+    const later = candidates.filter((segment) => segment.start > 0);
+    const pool = (middle.length ? middle : later.length ? later : candidates)
+      .slice()
+      .sort((a, b) => {
+        const lengthDiff = b.answer.length - a.answer.length;
+        if (lengthDiff) return lengthDiff;
+        return Math.abs(a.start - sentence.length / 2) - Math.abs(b.start - sentence.length / 2);
+      });
+    const selected = [];
+    let totalChars = 0;
+    pool.forEach((segment) => {
+      if (selected.length >= maxBlanks || totalChars + segment.answer.length > maxChars) return;
+      selected.push(segment);
+      totalChars += segment.answer.length;
+    });
+    return selected.sort((a, b) => a.start - b.start);
+  }
+
+  function readingsForKanjiSegment(text) {
+    const chars = Array.from(text);
+    const wordReading = lookupExampleReading(text);
+    if (wordReading) return splitReadingByKanji(chars, toHiragana(wordReading));
+    return chars.map((kanji) => sentenceReadingFromCard(kanji));
+  }
+
+  function lookupExampleReading(word) {
+    for (const card of state.cards) {
+      for (const example of card.examples || []) {
+        if (example.word === word && example.reading) return example.reading;
+      }
+    }
+    return "";
+  }
+
+  function splitReadingByKanji(chars, reading) {
+    const result = Array(chars.length).fill("");
+    let rest = reading;
+    for (let index = chars.length - 1; index > 0; index -= 1) {
+      const candidates = kanjiReadingCandidates(chars[index]).sort((a, b) => b.length - a.length);
+      const match = candidates.find((item) => item && rest.endsWith(item));
+      if (match) {
+        result[index] = match;
+        rest = rest.slice(0, -match.length);
+      }
+    }
+    result[0] = rest || sentenceReadingFromCard(chars[0]);
+    return result.map((item, index) => item || sentenceReadingFromCard(chars[index]));
+  }
+
+  function kanjiReadingCandidates(kanji) {
+    const card = state.cards.find((item) => item.kanji === kanji);
+    const readings = [card?.hiragana, card?.onyomi, card?.kunyomi]
+      .flatMap((value) => String(value || "").split(/[\/,;・、\s]+/))
+      .map((value) => toHiragana(value.trim()))
+      .filter(Boolean);
+    return [...new Set(readings)];
+  }
+
+  function autoSentenceReading(sentence) {
+    return toHiragana(Array.from(sentence).map((char) => isKanjiChar(char) ? sentenceReadingFromCard(char) : char).join(""));
+  }
+
+  function bestJlptForCustomSentence(sentence, learned) {
+    const order = ["N5", "N4", "N3", "N2", "N1"];
+    const learnedMap = new Map(learned.map((card) => [card.kanji, card]));
+    const levels = extractKanjiChars(sentence).map((kanji) => learnedMap.get(kanji)?.jlpt).filter(Boolean);
+    return levels.sort((a, b) => order.indexOf(b) - order.indexOf(a))[0] || "N5";
+  }
+
+  function normalizeSentenceText(value) {
+    return String(value || "").replace(/\s+/g, "").trim();
+  }
+
+  function containsKanji(value) {
+    return Array.from(String(value || "")).some(isKanjiChar);
+  }
+
+  function extractKanjiChars(value) {
+    return Array.from(String(value || "")).filter(isKanjiChar);
+  }
+
+  function isKanjiChar(char) {
+    return /[\u3400-\u9fff]/u.test(char);
+  }
+
+  function toHiragana(value) {
+    return String(value || "").replace(/[\u30a1-\u30f6]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0x60));
   }
 
   function sentenceReadingFromCard(kanji, card = state.cards.find((item) => item.kanji === kanji)) {
@@ -1302,10 +2370,12 @@
 
     if (correct) {
       awardSentencePractice(prepared.exercise);
+      adjustEvaRelationship({ trust: 0.8, curiosity: 0.5, discipline: 0.4 }, "sentence_correct");
       playTone("ok");
     } else {
       state.progress.totalWrong += 1;
       state.progress.correctCombo = 0;
+      adjustEvaRelationship({ discipline: -0.6, curiosity: 0.2 }, "sentence_wrong");
       const today = todayStats();
       today.mistakes += 1;
       state.progress.daily[todayKey()] = today;
@@ -1331,6 +2401,7 @@
     today.minutes = round((today.minutes || 0) + 0.8, 1);
     state.progress.daily[todayKey()] = today;
     addReward(xp, coins, `sentence:${exercise.id}`);
+    adjustEvaRelationship({ trust: 0.8, curiosity: 0.7 }, "sentence_complete");
     updateStreak();
     checkDailyGoal();
     evaluateAchievements();
@@ -1369,7 +2440,13 @@
       available
     ];
     const pool = pools.find((items) => items.length) || available;
-    return pool[Math.floor(Math.random() * pool.length)];
+    const challengePool = pool.filter(isChallengingSentenceExercise);
+    const finalPool = challengePool.length ? challengePool : pool;
+    return finalPool[Math.floor(Math.random() * finalPool.length)];
+  }
+
+  function isChallengingSentenceExercise(exercise) {
+    return exercise.source === "custom" || exercise.source === "dynamic" || String(exercise.sentence || "").indexOf("___") > 0;
   }
 
   function rememberSentenceExercise(exercise) {
@@ -2063,6 +3140,7 @@
     if (rating === "again") {
       state.progress.totalWrong += 1;
       state.progress.correctCombo = 0;
+      adjustEvaRelationship({ discipline: -0.8, trust: -0.2 }, "answer_again");
       playTone("again");
       toast(dialogueText("eva", "wrong"));
     } else {
@@ -2070,6 +3148,7 @@
       state.progress.totalCorrect += 1;
       state.progress.correctCombo += 1;
       state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
+      adjustEvaRelationship({ trust: 0.35, discipline: 0.25, curiosity: rating === "easy" ? 0.2 : 0 }, `answer_${rating}`);
       playTone("ok");
       toast(dialogueText("eva", "correct"));
       if (state.progress.correctCombo > 0 && state.progress.correctCombo % 5 === 0) {
@@ -2086,6 +3165,7 @@
       }
     }
 
+    syncEvaRelationshipFromProgress();
     checkLessonCompletion(card.lessonId);
     checkDailyGoal();
     evaluateAchievements();
@@ -2156,6 +3236,7 @@
     state.progress.lessonCompletions[lessonId] = new Date().toISOString();
     playUxSound("lesson_complete");
     addReward(xp, coins, "lesson_completion");
+    adjustEvaRelationship({ warmth: 2.4, trust: 2, discipline: 2.2, curiosity: 0.8 }, "lesson_completion");
     queueReward({
       title: localized({ ru: "Урок завершён", en: "Lesson complete" }),
       message: dialogueText("eva", "lessonComplete"),
@@ -2197,6 +3278,7 @@
   function handleMascotClick(character) {
     if (character === "eva") {
       state.progress.secrets.evaClicks = Number(state.progress.secrets.evaClicks || 0) + 1;
+      adjustEvaRelationship({ warmth: 0.2, curiosity: 0.1 }, "eva_click");
       toast(dialogueText("eva", "welcome"));
       evaluateAchievements();
       saveProgress();
@@ -2213,6 +3295,7 @@
     if (writingSession.cardId) {
       state.progress.writingPractice.cards[writingSession.cardId] = (state.progress.writingPractice.cards[writingSession.cardId] || 0) + 1;
     }
+    adjustEvaRelationship({ curiosity: 1, discipline: 0.8, trust: 0.4 }, "writing_complete");
     const unlocked = evaluateAchievements();
     saveProgress();
     if (unlocked) render();
@@ -2244,6 +3327,7 @@
     state.progress.dailyBonuses[key] = new Date().toISOString();
     playUxSound("daily_bonus");
     addReward(state.rewards.rewards.dailyBonusXp, state.rewards.rewards.dailyBonusCoins, "daily_bonus");
+    adjustEvaRelationship({ warmth: 1, discipline: 0.8 }, "daily_bonus");
     queueReward({
       title: t("dailyBonus"),
       message: dialogueText("leya", "welcome"),
@@ -2427,6 +3511,10 @@
     state.progress.streak.best = Math.max(state.progress.streak.best, state.progress.streak.current);
     state.progress.streakHistory.push({ date: today, value: state.progress.streak.current });
     state.progress.streakHistory = state.progress.streakHistory.slice(-120);
+    adjustEvaRelationship(lost
+      ? { discipline: -3.5, trust: -1.4, warmth: -0.8 }
+      : { discipline: 1.4, trust: 0.8, warmth: 0.4 },
+    lost ? "streak_lost" : "study_streak");
     if (lost) toast(dialogueText("eva", "streakLoss"));
     if ([1, 7, 30, 100].includes(state.progress.streak.current)) {
       playUxSound("streak_reward");
