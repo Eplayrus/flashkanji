@@ -4,6 +4,7 @@
   const STORAGE_KEY = "flashKanji.progress.v2";
   const LEGACY_STORAGE_KEY = "flashKanji.progress.v1";
   const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v1";
+  const NOTIFICATION_STORAGE_KEY = "flashKanji.notificationPrompt.v1";
   const APP_VERSION = 2;
   const DATA_URLS = {
     lessons: "data/lessons.json",
@@ -53,14 +54,22 @@
     sentencePractice: { activeId: null, selected: [], checked: false, result: null, tileKeys: [] },
     readingCheck: { cardId: null, value: "", status: null, message: "" },
     writingStep: 0,
-    pwaInstallPrompt: loadPwaInstallPromptState()
+    navMenu: null,
+    pendingFocus: null,
+    pwaInstallPrompt: loadPwaInstallPromptState(),
+    notificationPrompt: loadNotificationPromptState(),
+    notificationPromptVisible: false
   };
 
   let audioContext = null;
   let activeKanjiAudio = null;
   let lastAutoAudioKey = "";
+  let lastUxSoundAt = 0;
   let toastTimer = 0;
   let deferredPwaInstallPrompt = null;
+  let notificationPromptTimer = 0;
+  const notificationTimers = new Map();
+  const notificationUsageStartedAt = Date.now();
   const writingSession = {
     cardId: null,
     strokes: [],
@@ -82,12 +91,17 @@
   importInput.addEventListener("change", handleImportFile);
   window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   window.addEventListener("appinstalled", handlePwaInstallAccepted);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) maybeShowNotificationPrompt("usage");
+  });
   window.addEventListener("hashchange", () => {
     const route = readRouteHash();
     if (route !== state.route) {
       state.route = route;
       state.detailCardId = null;
       state.revealed = false;
+      state.navMenu = null;
+      state.pendingFocus = null;
       resetReadingCheck();
       render();
     }
@@ -98,6 +112,8 @@
   async function boot() {
     app.innerHTML = renderLoading();
     state.progress = loadProgress();
+    syncUxSoundSettings();
+    preloadUxSounds();
     applyTheme();
 
     try {
@@ -139,6 +155,8 @@
       saveProgress();
       render();
       registerServiceWorker();
+      scheduleNotificationPromptCheck();
+      prepareDailyNotifications();
     } catch (error) {
       console.error(error);
       app.innerHTML = renderLoadError(error);
@@ -222,13 +240,21 @@
     };
   }
 
+  function detectInitialLanguage() {
+    const languages = [navigator.language, ...(navigator.languages || [])]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+    return languages.some((value) => value === "ru" || value.startsWith("ru-") || value === "be" || value.startsWith("be-")) ? "ru" : "en";
+  }
+
   function defaultProgress() {
     const theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    const language = detectInitialLanguage();
     return {
       version: APP_VERSION,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      settings: { theme, sound: true, language: "ru", dailyGoal: 10 },
+      settings: { theme, sound: true, uxSound: true, uxVolume: 0.75, language, languageAutoDetected: true, languageManuallySelected: false, dailyGoal: 10 },
       xp: 0,
       level: 1,
       moonFragments: 0,
@@ -244,6 +270,7 @@
       transactions: [],
       streakHistory: [],
       streak: { current: 0, best: 0, lastStudyDate: null },
+      visits: { firstVisitDate: null, lastVisitDate: null, lastDailyBonusDate: null, streak: 0, bestStreak: 0 },
       lessonCompletions: {},
       achievements: {},
       dailyBonuses: {},
@@ -279,6 +306,7 @@
       transactions: Array.isArray(saved.transactions) ? saved.transactions : base.transactions,
       streakHistory: Array.isArray(saved.streakHistory) ? saved.streakHistory : base.streakHistory,
       streak: { ...base.streak, ...(saved.streak || {}) },
+      visits: { ...base.visits, ...(saved.visits || {}) },
       lessonCompletions: { ...base.lessonCompletions, ...(saved.lessonCompletions || {}) },
       achievements: { ...base.achievements, ...(saved.achievements || {}) },
       dailyBonuses: { ...base.dailyBonuses, ...(saved.dailyBonuses || {}) },
@@ -360,7 +388,15 @@
 
   function handleClick(event) {
     if (event.target.classList?.contains("detail-backdrop")) {
+      playUxSound("menu_close");
       state.detailCardId = null;
+      render();
+      return;
+    }
+
+    const clickedNavSurface = event.target.closest(".nav-popover, .bottom-nav");
+    if (state.navMenu && !clickedNavSurface && !event.target.closest("[data-action]")) {
+      state.navMenu = null;
       render();
       return;
     }
@@ -370,20 +406,40 @@
 
     const action = target.dataset.action;
     const id = target.dataset.id;
+    playActionSound(action, target);
 
     if (action === "route") {
-      if (target.dataset.route === "writing" && state.detailCardId) state.activeCardId = state.detailCardId;
-      setRoute(target.dataset.route);
+      const route = target.dataset.route;
+      if (target.closest(".bottom-nav") && hasNavMenu(route)) {
+        toggleNavMenu(route);
+        return;
+      }
+      state.navMenu = null;
+      if (route === "writing" && state.detailCardId) state.activeCardId = state.detailCardId;
+      setRoute(route);
+    }
+    if (action === "nav-menu-route") {
+      const route = target.dataset.route;
+      state.navMenu = null;
+      if (route === "writing" && state.detailCardId) state.activeCardId = state.detailCardId;
+      setRoute(route, target.dataset.focus || null);
+    }
+    if (action === "close-nav-menu") {
+      state.navMenu = null;
+      render();
     }
     if (action === "theme") toggleTheme();
     if (action === "language") toggleLanguage();
     if (action === "sound") toggleSound();
+    if (action === "toggle-ux-sound") toggleUxSound();
     if (action === "export") exportProgress();
     if (action === "import") importInput.click();
     if (action === "reset") resetProgress();
     if (action === "share-achievement") shareAchievement().catch(() => toast(t("shareFallback")));
     if (action === "pwa-install") handlePwaInstallRequest();
     if (action === "pwa-later") handlePwaInstallDeclined();
+    if (action === "notification-allow") handleNotificationPermissionAccepted();
+    if (action === "notification-later") handleNotificationPermissionDeclined();
     if (action === "mascot-click") handleMascotClick(target.dataset.character);
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "clear-writing") clearWritingCanvas();
@@ -467,7 +523,67 @@
     }
   }
 
+  function playActionSound(action, target) {
+    if (!action || target?.disabled) return;
+    if (isStudyCardAction(action, target)) return;
+    if (action === "route") {
+      if (target?.closest(".bottom-nav") && hasNavMenu(target.dataset.route)) {
+        playUxSound(state.navMenu === target.dataset.route ? "menu_close" : "menu_open");
+        return;
+      }
+      playUxSound("tab_switch");
+      return;
+    }
+    if (action === "nav-menu-route") {
+      playUxSound("tab_switch");
+      return;
+    }
+    if (action === "close-nav-menu") {
+      playUxSound("menu_close");
+      return;
+    }
+    if (action === "show-answer" || action === "open-card") {
+      playUxSound("card_flip");
+      return;
+    }
+    if (["close-reward", "close-detail", "pwa-later", "notification-later"].includes(action)) {
+      playUxSound("menu_close");
+      return;
+    }
+    if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate"].includes(action)) {
+      playUxSound("page_turn");
+      return;
+    }
+    if (["pwa-install", "notification-allow", "set-goal"].includes(action)) {
+      playUxSound("notification_soft");
+      return;
+    }
+    if (target?.matches("button, .btn, [role='button']")) playUxSound("button_click");
+  }
+
+  function isStudyCardAction(action, target) {
+    if (!["learn", "review"].includes(state.route)) return false;
+    const quietActions = new Set([
+      "show-answer",
+      "rate",
+      "check-reading",
+      "play-kanji-audio",
+      "start-lesson",
+      "select-lesson",
+      "study-card"
+    ]);
+    return quietActions.has(action) || Boolean(target?.closest(".study-card, .study-layout"));
+  }
+
   function handleInput(event) {
+    const uxVolumeInput = event.target.closest("[data-ux-volume]");
+    if (uxVolumeInput) {
+      setUxSoundVolume(Number(uxVolumeInput.value) / 100);
+      const label = document.querySelector("[data-ux-volume-label]");
+      if (label) label.textContent = `${Math.round(getUxSoundVolume() * 100)}%`;
+      return;
+    }
+
     const readingInput = event.target.closest("[data-reading-input]");
     if (readingInput) {
       state.readingCheck = {
@@ -496,9 +612,10 @@
   }
 
   function handleKeydown(event) {
-    if (event.key === "Escape" && (state.detailCardId || state.rewardModal)) {
+    if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.navMenu)) {
       state.detailCardId = null;
       state.rewardModal = null;
+      state.navMenu = null;
       render();
       return;
     }
@@ -511,11 +628,13 @@
     checkActiveCardReading();
   }
 
-  function setRoute(route) {
+  function setRoute(route, focus = null) {
     state.route = routes.includes(route) ? route : "home";
     if (location.hash !== `#${state.route}`) history.replaceState(null, "", `#${state.route}`);
     state.detailCardId = null;
     state.revealed = false;
+    state.navMenu = null;
+    state.pendingFocus = focus;
     resetReadingCheck();
     render();
   }
@@ -528,11 +647,11 @@
     if (state.route === "home") html = renderHome();
     if (state.route === "learn") {
       html = renderLearn();
-      requestAnimationFrame(autoPlayActiveKanjiAudio);
+      if (state.pendingFocus !== "lesson-tabs") requestAnimationFrame(autoPlayActiveKanjiAudio);
     }
     if (state.route === "review") {
       html = renderReview();
-      requestAnimationFrame(autoPlayActiveKanjiAudio);
+      if (state.pendingFocus !== "sentence-practice") requestAnimationFrame(autoPlayActiveKanjiAudio);
     }
     if (state.route === "dictionary") html = renderDictionary();
     if (state.route === "writing") {
@@ -546,17 +665,104 @@
     if (state.route === "achievements") html = renderAchievementsPage();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
     document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal));
+    requestAnimationFrame(applyPendingFocus);
   }
 
   function renderGlobalOverlays() {
-    const overlays = `${renderDetailModal()}${renderRewardModal()}${renderPwaInstallBanner()}`;
+    const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}`;
     return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
+  }
+
+  function hasNavMenu(route) {
+    return navMenuItems(route).length > 1;
+  }
+
+  function toggleNavMenu(route) {
+    if (!hasNavMenu(route)) {
+      setRoute(route);
+      return;
+    }
+    state.navMenu = state.navMenu === route ? null : route;
+    render();
+  }
+
+  function navMenuItems(route) {
+    const ru = lang() === "ru";
+    const items = {
+      learn: [
+        { route: "learn", focus: "lesson-card", icon: "文", title: ru ? "Текущий урок" : "Current lesson", text: ru ? "Карточки и новые кандзи." : "Cards and new kanji." },
+        { route: "learn", focus: "lesson-tabs", icon: "段", title: ru ? "Выбор урока" : "Lesson list", text: ru ? "Перейти к списку уроков." : "Jump to lesson picker." }
+      ],
+      review: [
+        { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "SRS-карточки на сегодня." : "Today’s SRS queue." },
+        { route: "review", focus: "sentence-practice", icon: "文", title: ru ? "Практика предложений" : "Sentence practice", text: ru ? "Вставь кандзи в пропуск." : "Fill kanji into blanks." }
+      ],
+      writing: [
+        { route: "writing", focus: "writing-demo", icon: "筆", title: ru ? "Порядок черт" : "Stroke order", text: ru ? "Пошаговый пример письма." : "Step-by-step guide." },
+        { route: "writing", focus: "writing-canvas", icon: "線", title: ru ? "Проверка письма" : "Writing check", text: ru ? "Напиши кандзи на canvas." : "Write kanji on canvas." }
+      ],
+      stats: [
+        { route: "stats", focus: "stats-top", icon: "▥", title: ru ? "Статистика" : "Statistics", text: ru ? "Графики, XP и серия." : "Charts, XP, and streak." },
+        { route: "achievements", focus: "achievements-top", icon: "月", title: ru ? "Достижения" : "Achievements", text: ru ? "Галерея наград." : "Reward gallery." },
+        { route: "stats", focus: "shop-panel", icon: "◈", title: ru ? "Магазин" : "Shop", text: ru ? "Moon Fragments и предметы." : "Moon Fragments and items." }
+      ]
+    };
+    return items[route] || [];
+  }
+
+  function renderBottomNavMenu() {
+    const items = navMenuItems(state.navMenu);
+    if (!items.length) return "";
+    const current = state.navMenu;
+    const title = current ? t(current) : "";
+    return `
+      <aside class="nav-popover" role="menu" aria-label="${escapeAttr(title)}">
+        <div class="nav-popover-head">
+          <strong>${escapeHtml(title)}</strong>
+          <button class="icon-btn nav-popover-close" type="button" data-action="close-nav-menu" aria-label="${escapeAttr(lang() === "ru" ? "Закрыть меню" : "Close menu")}">×</button>
+        </div>
+        <div class="nav-popover-list">
+          ${items.map((item) => `
+            <button class="nav-popover-item" type="button" role="menuitem" data-action="nav-menu-route" data-route="${escapeAttr(item.route)}" data-focus="${escapeAttr(item.focus)}">
+              <span>${escapeHtml(item.icon)}</span>
+              <b>${escapeHtml(item.title)}</b>
+              <small>${escapeHtml(item.text)}</small>
+            </button>
+          `).join("")}
+        </div>
+      </aside>
+    `;
+  }
+
+  function applyPendingFocus() {
+    if (!state.pendingFocus) return;
+    const focus = state.pendingFocus;
+    state.pendingFocus = null;
+    const selectors = {
+      "lesson-card": ".study-card, .daily-lesson-card",
+      "lesson-tabs": ".lesson-tabs",
+      "review-card": "[data-section='review-card']",
+      "sentence-practice": "[data-section='sentence-practice']",
+      "writing-demo": "[data-section='writing-demo']",
+      "writing-canvas": "[data-section='writing-canvas']",
+      "stats-top": ".metric-grid",
+      "achievements-top": ".achievements-page .metric-grid",
+      "shop-panel": "[data-section='shop-panel']"
+    };
+    const element = document.querySelector(selectors[focus] || focus);
+    if (!element) return;
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    element.classList.add("is-focus-pulse");
+    window.setTimeout(() => element.classList.remove("is-focus-pulse"), 900);
   }
 
   function syncChrome() {
     $$(".nav-btn").forEach((button) => {
       const route = button.dataset.route;
-      button.classList.toggle("is-active", route === state.route);
+      const active = route === state.route || (route === "stats" && state.route === "achievements");
+      button.classList.toggle("is-active", active);
+      button.classList.toggle("has-menu", hasNavMenu(route));
+      button.setAttribute("aria-expanded", state.navMenu === route ? "true" : "false");
       const label = button.querySelector("small");
       if (label && route) label.textContent = t(route);
     });
@@ -743,7 +949,7 @@
             <p>${due.length} ${escapeHtml(t("cardsToday"))}</p>
           </div>
         </div>
-        <div class="study-layout">
+        <div class="study-layout" data-section="review-card">
           ${card ? renderStudyCard(card) : renderNoReview()}
           ${renderStudySidePanel(card, due.length)}
         </div>
@@ -759,7 +965,7 @@
 
     if (!learned.length) {
       return `
-        <article class="sentence-practice empty-state">
+      <article class="sentence-practice empty-state" data-section="sentence-practice">
           <span class="kanji-char">文</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.noLearned)}</p>
@@ -770,7 +976,7 @@
 
     if (learned.length < 4) {
       return `
-        <article class="sentence-practice empty-state">
+        <article class="sentence-practice empty-state" data-section="sentence-practice">
           <span class="kanji-char">文</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.notEnough.replace("{count}", learned.length))}</p>
@@ -780,7 +986,7 @@
 
     if (!available.length) {
       return `
-        <article class="sentence-practice empty-state">
+        <article class="sentence-practice empty-state" data-section="sentence-practice">
           <span class="kanji-char">文</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.noExercise)}</p>
@@ -795,7 +1001,7 @@
     const result = state.progress.sentencePractice.result || {};
     const statusClass = state.progress.sentencePractice.checked ? (complete ? " is-success" : " is-error") : "";
     return `
-      <article class="sentence-practice${statusClass}" aria-live="polite">
+      <article class="sentence-practice${statusClass}" data-section="sentence-practice" aria-live="polite">
         <div class="section-head sentence-head">
           <div>
             <h2>${escapeHtml(labels.title)}</h2>
@@ -1424,7 +1630,7 @@
           </div>
         </div>
         <div class="writing-layout">
-          <article class="writing-card">
+          <article class="writing-card" data-section="writing-demo">
             <div class="kanji-focus writing-focus">${escapeHtml(card?.kanji || "文")}</div>
             ${card ? renderReadingGrid(card) : ""}
             ${card ? `<div class="actions"><button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 ${escapeHtml(t("audio"))}</button></div>` : ""}
@@ -1454,7 +1660,7 @@
             <h3>${escapeHtml(t("mnemonic"))}</h3>
             <p>${escapeHtml(kanjiHint(card?.id).mnemonic)}</p>
           </article>
-          <article class="writing-card writing-practice">
+          <article class="writing-card writing-practice" data-section="writing-canvas">
             <h3>${escapeHtml(lang() === "ru" ? "Поле письма" : "Writing area")}</h3>
             <div class="writing-practice-head">
               <span class="pill" id="writingStrokeCounter">0/${stepCount}</span>
@@ -1572,10 +1778,27 @@
           <article class="chart-panel"><h3>SRS</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("errors"))}</h3><div class="chart-box"><canvas id="mistakeChart"></canvas></div></article>
           <article class="tool-panel">${renderAchievementsList()}</article>
-          <article class="tool-panel">${renderShop()}</article>
+          <article class="tool-panel" data-section="shop-panel">${renderShop()}</article>
           <article class="tool-panel">${renderTransactions()}</article>
           <article class="tool-panel">
             <h3>${escapeHtml(t("settings"))}</h3>
+            <div class="settings-list">
+              <div class="settings-row">
+                <span>
+                  <strong>${escapeHtml(lang() === "ru" ? "Звуки интерфейса" : "UX sounds")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "Клики, ответы, награды и уведомления." : "Clicks, answers, rewards, and in-app notices.")}</small>
+                </span>
+                <button class="btn ${isUxSoundEnabled() ? "success" : "ghost"}" type="button" data-action="toggle-ux-sound">${isUxSoundEnabled() ? "On" : "Off"}</button>
+              </div>
+              <label class="settings-row settings-row-range">
+                <span>
+                  <strong>${escapeHtml(lang() === "ru" ? "Громкость UX" : "UX volume")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "Не влияет на озвучку кандзи и музыку." : "Does not affect kanji voice or music.")}</small>
+                </span>
+                <input class="ux-volume-slider" type="range" min="0" max="100" step="5" value="${Math.round(getUxSoundVolume() * 100)}" data-ux-volume />
+                <strong class="volume-value" data-ux-volume-label>${Math.round(getUxSoundVolume() * 100)}%</strong>
+              </label>
+            </div>
             <div class="actions">
               <button class="btn primary" type="button" data-action="export">⇩ ${escapeHtml(t("export"))}</button>
               <button class="btn" type="button" data-action="import">⇧ ${escapeHtml(t("import"))}</button>
@@ -1786,6 +2009,26 @@
     `;
   }
 
+  function renderNotificationPermissionBanner() {
+    if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible")) return "";
+    if (state.detailCardId || state.rewardModal || canShowPwaInstallPrompt()) return "";
+    const copy = notificationPromptCopy();
+    return `
+      <aside class="pwa-install-banner notification-permission-banner" role="dialog" aria-modal="false" aria-label="${escapeAttr(copy.title)}">
+        <div class="pwa-install-logo notification-bell">月</div>
+        <div class="pwa-install-copy">
+          <span class="pill">${escapeHtml(copy.badge)}</span>
+          <h2>${escapeHtml(copy.title)}</h2>
+          <p>${escapeHtml(copy.description)}</p>
+        </div>
+        <div class="pwa-install-actions">
+          <button class="btn primary" type="button" data-action="notification-allow">${escapeHtml(copy.allow)}</button>
+          <button class="btn ghost" type="button" data-action="notification-later">${escapeHtml(copy.later)}</button>
+        </div>
+      </aside>
+    `;
+  }
+
   function renderMascotPanel(character, mood, category) {
     const mascot = getMascot(character);
     return `
@@ -1809,6 +2052,7 @@
   function rateActiveCard(rating) {
     const card = findCard(state.activeCardId);
     if (!card || !ratingLabels[rating]) return;
+    stopKanjiAudio();
 
     const before = cloneProgress(getCardProgress(card.id));
     const after = calculateNextProgress(before, rating);
@@ -1910,6 +2154,7 @@
     const xp = state.rewards.rewards.lessonCompleteXp;
     const coins = state.rewards.rewards.lessonCompleteCoins;
     state.progress.lessonCompletions[lessonId] = new Date().toISOString();
+    playUxSound("lesson_complete");
     addReward(xp, coins, "lesson_completion");
     queueReward({
       title: localized({ ru: "Урок завершён", en: "Lesson complete" }),
@@ -1920,6 +2165,7 @@
       mood: "happy",
       dialog: "lessonComplete"
     });
+    maybeShowNotificationPrompt("lesson_complete");
   }
 
   function checkDailyGoal() {
@@ -1974,8 +2220,29 @@
 
   function claimDailyBonus() {
     const key = todayKey();
-    if (state.progress.dailyBonuses[key]) return;
+    const visits = normalizeVisitState();
+    const previousVisitDate = visits.lastVisitDate;
+
+    if (!visits.firstVisitDate) {
+      visits.firstVisitDate = key;
+      visits.lastVisitDate = key;
+      visits.streak = 1;
+      visits.bestStreak = Math.max(visits.bestStreak || 0, visits.streak);
+      return;
+    }
+
+    if (state.progress.dailyBonuses[key] || visits.lastDailyBonusDate === key) {
+      visits.lastVisitDate = key;
+      return;
+    }
+
+    if (previousVisitDate === key) return;
+
+    updateVisitStreak(previousVisitDate, key);
+    visits.lastVisitDate = key;
+    visits.lastDailyBonusDate = key;
     state.progress.dailyBonuses[key] = new Date().toISOString();
+    playUxSound("daily_bonus");
     addReward(state.rewards.rewards.dailyBonusXp, state.rewards.rewards.dailyBonusCoins, "daily_bonus");
     queueReward({
       title: t("dailyBonus"),
@@ -1986,6 +2253,35 @@
       mood: "calm",
       dialog: "welcome"
     });
+    evaluateAchievements();
+    prepareDailyNotifications();
+  }
+
+  function normalizeVisitState() {
+    state.progress.visits ||= {};
+    const visits = state.progress.visits;
+    visits.firstVisitDate ||= null;
+    visits.lastVisitDate ||= null;
+    visits.lastDailyBonusDate ||= null;
+    visits.streak = Number(visits.streak || 0);
+    visits.bestStreak = Number(visits.bestStreak || 0);
+
+    return visits;
+  }
+
+  function updateVisitStreak(previousVisitDate, today) {
+    const visits = normalizeVisitState();
+    visits.streak = previousVisitDate && dayDifference(previousVisitDate, today) === 1 ? visits.streak + 1 : 1;
+    visits.bestStreak = Math.max(visits.bestStreak || 0, visits.streak);
+
+    const studyLast = state.progress.streak.lastStudyDate;
+    if (studyLast !== today) {
+      state.progress.streak.current = studyLast && dayDifference(studyLast, today) === 1 ? state.progress.streak.current + 1 : 1;
+      state.progress.streak.lastStudyDate = today;
+      state.progress.streak.best = Math.max(state.progress.streak.best || 0, state.progress.streak.current);
+      state.progress.streakHistory.push({ date: today, value: state.progress.streak.current });
+      state.progress.streakHistory = state.progress.streakHistory.slice(-120);
+    }
   }
 
   function evaluateAchievements() {
@@ -2058,13 +2354,25 @@
 
   function showRewardFeedback(reward) {
     showConfetti();
-    if (reward?.type === "achievement") playAchievementSound();
+    if (reward?.type === "achievement") {
+      if (soundManager()) playUxSound("achievement_unlock");
+      else if (isUxSoundEnabled()) playAchievementSound();
+      return;
+    }
+    if (reward?.type === "level") {
+      playUxSound("level_up");
+      return;
+    }
+    if ((reward?.xp || 0) > 0 || (reward?.coins || 0) > 0) playUxSound("notification_reward");
   }
 
   function addReward(xp, coins, reason = "reward") {
     const previousLevel = state.progress.level || calculateLevel(state.progress.xp);
     state.progress.xp += xp;
     state.progress.moonFragments += coins;
+    const quietReward = shouldQuietPerCardReward(reason);
+    if (!quietReward && xp > 0) playUxSound("xp_gain");
+    if (!quietReward && coins > 0) playUxSound("moon_fragment_gain");
     if (coins > 0) state.progress.totalMoonFragmentsEarned = Number(state.progress.totalMoonFragmentsEarned || 0) + coins;
     state.progress.level = calculateLevel(state.progress.xp);
     if (xp || coins) {
@@ -2078,6 +2386,7 @@
       state.progress.transactions = state.progress.transactions.slice(0, 80);
     }
     if (state.progress.level > previousLevel) {
+      playUxSound("level_up");
       queueReward({
         type: "level",
         title: t("levelUp"),
@@ -2092,6 +2401,10 @@
         moonFragments: state.progress.moonFragments
       });
     }
+  }
+
+  function shouldQuietPerCardReward(reason) {
+    return ["learn", "review"].includes(state.route) && ["review_success", "combo_bonus"].includes(reason);
   }
 
   function updateDailyStats(before, after, rating) {
@@ -2116,6 +2429,7 @@
     state.progress.streakHistory = state.progress.streakHistory.slice(-120);
     if (lost) toast(dialogueText("eva", "streakLoss"));
     if ([1, 7, 30, 100].includes(state.progress.streak.current)) {
+      playUxSound("streak_reward");
       addReward(0, state.rewards.rewards.streakCoins, `streak:${state.progress.streak.current}`);
     }
   }
@@ -2914,6 +3228,7 @@
   function checkActiveCardReading() {
     const card = findCard(state.readingCheck.cardId || state.activeCardId);
     if (!card) return;
+    stopKanjiAudio();
 
     const tokens = normalizeKanaTokens(state.readingCheck.value);
     const accepted = acceptedKanaReadings(card);
@@ -2932,6 +3247,7 @@
       status,
       message
     };
+    playUxSound(status === "correct" ? "answer_correct" : "answer_wrong");
     render();
     requestAnimationFrame(() => {
       const input = document.getElementById(`readingCheck-${card.id}`);
@@ -3090,6 +3406,11 @@
 
   function autoPlayActiveKanjiAudio() {
     if (state.route !== "learn" && state.route !== "review") return;
+    const waitForUx = 560 - (Date.now() - lastUxSoundAt);
+    if (waitForUx > 0) {
+      window.setTimeout(autoPlayActiveKanjiAudio, waitForUx);
+      return;
+    }
     const card = findCard(state.activeCardId);
     const audio = normalizeAudioPath(card?.audioSrc || card?.audio || "");
     if (!card || !audio) return;
@@ -3097,6 +3418,15 @@
     if (key === lastAutoAudioKey) return;
     lastAutoAudioKey = key;
     playKanjiAudio(card, { silent: true });
+  }
+
+  function stopKanjiAudio() {
+    if (activeKanjiAudio) {
+      activeKanjiAudio.pause();
+      activeKanjiAudio.currentTime = 0;
+      activeKanjiAudio = null;
+    }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }
 
   function playKanjiAudio(card, options = {}) {
@@ -3112,6 +3442,9 @@
 
     activeKanjiAudio = new Audio(audio);
     activeKanjiAudio.preload = "auto";
+    activeKanjiAudio.onended = () => {
+      activeKanjiAudio = null;
+    };
     activeKanjiAudio.onerror = () => {
       if (!options.silent) console.warn("Kanji audio file could not be loaded.", { id: card?.id, audio });
     };
@@ -3189,6 +3522,7 @@
     const item = state.rewards.shop.find((entry) => entry.id === id);
     if (!item || state.progress.shop.owned.includes(id)) return;
     if (state.progress.moonFragments < item.cost) {
+      playUxSound("purchase_failed");
       toast(`${item.cost} ◐`);
       return;
     }
@@ -3202,6 +3536,8 @@
     });
     state.progress.transactions = state.progress.transactions.slice(0, 80);
     state.progress.shop.owned.push(id);
+    playUxSound("purchase_success");
+    playUxSound("item_unlock");
     evaluateAchievements();
     saveProgress();
     toast(localized(item.name));
@@ -3414,6 +3750,7 @@
       const parsed = JSON.parse(await file.text());
       state.progress = mergeProgress(defaultProgress(), parsed.progress || parsed);
       hydrateProgress();
+      syncUxSoundSettings();
       saveProgress();
       applyTheme();
       toast(t("import"));
@@ -3432,6 +3769,7 @@
     state.progress = defaultProgress();
     state.progress.settings = settings;
     hydrateProgress();
+    syncUxSoundSettings();
     saveProgress();
     render();
   }
@@ -3445,14 +3783,74 @@
 
   function toggleLanguage() {
     state.progress.settings.language = lang() === "ru" ? "en" : "ru";
+    state.progress.settings.languageAutoDetected = false;
+    state.progress.settings.languageManuallySelected = true;
     saveProgress();
     render();
   }
 
   function toggleSound() {
     state.progress.settings.sound = !state.progress.settings.sound;
+    syncUxSoundSettings();
     saveProgress();
     toast(state.progress.settings.sound ? "♪" : "×");
+  }
+
+  function toggleUxSound() {
+    state.progress.settings.uxSound = state.progress.settings.uxSound === false;
+    syncUxSoundSettings();
+    saveProgress();
+    toast(state.progress.settings.uxSound ? "UX On" : "UX Off");
+    if (state.progress.settings.uxSound) playUxSound("notification_soft");
+    render();
+  }
+
+  function soundManager() {
+    return window.FlashKanjiSound || null;
+  }
+
+  function preloadUxSounds() {
+    try {
+      soundManager()?.preloadSounds?.();
+    } catch (error) {
+      console.warn("UX sounds preload failed.", error);
+    }
+  }
+
+  function syncUxSoundSettings() {
+    const manager = soundManager();
+    if (!manager || !state.progress?.settings) return;
+    manager.setSoundEnabled?.(isUxSoundEnabled());
+    manager.setSoundVolume?.(getUxSoundVolume());
+  }
+
+  function isUxSoundEnabled() {
+    return state.progress?.settings?.sound !== false && state.progress?.settings?.uxSound !== false;
+  }
+
+  function getUxSoundVolume() {
+    const volume = Number(state.progress?.settings?.uxVolume);
+    return Number.isFinite(volume) ? clamp(volume, 0, 1) : 0.75;
+  }
+
+  function setUxSoundVolume(value) {
+    const volume = clamp(Number(value), 0, 1);
+    state.progress.settings.uxVolume = volume;
+    syncUxSoundSettings();
+    saveProgress();
+  }
+
+  function playUxSound(name) {
+    if (!isUxSoundEnabled()) return false;
+    syncUxSoundSettings();
+    try {
+      const played = Boolean(soundManager()?.playSound?.(name));
+      if (played) lastUxSoundAt = Date.now();
+      return played;
+    } catch (error) {
+      console.warn("UX sound failed.", error);
+      return false;
+    }
   }
 
   function applyTheme() {
@@ -3556,7 +3954,12 @@
 
   function playTone(kind) {
     if (!state.progress.settings.sound) return;
+    if (soundManager()) {
+      playUxSound(kind === "again" ? "answer_wrong" : "answer_correct");
+      return;
+    }
     try {
+      lastUxSoundAt = Date.now();
       audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gain = audioContext.createGain();
@@ -3577,6 +3980,7 @@
   function playAchievementSound() {
     if (!state.progress.settings.sound) return;
     try {
+      lastUxSoundAt = Date.now();
       audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
       const now = audioContext.currentTime;
       [523.25, 659.25, 783.99].forEach((frequency, index) => {
@@ -3702,7 +4106,10 @@
   }
 
   function showPwaInstallBanner() {
-    if (canShowPwaInstallPrompt()) render();
+    if (canShowPwaInstallPrompt()) {
+      playUxSound("notification_soft");
+      render();
+    }
   }
 
   function handlePwaInstallAccepted() {
@@ -3714,6 +4121,7 @@
       nextShowAt: 0
     };
     savePwaInstallPromptState();
+    scheduleNotificationPromptCheck();
     if (state.progress && state.i18n) render();
   }
 
@@ -3774,6 +4182,280 @@
       iosInstruction: "Нажмите Поделиться → На экран Домой.",
       install: "Установить",
       later: "Позже"
+    };
+  }
+
+  function loadNotificationPromptState() {
+    const base = {
+      declineCount: 0,
+      nextShowAt: 0,
+      neverShow: false,
+      permission: typeof Notification === "undefined" ? "unsupported" : Notification.permission,
+      enabled: false,
+      acceptedAt: null,
+      lastAskedAt: 0,
+      lastShown: {},
+      periodicSync: false
+    };
+    try {
+      const raw = localStorage.getItem(NOTIFICATION_STORAGE_KEY);
+      if (!raw) return base;
+      const saved = JSON.parse(raw);
+      return {
+        ...base,
+        ...saved,
+        declineCount: Number(saved.declineCount || 0),
+        nextShowAt: Number(saved.nextShowAt || 0),
+        neverShow: Boolean(saved.neverShow),
+        enabled: Boolean(saved.enabled),
+        lastShown: saved.lastShown && typeof saved.lastShown === "object" ? saved.lastShown : {}
+      };
+    } catch (error) {
+      console.warn("Notification prompt state reset.", error);
+      return base;
+    }
+  }
+
+  function saveNotificationPromptState() {
+    try {
+      localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(state.notificationPrompt));
+    } catch (error) {
+      console.warn("Cannot save notification prompt state.", error);
+    }
+  }
+
+  function isNotificationInstallEligible() {
+    return isPwaInstalled() || Boolean(state.pwaInstallPrompt?.installed);
+  }
+
+  function canShowNotificationPrompt(trigger = "usage") {
+    const prompt = state.notificationPrompt || loadNotificationPromptState();
+    if (!("Notification" in window) || prompt.neverShow || prompt.enabled) return false;
+    if (!isNotificationInstallEligible()) return false;
+    if (Notification.permission === "granted") return false;
+    if (Notification.permission === "denied") return false;
+    if (Date.now() < Number(prompt.nextShowAt || 0)) return false;
+    if (trigger !== "lesson_complete" && Date.now() - notificationUsageStartedAt < 2 * 60 * 1000) return false;
+    return true;
+  }
+
+  function maybeShowNotificationPrompt(trigger = "usage") {
+    if (!canShowNotificationPrompt(trigger)) {
+      if ("Notification" in window && Notification.permission === "granted") handleNotificationPermissionGranted();
+      return false;
+    }
+    state.notificationPromptVisible = true;
+    playUxSound("notification_soft");
+    render();
+    return true;
+  }
+
+  function scheduleNotificationPromptCheck() {
+    clearTimeout(notificationPromptTimer);
+    if (!isNotificationInstallEligible()) return;
+    const wait = Math.max(0, 2 * 60 * 1000 - (Date.now() - notificationUsageStartedAt));
+    notificationPromptTimer = window.setTimeout(() => maybeShowNotificationPrompt("usage"), wait);
+  }
+
+  async function handleNotificationPermissionAccepted() {
+    state.notificationPromptVisible = false;
+    if (!("Notification" in window)) {
+      handleNotificationPermissionDeclined();
+      return;
+    }
+
+    try {
+      const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+      state.notificationPrompt.permission = permission;
+      state.notificationPrompt.lastAskedAt = Date.now();
+      if (permission === "granted") {
+        handleNotificationPermissionGranted();
+        toast(notificationPromptCopy().enabled);
+        render();
+        return;
+      }
+      handleNotificationPermissionDeclined();
+    } catch (error) {
+      console.warn("Notification permission failed.", error);
+      handleNotificationPermissionDeclined();
+    }
+  }
+
+  function handleNotificationPermissionGranted() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    state.notificationPrompt = {
+      ...loadNotificationPromptState(),
+      ...state.notificationPrompt,
+      permission: "granted",
+      enabled: true,
+      neverShow: true,
+      acceptedAt: state.notificationPrompt.acceptedAt || new Date().toISOString(),
+      nextShowAt: 0
+    };
+    saveNotificationPromptState();
+    prepareDailyNotifications();
+  }
+
+  function handleNotificationPermissionDeclined() {
+    const current = state.notificationPrompt || loadNotificationPromptState();
+    const declineCount = Math.min(Number(current.declineCount || 0) + 1, 5);
+    state.notificationPromptVisible = false;
+    state.notificationPrompt = {
+      ...current,
+      permission: "Notification" in window ? Notification.permission : "unsupported",
+      declineCount,
+      nextShowAt: scheduleNextNotificationPrompt(declineCount),
+      neverShow: declineCount >= 5,
+      enabled: false,
+      lastAskedAt: Date.now()
+    };
+    saveNotificationPromptState();
+    render();
+  }
+
+  function scheduleNextNotificationPrompt(declineCount) {
+    const hour = 60 * 60 * 1000;
+    const day = 24 * hour;
+    const delays = {
+      1: 12 * hour,
+      2: 48 * hour,
+      3: 7 * day,
+      4: 30 * day
+    };
+    return declineCount >= 5 ? 0 : Date.now() + (delays[declineCount] || 12 * hour);
+  }
+
+  function prepareDailyNotifications() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    state.notificationPrompt.permission = "granted";
+    state.notificationPrompt.enabled = true;
+    saveNotificationPromptState();
+    notificationTimers.forEach((timer) => clearTimeout(timer));
+    notificationTimers.clear();
+    [
+      { type: "daily_bonus", hour: 9, minute: 0 },
+      { type: "lesson", hour: 11, minute: 30 },
+      { type: "review", hour: 18, minute: 0 },
+      { type: "streak", hour: 20, minute: 30 }
+    ].forEach((entry) => scheduleDailyNotification(entry.type, nextNotificationTime(entry.hour, entry.minute)));
+    registerPeriodicNotificationSync();
+  }
+
+  function scheduleDailyNotification(type, when) {
+    const delay = Math.max(1000, Math.min(when.getTime() - Date.now(), 2147483647));
+    const timer = window.setTimeout(async () => {
+      await sendDailyNotification(type);
+      scheduleDailyNotification(type, addDays(when, 1));
+    }, delay);
+    notificationTimers.set(type, timer);
+  }
+
+  function nextNotificationTime(hour, minute) {
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+    if (date.getTime() <= Date.now() + 60 * 1000) date.setDate(date.getDate() + 1);
+    return date;
+  }
+
+  async function sendDailyNotification(type) {
+    if (!notificationShouldFire(type)) return false;
+    const payload = notificationPayload(type);
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      if (registration?.showNotification) {
+        await registration.showNotification(payload.title, payload.options);
+      } else if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(payload.title, payload.options);
+      }
+      playUxSound(type === "daily_bonus" ? "notification_reward" : "notification_reminder");
+      state.notificationPrompt.lastShown[type] = todayKey();
+      saveNotificationPromptState();
+      return true;
+    } catch (error) {
+      console.warn("Notification show failed.", error);
+      return false;
+    }
+  }
+
+  function notificationShouldFire(type) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return false;
+    if (state.notificationPrompt.lastShown?.[type] === todayKey()) return false;
+    if (type === "review") return getDueNowCards().length > 0;
+    if (type === "daily_bonus") return Boolean(state.progress.visits?.firstVisitDate) && !state.progress.dailyBonuses[todayKey()];
+    if (type === "lesson") return getUnlockedNewCards().length > 0;
+    if (type === "streak") return (state.progress.streak.current || state.progress.visits?.streak || 0) > 0;
+    return true;
+  }
+
+  function notificationPayload(type) {
+    const ru = lang() === "ru";
+    const payloads = {
+      review: {
+        title: "Flash Kanji",
+        body: ru ? "Ваши кандзи ждут повторения." : "Your kanji are waiting for review.",
+        url: "./index.html#review"
+      },
+      streak: {
+        title: ru ? "Лея рядом 🌙" : "Leya is nearby 🌙",
+        body: ru ? "Не потеряйте свою серию дней." : "Do not lose your daily streak.",
+        url: "./index.html#home"
+      },
+      daily_bonus: {
+        title: ru ? "Ежедневный бонус" : "Daily Bonus",
+        body: ru ? "Заберите XP и Moon Fragments." : "Claim XP and Moon Fragments.",
+        url: "./index.html#home"
+      },
+      lesson: {
+        title: ru ? "Новые знания ждут" : "New knowledge awaits",
+        body: ru ? "Продолжите изучение кандзи." : "Continue learning kanji.",
+        url: "./index.html#learn"
+      }
+    };
+    const item = payloads[type] || payloads.review;
+    return {
+      title: item.title,
+      options: {
+        body: item.body,
+        tag: `flash-kanji-${type}`,
+        renotify: false,
+        icon: "./assets/icon-192.png",
+        badge: "./assets/icon-192.png",
+        data: { url: item.url, type }
+      }
+    };
+  }
+
+  async function registerPeriodicNotificationSync() {
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      if (!registration?.periodicSync) return;
+      await registration.periodicSync.register("flash-kanji-daily", { minInterval: 24 * 60 * 60 * 1000 });
+      state.notificationPrompt.periodicSync = true;
+      saveNotificationPromptState();
+    } catch {
+      state.notificationPrompt.periodicSync = false;
+      saveNotificationPromptState();
+    }
+  }
+
+  function notificationPromptCopy() {
+    if (lang() === "en") {
+      return {
+        badge: "PWA reminders",
+        title: "Allow Flash Kanji notifications?",
+        description: "We will remind you about reviews, streaks and daily bonuses.",
+        allow: "Allow",
+        later: "Later",
+        enabled: "Notifications enabled"
+      };
+    }
+    return {
+      badge: "PWA напоминания",
+      title: "Разрешить уведомления Flash Kanji?",
+      description: "Мы напомним о повторениях, серии и ежедневном бонусе.",
+      allow: "Разрешить",
+      later: "Позже",
+      enabled: "Уведомления включены"
     };
   }
 

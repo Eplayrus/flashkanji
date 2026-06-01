@@ -333,6 +333,49 @@ textarea:focus-visible {
   line-height: 1.1;
 }
 
+.settings-list {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.settings-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.settings-row small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.settings-row-range {
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 160px) auto;
+}
+
+.ux-volume-slider {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.volume-value {
+  min-width: 42px;
+  text-align: right;
+  color: var(--accent-2);
+}
+
 .hero-mascot {
   position: absolute;
   right: -18px;
@@ -1637,6 +1680,17 @@ textarea:focus-visible {
   filter: drop-shadow(0 8px 18px rgba(255, 225, 90, 0.18));
 }
 
+.notification-bell {
+  color: var(--accent-2);
+  font-family: var(--kanji-font);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.notification-permission-banner {
+  border-color: color-mix(in srgb, var(--accent-2), transparent 35%);
+}
+
 .pwa-install-copy {
   min-width: 0;
 }
@@ -1750,6 +1804,7 @@ textarea:focus-visible {
 }
 
 .nav-btn {
+  position: relative;
   display: grid;
   place-items: center;
   gap: 2px;
@@ -1780,6 +1835,131 @@ textarea:focus-visible {
   border-color: color-mix(in srgb, var(--accent), transparent 35%);
   background: color-mix(in srgb, var(--accent), transparent 84%);
   color: var(--text);
+}
+
+.nav-btn.has-menu::after {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-2), transparent 35%);
+  content: "";
+}
+
+.nav-popover {
+  position: fixed;
+  z-index: 86;
+  right: 14px;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 14px;
+  width: min(calc(100% - 28px), 460px);
+  margin: 0 auto;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent), transparent 86%), transparent 52%),
+    color-mix(in srgb, var(--surface), transparent 2%);
+  box-shadow: 0 24px 56px var(--shadow);
+  backdrop-filter: blur(20px);
+  animation: pop 0.16s ease both;
+}
+
+.nav-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 8px;
+}
+
+.nav-popover-close {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+}
+
+.nav-popover-list {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-popover-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 2px 10px;
+  align-items: center;
+  min-height: 62px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.nav-popover-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent), transparent 30%);
+}
+
+.nav-popover-item > span {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 45%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-2), transparent 88%);
+  color: var(--accent-2);
+  font-weight: 900;
+}
+
+.nav-popover-item b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-popover-item small {
+  min-width: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.is-focus-pulse {
+  animation: focusPulse 0.9s ease;
+}
+
+@keyframes focusPulse {
+  0%,
+  100% {
+    outline: 0 solid transparent;
+  }
+
+  35% {
+    outline: 2px solid color-mix(in srgb, var(--accent-2), transparent 15%);
+    outline-offset: 4px;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .toast {
@@ -1851,6 +2031,15 @@ textarea:focus-visible {
     min-width: 0;
     padding-right: 10px;
     padding-left: 10px;
+  }
+
+  .settings-row,
+  .settings-row-range {
+    grid-template-columns: 1fr;
+  }
+
+  .volume-value {
+    text-align: left;
   }
 }
 

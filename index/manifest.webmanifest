@@ -2,13 +2,17 @@
   "name": "Flash Kanji",
   "short_name": "Flash Kanji",
   "description": "SRS-приложение для изучения японских кандзи N5-N1.",
+  "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#08080c",
   "theme_color": "#08080c",
   "lang": "ru",
+  "categories": ["education", "games"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "assets/icon-192.png",

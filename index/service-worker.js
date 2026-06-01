@@ -1,10 +1,49 @@
-const CACHE_NAME = "flash-kanji-cache-v20";
+const CACHE_NAME = "flash-kanji-cache-v23";
+
+const NOTIFICATION_FALLBACKS = {
+  review: {
+    title: "Flash Kanji",
+    body: "Ваши кандзи ждут повторения.",
+    url: "./index.html#review"
+  },
+  streak: {
+    title: "Лея рядом 🌙",
+    body: "Не потеряйте свою серию дней.",
+    url: "./index.html#home"
+  },
+  daily_bonus: {
+    title: "Ежедневный бонус",
+    body: "Заберите XP и Moon Fragments.",
+    url: "./index.html#home"
+  },
+  lesson: {
+    title: "Новые знания ждут",
+    body: "Продолжите изучение кандзи.",
+    url: "./index.html#learn"
+  }
+};
+
+function notificationPayload(type = "review", overrides = {}) {
+  const base = NOTIFICATION_FALLBACKS[type] || NOTIFICATION_FALLBACKS.review;
+  return {
+    title: overrides.title || base.title,
+    options: {
+      body: overrides.body || base.body,
+      tag: overrides.tag || `flash-kanji-${type}`,
+      renotify: false,
+      icon: "./assets/icon-192.png",
+      badge: "./assets/icon-192.png",
+      data: { url: overrides.url || base.url, type }
+    }
+  };
+}
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./styles.css",
   "./script.js",
+  "./src/audio/soundManager.js",
   "./manifest.webmanifest",
   "./vendor/chart.umd.min.js",
   "./assets/1.png",
@@ -19,6 +58,27 @@ const PRECACHE_URLS = [
   "./assets/mascots/eva_normal.png",
   "./assets/mascots/leya_calm.png",
   "./assets/plate.png",
+  "./audio/ux_sounds/achievement_unlock.mp3",
+  "./audio/ux_sounds/answer_correct.mp3",
+  "./audio/ux_sounds/answer_wrong.mp3",
+  "./audio/ux_sounds/button_click.mp3",
+  "./audio/ux_sounds/button_hover.mp3",
+  "./audio/ux_sounds/card_flip.mp3",
+  "./audio/ux_sounds/daily_bonus.mp3",
+  "./audio/ux_sounds/item_unlock.mp3",
+  "./audio/ux_sounds/level_up.mp3",
+  "./audio/ux_sounds/menu_close.mp3",
+  "./audio/ux_sounds/menu_open.mp3",
+  "./audio/ux_sounds/moon_fragment_gain.mp3",
+  "./audio/ux_sounds/notification_reminder.mp3",
+  "./audio/ux_sounds/notification_reward.mp3",
+  "./audio/ux_sounds/notification_soft.mp3",
+  "./audio/ux_sounds/page_turn.mp3",
+  "./audio/ux_sounds/purchase_failed.mp3",
+  "./audio/ux_sounds/purchase_success.mp3",
+  "./audio/ux_sounds/streak_reward.mp3",
+  "./audio/ux_sounds/tab_switch.mp3",
+  "./audio/ux_sounds/xp_gain.mp3",
   "./data/dialogues.json",
   "./data/dialogues/index.json",
   "./data/i18n.json",
@@ -161,6 +221,45 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         return response;
       });
+    })
+  );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "SHOW_NOTIFICATION") return;
+  const payload = notificationPayload(event.data.notificationType, event.data);
+  event.waitUntil(self.registration.showNotification(payload.title, payload.options));
+});
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data?.text() };
+  }
+  const type = data.type || "review";
+  const payload = notificationPayload(type, data);
+  event.waitUntil(self.registration.showNotification(payload.title, payload.options));
+});
+
+self.addEventListener("periodicsync", (event) => {
+  if (event.tag !== "flash-kanji-daily") return;
+  const payload = notificationPayload("review");
+  event.waitUntil(self.registration.showNotification(payload.title, payload.options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "./index.html#review", self.registration.scope).href;
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const existing = windows.find((client) => "focus" in client);
+      if (existing) {
+        existing.navigate?.(url);
+        return existing.focus();
+      }
+      return clients.openWindow(url);
     })
   );
 });

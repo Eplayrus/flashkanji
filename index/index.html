@@ -23,6 +23,7 @@
   </script>
   <!-- /Yandex.Metrika counter -->
   <script src="vendor/chart.umd.min.js" defer></script>
+  <script src="src/audio/soundManager.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -49,19 +50,19 @@
       <button class="nav-btn is-active" type="button" data-action="route" data-route="home">
         <span>⌂</span><small>Главная</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="learn">
+      <button class="nav-btn" type="button" data-action="route" data-route="learn" aria-haspopup="menu" aria-expanded="false">
         <span>文</span><small>Урок</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="review">
+      <button class="nav-btn" type="button" data-action="route" data-route="review" aria-haspopup="menu" aria-expanded="false">
         <span>↻</span><small>Повтор</small>
       </button>
       <button class="nav-btn" type="button" data-action="route" data-route="dictionary">
         <span>典</span><small>Словарь</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="writing">
+      <button class="nav-btn" type="button" data-action="route" data-route="writing" aria-haspopup="menu" aria-expanded="false">
         <span>筆</span><small>Письмо</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="stats">
+      <button class="nav-btn" type="button" data-action="route" data-route="stats" aria-haspopup="menu" aria-expanded="false">
         <span>▥</span><small>Статы</small>
       </button>
     </nav>
