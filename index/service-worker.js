@@ -1,4 +1,4 @@
-const CACHE_NAME = "flash-kanji-cache-v28";
+const CACHE_NAME = "flash-kanji-cache-v34";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -42,10 +42,14 @@ const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./styles.css",
+  "./styles.css?v=2026-06-02-eva-autonomy-v4",
   "./script.js",
+  "./script.js?v=2026-06-02-eva-autonomy-v4",
   "./src/audio/soundManager.js",
+  "./src/audio/soundManager.js?v=2026-06-02-eva-autonomy-v4",
   "./manifest.webmanifest",
   "./vendor/chart.umd.min.js",
+  "./vendor/chart.umd.min.js?v=2026-06-02-eva-autonomy-v4",
   "./assets/1.png",
   "./assets/bg_1.png",
   "./assets/button.png",
@@ -108,6 +112,7 @@ const PRECACHE_URLS = [
   "./data/eva-backgrounds.json",
   "./data/eva-sprites.json",
   "./data/eva-room-dialogues.json",
+  "./data/eva-autonomy-lines.json",
   "./data/i18n.json",
   "./data/kanji/meta.json",
   "./data/kanji/hints.json",
@@ -191,6 +196,7 @@ const PRECACHE_URLS = [
   "./data/vocabulary/index.json",
   "./data/achievements/index.json",
   "./data/jlpt-lessons.json",
+  "./data/jlpt-practice-lessons.json",
   "./data/monetization/catalog.json",
   "./data/content-sources.json"
 ];
