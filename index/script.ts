@@ -6,7 +6,7 @@
   const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v1";
   const NOTIFICATION_STORAGE_KEY = "flashKanji.notificationPrompt.v1";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-02-eva-autonomy-v4";
+  const BUILD_VERSION = "2026-06-02-kanjivg-writing-v1";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const DATA_URLS = {
     lessons: "data/lessons.json",
@@ -16,6 +16,7 @@
     kanjiMeta: "data/kanji/meta.json",
     kanjiHints: "data/kanji/hints.json",
     kanjiTranslations: "data/kanji/translations.json",
+    kanjiStrokes: "data/kanji/stroke-order-kanjivg.json",
     lessonTranslations: "data/lessons/translations.json",
     vocabulary: "data/vocabulary/index.json",
     sentences: "data/sentences/index.json",
@@ -26,7 +27,8 @@
     evaBackgrounds: "data/eva-backgrounds.json",
     evaSprites: "data/eva-sprites.json",
     evaRoomDialogues: "data/eva-room-dialogues.json",
-    evaAutonomyLines: "data/eva-autonomy-lines.json"
+    evaAutonomyLines: "data/eva-autonomy-lines.json",
+    evaFisPersonality: "data/eva-fis-personality.json"
   };
 
   const ratingLabels = { forgot: "Forgot", remember: "Remember", again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
@@ -84,6 +86,7 @@
     kanjiMeta: {},
     kanjiHints: {},
     kanjiTranslations: {},
+    kanjiStrokes: {},
     lessonTranslations: {},
     vocabulary: [],
     sentenceExercises: [],
@@ -97,6 +100,7 @@
     evaRoomDialogues: [],
     evaRoomLines: [],
     evaAutonomyLines: [],
+    evaFisPersonality: null,
     evaRoomShopOpen: false,
     progress: null,
     activeLessonId: null,
@@ -181,7 +185,7 @@
     applyTheme();
 
     try {
-      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, sentences, achievements, jlptLessons, jlptPracticeLessons, monetization, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines] = await Promise.all([
+      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, lessonTranslations, vocabulary, sentences, achievements, jlptLessons, jlptPracticeLessons, monetization, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaFisPersonality] = await Promise.all([
         loadCourse(),
         fetchJson(DATA_URLS.i18n),
         fetchJson(DATA_URLS.dialogues),
@@ -189,6 +193,7 @@
         fetchJson(DATA_URLS.kanjiMeta),
         fetchJson(DATA_URLS.kanjiHints),
         fetchJson(DATA_URLS.kanjiTranslations),
+        fetchJson(DATA_URLS.kanjiStrokes),
         fetchJson(DATA_URLS.lessonTranslations),
         fetchJson(DATA_URLS.vocabulary),
         fetchJson(DATA_URLS.sentences),
@@ -199,7 +204,8 @@
         fetchJson(DATA_URLS.evaBackgrounds),
         fetchJson(DATA_URLS.evaSprites),
         fetchJson(DATA_URLS.evaRoomDialogues),
-        fetchJson(DATA_URLS.evaAutonomyLines)
+        fetchJson(DATA_URLS.evaAutonomyLines),
+        fetchJson(DATA_URLS.evaFisPersonality)
       ]);
       const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
       state.lessons = course.lessons;
@@ -215,16 +221,22 @@
       state.kanjiMeta = kanjiMeta.items || {};
       state.kanjiHints = kanjiHints.items || {};
       state.kanjiTranslations = kanjiTranslations.items || {};
+      state.kanjiStrokes = normalizeKanjiStrokeData(kanjiStrokes);
       state.lessonTranslations = lessonTranslations.items || {};
       state.vocabulary = vocabulary.items || [];
       state.sentenceExercises = sentences.items || [];
       state.monetization = monetization;
       const evaRoomData = normalizeEvaRoomDialogueData(evaRoomDialogues);
+      const evaFisRoomData = normalizeEvaRoomDialogueData(evaFisPersonality || {});
       state.evaBackgrounds = Array.isArray(evaBackgrounds) ? evaBackgrounds : [];
       state.evaSprites = evaSprites || {};
-      state.evaRoomDialogues = evaRoomData.nodes;
-      state.evaRoomLines = evaRoomData.lines;
-      state.evaAutonomyLines = normalizeEvaAutonomyLines(evaAutonomyLines);
+      state.evaFisPersonality = evaFisPersonality || null;
+      state.evaRoomDialogues = mergeEvaFisRoomNodes(evaRoomData.nodes, evaFisRoomData.nodes, evaFisPersonality?.introChoices || []);
+      state.evaRoomLines = [...evaRoomData.lines, ...evaFisRoomData.lines];
+      state.evaAutonomyLines = [
+        ...normalizeEvaAutonomyLines(evaAutonomyLines),
+        ...normalizeEvaAutonomyLines(evaFisPersonality?.autonomyLines || [])
+      ];
       hydrateProgress();
       syncPwaInstallInstalledFlag();
       recordAppOpen();
@@ -304,6 +316,25 @@
       apps: Array.isArray(item.apps) ? item.apps : [],
       stroke_order: Array.isArray(item.stroke_order) ? item.stroke_order : []
     };
+  }
+
+  function normalizeKanjiStrokeData(payload) {
+    const items = payload?.items && typeof payload.items === "object" ? payload.items : {};
+    return Object.fromEntries(Object.entries(items)
+      .map(([kanji, item]) => {
+        const strokeOrder = Array.isArray(item?.strokeOrder)
+          ? item.strokeOrder.filter((stroke) => typeof stroke?.path === "string" && stroke.path.trim())
+          : [];
+        if (!strokeOrder.length) return null;
+        return [kanji, {
+          ...item,
+          kanji: item.kanji || kanji,
+          strokes: Number(item.strokes || strokeOrder.length),
+          viewBox: item.viewBox || "0 0 109 109",
+          strokeOrder
+        }];
+      })
+      .filter(Boolean));
   }
 
   function normalizeJlptLessons(payload) {
@@ -417,7 +448,9 @@
         recentIds: [],
         recentAnswers: [],
         custom: [],
-        customDraft: { sentence: "", reading: "", translationRu: "", translationEn: "" },
+        customSentences: [],
+        customEditingId: null,
+        customDraft: { jp: "", hiragana: "", ru: "", en: "" },
         customMessage: "",
         customStatus: ""
       },
@@ -498,10 +531,47 @@
       recentAnswers: Array.isArray(saved.recentAnswers) ? saved.recentAnswers : base.recentAnswers,
       completed: { ...base.completed, ...(saved.completed || {}) },
       custom: Array.isArray(saved.custom) ? saved.custom.slice(0, 80) : base.custom,
-      customDraft: { ...base.customDraft, ...(saved.customDraft || {}) },
+      customSentences: normalizeCustomSentences(saved.customSentences, saved.custom),
+      customEditingId: typeof saved.customEditingId === "string" ? saved.customEditingId : null,
+      customDraft: normalizeCustomSentenceDraft(saved.customDraft || base.customDraft),
       customMessage: typeof saved.customMessage === "string" ? saved.customMessage : base.customMessage,
       customStatus: typeof saved.customStatus === "string" ? saved.customStatus : base.customStatus
     };
+  }
+
+  function normalizeCustomSentenceDraft(draft = {}) {
+    return {
+      jp: String(draft.jp ?? draft.sentence ?? ""),
+      hiragana: String(draft.hiragana ?? draft.reading ?? ""),
+      ru: String(draft.ru ?? draft.translationRu ?? ""),
+      en: String(draft.en ?? draft.translationEn ?? "")
+    };
+  }
+
+  function normalizeCustomSentences(savedCustomSentences, legacyCustomExercises) {
+    const result = [];
+    const seen = new Set();
+    const addItem = (item) => {
+      if (!item) return;
+      const jp = cleanSentenceField(item.jp || restoreSentenceFromExercise(item));
+      const key = normalizeSentenceText(jp);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      const id = String(item.id || "").startsWith("custom_")
+        ? String(item.id)
+        : `custom_${stableHash(key).toString(36)}`;
+      result.push({
+        id,
+        jp,
+        hiragana: cleanSentenceField(item.hiragana || item.reading || ""),
+        ru: cleanSentenceField(item.ru || item.translationRu || ""),
+        en: cleanSentenceField(item.en || item.translationEn || ""),
+        source: "user"
+      });
+    };
+    (Array.isArray(savedCustomSentences) ? savedCustomSentences : []).forEach(addItem);
+    (Array.isArray(legacyCustomExercises) ? legacyCustomExercises : []).forEach(addItem);
+    return result.slice(0, 160);
   }
 
   function mergeJlptLessonPractice(base, saved) {
@@ -607,6 +677,29 @@
       });
     });
     return { nodes, lines };
+  }
+
+  function mergeEvaFisRoomNodes(baseNodes = [], fisNodes = [], introChoices = []) {
+    const nodes = baseNodes.map((node) => ({ ...node, choices: Array.isArray(node.choices) ? [...node.choices] : node.choices }));
+    const existingIds = new Set(nodes.map((node) => node.id));
+    fisNodes.forEach((node) => {
+      if (node?.id && !existingIds.has(node.id)) {
+        nodes.push(node);
+        existingIds.add(node.id);
+      }
+    });
+    const intro = nodes.find((node) => node.id === "intro");
+    if (intro && Array.isArray(introChoices) && introChoices.length) {
+      intro.choices ||= [];
+      const choiceKeys = new Set(intro.choices.map((choice) => localized(choice.text || {}).toLowerCase()));
+      introChoices.forEach((choice) => {
+        const key = localized(choice.text || {}).toLowerCase();
+        if (!choice || choiceKeys.has(key)) return;
+        intro.choices.push(choice);
+        choiceKeys.add(key);
+      });
+    }
+    return nodes;
   }
 
   function normalizeEvaAutonomyLines(payload) {
@@ -784,6 +877,9 @@
     if (action === "check-sentence") checkSentencePractice();
     if (action === "next-sentence") nextSentencePractice();
     if (action === "add-custom-sentence") addCustomSentenceExercise();
+    if (action === "edit-custom-sentence") editCustomSentence(target.dataset.id);
+    if (action === "delete-custom-sentence") deleteCustomSentence(target.dataset.id);
+    if (action === "cancel-custom-sentence-edit") cancelCustomSentenceEdit();
     if (action === "insert-jlpt-tile") insertJlptLessonTile(Number(target.dataset.index));
     if (action === "undo-jlpt-tile") undoJlptLessonTile();
     if (action === "clear-jlpt-practice") clearJlptLessonPractice();
@@ -949,7 +1045,8 @@
     if (sentenceDraftInput) {
       const practice = sentencePracticeProgress();
       const field = sentenceDraftInput.dataset.sentenceDraft;
-      if (field && practice.customDraft && Object.prototype.hasOwnProperty.call(practice.customDraft, field)) {
+      practice.customDraft = normalizeCustomSentenceDraft(practice.customDraft || {});
+      if (field && Object.prototype.hasOwnProperty.call(practice.customDraft, field)) {
         practice.customDraft[field] = sentenceDraftInput.value;
         practice.customMessage = "";
         practice.customStatus = "";
@@ -1690,8 +1787,8 @@
     }
     const mood = evaRelationship().mood;
     return {
-      close: "happy",
-      proud: "proud",
+      close: "shy",
+      proud: "approve",
       curious: "think",
       worried: "sad",
       reserved: "idle",
@@ -1787,12 +1884,12 @@
     if (autonomy.outfitMode === "manual" && isEvaSpriteUnlocked(state.progress.selectedEvaSprite)) return state.progress.selectedEvaSprite;
     const mood = evaRelationship().mood;
     const moodPrefs = {
-      close: ["shy", "happy", "idle"],
-      proud: ["proud", "approve", "happy"],
+      close: ["shy", "idle", "approve"],
+      proud: ["approve", "proud", "review"],
       curious: ["think", "review", "idle"],
-      worried: ["sad", "idle"],
+      worried: ["sad", "idle", "think"],
       reserved: ["idle", "default"],
-      neutral: ["idle", "default", "think"]
+      neutral: ["idle", "think", "review", "default"]
     };
     const preferred = [line?.sprite, ...(moodPrefs[mood] || moodPrefs.neutral)].filter(Boolean);
     return preferred.find((sprite) => isEvaSpriteUnlocked(sprite) && state.evaSprites?.[sprite]) || state.progress.selectedEvaSprite || "idle";
@@ -1887,15 +1984,15 @@
     const due = getDueNowCards().length;
     const today = todayStats();
     const categories = [];
-    if (reason === "return" || (!rel.lastInteractionDate && state.progress.appOpens > 1)) categories.push("return");
-    if (hour >= 23 || hour < 5) categories.push("night");
-    if (due >= 8) categories.push("review");
-    if ((today.reviews || 0) === 0) categories.push("study");
-    if ((state.progress.streak?.current || 0) >= 3) categories.push("streak");
-    if (state.progress.rewardHistory?.length || state.rewardModal) categories.push("reward");
-    if (rel.mood === "curious") categories.push("hint", "room");
-    if (rel.mood === "worried" || rel.mood === "reserved") categories.push("mood", "return");
-    categories.push("mood", "study", "short");
+    if (reason === "return" || (!rel.lastInteractionDate && state.progress.appOpens > 1)) categories.push("fis_return", "return");
+    if (hour >= 23 || hour < 5) categories.push("fis_night", "night");
+    if (due >= 8) categories.push("fis_review", "review");
+    if ((today.reviews || 0) === 0) categories.push("fis_study", "study");
+    if ((state.progress.streak?.current || 0) >= 3) categories.push("fis_streak", "streak");
+    if (state.progress.rewardHistory?.length || state.rewardModal) categories.push("fis_reward", "reward");
+    if (rel.mood === "curious") categories.push("fis_observation", "fis_focus", "fis_room", "hint", "room");
+    if (rel.mood === "worried" || rel.mood === "reserved") categories.push("fis_guard", "fis_return", "mood", "return");
+    categories.push("fis_observation", "fis_road", "fis_guard", "fis_focus", "fis_short", "mood", "study", "short");
     return [...new Set(categories)];
   }
 
@@ -2627,7 +2724,7 @@
           </div>
           <div class="tag-row">
             <span class="pill">${escapeHtml(exercise.jlpt)}</span>
-            ${exercise.source ? `<span class="pill">${escapeHtml(exercise.source === "custom" ? labels.customSource : labels.dynamicSource)}</span>` : ""}
+            ${exercise.source ? `<span class="pill">${escapeHtml(sentenceSourceLabel(exercise.source, labels))}</span>` : ""}
             <span class="pill">${escapeHtml(labels.progress.replace("{done}", Object.keys(state.progress.sentencePractice.completed || {}).length).replace("{total}", available.length))}</span>
           </div>
         </div>
@@ -2665,11 +2762,13 @@
 
   function renderCustomSentenceBuilder(learned, labels) {
     const practice = sentencePracticeProgress();
-    const draft = practice.customDraft || {};
-    const customCount = Array.isArray(practice.custom) ? practice.custom.length : 0;
+    const draft = normalizeCustomSentenceDraft(practice.customDraft || {});
+    const customSentences = Array.isArray(practice.customSentences) ? practice.customSentences : [];
+    const customCount = customSentences.length;
+    const isEditing = Boolean(practice.customEditingId);
     const messageClass = practice.customStatus ? ` is-${practice.customStatus}` : "";
     return `
-      <details class="sentence-builder">
+      <details class="sentence-builder" ${isEditing || practice.customMessage ? "open" : ""}>
         <summary>
           <span>${escapeHtml(labels.customTitle)}</span>
           <small>${escapeHtml(labels.customCount.replace("{count}", customCount))}</small>
@@ -2677,27 +2776,67 @@
         <div class="sentence-builder-grid">
           <label class="field sentence-builder-wide">
             <span>${escapeHtml(labels.customSentence)}</span>
-            <textarea data-sentence-draft="sentence" rows="2" autocomplete="off" spellcheck="false" placeholder="${escapeAttr(labels.customSentencePlaceholder)}">${escapeHtml(draft.sentence || "")}</textarea>
+            <textarea data-sentence-draft="jp" rows="2" autocomplete="off" spellcheck="false" placeholder="${escapeAttr(labels.customSentencePlaceholder)}">${escapeHtml(draft.jp || "")}</textarea>
           </label>
           <label class="field sentence-builder-wide">
             <span>${escapeHtml(labels.customReading)}</span>
-            <input data-sentence-draft="reading" type="text" autocomplete="off" spellcheck="false" value="${escapeAttr(draft.reading || "")}" placeholder="${escapeAttr(labels.customReadingPlaceholder)}" />
+            <input data-sentence-draft="hiragana" type="text" autocomplete="off" spellcheck="false" value="${escapeAttr(draft.hiragana || "")}" placeholder="${escapeAttr(labels.customReadingPlaceholder)}" />
           </label>
           <label class="field">
             <span>${escapeHtml(labels.customTranslationRu)}</span>
-            <input data-sentence-draft="translationRu" type="text" value="${escapeAttr(draft.translationRu || "")}" placeholder="${escapeAttr(labels.customTranslationRuPlaceholder)}" />
+            <input data-sentence-draft="ru" type="text" value="${escapeAttr(draft.ru || "")}" placeholder="${escapeAttr(labels.customTranslationRuPlaceholder)}" />
           </label>
           <label class="field">
             <span>${escapeHtml(labels.customTranslationEn)}</span>
-            <input data-sentence-draft="translationEn" type="text" value="${escapeAttr(draft.translationEn || "")}" placeholder="${escapeAttr(labels.customTranslationEnPlaceholder)}" />
+            <input data-sentence-draft="en" type="text" value="${escapeAttr(draft.en || "")}" placeholder="${escapeAttr(labels.customTranslationEnPlaceholder)}" />
           </label>
         </div>
         <div class="sentence-builder-actions">
-          <button class="btn primary" type="button" data-action="add-custom-sentence">${escapeHtml(labels.addCustom)}</button>
+          <button class="btn primary" type="button" data-action="add-custom-sentence">${escapeHtml(isEditing ? labels.updateCustom : labels.addCustom)}</button>
+          ${isEditing ? `<button class="btn ghost" type="button" data-action="cancel-custom-sentence-edit">${escapeHtml(labels.cancelEdit)}</button>` : ""}
           <span class="sentence-builder-message${messageClass}">${escapeHtml(practice.customMessage || labels.customHelp.replace("{learned}", learned.length))}</span>
         </div>
+        ${renderCustomSentenceList(customSentences, learned, labels)}
       </details>
     `;
+  }
+
+  function renderCustomSentenceList(items, learned, labels) {
+    if (!items.length) {
+      return `<p class="sentence-custom-empty">${escapeHtml(labels.customEmpty)}</p>`;
+    }
+    return `
+      <div class="sentence-custom-list">
+        ${items.map((item) => {
+          const exercise = customSentenceToExercise(item, learned);
+          const ready = Boolean(exercise && buildSentenceTiles(exercise, learned).length >= Math.max(4, flatSentenceAnswer(exercise).length));
+          const translation = lang() === "en" ? item.en || item.ru : item.ru || item.en;
+          return `
+            <article class="sentence-custom-item">
+              <div class="sentence-custom-copy">
+                <div class="tag-row">
+                  <span class="pill">${escapeHtml(labels.userSource)}</span>
+                  <span class="pill ${ready ? "success" : ""}">${escapeHtml(ready ? labels.customReady : labels.customLocked)}</span>
+                </div>
+                <strong>${escapeHtml(item.jp)}</strong>
+                ${item.hiragana ? `<small>${escapeHtml(item.hiragana)}</small>` : ""}
+                ${translation ? `<small>${escapeHtml(translation)}</small>` : ""}
+              </div>
+              <div class="sentence-custom-actions">
+                <button class="btn" type="button" data-action="edit-custom-sentence" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.editCustom)}</button>
+                <button class="btn ghost" type="button" data-action="delete-custom-sentence" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.deleteCustom)}</button>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function sentenceSourceLabel(source, labels) {
+    if (source === "user" || source === "custom") return labels.userSource || labels.customSource;
+    if (source === "dynamic") return labels.dynamicSource;
+    return source;
   }
 
   function sentencePracticeLabels() {
@@ -2759,12 +2898,22 @@
           customTranslationEnPlaceholder: "I study Japanese.",
           addCustom: "Добавить",
           customHelp: "Вставь фразу. Приложение спрячет только изученные кандзи: {learned}.",
-          customAdded: "Упражнение добавлено.",
+          customAdded: "Предложение добавлено.",
           customNoSentence: "Вставь японское предложение.",
           customNoKnown: "В этом предложении нет изученных кандзи.",
           customNoTiles: "Нужно минимум 4 изученных кандзи для вариантов.",
-          customDuplicate: "Такое упражнение уже есть.",
+          customDuplicate: "Такое предложение уже есть.",
+          customUpdated: "Предложение обновлено.",
+          customDeleted: "Предложение удалено.",
+          customEmpty: "Свои предложения появятся здесь.",
+          customReady: "Доступно",
+          customLocked: "Позже",
+          updateCustom: "Сохранить",
+          cancelEdit: "Отмена",
+          editCustom: "Редактировать",
+          deleteCustom: "Удалить",
           customSource: "Своё",
+          userSource: "USER",
           dynamicSource: "JSON"
         }
       : {
@@ -2780,12 +2929,22 @@
           customTranslationEnPlaceholder: "I study Japanese.",
           addCustom: "Add",
           customHelp: "Paste a phrase. The app will hide only learned kanji: {learned}.",
-          customAdded: "Exercise added.",
+          customAdded: "Sentence added.",
           customNoSentence: "Paste a Japanese sentence.",
           customNoKnown: "No learned kanji found in this sentence.",
           customNoTiles: "You need at least 4 learned kanji for tile choices.",
-          customDuplicate: "This exercise already exists.",
+          customDuplicate: "This sentence already exists.",
+          customUpdated: "Sentence updated.",
+          customDeleted: "Sentence deleted.",
+          customEmpty: "Your sentences will appear here.",
+          customReady: "Ready",
+          customLocked: "Later",
+          updateCustom: "Save",
+          cancelEdit: "Cancel",
+          editCustom: "Edit",
+          deleteCustom: "Delete",
           customSource: "Custom",
+          userSource: "USER",
           dynamicSource: "JSON"
         };
   }
@@ -2795,8 +2954,7 @@
   }
 
   function allSentenceExercises(learned = getLearnedSentenceCards()) {
-    const practice = sentencePracticeProgress();
-    const custom = Array.isArray(practice.custom) ? practice.custom : [];
+    const custom = customSentenceExercises(learned);
     const dynamic = buildDynamicSentenceExercises(learned);
     const seen = new Set();
     return [...custom, ...dynamic, ...state.sentenceExercises].filter((exercise) => {
@@ -2804,6 +2962,26 @@
       seen.add(exercise.id);
       return true;
     });
+  }
+
+  function customSentenceExercises(learned = getLearnedSentenceCards()) {
+    const practice = sentencePracticeProgress();
+    return (practice.customSentences || [])
+      .map((item) => customSentenceToExercise(item, learned))
+      .filter(Boolean);
+  }
+
+  function customSentenceToExercise(item, learned = getLearnedSentenceCards()) {
+    if (!item?.jp) return null;
+    return createSentenceExerciseFromText({
+      id: item.id,
+      jlpt: bestJlptForCustomSentence(item.jp, learned),
+      sentence: item.jp,
+      reading: item.hiragana || autoSentenceReading(item.jp),
+      translationRu: item.ru || "",
+      translationEn: item.en || "",
+      source: "user"
+    }, learned, { maxBlanks: 3, maxBlankChars: 5 });
   }
 
   function renderSentenceLine(exercise, selectedTiles, wrongIndexes) {
@@ -2992,48 +3170,116 @@
   function addCustomSentenceExercise() {
     const practice = sentencePracticeProgress();
     const labels = { ...sentencePracticeLabels(), ...sentencePracticeCustomLabels() };
-    const draft = practice.customDraft || {};
+    const draft = normalizeCustomSentenceDraft(readCustomSentenceDraftFromDom() || practice.customDraft || {});
     const learned = getLearnedSentenceCards();
-    const sentence = normalizeSentenceText(draft.sentence || "");
-    if (!sentence) {
+    const jp = cleanSentenceField(draft.jp);
+    if (!jp) {
       setCustomSentenceMessage(labels.customNoSentence, "error");
       return;
     }
 
-    const exercise = createSentenceExerciseFromText({
-      id: `sentence-custom-${Date.now().toString(36)}-${stableHash(sentence).toString(36)}`,
-      jlpt: bestJlptForCustomSentence(sentence, learned),
-      sentence,
-      reading: toHiragana(draft.reading || autoSentenceReading(sentence)),
-      translationRu: draft.translationRu || "",
-      translationEn: draft.translationEn || "",
-      source: "custom",
-      createdAt: new Date().toISOString()
-    }, learned, { maxBlanks: 3, maxBlankChars: 5 });
-
-    if (!exercise) {
-      setCustomSentenceMessage(labels.customNoKnown, "error");
-      return;
-    }
-    if (buildSentenceTiles(exercise, learned).length < Math.max(4, flatSentenceAnswer(exercise).length)) {
-      setCustomSentenceMessage(labels.customNoTiles, "error");
-      return;
-    }
-
-    const answerKey = sentenceAnswerKey(exercise);
-    const duplicate = allSentenceExercises(learned).some((item) => normalizeSentenceText(item.originalSentence || item.sentence || "") === sentence && sentenceAnswerKey(item) === answerKey);
+    const editingId = practice.customEditingId || null;
+    const duplicate = hasDuplicateCustomSentence(jp, editingId);
     if (duplicate) {
       setCustomSentenceMessage(labels.customDuplicate, "error");
       return;
     }
 
-    practice.custom = [exercise, ...(practice.custom || [])].slice(0, 80);
-    practice.customDraft = { sentence: "", reading: "", translationRu: "", translationEn: "" };
-    setCustomSentenceMessage(labels.customAdded, "success", false);
-    resetSentencePractice(exercise.id);
-    state.progress.sentencePractice.tileKeys = buildSentenceTiles(exercise, learned).map(sentenceTileKey);
+    const livePractice = sentencePracticeProgress();
+    const item = {
+      id: editingId || `custom_${Date.now().toString(36)}_${stableHash(jp).toString(36)}`,
+      jp,
+      hiragana: toHiragana(cleanSentenceField(draft.hiragana) || autoSentenceReading(jp)),
+      ru: cleanSentenceField(draft.ru),
+      en: cleanSentenceField(draft.en),
+      source: "user"
+    };
+    const existingIndex = (livePractice.customSentences || []).findIndex((sentence) => sentence.id === item.id);
+    if (existingIndex >= 0) {
+      livePractice.customSentences[existingIndex] = item;
+    } else {
+      livePractice.customSentences = [item, ...(livePractice.customSentences || [])].slice(0, 160);
+    }
+    livePractice.customDraft = { jp: "", hiragana: "", ru: "", en: "" };
+    livePractice.customEditingId = null;
+    setCustomSentenceMessage(editingId ? labels.customUpdated : labels.customAdded, "success", false);
+    const exercise = customSentenceToExercise(item, learned);
+    if (exercise && buildSentenceTiles(exercise, learned).length >= Math.max(4, flatSentenceAnswer(exercise).length)) {
+      resetSentencePractice(exercise.id);
+      state.progress.sentencePractice.tileKeys = buildSentenceTiles(exercise, learned).map(sentenceTileKey);
+    }
     saveProgress();
     render();
+  }
+
+  function readCustomSentenceDraftFromDom() {
+    const root = document.querySelector(".sentence-builder");
+    if (!root) return null;
+    const read = (field) => root.querySelector(`[data-sentence-draft="${field}"]`)?.value || "";
+    return {
+      jp: read("jp"),
+      hiragana: read("hiragana"),
+      ru: read("ru"),
+      en: read("en")
+    };
+  }
+
+  function editCustomSentence(id) {
+    const practice = sentencePracticeProgress();
+    const item = (practice.customSentences || []).find((sentence) => sentence.id === id);
+    if (!item) return;
+    practice.customEditingId = item.id;
+    practice.customDraft = {
+      jp: item.jp || "",
+      hiragana: item.hiragana || "",
+      ru: item.ru || "",
+      en: item.en || ""
+    };
+    practice.customMessage = "";
+    practice.customStatus = "";
+    saveProgress();
+    render();
+  }
+
+  function deleteCustomSentence(id) {
+    const practice = sentencePracticeProgress();
+    const labels = { ...sentencePracticeLabels(), ...sentencePracticeCustomLabels() };
+    const before = (practice.customSentences || []).length;
+    practice.customSentences = (practice.customSentences || []).filter((sentence) => sentence.id !== id);
+    if (practice.customSentences.length === before) return;
+    if (practice.customEditingId === id) {
+      practice.customEditingId = null;
+      practice.customDraft = { jp: "", hiragana: "", ru: "", en: "" };
+    }
+    if (practice.completed?.[id]) delete practice.completed[id];
+    practice.recentIds = (practice.recentIds || []).filter((recentId) => recentId !== id);
+    if (practice.activeId === id) {
+      const learned = getLearnedSentenceCards();
+      const next = chooseSentenceExercise(getAvailableSentenceExercises(learned));
+      resetSentencePractice(next?.id || null);
+    }
+    setCustomSentenceMessage(labels.customDeleted, "success", false);
+    saveProgress();
+    render();
+  }
+
+  function cancelCustomSentenceEdit() {
+    const practice = sentencePracticeProgress();
+    practice.customEditingId = null;
+    practice.customDraft = { jp: "", hiragana: "", ru: "", en: "" };
+    practice.customMessage = "";
+    practice.customStatus = "";
+    saveProgress();
+    render();
+  }
+
+  function hasDuplicateCustomSentence(jp, ignoreId = null) {
+    const key = normalizeSentenceText(jp);
+    const practice = sentencePracticeProgress();
+    if ((practice.customSentences || []).some((item) => item.id !== ignoreId && normalizeSentenceText(item.jp) === key)) {
+      return true;
+    }
+    return state.sentenceExercises.some((exercise) => normalizeSentenceText(restoreSentenceFromExercise(exercise)) === key);
   }
 
   function setCustomSentenceMessage(message, status, shouldRender = true) {
@@ -3173,6 +3419,21 @@
 
   function normalizeSentenceText(value) {
     return String(value || "").replace(/\s+/g, "").trim();
+  }
+
+  function cleanSentenceField(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function restoreSentenceFromExercise(exercise) {
+    if (!exercise) return "";
+    if (exercise.jp) return exercise.jp;
+    if (exercise.originalSentence) return exercise.originalSentence;
+    let blankIndex = 0;
+    return String(exercise.sentence || "").replace(/___/g, () => {
+      const blank = exercise.blanks?.[blankIndex++];
+      return (blank?.answer || []).join("");
+    });
   }
 
   function containsKanji(value) {
@@ -3345,7 +3606,7 @@
   }
 
   function isChallengingSentenceExercise(exercise) {
-    return exercise.source === "custom" || exercise.source === "dynamic" || String(exercise.sentence || "").indexOf("___") > 0;
+    return exercise.source === "user" || exercise.source === "custom" || exercise.source === "dynamic" || String(exercise.sentence || "").indexOf("___") > 0;
   }
 
   function rememberSentenceExercise(exercise) {
@@ -3612,11 +3873,16 @@
     if (card) {
       state.activeCardId = card.id;
       state.activeLessonId = card.lessonId;
-      state.writingStep = clamp(state.writingStep, 0, Math.max(0, card.strokes - 1));
+      state.writingStep = clamp(state.writingStep, 0, Math.max(0, writingStepCount(card) - 1));
     }
-    const stepCount = Math.max(1, card?.strokes || 1);
+    const preciseStrokeData = hasPreciseStrokeData(card);
+    const stepCount = writingStepCount(card);
     const stepLabel = lang() === "ru" ? "Шаг" : "Step";
-    const practiceLabel = lang() === "ru" ? "Проверка черт" : "Stroke check";
+    const practiceLabel = lang() === "ru" ? "Получилось" : "Got it";
+    const sampleLabel = lang() === "ru" ? "Показать образец" : "Show sample";
+    const modeLabel = preciseStrokeData
+      ? (lang() === "ru" ? "Точные SVG-штрихи KanjiVG" : "Precise KanjiVG SVG strokes")
+      : (lang() === "ru" ? "Fallback: шаблон без фейковых штрихов" : "Fallback: template without fake strokes");
     return `
       <section class="page">
         <div class="section-head">
@@ -3636,11 +3902,12 @@
             <div class="writing-step-panel">
               <div class="writing-step-head">
                 <span class="pill" id="writingStepCounter">${stepLabel} ${state.writingStep + 1}/${stepCount}</span>
-                <span class="label">${escapeHtml(card?.stroke_order?.[state.writingStep] || "")}</span>
+                <span class="label">${escapeHtml(normalizeStrokeDescriptions(card)[state.writingStep] || "")}</span>
+                <span class="writing-mode-note">${escapeHtml(modeLabel)}</span>
               </div>
               <div class="writing-step-actions">
                 <button class="btn" type="button" data-action="writing-step-prev">←</button>
-                <button class="btn primary" type="button" data-action="play-writing-step">${escapeHtml(lang() === "ru" ? "Показать шаг" : "Show step")}</button>
+                <button class="btn primary" type="button" data-action="play-writing-step">${escapeHtml(sampleLabel)}</button>
                 <button class="btn" type="button" data-action="writing-step-next">→</button>
               </div>
             </div>
@@ -3670,8 +3937,9 @@
               <button class="btn primary" type="button" data-action="check-writing">${escapeHtml(practiceLabel)}</button>
               <button class="btn" type="button" data-action="undo-writing">${escapeHtml(lang() === "ru" ? "Отменить черту" : "Undo stroke")}</button>
               <button class="btn" type="button" data-action="clear-writing">${escapeHtml(t("clear"))}</button>
+              <button class="btn" type="button" data-action="replay-writing">${escapeHtml(t("replay"))}</button>
             </div>
-            <div class="writing-feedback" id="writingFeedback">${escapeHtml(lang() === "ru" ? "Напиши кандзи отдельными чертами." : "Write the kanji stroke by stroke.")}</div>
+            <div class="writing-feedback" id="writingFeedback">${escapeHtml(lang() === "ru" ? "Напиши кандзи поверх образца и нажми «Получилось» для самопроверки." : "Write over the guide and tap “Got it” for self-check.")}</div>
           </article>
         </div>
       </section>
@@ -4577,7 +4845,7 @@
     if (card) {
       state.activeCardId = card.id;
       state.activeLessonId = card.lessonId;
-      state.writingStep = clamp(state.writingStep, 0, Math.max(0, card.strokes - 1));
+      state.writingStep = clamp(state.writingStep, 0, Math.max(0, writingStepCount(card) - 1));
       if (writingSession.cardId !== String(card.id)) resetWritingSession(card);
     }
     setupPracticeCanvas();
@@ -4713,11 +4981,10 @@
   function evaluateWritingPractice(final) {
     const canvas = document.getElementById("practiceCanvas");
     const card = currentWritingCard();
-    const expectedCount = Math.max(1, card?.strokes || 1);
+    const expectedCount = writingStepCount(card);
     if (!canvas || !card) {
       return { score: 0, success: false, expectedCount, message: "" };
     }
-    const expected = makeStrokePaths(expectedCount, canvas.width, canvas.height, card);
     const actual = writingSession.strokes;
     if (!actual.length) {
       return {
@@ -4727,34 +4994,24 @@
         message: lang() === "ru" ? "Начни с первой черты." : "Start with the first stroke."
       };
     }
-    const comparisons = expected.map((stroke, index) => actual[index] ? compareStroke(actual[index], stroke, canvas) : null);
-    const readyComparisons = comparisons.filter(Boolean);
-    const averageStrokeScore = readyComparisons.length
-      ? readyComparisons.reduce((sum, item) => sum + item.score, 0) / readyComparisons.length
-      : 0;
-    const countPenalty = Math.min(42, Math.abs(actual.length - expected.length) * 14);
-    const completionPenalty = Math.max(0, expected.length - actual.length) * 10;
-    const score = clamp(Math.round(averageStrokeScore - countPenalty - completionPenalty), 0, 100);
-    const firstWeak = comparisons.findIndex((item) => item && (!item.directionOk || !item.positionOk));
-    const success = actual.length === expected.length && score >= 72 && firstWeak === -1;
+    const countScore = clamp(Math.round((Math.min(actual.length, expectedCount) / expectedCount) * 100), 0, 100);
+    const score = final ? 100 : countScore;
+    const success = Boolean(final && actual.length);
     let message = lang() === "ru"
-      ? `Черты: ${actual.length}/${expected.length}. Точность ${score}%.`
-      : `Strokes: ${actual.length}/${expected.length}. Accuracy ${score}%.`;
-    if (actual.length < expected.length) {
+      ? `Черты: ${actual.length}/${expectedCount}. Самопроверка без распознавания.`
+      : `Strokes: ${actual.length}/${expectedCount}. Self-check without recognition.`;
+    if (!final && actual.length < expectedCount) {
       message = lang() === "ru"
-        ? `Черта ${actual.length + 1}/${expected.length}: продолжай по примеру.`
-        : `Stroke ${actual.length + 1}/${expected.length}: keep following the guide.`;
-    } else if (actual.length > expected.length) {
+        ? `Черта ${actual.length + 1}/${expectedCount}: продолжай по образцу.`
+        : `Stroke ${actual.length + 1}/${expectedCount}: keep following the guide.`;
+    } else if (!final && actual.length > expectedCount) {
       message = lang() === "ru"
-        ? `Лишние черты: нужно ${expected.length}, сейчас ${actual.length}.`
-        : `Extra strokes: expected ${expected.length}, got ${actual.length}.`;
-    } else if (firstWeak >= 0) {
-      const weak = comparisons[firstWeak];
-      message = weak.directionOk
-        ? (lang() === "ru" ? `Черта ${firstWeak + 1}: ближе к форме примера.` : `Stroke ${firstWeak + 1}: stay closer to the guide.`)
-        : (lang() === "ru" ? `Черта ${firstWeak + 1}: проверь направление.` : `Stroke ${firstWeak + 1}: check the direction.`);
-    } else if (success) {
-      message = lang() === "ru" ? "Отлично. Черты похожи на пример." : "Great. The strokes match the guide.";
+        ? `Черты: ${actual.length}/${expectedCount}. Если лишняя линия случайная, нажми «Отменить черту».`
+        : `Strokes: ${actual.length}/${expectedCount}. If one was accidental, tap “Undo stroke”.`;
+    } else if (final) {
+      message = hasPreciseStrokeData(card)
+        ? (lang() === "ru" ? "Записано. Сравни с жёлтым порядком KanjiVG и двигайся дальше." : "Saved. Compare it with the yellow KanjiVG order and move on.")
+        : (lang() === "ru" ? "Записано. Для этого кандзи пока есть только шаблон, без точной схемы штрихов." : "Saved. This kanji currently has a template only, without exact stroke paths.");
     }
     return { score, success, expectedCount, message };
   }
@@ -4764,20 +5021,20 @@
     const card = currentWritingCard();
     if (!canvas || !card) return;
     cancelAnimationFrame(writingSession.demoAnimationId);
-    const strokes = makeStrokePaths(card.strokes, canvas.width, canvas.height, card);
+    const strokeTotal = writingStepCount(card);
     const duration = 460;
     const startedAt = performance.now();
     const frame = (now) => {
       const elapsed = now - startedAt;
-      const index = clamp(Math.floor(elapsed / duration), 0, strokes.length - 1);
+      const index = clamp(Math.floor(elapsed / duration), 0, strokeTotal - 1);
       const progress = clamp((elapsed - index * duration) / duration, 0, 1);
       state.writingStep = index;
       drawWritingGuideFrame(index, progress);
       updateWritingStepUi();
-      if (elapsed < strokes.length * duration) {
+      if (elapsed < strokeTotal * duration) {
         writingSession.demoAnimationId = requestAnimationFrame(frame);
       } else {
-        state.writingStep = strokes.length - 1;
+        state.writingStep = strokeTotal - 1;
         drawWritingGuideFrame(state.writingStep, 1);
         updateWritingStepUi();
       }
@@ -4792,7 +5049,7 @@
     cancelAnimationFrame(writingSession.demoAnimationId);
     const startedAt = performance.now();
     const duration = 520;
-    const step = clamp(state.writingStep, 0, Math.max(0, card.strokes - 1));
+    const step = clamp(state.writingStep, 0, Math.max(0, writingStepCount(card) - 1));
     const frame = (now) => {
       const progress = clamp((now - startedAt) / duration, 0, 1);
       drawWritingGuideFrame(step, progress);
@@ -4808,7 +5065,7 @@
   function selectWritingStep(index, animate) {
     const card = currentWritingCard();
     if (!card) return;
-    state.writingStep = clamp(index, 0, Math.max(0, card.strokes - 1));
+    state.writingStep = clamp(index, 0, Math.max(0, writingStepCount(card) - 1));
     updateWritingStepUi();
     if (animate) playWritingStep();
     else drawWritingGuideFrame(state.writingStep, 1);
@@ -4820,7 +5077,7 @@
     const steps = normalizeStrokeDescriptions(card);
     const label = lang() === "ru" ? "Шаг" : "Step";
     const counter = document.getElementById("writingStepCounter");
-    if (counter) counter.textContent = `${label} ${state.writingStep + 1}/${Math.max(1, card.strokes)}`;
+    if (counter) counter.textContent = `${label} ${state.writingStep + 1}/${writingStepCount(card)}`;
     const stepText = document.querySelector(".writing-step-head .label");
     if (stepText) stepText.textContent = steps[state.writingStep] || "";
     $$(".writing-guide-list li").forEach((item, index) => item.classList.toggle("is-active", index === state.writingStep));
@@ -4831,39 +5088,150 @@
     const card = currentWritingCard();
     if (!canvas || !card) return;
     const context = canvas.getContext("2d");
-    const strokes = makeStrokePaths(card.strokes, canvas.width, canvas.height, card);
     clearCanvas(context, canvas);
-    strokes.forEach((stroke, index) => {
-      const isPast = index < activeIndex;
-      const isActive = index === activeIndex;
-      context.save();
-      context.globalAlpha = isPast || isActive ? 1 : 0.2;
-      drawSmoothStroke(context, isActive ? clipPolyline(stroke, progress) : stroke, {
-        color: isActive
-          ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
-          : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
-        width: isActive ? 15 : 11,
-        shadow: isActive
-      });
-      drawStrokeNumber(context, stroke, index + 1, isActive);
-      context.restore();
+    const strokeData = preciseStrokeDataForCard(card);
+    if (!strokeData) {
+      drawWritingFallbackTemplate(context, canvas, card, activeIndex);
+      return;
+    }
+    drawKanjiSvgStrokes(context, canvas, strokeData, {
+      activeIndex,
+      progress,
+      showFuture: true,
+      guideAlpha: 1,
+      showNumbers: true
     });
   }
 
   function drawExpectedGuide(context, canvas, card) {
-    const strokes = makeStrokePaths(card.strokes, canvas.width, canvas.height, card);
-    context.save();
-    context.globalAlpha = 0.2;
-    context.setLineDash([10, 11]);
-    strokes.forEach((stroke, index) => {
-      drawSmoothStroke(context, stroke, {
-        color: index === state.writingStep
-          ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
-          : getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
-        width: index === state.writingStep ? 10 : 7,
-        shadow: false
-      });
+    const strokeData = preciseStrokeDataForCard(card);
+    if (!strokeData) {
+      drawWritingFallbackTemplate(context, canvas, card, state.writingStep);
+      return;
+    }
+    drawKanjiSvgStrokes(context, canvas, strokeData, {
+      activeIndex: state.writingStep,
+      progress: 1,
+      showFuture: true,
+      guideAlpha: 0.24,
+      showNumbers: false
     });
+  }
+
+  function preciseStrokeDataForCard(card) {
+    if (!card?.kanji) return null;
+    const data = state.kanjiStrokes?.[card.kanji];
+    if (!data?.strokeOrder?.length) return null;
+    return data;
+  }
+
+  function hasPreciseStrokeData(card) {
+    return Boolean(preciseStrokeDataForCard(card));
+  }
+
+  function writingStepCount(card) {
+    const data = preciseStrokeDataForCard(card);
+    return Math.max(1, data?.strokeOrder?.length || Number(card?.strokes || 1));
+  }
+
+  function drawKanjiSvgStrokes(context, canvas, strokeData, options = {}) {
+    const activeIndex = clamp(Number(options.activeIndex || 0), 0, Math.max(0, strokeData.strokeOrder.length - 1));
+    const transform = kanjiSvgTransform(strokeData, canvas, options.padding || 22);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+    const active = getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim();
+    const muted = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim();
+    strokeData.strokeOrder.forEach((stroke, index) => {
+      const isPast = index < activeIndex;
+      const isActive = index === activeIndex;
+      const isFuture = index > activeIndex;
+      if (isFuture && !options.showFuture) return;
+      context.save();
+      context.translate(transform.x, transform.y);
+      context.scale(transform.scale, transform.scale);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.strokeStyle = isActive ? active : (isPast ? accent : muted);
+      context.lineWidth = (isActive ? 8 : 5.5) / transform.scale;
+      context.globalAlpha = Number(options.guideAlpha ?? 1) * (isActive ? 1 : isPast ? 0.86 : 0.24);
+      if (isActive && options.progress < 1) {
+        context.globalAlpha *= 0.45 + clamp(options.progress, 0, 1) * 0.55;
+      }
+      if (isActive) {
+        context.shadowColor = "rgba(248, 216, 74, 0.34)";
+        context.shadowBlur = 13 / transform.scale;
+      }
+      context.stroke(new Path2D(stroke.path));
+      context.restore();
+      if (options.showNumbers) drawSvgStrokeNumber(context, stroke, transform, index + 1, isActive);
+    });
+  }
+
+  function kanjiSvgTransform(strokeData, canvas, padding = 22) {
+    const box = parseViewBox(strokeData.viewBox);
+    const scale = Math.min((canvas.width - padding * 2) / box.width, (canvas.height - padding * 2) / box.height);
+    const x = (canvas.width - box.width * scale) / 2 - box.x * scale;
+    const y = (canvas.height - box.height * scale) / 2 - box.y * scale;
+    return { ...box, scale, x, y };
+  }
+
+  function parseViewBox(viewBox) {
+    const parts = String(viewBox || "0 0 109 109").trim().split(/\s+/).map(Number);
+    const [x = 0, y = 0, width = 109, height = 109] = parts;
+    return { x, y, width: Math.max(1, width), height: Math.max(1, height) };
+  }
+
+  function drawSvgStrokeNumber(context, stroke, transform, number, active) {
+    const point = firstSvgMovePoint(stroke.path);
+    if (!point) return;
+    const x = transform.x + point.x * transform.scale;
+    const y = transform.y + point.y * transform.scale;
+    drawStrokeBadge(context, x, y, number, active);
+  }
+
+  function firstSvgMovePoint(pathData) {
+    const match = String(pathData || "").match(/M\s*(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/i);
+    if (!match) return null;
+    return { x: Number(match[1]), y: Number(match[2]) };
+  }
+
+  function drawStrokeBadge(context, x, y, number, active) {
+    context.save();
+    context.fillStyle = active
+      ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
+      : getComputedStyle(document.documentElement).getPropertyValue("--surface-2").trim();
+    context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line-strong").trim();
+    context.lineWidth = 1;
+    context.beginPath();
+    context.arc(x, y, active ? 13 : 10, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.fillStyle = active ? "#111014" : getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    context.font = "800 12px system-ui";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(String(number), x, y + 0.5);
+    context.restore();
+  }
+
+  function drawWritingFallbackTemplate(context, canvas, card, activeIndex = 0) {
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim();
+    context.save();
+    context.globalAlpha = 0.16;
+    context.fillStyle = textColor;
+    context.font = `900 ${Math.floor(canvas.height * 0.7)}px "Noto Sans JP", "Yu Gothic", serif`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(card?.kanji || "文", canvas.width / 2, canvas.height / 2 + canvas.height * 0.04);
+    context.globalAlpha = 1;
+    context.fillStyle = accent;
+    context.font = "800 15px system-ui";
+    context.textAlign = "left";
+    context.textBaseline = "top";
+    const label = lang() === "ru"
+      ? `Шаг ${activeIndex + 1}/${writingStepCount(card)} · точной схемы пока нет`
+      : `Step ${activeIndex + 1}/${writingStepCount(card)} · exact paths not available yet`;
+    context.fillText(label, 18, 16);
     context.restore();
   }
 
@@ -4953,78 +5321,22 @@
     context.restore();
   }
 
-  function makeStrokePaths(count, width = 520, height = 280, card = null) {
-    const known = makeKnownKanjiStrokePaths(card?.kanji, width, height);
-    if (known && known.length === count) return known;
-    const templates = makeGenericStrokeTemplates(width, height);
-    return Array.from({ length: Math.max(1, count) }, (_, index) => templates[index % templates.length]);
-  }
-
-  function makeKnownKanjiStrokePaths(kanji, width, height) {
-    const x1 = width * 0.24;
-    const x2 = width * 0.76;
-    const y1 = height * 0.18;
-    const y2 = height * 0.82;
-    const xm = width * 0.5;
-    const ym = height * 0.5;
-    const shapes = {
-      "日": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, ym], [x2, ym]], [[x1, y2], [x2, y2]]],
-      "月": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, y1 + (y2 - y1) * 0.36], [x2, y1 + (y2 - y1) * 0.36]], [[x1, y1 + (y2 - y1) * 0.68], [x2, y1 + (y2 - y1) * 0.68]]],
-      "一": [[[width * 0.18, ym], [width * 0.82, ym]]],
-      "二": [[[width * 0.25, height * 0.34], [width * 0.75, height * 0.34]], [[width * 0.16, height * 0.68], [width * 0.84, height * 0.68]]],
-      "三": [[[width * 0.26, height * 0.28], [width * 0.74, height * 0.28]], [[width * 0.22, ym], [width * 0.78, ym]], [[width * 0.15, height * 0.74], [width * 0.85, height * 0.74]]],
-      "人": [[[width * 0.46, height * 0.2], [width * 0.38, height * 0.46], [width * 0.2, height * 0.8]], [[width * 0.48, height * 0.25], [width * 0.66, height * 0.55], [width * 0.82, height * 0.8]]],
-      "大": [[[width * 0.22, height * 0.36], [width * 0.78, height * 0.36]], [[width * 0.5, height * 0.18], [width * 0.42, height * 0.5], [width * 0.23, height * 0.82]], [[width * 0.51, height * 0.42], [width * 0.67, height * 0.63], [width * 0.82, height * 0.82]]],
-      "十": [[[width * 0.22, ym], [width * 0.78, ym]], [[xm, height * 0.18], [xm, height * 0.84]]],
-      "口": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, y2], [x2, y2]]],
-      "中": [[[x1, y1], [x1, y2]], [[x1, y1], [x2, y1], [x2, y2]], [[x1, ym], [x2, ym]], [[xm, height * 0.1], [xm, height * 0.9]]],
-      "木": [[[width * 0.2, height * 0.36], [width * 0.8, height * 0.36]], [[xm, height * 0.14], [xm, height * 0.86]], [[xm, height * 0.43], [width * 0.22, height * 0.82]], [[xm, height * 0.44], [width * 0.8, height * 0.82]]],
-      "本": [[[width * 0.2, height * 0.34], [width * 0.8, height * 0.34]], [[xm, height * 0.12], [xm, height * 0.86]], [[xm, height * 0.42], [width * 0.22, height * 0.8]], [[xm, height * 0.43], [width * 0.8, height * 0.8]], [[width * 0.32, height * 0.7], [width * 0.68, height * 0.7]]],
-      "川": [[[width * 0.28, height * 0.22], [width * 0.24, height * 0.82]], [[xm, height * 0.16], [xm, height * 0.86]], [[width * 0.72, height * 0.22], [width * 0.76, height * 0.82]]],
-      "山": [[[xm, height * 0.14], [xm, height * 0.78]], [[width * 0.25, height * 0.4], [width * 0.25, height * 0.8], [width * 0.75, height * 0.8]], [[width * 0.75, height * 0.4], [width * 0.75, height * 0.8]]],
-      "小": [[[xm, height * 0.18], [xm, height * 0.84]], [[width * 0.34, height * 0.45], [width * 0.2, height * 0.72]], [[width * 0.66, height * 0.45], [width * 0.82, height * 0.72]]]
-    };
-    return shapes[kanji] || null;
-  }
-
-  function makeGenericStrokeTemplates(width, height) {
-    const point = (x, y) => [width * x, height * y];
-    return [
-      [point(0.18, 0.24), point(0.82, 0.24)],
-      [point(0.23, 0.22), point(0.23, 0.78)],
-      [point(0.77, 0.22), point(0.77, 0.78)],
-      [point(0.18, 0.78), point(0.82, 0.78)],
-      [point(0.24, 0.5), point(0.76, 0.5)],
-      [point(0.5, 0.16), point(0.5, 0.84)],
-      [point(0.3, 0.78), point(0.45, 0.52), point(0.5, 0.24)],
-      [point(0.5, 0.42), point(0.66, 0.62), point(0.82, 0.8)],
-      [point(0.3, 0.3), point(0.42, 0.5), point(0.3, 0.7)],
-      [point(0.7, 0.3), point(0.58, 0.5), point(0.7, 0.7)]
-    ];
-  }
-
   function normalizeStrokeDescriptions(card) {
-    const paths = makeStrokePaths(card.strokes, 520, 280, card);
-    const source = Array.isArray(card.stroke_order) ? card.stroke_order : [];
-    return Array.from({ length: Math.max(1, card.strokes) }, (_, index) => source[index] || describeStrokePath(paths[index], index));
+    const precise = preciseStrokeDataForCard(card);
+    if (precise?.strokeOrder?.length) {
+      return precise.strokeOrder.map((stroke, index) => lang() === "ru"
+        ? (stroke.description_ru || `Штрих ${index + 1} по данным KanjiVG`)
+        : (stroke.description_en || `Stroke ${index + 1} from KanjiVG data`));
+    }
+    const source = Array.isArray(card?.stroke_order) ? card.stroke_order : [];
+    return Array.from({ length: writingStepCount(card) }, (_, index) => source[index] || fallbackStrokeDescription(card, index));
   }
 
-  function describeStrokePath(path, index) {
-    const points = path.map(toCanvasPoint);
-    const start = points[0];
-    const end = points[points.length - 1];
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const vertical = Math.abs(dy) > Math.abs(dx) * 1.35;
-    const horizontal = Math.abs(dx) > Math.abs(dy) * 1.35;
+  function fallbackStrokeDescription(card, index) {
     if (lang() !== "ru") {
-      if (horizontal) return `Stroke ${index + 1}: horizontal ${dx >= 0 ? "left to right" : "right to left"}.`;
-      if (vertical) return `Stroke ${index + 1}: vertical ${dy >= 0 ? "top to bottom" : "bottom to top"}.`;
-      return `Stroke ${index + 1}: diagonal ${dx >= 0 ? "to the right" : "to the left"}.`;
+      return `Step ${index + 1}: exact stroke paths are not available yet. Use the translucent ${card?.kanji || "kanji"} template.`;
     }
-    if (horizontal) return `Черта ${index + 1}: горизонталь ${dx >= 0 ? "слева направо" : "справа налево"}.`;
-    if (vertical) return `Черта ${index + 1}: вертикаль ${dy >= 0 ? "сверху вниз" : "снизу вверх"}.`;
-    return `Черта ${index + 1}: диагональ ${dx >= 0 ? "вправо" : "влево"}.`;
+    return `Шаг ${index + 1}: для этого кандзи пока нет точной схемы штрихов. Обводи полупрозрачный шаблон ${card?.kanji || ""}.`;
   }
 
   function compareStroke(actualStroke, expectedStroke, canvas) {

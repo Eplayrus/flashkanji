@@ -709,6 +709,54 @@ textarea:focus-visible {
   color: var(--danger);
 }
 
+.sentence-custom-empty {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sentence-custom-list {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  margin-top: 12px;
+  overflow: auto;
+}
+
+.sentence-custom-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2), transparent 22%);
+}
+
+.sentence-custom-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sentence-custom-copy strong,
+.sentence-custom-copy small {
+  overflow-wrap: anywhere;
+}
+
+.sentence-custom-copy small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sentence-custom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .sentence-card {
   display: grid;
   gap: 8px;
@@ -1631,11 +1679,24 @@ textarea:focus-visible {
   white-space: normal;
 }
 
+.writing-mode-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .writing-step-actions,
 .writing-practice-actions {
   display: grid;
-  grid-template-columns: auto 1fr auto;
   gap: 8px;
+}
+
+.writing-step-actions {
+  grid-template-columns: auto 1fr auto;
+}
+
+.writing-practice-actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .writing-guide-list {
@@ -2785,6 +2846,18 @@ textarea:focus-visible {
 
   .sentence-builder-grid {
     grid-template-columns: 1fr;
+  }
+
+  .sentence-custom-item {
+    grid-template-columns: 1fr;
+  }
+
+  .sentence-custom-actions {
+    justify-content: stretch;
+  }
+
+  .sentence-custom-actions .btn {
+    flex: 1 1 130px;
   }
 
   .pwa-install-banner {

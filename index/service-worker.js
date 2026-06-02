@@ -1,4 +1,4 @@
-const CACHE_NAME = "flash-kanji-cache-v34";
+const CACHE_NAME = "flash-kanji-cache-v39";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -41,15 +41,16 @@ function notificationPayload(type = "review", overrides = {}) {
 const PRECACHE_URLS = [
   "./",
   "./index.html",
+  "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-02-eva-autonomy-v4",
+  "./styles.css?v=2026-06-02-kanjivg-writing-v1",
   "./script.js",
-  "./script.js?v=2026-06-02-eva-autonomy-v4",
+  "./script.js?v=2026-06-02-kanjivg-writing-v1",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-02-eva-autonomy-v4",
+  "./src/audio/soundManager.js?v=2026-06-02-kanjivg-writing-v1",
   "./manifest.webmanifest",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-02-eva-autonomy-v4",
+  "./vendor/chart.umd.min.js?v=2026-06-02-kanjivg-writing-v1",
   "./assets/1.png",
   "./assets/bg_1.png",
   "./assets/button.png",
@@ -113,10 +114,12 @@ const PRECACHE_URLS = [
   "./data/eva-sprites.json",
   "./data/eva-room-dialogues.json",
   "./data/eva-autonomy-lines.json",
+  "./data/eva-fis-personality.json",
   "./data/i18n.json",
   "./data/kanji/meta.json",
   "./data/kanji/hints.json",
   "./data/kanji/translations.json",
+  "./data/kanji/stroke-order-kanjivg.json",
   "./data/lessons.json",
   "./data/lesson-1.json",
   "./data/lesson-2.json",
@@ -225,6 +228,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
+          if (!response.ok) return caches.match("./index.html");
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
