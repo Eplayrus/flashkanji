@@ -936,6 +936,61 @@ textarea:focus-visible {
   margin-bottom: 12px;
 }
 
+.lesson-tabs .btn {
+  position: relative;
+  min-width: 54px;
+}
+
+.lesson-status-dot {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), transparent 25%);
+}
+
+.lesson-tabs .btn.is-completed .lesson-status-dot {
+  background: var(--accent-3);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), transparent 25%), 0 0 18px color-mix(in srgb, var(--accent-3), transparent 35%);
+}
+
+.lesson-tabs .btn.is-started .lesson-status-dot {
+  background: var(--accent-2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), transparent 25%), 0 0 18px color-mix(in srgb, var(--accent-2), transparent 35%);
+}
+
+.lesson-tile.is-completed,
+.lesson-status-pill.is-completed {
+  border-color: color-mix(in srgb, var(--accent-3), transparent 20%);
+}
+
+.lesson-tile.is-completed {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-3), transparent 84%), transparent 42%),
+    var(--surface);
+}
+
+.lesson-tile.is-started,
+.lesson-status-pill.is-started {
+  border-color: color-mix(in srgb, var(--accent-2), transparent 18%);
+}
+
+.lesson-tile.is-started {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-2), transparent 84%), transparent 42%),
+    var(--surface);
+}
+
+.lesson-status-pill.is-completed {
+  color: var(--accent-3);
+}
+
+.lesson-status-pill.is-started {
+  color: var(--accent-2);
+}
+
 .is-disabled {
   opacity: 0.48;
 }
@@ -1151,11 +1206,62 @@ textarea:focus-visible {
   margin-top: 12px;
 }
 
+.compact-actions {
+  margin-top: 12px;
+}
+
+.srs-binary-grid .btn {
+  min-height: 74px;
+}
+
 .rating-grid .btn {
   min-height: 66px;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+}
+
+.jlpt-switcher {
+  margin: 0 0 12px;
+}
+
+.jlpt-lesson-hero,
+.jlpt-section-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent), transparent 88%), transparent 44%),
+    var(--surface);
+  box-shadow: 0 18px 42px var(--shadow);
+}
+
+.jlpt-lesson-hero {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.jlpt-lesson-hero h2 {
+  margin: 8px 0 6px;
+  font-size: clamp(1.5rem, 6vw, 2.8rem);
+}
+
+.jlpt-section-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.jlpt-section-card h3 {
+  margin-bottom: 8px;
+}
+
+.jlpt-section-card ul {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  padding-left: 18px;
+  color: var(--muted);
 }
 
 .sidekick {
@@ -2584,6 +2690,15 @@ textarea:focus-visible {
   }
 
   .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jlpt-lesson-hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    align-items: center;
+  }
+
+  .jlpt-section-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

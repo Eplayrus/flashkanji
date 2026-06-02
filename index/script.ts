@@ -18,16 +18,17 @@
     vocabulary: "data/vocabulary/index.json",
     sentences: "data/sentences/index.json",
     achievements: "data/achievements/index.json",
+    jlptLessons: "data/jlpt-lessons.json",
     monetization: "data/monetization/catalog.json",
     evaBackgrounds: "data/eva-backgrounds.json",
     evaSprites: "data/eva-sprites.json",
     evaRoomDialogues: "data/eva-room-dialogues.json"
   };
 
-  const ratingLabels = { again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
+  const ratingLabels = { forgot: "Forgot", remember: "Remember", again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
   const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
   const sentenceRewardFallback = { xp: 12, coins: 2 };
-  const routes = ["home", "learn", "review", "dictionary", "writing", "stats", "achievements", "eva-room"];
+  const routes = ["home", "learn", "review", "dictionary", "writing", "stats", "achievements", "eva-room", "jlpt-lesson"];
 
   const state = {
     route: readRouteHash(),
@@ -44,6 +45,7 @@
     sentenceExercises: [],
     achievements: [],
     achievementCategories: [],
+    jlptLessons: [],
     monetization: null,
     evaBackgrounds: [],
     evaSprites: {},
@@ -52,6 +54,7 @@
     evaRoomShopOpen: false,
     progress: null,
     activeLessonId: null,
+    activeJlptLesson: null,
     activeCardId: null,
     revealed: false,
     detailCardId: null,
@@ -126,7 +129,7 @@
     applyTheme();
 
     try {
-      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, sentences, achievements, monetization, evaBackgrounds, evaSprites, evaRoomDialogues] = await Promise.all([
+      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, lessonTranslations, vocabulary, sentences, achievements, jlptLessons, monetization, evaBackgrounds, evaSprites, evaRoomDialogues] = await Promise.all([
         loadCourse(),
         fetchJson(DATA_URLS.i18n),
         fetchJson(DATA_URLS.dialogues),
@@ -138,6 +141,7 @@
         fetchJson(DATA_URLS.vocabulary),
         fetchJson(DATA_URLS.sentences),
         fetchJson(DATA_URLS.achievements),
+        fetchJson(DATA_URLS.jlptLessons),
         fetchJson(DATA_URLS.monetization),
         fetchJson(DATA_URLS.evaBackgrounds),
         fetchJson(DATA_URLS.evaSprites),
@@ -151,6 +155,7 @@
       state.rewards = rewards;
       state.achievements = achievementBundle.items;
       state.achievementCategories = achievementBundle.categories;
+      state.jlptLessons = normalizeJlptLessons(jlptLessons);
       state.rewards.achievements = state.achievements;
       state.kanjiMeta = kanjiMeta.items || {};
       state.kanjiHints = kanjiHints.items || {};
@@ -218,6 +223,20 @@
       apps: Array.isArray(item.apps) ? item.apps : [],
       stroke_order: Array.isArray(item.stroke_order) ? item.stroke_order : []
     };
+  }
+
+  function normalizeJlptLessons(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item) => ({
+      ...item,
+      jlpt: String(item.jlpt || "").toUpperCase(),
+      title: item.title || { ru: item.jlpt || "JLPT", en: item.jlpt || "JLPT" },
+      summary: item.summary || { ru: "", en: "" },
+      goals: Array.isArray(item.goals) ? item.goals : [],
+      sections: Array.isArray(item.sections) ? item.sections : [],
+      practice: Array.isArray(item.practice) ? item.practice : [],
+      checkpoint: Array.isArray(item.checkpoint) ? item.checkpoint : []
+    })).filter((item) => item.jlpt);
   }
 
   function normalizeAchievementData(payload, fallback = []) {
@@ -588,6 +607,13 @@
       const card = findCard(id) || findCard(state.activeCardId);
       if (card) playKanjiAudio(card);
     }
+    if (action === "open-jlpt-lesson") {
+      const jlpt = String(target.dataset.jlpt || "").toUpperCase();
+      if (jlptLessonByLevel(jlpt)) {
+        state.activeJlptLesson = jlpt;
+        setRoute("jlpt-lesson");
+      }
+    }
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
       state.rewardModal = state.rewardQueue.shift() || null;
@@ -688,7 +714,7 @@
       playUxSound("menu_close");
       return;
     }
-    if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate"].includes(action)) {
+    if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate", "open-jlpt-lesson"].includes(action)) {
       playUxSound("page_turn");
       return;
     }
@@ -816,6 +842,7 @@
     }
     if (state.route === "achievements") html = renderAchievementsPage();
     if (state.route === "eva-room") html = renderEvaRoom();
+    if (state.route === "jlpt-lesson") html = renderJlptLessonPage();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
     document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal));
     requestAnimationFrame(applyPendingFocus);
@@ -1580,13 +1607,15 @@
     const learned = lessonCards.filter((card) => getCardProgress(card.id).state !== "New").length;
     const mastered = lessonCards.filter((card) => getCardProgress(card.id).state === "Mastered").length;
     const locked = !isLessonUnlocked(lesson);
+    const status = lessonProgressStatus(lesson);
     const glyph = locked ? "鎖" : lessonCards[0]?.kanji || "文";
     const width = progressWidth(mastered, lessonCards.length);
     return `
-      <button class="lesson-tile ${locked ? "is-locked" : ""}" type="button" data-action="start-lesson" data-id="${escapeAttr(lesson.id)}">
+      <button class="lesson-tile ${locked ? "is-locked" : ""} ${lessonStatusClass(status)}" type="button" data-action="start-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="lesson-glyph">${escapeHtml(glyph)}</span>
         <span>
           <span class="pill">${escapeHtml(lesson.jlpt)}</span>
+          ${renderLessonStatusPill(status)}
           <h3>${escapeHtml(lessonTitle(lesson))}</h3>
           <p>${escapeHtml(lessonSummary(lesson))}</p>
           <span class="lesson-meta">
@@ -1620,6 +1649,18 @@
     `;
   }
 
+  function renderLessonTab(lesson) {
+    const status = lessonProgressStatus(lesson);
+    const active = lesson.id === state.activeLessonId;
+    const locked = !isLessonUnlocked(lesson);
+    return `
+      <button class="btn ${active ? "primary" : "ghost"} ${locked ? "is-disabled" : ""} ${lessonStatusClass(status)}" type="button" data-action="select-lesson" data-id="${escapeAttr(lesson.id)}" title="${escapeAttr(lessonStatusLabel(status))}">
+        <span>${escapeHtml(lesson.jlpt)}</span>
+        ${renderLessonStatusDot(status)}
+      </button>
+    `;
+  }
+
   function renderLearn() {
     ensureActiveLesson();
     const lesson = state.lessons.find((item) => item.id === state.activeLessonId);
@@ -1638,15 +1679,87 @@
           </div>
         </div>
         <div class="actions lesson-tabs">
-          ${state.lessons.map((item) => `
-            <button class="btn ${item.id === state.activeLessonId ? "primary" : "ghost"} ${!isLessonUnlocked(item) ? "is-disabled" : ""}" type="button" data-action="select-lesson" data-id="${escapeAttr(item.id)}">
-              ${escapeHtml(item.jlpt)}
-            </button>
-          `).join("")}
+          ${state.lessons.map(renderLessonTab).join("")}
         </div>
         <div class="study-layout">
           ${card ? renderStudyCard(card) : renderLessonDone(lesson)}
           ${renderStudySidePanel(card, candidates.length)}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderJlptLessonPage() {
+    const lesson = jlptLessonByLevel(state.activeJlptLesson)
+      || jlptLessonByLevel(findCard(state.activeCardId)?.jlpt)
+      || state.jlptLessons[0];
+    if (!lesson) {
+      return `
+        <section class="page">
+          <article class="empty-state">
+            <span class="kanji-char">JLPT</span>
+            <h2>${escapeHtml(lang() === "ru" ? "JLPT-уроки пока не загружены" : "JLPT lessons are not loaded yet")}</h2>
+            <button class="btn primary" type="button" data-action="route" data-route="learn">${escapeHtml(t("learn"))}</button>
+          </article>
+        </section>
+      `;
+    }
+    state.activeJlptLesson = lesson.jlpt;
+    const cards = cardsForJlpt(lesson.jlpt);
+    const mastered = cards.filter((card) => getCardProgress(card.id).state === "Mastered").length;
+    const learned = cards.filter((card) => getCardProgress(card.id).state !== "New").length;
+    const labels = jlptLessonLabels();
+    return `
+      <section class="page jlpt-lesson-page">
+        <div class="section-head">
+          <div>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(lesson.summary))}</p>
+          </div>
+          <button class="btn ghost" type="button" data-action="route" data-route="learn">${escapeHtml(labels.back)}</button>
+        </div>
+        <div class="actions jlpt-switcher">
+          ${state.jlptLessons.map((item) => `
+            <button class="btn ${item.jlpt === lesson.jlpt ? "primary" : "ghost"}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(item.jlpt)}">${escapeHtml(item.jlpt)}</button>
+          `).join("")}
+        </div>
+        <article class="jlpt-lesson-hero">
+          <div>
+            <span class="pill">${escapeHtml(lesson.jlpt)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(labels.courseText)}</p>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.available, cards.length, lesson.jlpt, progressWidth(cards.length, Math.max(state.cards.length, 1)))}
+            ${renderMetric(labels.learned, learned, `${mastered} ${labels.mastered}`, progressWidth(learned, Math.max(cards.length, 1)))}
+          </div>
+        </article>
+        <div class="jlpt-section-grid">
+          ${lesson.goals.length ? `
+            <article class="jlpt-section-card">
+              <h3>${escapeHtml(labels.goals)}</h3>
+              <ul>${lesson.goals.map((goal) => `<li>${escapeHtml(localized(goal))}</li>`).join("")}</ul>
+            </article>
+          ` : ""}
+          ${lesson.sections.map((section) => `
+            <article class="jlpt-section-card">
+              <h3>${escapeHtml(localized(section.title))}</h3>
+              <p>${escapeHtml(localized(section.body))}</p>
+              ${Array.isArray(section.points) && section.points.length ? `<ul>${section.points.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>` : ""}
+            </article>
+          `).join("")}
+          ${lesson.practice.length ? `
+            <article class="jlpt-section-card">
+              <h3>${escapeHtml(labels.practice)}</h3>
+              <ul>${lesson.practice.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>
+            </article>
+          ` : ""}
+          ${lesson.checkpoint.length ? `
+            <article class="jlpt-section-card">
+              <h3>${escapeHtml(labels.checkpoint)}</h3>
+              <ul>${lesson.checkpoint.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>
+            </article>
+          ` : ""}
         </div>
       </section>
     `;
@@ -2491,6 +2604,13 @@
     `;
   }
 
+  function renderJlptLessonButton(card, className = "btn ghost") {
+    const lesson = jlptLessonForCard(card);
+    if (!lesson) return "";
+    const label = lang() === "ru" ? "JLPT урок" : "JLPT lesson";
+    return `<button class="${className}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(lesson.jlpt)}">${escapeHtml(lesson.jlpt)} · ${escapeHtml(label)}</button>`;
+  }
+
   function renderStudyCard(card) {
     const progress = getCardProgress(card.id);
     const visible = state.revealed;
@@ -2511,6 +2631,7 @@
           ${renderReadingCheck(card)}
           <div class="actions">
             <button class="btn primary" type="button" data-action="show-answer">${escapeHtml(t("showAnswer"))}</button>
+            ${renderJlptLessonButton(card)}
             <button class="btn" type="button" data-action="open-card" data-id="${escapeAttr(card.id)}">典 ${escapeHtml(t("details"))}</button>
           </div>
         `}
@@ -2549,11 +2670,12 @@
         <strong>${escapeHtml(t("apps"))}</strong>
         <p>${escapeHtml(cardInterface(card))}</p>
         <ul class="app-list">${card.apps.map((name) => `<li>${escapeHtml(name)}</li>`).join("")}</ul>
-        <div class="rating-grid">
-          <button class="btn danger" type="button" data-action="rate" data-rating="again">Again <small>5 min</small></button>
-          <button class="btn warning" type="button" data-action="rate" data-rating="hard">Hard <small>12 h</small></button>
-          <button class="btn success" type="button" data-action="rate" data-rating="good">Good <small>1 d</small></button>
-          <button class="btn primary" type="button" data-action="rate" data-rating="easy">Easy <small>4 d</small></button>
+        <div class="actions compact-actions">
+          ${renderJlptLessonButton(card)}
+        </div>
+        <div class="rating-grid srs-binary-grid">
+          <button class="btn danger" type="button" data-action="rate" data-rating="forgot">${escapeHtml(srsButtonLabels().forgot)} <small>${escapeHtml(srsButtonLabels().forgotHint)}</small></button>
+          <button class="btn success" type="button" data-action="rate" data-rating="remember">${escapeHtml(srsButtonLabels().remember)} <small>${escapeHtml(srsDecisionHint(card))}</small></button>
         </div>
       </div>
     `;
@@ -2807,6 +2929,7 @@
             <button class="btn primary" type="button" data-action="study-card" data-id="${escapeAttr(card.id)}">▶ ${escapeHtml(t("study"))}</button>
             <button class="btn" type="button" data-action="toggle-favorite" data-id="${escapeAttr(card.id)}">${favorite ? "★" : "☆"} ${escapeHtml(t("favorites"))}</button>
             <button class="btn" type="button" data-action="route" data-route="writing">筆 ${escapeHtml(t("writing"))}</button>
+            ${renderJlptLessonButton(card)}
             <button class="btn" type="button" data-action="close-detail">OK</button>
           </div>
         </article>
@@ -3137,7 +3260,7 @@
     updateDailyStats(before, after, rating);
     updateStreak();
 
-    if (rating === "again") {
+    if (isForgottenRating(rating)) {
       state.progress.totalWrong += 1;
       state.progress.correctCombo = 0;
       adjustEvaRelationship({ discipline: -0.8, trust: -0.2 }, "answer_again");
@@ -3148,7 +3271,7 @@
       state.progress.totalCorrect += 1;
       state.progress.correctCombo += 1;
       state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
-      adjustEvaRelationship({ trust: 0.35, discipline: 0.25, curiosity: rating === "easy" ? 0.2 : 0 }, `answer_${rating}`);
+      adjustEvaRelationship({ trust: 0.35, discipline: 0.25, curiosity: after.lastDecision === "Easy" ? 0.2 : 0 }, `answer_${rating}`);
       playTone("ok");
       toast(dialogueText("eva", "correct"));
       if (state.progress.correctCombo > 0 && state.progress.correctCombo % 5 === 0) {
@@ -3176,9 +3299,50 @@
     render();
   }
 
+  function srsButtonLabels() {
+    return lang() === "ru"
+      ? { forgot: "Не помню", remember: "Помню", forgotHint: "вернём быстро", rememberHint: "SRS выберет срок" }
+      : { forgot: "Forgot", remember: "Remember", forgotHint: "review soon", rememberHint: "SRS decides" };
+  }
+
+  function srsDecisionHint(card) {
+    const labels = srsButtonLabels();
+    const decision = resolveSrsDecision(getCardProgress(card.id), "remember");
+    const intervals = {
+      hard: lang() === "ru" ? "около 12 ч." : "about 12 h",
+      good: lang() === "ru" ? "около 1 дня" : "about 1 day",
+      easy: lang() === "ru" ? "дольше обычного" : "longer interval"
+    };
+    return `${labels.rememberHint}: ${intervals[decision] || intervals.good}`;
+  }
+
+  function resolveSrsDecision(before, rating) {
+    if (isForgottenRating(rating)) return "again";
+    if (rating !== "remember") return rating;
+    const oldState = before.state || "New";
+    const reviews = Number(before.reviews || before.reviewCount || 0);
+    const correct = Number(before.correct || 0);
+    const wrong = Number(before.wrong || 0);
+    const lapses = Number(before.lapses || 0);
+    const successRate = Number(before.successRate || (reviews ? (correct / Math.max(correct + wrong, 1)) * 100 : 0));
+
+    if (oldState === "New") return "good";
+    if (oldState === "Learning") return successRate >= 70 || correct >= 2 ? "good" : "hard";
+    if (successRate >= 88 && correct >= 5 && lapses <= 1) return "easy";
+    if (successRate < 70 || lapses > Math.max(1, Math.floor(correct / 3))) return "hard";
+    return "good";
+  }
+
+  function isForgottenRating(rating) {
+    return rating === "forgot" || rating === "again";
+  }
+
   function calculateNextProgress(before, rating) {
     const now = new Date();
     const next = cloneProgress(before);
+    const inputRating = rating;
+    const decisionRating = resolveSrsDecision(before, rating);
+    rating = decisionRating;
     const oldState = before.state || "New";
     let ease = Number(before.easeFactor || 2.5);
     let intervalDays = Number(before.intervalDays || 0);
@@ -3218,10 +3382,19 @@
     next.nextReview = next.dueAt;
     next.lastReviewedAt = now.toISOString();
     next.lastReview = next.lastReviewedAt;
-    next.lastRating = ratingLabels[rating];
+    next.lastRating = ratingLabels[inputRating] || ratingLabels[rating];
+    next.lastDecision = ratingLabels[decisionRating] || ratingLabels[rating];
     next.reviews += 1;
     next.reviewCount = next.reviews;
-    next.history = [...(before.history || []), { at: now.toISOString(), rating: ratingLabels[rating], from: oldState, to: nextState, intervalDays: next.intervalDays }].slice(-120);
+    next.history = [...(before.history || []), {
+      at: now.toISOString(),
+      rating: ratingLabels[inputRating] || ratingLabels[rating],
+      inputRating: ratingLabels[inputRating] || ratingLabels[rating],
+      decision: ratingLabels[decisionRating] || ratingLabels[rating],
+      from: oldState,
+      to: nextState,
+      intervalDays: next.intervalDays
+    }].slice(-120);
     next.successRate = calculateSuccessRate(next);
     return next;
   }
@@ -3496,7 +3669,7 @@
     today.reviews += 1;
     if (before.state === "New" && after.state !== "New") today.learned += 1;
     if (before.state !== "Mastered" && after.state === "Mastered") today.mastered += 1;
-    if (rating === "again") today.mistakes += 1;
+    if (isForgottenRating(rating)) today.mistakes += 1;
     today.minutes = round(today.reviews * 0.75 + today.learned * 1.25, 1);
     state.progress.daily[todayKey()] = today;
   }
@@ -4577,6 +4750,85 @@
 
   function unlockLevel(lesson) {
     return state.rewards?.lessonUnlocks?.[lesson?.id] || 1;
+  }
+
+  function lessonProgressStatus(lesson) {
+    if (!lesson || !isLessonUnlocked(lesson)) return "locked";
+    const lessonCards = getLessonCards(lesson.id);
+    if (!lessonCards.length) return "new";
+    const completed = Boolean(state.progress.lessonCompletions?.[lesson.id]) || lessonCards.every((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" || progress.reviewCount > 0 || progress.lastReview;
+    });
+    if (completed) return "completed";
+    const started = lessonCards.some((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" || progress.reviewCount > 0 || progress.lastReview;
+    });
+    return started ? "started" : "new";
+  }
+
+  function lessonStatusClass(status) {
+    if (status === "completed") return "is-completed";
+    if (status === "started") return "is-started";
+    return "";
+  }
+
+  function lessonStatusLabel(status) {
+    const ru = lang() === "ru";
+    if (status === "completed") return ru ? "Урок пройден" : "Lesson completed";
+    if (status === "started") return ru ? "Урок начат" : "Lesson started";
+    return ru ? "Не начат" : "Not started";
+  }
+
+  function renderLessonStatusDot(status) {
+    if (status !== "completed" && status !== "started") return "";
+    return `<span class="lesson-status-dot" aria-label="${escapeAttr(lessonStatusLabel(status))}"></span>`;
+  }
+
+  function renderLessonStatusPill(status) {
+    if (status !== "completed" && status !== "started") return "";
+    return `<span class="pill lesson-status-pill ${lessonStatusClass(status)}">${escapeHtml(lessonStatusLabel(status))}</span>`;
+  }
+
+  function jlptLessonByLevel(jlpt) {
+    const key = String(jlpt || "").toUpperCase();
+    return state.jlptLessons.find((item) => item.jlpt === key) || null;
+  }
+
+  function jlptLessonForCard(card) {
+    return card ? jlptLessonByLevel(card.jlpt) : null;
+  }
+
+  function cardsForJlpt(jlpt) {
+    const key = String(jlpt || "").toUpperCase();
+    return state.cards.filter((card) => String(card.jlpt || "").toUpperCase() === key);
+  }
+
+  function jlptLessonLabels() {
+    return lang() === "ru"
+      ? {
+        back: "К урокам",
+        courseMap: "Полноценный JLPT-модуль",
+        courseText: "Краткая стратегия уровня, чтения, лексика и практика. Данные хранятся в JSON, поэтому урок можно расширять без изменения логики.",
+        available: "кандзи уровня",
+        learned: "изучено",
+        mastered: "освоено",
+        goals: "Цели уровня",
+        practice: "Практика",
+        checkpoint: "Чекпоинт"
+      }
+      : {
+        back: "Back to lessons",
+        courseMap: "Full JLPT module",
+        courseText: "Level strategy, readings, vocabulary, and practice. The content lives in JSON, so lessons can grow without changing app logic.",
+        available: "level kanji",
+        learned: "learned",
+        mastered: "mastered",
+        goals: "Level goals",
+        practice: "Practice",
+        checkpoint: "Checkpoint"
+      };
   }
 
   function calculateLevel(xp) {

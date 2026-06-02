@@ -1,4 +1,4 @@
-const CACHE_NAME = "flash-kanji-cache-v27";
+const CACHE_NAME = "flash-kanji-cache-v28";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -190,6 +190,7 @@ const PRECACHE_URLS = [
   "./data/sentences/index.json",
   "./data/vocabulary/index.json",
   "./data/achievements/index.json",
+  "./data/jlpt-lessons.json",
   "./data/monetization/catalog.json",
   "./data/content-sources.json"
 ];
