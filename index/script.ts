@@ -5,8 +5,10 @@
   const LEGACY_STORAGE_KEY = "flashKanji.progress.v1";
   const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v1";
   const NOTIFICATION_STORAGE_KEY = "flashKanji.notificationPrompt.v1";
+  const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
+  const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-02-kanjivg-writing-v1";
+  const BUILD_VERSION = "2026-06-04-eva-autonomy-seo-v6";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const DATA_URLS = {
     lessons: "data/lessons.json",
@@ -24,6 +26,7 @@
     jlptLessons: "data/jlpt-lessons.json",
     jlptPracticeLessons: "data/jlpt-practice-lessons.json",
     monetization: "data/monetization/catalog.json",
+    customizationShop: "data/customization-shop.json",
     evaBackgrounds: "data/eva-backgrounds.json",
     evaSprites: "data/eva-sprites.json",
     evaRoomDialogues: "data/eva-room-dialogues.json",
@@ -95,12 +98,15 @@
     jlptLessons: [],
     jlptPracticeLessons: [],
     monetization: null,
+    customizationCatalog: { categories: [], items: [] },
+    customization: null,
     evaBackgrounds: [],
     evaSprites: {},
     evaRoomDialogues: [],
     evaRoomLines: [],
     evaAutonomyLines: [],
     evaFisPersonality: null,
+    evaRuntime: null,
     evaRoomShopOpen: false,
     progress: null,
     activeLessonId: null,
@@ -112,6 +118,7 @@
     rewardQueue: [],
     charts: [],
     filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" },
+    shopFilters: { category: "all", view: "all", sort: "featured" },
     sentencePractice: { activeId: null, selected: [], checked: false, result: null, tileKeys: [] },
     readingCheck: { cardId: null, value: "", status: null, message: "" },
     writingStep: 0,
@@ -130,6 +137,7 @@
   let deferredPwaInstallPrompt = null;
   let notificationPromptTimer = 0;
   let evaAutonomyTimer = 0;
+  let lastEvaDirectActionAt = 0;
   const notificationTimers = new Map();
   const notificationUsageStartedAt = Date.now();
   const writingSession = {
@@ -148,11 +156,16 @@
   const importInput = $("#progressImport");
 
   document.addEventListener("click", handleClick);
+  document.addEventListener("pointerdown", handleEvaDirectPointer);
   document.addEventListener("input", handleInput);
   document.addEventListener("keydown", handleKeydown);
   importInput.addEventListener("change", handleImportFile);
   window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   window.addEventListener("appinstalled", handlePwaInstallAccepted);
+  window.addEventListener("eva:event", (event) => {
+    if (event.detail?.handledByFlashKanji) return;
+    handleEvaEvent(event.detail || {});
+  });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) maybeShowNotificationPrompt("usage");
     if (!document.hidden && state.route === "eva-room" && maybeRunEvaAutonomy("return")) {
@@ -171,6 +184,7 @@
       if (route !== "eva-room") state.evaRoomShopOpen = false;
       resetReadingCheck();
       render();
+      if (route === "eva-room") dispatchEvaEvent("room_opened");
     }
   });
 
@@ -185,7 +199,7 @@
     applyTheme();
 
     try {
-      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, lessonTranslations, vocabulary, sentences, achievements, jlptLessons, jlptPracticeLessons, monetization, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaFisPersonality] = await Promise.all([
+      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, lessonTranslations, vocabulary, sentences, achievements, jlptLessons, jlptPracticeLessons, monetization, customizationShop, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaFisPersonality] = await Promise.all([
         loadCourse(),
         fetchJson(DATA_URLS.i18n),
         fetchJson(DATA_URLS.dialogues),
@@ -201,6 +215,7 @@
         fetchJson(DATA_URLS.jlptLessons),
         fetchJson(DATA_URLS.jlptPracticeLessons),
         fetchJson(DATA_URLS.monetization),
+        fetchJson(DATA_URLS.customizationShop),
         fetchJson(DATA_URLS.evaBackgrounds),
         fetchJson(DATA_URLS.evaSprites),
         fetchJson(DATA_URLS.evaRoomDialogues),
@@ -218,6 +233,7 @@
       state.jlptLessons = normalizeJlptLessons(jlptLessons);
       state.jlptPracticeLessons = normalizeJlptPracticeLessons(jlptPracticeLessons);
       state.rewards.achievements = state.achievements;
+      state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
       state.kanjiMeta = kanjiMeta.items || {};
       state.kanjiHints = kanjiHints.items || {};
       state.kanjiTranslations = kanjiTranslations.items || {};
@@ -238,6 +254,9 @@
         ...normalizeEvaAutonomyLines(evaFisPersonality?.autonomyLines || [])
       ];
       hydrateProgress();
+      hydrateCustomization();
+      hydrateEvaState();
+      applyTheme();
       syncPwaInstallInstalledFlag();
       recordAppOpen();
       claimDailyBonus();
@@ -335,6 +354,199 @@
         }];
       })
       .filter(Boolean));
+  }
+
+  function normalizeCustomizationCatalog(payload) {
+    const categories = Array.isArray(payload?.categories) ? payload.categories : [];
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    return {
+      version: Number(payload?.version || 1),
+      currency: payload?.currency || "Moon Fragments",
+      categories: categories.length ? categories : [
+        { id: "all", title_ru: "Все", title_en: "All" },
+        { id: "background", title_ru: "Фоны", title_en: "Backgrounds" },
+        { id: "outfit", title_ru: "Образы", title_en: "Outfits" },
+        { id: "decoration", title_ru: "Декор", title_en: "Decorations" },
+        { id: "theme", title_ru: "Темы", title_en: "Themes" },
+        { id: "effect", title_ru: "Эффекты", title_en: "Effects" }
+      ],
+      items: items.map((item) => ({
+        ...item,
+        id: String(item.id || ""),
+        type: String(item.type || "effect"),
+        price: Math.max(0, Number(item.price || 0)),
+        rarity: String(item.rarity || "common").toLowerCase(),
+        defaultOwned: Boolean(item.defaultOwned || item.price === 0),
+        unlockCondition: item.unlockCondition || null
+      })).filter((item) => item.id)
+    };
+  }
+
+  function defaultCustomization() {
+    return {
+      owned: [],
+      selected: {
+        background: "bg_study_hub",
+        outfit: "outfit_default_assassin",
+        theme: "theme_default_dark",
+        decoration: null,
+        frame: null,
+        effect: null
+      },
+      seen: [],
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function readCustomizationStorage() {
+    try {
+      const raw = localStorage.getItem(CUSTOMIZATION_STORAGE_KEY);
+      if (!raw) return defaultCustomization();
+      const parsed = JSON.parse(raw);
+      const base = defaultCustomization();
+      return {
+        owned: Array.isArray(parsed.owned) ? parsed.owned.map(String) : base.owned,
+        selected: { ...base.selected, ...((parsed && parsed.selected) || {}) },
+        seen: Array.isArray(parsed.seen) ? parsed.seen.map(String) : base.seen,
+        updatedAt: parsed.updatedAt || base.updatedAt
+      };
+    } catch (error) {
+      console.warn("Customization storage failed.", error);
+      return defaultCustomization();
+    }
+  }
+
+  function saveCustomizationStorage() {
+    if (!state.customization) return;
+    state.customization.updatedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(CUSTOMIZATION_STORAGE_KEY, JSON.stringify(state.customization));
+    } catch (error) {
+      console.warn("Customization save failed.", error);
+    }
+  }
+
+  function hydrateCustomization() {
+    const customization = readCustomizationStorage();
+    const owned = new Set();
+    (customization.owned || []).forEach((id) => {
+      const item = customizationShopItem(id) || legacyCustomizationItem(id);
+      if (item) owned.add(item.id);
+    });
+    customizationShopItems().forEach((item) => {
+      if (item.defaultOwned || item.price === 0) owned.add(item.id);
+    });
+    (state.progress.unlockedBackgrounds || []).forEach((id) => {
+      const item = customizationShopItem(id) || legacyCustomizationItem(id);
+      if (item) owned.add(item.id);
+    });
+    (state.progress.unlockedEvaSprites || []).forEach((sprite) => {
+      const outfit = outfitItemBySprite(sprite);
+      if (outfit) owned.add(outfit.id);
+      if (state.progress.shop?.owned?.includes(`eva_sprite:${sprite}`) && outfit) owned.add(outfit.id);
+    });
+    (state.progress.shop?.owned || []).forEach((id) => {
+      const legacyId = String(id);
+      const item = customizationShopItem(legacyId) || legacyCustomizationItem(legacyId);
+      if (item) owned.add(item.id);
+      if (!item && legacyId.startsWith("eva_sprite:")) {
+        const outfit = outfitItemBySprite(legacyId.replace("eva_sprite:", ""));
+        if (outfit) owned.add(outfit.id);
+      }
+    });
+
+    const selected = normalizeCustomizationSelection({ ...defaultCustomization().selected, ...(customization.selected || {}) });
+    if (state.progress.selectedEvaRoomBackground) selected.background = normalizeCustomizationItemId(state.progress.selectedEvaRoomBackground);
+    if (state.progress.selectedEvaSprite) selected.outfit = outfitItemBySprite(state.progress.selectedEvaSprite)?.id || selected.outfit;
+    if (!owned.has(selected.background)) selected.background = "bg_study_hub";
+    if (!owned.has(selected.outfit)) selected.outfit = "outfit_default_assassin";
+    if (!owned.has(selected.theme)) selected.theme = "theme_default_dark";
+    if (selected.decoration && !owned.has(selected.decoration)) selected.decoration = null;
+    if (selected.effect && !owned.has(selected.effect)) selected.effect = null;
+
+    state.customization = {
+      owned: [...owned],
+      selected,
+      seen: [...new Set([...(customization.seen || []), ...owned])],
+      updatedAt: customization.updatedAt || new Date().toISOString()
+    };
+    syncCustomizationToProgress();
+    saveCustomizationStorage();
+  }
+
+  function syncCustomizationToProgress() {
+    if (!state.customization || !state.progress) return;
+    ensureEvaRoomProgress();
+    const selected = state.customization.selected || {};
+    if (selected.background) state.progress.selectedEvaRoomBackground = selected.background;
+    const outfit = customizationShopItem(selected.outfit);
+    if (outfit?.spriteId) state.progress.selectedEvaSprite = outfit.spriteId;
+    state.progress.unlockedBackgrounds = [...new Set([
+      ...(state.progress.unlockedBackgrounds || []),
+      ...state.customization.owned.filter((id) => customizationShopItem(id)?.type === "background")
+    ])];
+    state.progress.unlockedEvaSprites = [...new Set([
+      ...(state.progress.unlockedEvaSprites || []),
+      ...state.customization.owned
+        .map((id) => customizationShopItem(id))
+        .filter((item) => item?.type === "outfit" && item.spriteId)
+        .map((item) => item.spriteId)
+    ])];
+    state.progress.shop ||= { owned: [], equipped: {} };
+    state.progress.shop.owned = [...new Set([
+      ...(state.progress.shop.owned || []),
+      ...state.customization.owned,
+      ...state.progress.unlockedEvaSprites.map((sprite) => `eva_sprite:${sprite}`)
+    ])];
+    state.progress.shop.equipped = {
+      ...(state.progress.shop.equipped || {}),
+      background: selected.background || null,
+      outfit: selected.outfit || null,
+      theme: selected.theme || null,
+      decoration: selected.decoration || selected.frame || null,
+      effect: selected.effect || null
+    };
+  }
+
+  function customizationShopItems() {
+    return state.customizationCatalog?.items || [];
+  }
+
+  function customizationShopItem(id) {
+    return customizationShopItems().find((item) => item.id === id) || null;
+  }
+
+  function legacyCustomizationItem(id) {
+    const legacyId = String(id || "");
+    if (!legacyId) return null;
+    return customizationShopItems().find((item) => Array.isArray(item.legacyIds) && item.legacyIds.map(String).includes(legacyId)) || null;
+  }
+
+  function normalizeCustomizationItemId(id) {
+    const item = customizationShopItem(id) || legacyCustomizationItem(id);
+    return item?.id || id || null;
+  }
+
+  function normalizeCustomizationSelection(selected = {}) {
+    return {
+      background: normalizeCustomizationItemId(selected.background),
+      outfit: normalizeCustomizationItemId(selected.outfit),
+      theme: normalizeCustomizationItemId(selected.theme),
+      decoration: normalizeCustomizationItemId(selected.decoration || selected.frame),
+      effect: normalizeCustomizationItemId(selected.effect)
+    };
+  }
+
+  function outfitItemBySprite(sprite) {
+    const spriteId = String(sprite || "");
+    if (!spriteId) return null;
+    const legacyToken = `eva_sprite:${spriteId}`;
+    return customizationShopItems().find((item) => {
+      if (item.type !== "outfit") return false;
+      if (item.spriteId === spriteId) return true;
+      if (item.legacySpriteId === spriteId) return true;
+      return Array.isArray(item.legacyIds) && item.legacyIds.map(String).includes(legacyToken);
+    }) || null;
   }
 
   function normalizeJlptLessons(payload) {
@@ -619,6 +831,11 @@
       roomMode: "auto",
       outfitMode: "auto",
       currentLine: null,
+      currentQuestion: null,
+      currentDecoration: null,
+      currentEffect: null,
+      mood: "neutral",
+      emotion: "calm",
       lastSpokeAt: null,
       nextSpeakAt: null,
       recentLineIds: [],
@@ -644,13 +861,150 @@
     return {
       ...base,
       ...saved,
-      enabled: saved.enabled !== false,
-      frequency: ["quiet", "normal", "active"].includes(saved.frequency) ? saved.frequency : base.frequency,
-      roomMode: saved.roomMode === "manual" ? "manual" : "auto",
-      outfitMode: saved.outfitMode === "manual" ? "manual" : "auto",
+      enabled: true,
+      frequency: "normal",
+      roomMode: "auto",
+      outfitMode: "auto",
       recentLineIds: Array.isArray(saved.recentLineIds) ? saved.recentLineIds.slice(0, 32) : base.recentLineIds,
-      currentLine: saved.currentLine && typeof saved.currentLine === "object" ? saved.currentLine : base.currentLine
+      currentLine: saved.currentLine && typeof saved.currentLine === "object" ? saved.currentLine : base.currentLine,
+      currentQuestion: saved.currentQuestion && typeof saved.currentQuestion === "object" ? saved.currentQuestion : base.currentQuestion,
+      currentDecoration: typeof saved.currentDecoration === "string" ? saved.currentDecoration : base.currentDecoration,
+      currentEffect: typeof saved.currentEffect === "string" ? saved.currentEffect : base.currentEffect,
+      mood: typeof saved.mood === "string" ? saved.mood : base.mood,
+      emotion: typeof saved.emotion === "string" ? saved.emotion : base.emotion
     };
+  }
+
+  function defaultEvaStateV2() {
+    return {
+      version: 2,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      mood: "neutral",
+      emotion: "calm",
+      currentPhrase: null,
+      pendingQuestion: null,
+      currentSkin: "idle",
+      currentBackground: "bg_study_hub",
+      currentDecoration: null,
+      currentEffect: "none",
+      activeSkin: "idle",
+      activeBackground: "bg_study_hub",
+      ownedSkins: ["idle", "default"],
+      ownedBackgrounds: ["bg_study_hub"],
+      ownedEffects: [],
+      ownedDecorations: [],
+      lastEvent: null,
+      lastQuestion: null,
+      lastPhraseAt: 0,
+      lastEmotionChangeAt: 0,
+      lastQuestionAt: 0,
+      lastVisualChangeAt: 0,
+      lastPlayerActionAt: Date.now(),
+      questionHistory: [],
+      clickCount: 0,
+      eventHistory: [],
+      recentEvents: [],
+      cooldowns: {
+        emotion: 18000,
+        phrase: 65000,
+        question: 240000,
+        visual: 720000
+      }
+    };
+  }
+
+  function hydrateEvaState() {
+    const fresh = defaultEvaStateV2();
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(EVA_STATE_STORAGE_KEY);
+      saved = raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      console.warn("Eva state reset because stored JSON is invalid.", error);
+    }
+    state.evaRuntime = mergeEvaStateV2(fresh, saved || migrateEvaStateFromProgress());
+    saveEvaState();
+  }
+
+  function migrateEvaStateFromProgress() {
+    const autonomy = state.progress?.evaAutonomy || {};
+    return {
+      currentSkin: state.progress?.selectedEvaSprite || autonomy.lastSprite || "idle",
+      currentBackground: state.progress?.selectedEvaRoomBackground || autonomy.lastRoomId || "bg_study_hub",
+      currentDecoration: state.customization?.selected?.decoration || state.customization?.selected?.frame || null,
+      currentEffect: state.customization?.selected?.effect || "none",
+      activeSkin: state.progress?.selectedEvaSprite || autonomy.lastSprite || "idle",
+      activeBackground: state.progress?.selectedEvaRoomBackground || autonomy.lastRoomId || "bg_study_hub",
+      lastEvent: autonomy.currentLine?.reason ? { type: autonomy.currentLine.reason, at: autonomy.currentLine.at } : null
+    };
+  }
+
+  function mergeEvaStateV2(base, saved = {}) {
+    return {
+      ...base,
+      ...saved,
+      version: 2,
+      updatedAt: new Date().toISOString(),
+      mood: typeof saved.mood === "string" ? saved.mood : base.mood,
+      emotion: typeof saved.emotion === "string" ? saved.emotion : base.emotion,
+      currentPhrase: saved.currentPhrase && typeof saved.currentPhrase === "object" ? saved.currentPhrase : base.currentPhrase,
+      pendingQuestion: saved.pendingQuestion && typeof saved.pendingQuestion === "object" ? saved.pendingQuestion : base.pendingQuestion,
+      currentSkin: typeof saved.currentSkin === "string" ? saved.currentSkin : base.currentSkin,
+      currentBackground: typeof saved.currentBackground === "string" ? saved.currentBackground : base.currentBackground,
+      currentDecoration: typeof saved.currentDecoration === "string" ? saved.currentDecoration : null,
+      currentEffect: typeof saved.currentEffect === "string" ? saved.currentEffect : base.currentEffect,
+      activeSkin: typeof saved.activeSkin === "string" ? saved.activeSkin : (saved.currentSkin || base.activeSkin),
+      activeBackground: typeof saved.activeBackground === "string" ? saved.activeBackground : (saved.currentBackground || base.activeBackground),
+      ownedSkins: Array.isArray(saved.ownedSkins) ? saved.ownedSkins : base.ownedSkins,
+      ownedBackgrounds: Array.isArray(saved.ownedBackgrounds) ? saved.ownedBackgrounds : base.ownedBackgrounds,
+      ownedEffects: Array.isArray(saved.ownedEffects) ? saved.ownedEffects : base.ownedEffects,
+      ownedDecorations: Array.isArray(saved.ownedDecorations) ? saved.ownedDecorations : base.ownedDecorations,
+      lastPhraseAt: Number(saved.lastPhraseAt || base.lastPhraseAt || 0),
+      lastEmotionChangeAt: Number(saved.lastEmotionChangeAt || base.lastEmotionChangeAt || 0),
+      lastQuestionAt: Number(saved.lastQuestionAt || base.lastQuestionAt || 0),
+      lastVisualChangeAt: Number(saved.lastVisualChangeAt || base.lastVisualChangeAt || 0),
+      lastPlayerActionAt: Number(saved.lastPlayerActionAt || base.lastPlayerActionAt || Date.now()),
+      questionHistory: Array.isArray(saved.questionHistory) ? saved.questionHistory.slice(0, 40) : base.questionHistory,
+      eventHistory: Array.isArray(saved.eventHistory) ? saved.eventHistory.slice(0, 80) : base.eventHistory,
+      recentEvents: Array.isArray(saved.recentEvents) ? saved.recentEvents.slice(0, 80) : base.recentEvents,
+      cooldowns: {
+        ...base.cooldowns,
+        ...(saved.cooldowns || {})
+      },
+      clickCount: Number(saved.clickCount || base.clickCount || 0)
+    };
+  }
+
+  function saveEvaState() {
+    if (!state.evaRuntime) return;
+    syncEvaRuntimeInventory();
+    state.evaRuntime.updatedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(EVA_STATE_STORAGE_KEY, JSON.stringify(state.evaRuntime));
+    } catch (error) {
+      console.warn("Eva state could not be saved.", error);
+    }
+  }
+
+  function syncEvaRuntimeInventory() {
+    if (!state.evaRuntime || !state.progress) return;
+    const ownedItems = customizationShopItems().filter((item) => isCustomizationOwned(item.id));
+    state.evaRuntime.ownedSkins = [...new Set([
+      "idle",
+      "default",
+      ...(state.progress.unlockedEvaSprites || []),
+      ...ownedItems.filter((item) => item.type === "outfit").map((item) => item.spriteId || item.id)
+    ].filter(Boolean))];
+    state.evaRuntime.ownedBackgrounds = [...new Set([
+      "bg_study_hub",
+      ...(state.progress.unlockedBackgrounds || []),
+      ...ownedItems.filter((item) => item.type === "background").map((item) => item.id)
+    ].filter(Boolean))];
+    state.evaRuntime.ownedEffects = [...new Set(ownedItems.filter((item) => item.type === "effect").map((item) => item.id))];
+    state.evaRuntime.ownedDecorations = [...new Set(ownedItems.filter((item) => item.type === "decoration").map((item) => item.id))];
+    state.evaRuntime.activeSkin = state.evaRuntime.currentSkin || state.progress.selectedEvaSprite || "idle";
+    state.evaRuntime.activeBackground = state.evaRuntime.currentBackground || state.progress.selectedEvaRoomBackground || "bg_study_hub";
   }
 
   function normalizeEvaRoomDialogueData(payload) {
@@ -807,6 +1161,8 @@
 
     const action = target.dataset.action;
     const id = target.dataset.id;
+    if (["eva-click", "eva-autonomy-next"].includes(action) && Date.now() - lastEvaDirectActionAt < 280) return;
+    recordEvaPlayerActivity(action);
     playActionSound(action, target);
 
     if (action === "route") {
@@ -842,8 +1198,10 @@
     if (action === "notification-allow") handleNotificationPermissionAccepted();
     if (action === "notification-later") handleNotificationPermissionDeclined();
     if (action === "mascot-click") handleMascotClick(target.dataset.character);
+    if (action === "eva-click") handleEvaRoomSpriteClick();
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "eva-room-choice") handleEvaRoomChoice(target);
+    if (action === "eva-question-answer") handleEvaQuestionAnswer(target);
     if (action === "eva-room-reset") resetEvaRoomDialogue();
     if (action === "toggle-eva-autonomy") toggleEvaAutonomy();
     if (action === "cycle-eva-autonomy") cycleEvaAutonomyFrequency();
@@ -853,6 +1211,7 @@
     if (action === "eva-autonomy-clear") clearEvaAutonomyLine();
     if (action === "eva-room-shop-open") {
       state.evaRoomShopOpen = true;
+      dispatchEvaEvent("shop_opened");
       render();
     }
     if (action === "eva-room-shop-close") {
@@ -863,6 +1222,20 @@
     if (action === "eva-bg-select") selectEvaRoomBackground(id);
     if (action === "eva-sprite-buy") buyEvaSprite(id);
     if (action === "eva-sprite-select") selectEvaSprite(id);
+    if (action === "shop-category") {
+      state.shopFilters.category = target.dataset.category || "all";
+      render();
+    }
+    if (action === "shop-filter") {
+      state.shopFilters.view = target.dataset.filter || "all";
+      render();
+    }
+    if (action === "shop-sort") {
+      state.shopFilters.sort = target.dataset.sort || "featured";
+      render();
+    }
+    if (action === "shop-buy") buyCustomizationItem(id);
+    if (action === "shop-select") selectCustomizationItem(id);
     if (action === "clear-writing") clearWritingCanvas();
     if (action === "undo-writing") undoWritingStroke();
     if (action === "check-writing") checkWritingPractice(true);
@@ -908,7 +1281,7 @@
       toast(`${t("dailyGoal")}: ${state.progress.settings.dailyGoal}`);
       render();
     }
-    if (action === "buy-shop") buyShopItem(id);
+    if (action === "buy-shop") buyCustomizationItem(id);
     if (action === "start-due") {
       setRoute(getDueNowCards().length ? "review" : "learn");
       if (!getDueNowCards().length) toast(dialogueText("eva", "welcome"));
@@ -923,8 +1296,12 @@
       state.activeCardId = null;
       state.revealed = false;
       resetReadingCheck();
-      if (action === "start-lesson") setRoute("learn");
-      else render();
+      if (action === "start-lesson") {
+        dispatchEvaEvent("lesson_start", { lessonId: id, jlpt: lesson.jlpt });
+        setRoute("learn");
+      } else {
+        render();
+      }
     }
     if (action === "show-answer") {
       state.revealed = true;
@@ -958,6 +1335,24 @@
       state.detailCardId = null;
       setRoute("learn");
     }
+  }
+
+  function handleEvaDirectPointer(event) {
+    const target = event.target.closest?.('[data-action="eva-click"], [data-action="eva-autonomy-next"]');
+    if (!target || target.disabled) return;
+    const action = target.dataset.action;
+    lastEvaDirectActionAt = Date.now();
+    event.preventDefault();
+    recordEvaPlayerActivity(action);
+    if (action === "eva-click") handleEvaRoomSpriteClick();
+    if (action === "eva-autonomy-next") nextEvaAutonomyLine();
+  }
+
+  function recordEvaPlayerActivity(action = "activity") {
+    if (!state.evaRuntime) return;
+    state.evaRuntime.lastPlayerActionAt = Date.now();
+    if (!["eva-autonomy-next", "eva-question-answer"].includes(action)) return;
+    state.evaRuntime.lastPlayerActionAt = Date.now();
   }
 
   function playActionSound(action, target) {
@@ -1022,6 +1417,7 @@
   }
 
   function handleInput(event) {
+    recordEvaPlayerActivity("input");
     const uxVolumeInput = event.target.closest("[data-ux-volume]");
     if (uxVolumeInput) {
       setUxSoundVolume(Number(uxVolumeInput.value) / 100);
@@ -1098,6 +1494,7 @@
     if (state.route !== "eva-room") state.evaRoomShopOpen = false;
     resetReadingCheck();
     render();
+    if (state.route === "eva-room") dispatchEvaEvent("room_opened");
   }
 
   function render() {
@@ -1348,6 +1745,7 @@
     const bg = scene.bg || getEvaRoomBackground(node.background) || currentEvaRoomBackground();
     const sprite = evaSpritePath(scene.sprite || resolveEvaSprite(node.sprite));
     const labels = evaRoomLabels();
+    const liveLabels = evaLiveLabels();
     const choices = Array.isArray(node.choices) ? node.choices : [];
     return `
       <section class="page eva-room-page">
@@ -1358,19 +1756,22 @@
             <strong>${state.progress.moonFragments}</strong>
             <small>Moon Fragments</small>
           </div>
-          <button class="btn ${isEvaAutonomyEnabled() ? "success" : "ghost"}" type="button" data-action="toggle-eva-autonomy">${escapeHtml(isEvaAutonomyEnabled() ? labels.autonomyShortOn : labels.autonomyShortOff)}</button>
+          <span class="eva-room-live-pill">${escapeHtml(liveLabels.badge)}</span>
           <button class="btn primary" type="button" data-action="eva-room-shop-open">Shop · ${escapeHtml(labels.shop)}</button>
         </div>
 
         ${renderEvaRelationshipStats()}
         ${renderEvaAutonomyPanel(scene)}
-        <article class="eva-vn-scene ${scene.isAutonomy ? "is-autonomous" : ""}" style="--eva-bg:url('${escapeAttr(bg.file)}')">
+        <article class="eva-vn-scene ${scene.isAutonomy ? "is-autonomous" : ""}" data-eva-mood="${escapeAttr(scene.mood || evaRelationship().mood)}" data-eva-emotion="${escapeAttr(scene.emotion || "calm")}" style="--eva-bg:url('${escapeAttr(bg.file)}')">
           <div class="eva-vn-bg" aria-hidden="true"></div>
-          <img class="eva-vn-sprite" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.png'" />
+          <button class="eva-sprite-button" type="button" data-action="eva-click" aria-label="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}">
+            <img class="eva-vn-sprite" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.png'" />
+          </button>
+          ${renderEvaRoomDecoration(scene)}
           <div class="eva-dialogue-box">
             <div class="eva-dialogue-meta">
               <strong>${escapeHtml(localized(node.speaker || { ru: "Ева", en: "Eva" }))}</strong>
-              <span>${scene.isAutonomy ? `${escapeHtml(labels.autonomyBadge)} · ` : ""}${escapeHtml(localized(bg.title || {}))}</span>
+              <span>${scene.isAutonomy ? `${escapeHtml(liveLabels.badge)} · ` : ""}${escapeHtml(localized(bg.title || {}))}</span>
             </div>
             <p>${escapeHtml(localized(node.text || {}))}</p>
             ${scene.isAutonomy ? renderEvaAutonomyChoices(labels) : `
@@ -1399,102 +1800,340 @@
 
   function renderEvaRoomShop() {
     const labels = evaRoomLabels();
-    const unlocked = new Set(state.progress.unlockedBackgrounds || []);
-    const selected = state.progress.selectedEvaRoomBackground || "bg_study_hub";
-    const selectedSprite = state.progress.selectedEvaSprite || "idle";
     return `
-      <aside class="eva-shop-panel" role="dialog" aria-label="${escapeAttr(labels.shop)}">
-        <div class="eva-shop-head">
-          <div>
-            <span class="pill">Moon ${state.progress.moonFragments}</span>
-            <h2>${escapeHtml(labels.shop)}</h2>
-            <p>${escapeHtml(labels.shopHint)}</p>
-          </div>
-          <button class="icon-btn" type="button" data-action="eva-room-shop-close" aria-label="${escapeAttr(labels.close)}">×</button>
-        </div>
-        <h3>${escapeHtml(labels.roomShopTitle)}</h3>
-        <div class="eva-bg-grid">
-          ${evaRoomBackgrounds().map((bg) => {
-            const isUnlocked = unlocked.has(bg.id) || bg.defaultUnlocked || bg.price === 0;
-            const isSelected = selected === bg.id;
-            return `
-              <article class="eva-bg-card ${isSelected ? "is-selected" : ""}">
-                <img src="${escapeAttr(bg.file)}" alt="${escapeAttr(localized(bg.title))}" loading="lazy" onerror="this.closest('.eva-bg-card').classList.add('is-missing')" />
-                <div>
-                  <strong>${escapeHtml(localized(bg.title))}</strong>
-                  <small>${bg.price ? `${bg.price} Moon Fragments` : labels.free}</small>
-                </div>
-                ${isSelected
-                  ? `<button class="btn success" type="button" disabled>${escapeHtml(labels.selected)}</button>`
-                  : isUnlocked
-                    ? `<button class="btn" type="button" data-action="eva-bg-select" data-id="${escapeAttr(bg.id)}">${escapeHtml(labels.select)}</button>`
-                    : `<button class="btn primary" type="button" data-action="eva-bg-buy" data-id="${escapeAttr(bg.id)}">${escapeHtml(labels.buy)}</button>`}
-              </article>
-            `;
-          }).join("")}
-        </div>
-        <h3>${escapeHtml(labels.spriteShopTitle)}</h3>
-        <div class="eva-bg-grid eva-sprite-grid">
-          ${evaSpriteShopItems().map((item) => {
-            const isUnlocked = isEvaSpriteUnlocked(item.id);
-            const isSelected = selectedSprite === item.id;
-            return `
-              <article class="eva-bg-card eva-sprite-card ${isSelected ? "is-selected" : ""}">
-                <img src="${escapeAttr(evaSpritePath(item.id))}" alt="${escapeAttr(localized(item.title))}" loading="lazy" onerror="this.closest('.eva-bg-card').classList.add('is-missing')" />
-                <div>
-                  <strong>${escapeHtml(localized(item.title))}</strong>
-                  <small>${item.price ? `${item.price} Moon Fragments` : labels.free}</small>
-                </div>
-                ${isSelected
-                  ? `<button class="btn success" type="button" disabled>${escapeHtml(labels.selected)}</button>`
-                  : isUnlocked
-                    ? `<button class="btn" type="button" data-action="eva-sprite-select" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.select)}</button>`
-                    : `<button class="btn primary" type="button" data-action="eva-sprite-buy" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.buy)}</button>`}
-              </article>
-            `;
-          }).join("")}
-        </div>
+      <aside class="eva-shop-panel customization-shop-panel" role="dialog" aria-label="${escapeAttr(labels.shop)}">
+        ${renderCustomizationShop({ closable: true })}
       </aside>
     `;
   }
 
+  function renderEvaRoomDecoration(scene = {}) {
+    const decorationId = scene.decoration || evaAutonomy().currentDecoration || state.customization?.selected?.decoration || state.customization?.selected?.frame;
+    const item = customizationShopItem(decorationId);
+    if (!item || item.type !== "decoration" || !isCustomizationOwned(item.id)) return "";
+    return `
+      <div class="eva-room-decoration" aria-label="${escapeAttr(customizationItemTitle(item))}">
+        <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" />
+      </div>
+    `;
+  }
+
+  function renderCustomizationShop(options = {}) {
+    const labels = shopLabels();
+    const items = filteredCustomizationItems();
+    const ownedCount = customizationShopItems().filter((item) => isCustomizationOwned(item.id)).length;
+    return `
+      <div class="custom-shop">
+        <div class="custom-shop-hero">
+          <div>
+            <span class="pill">${escapeHtml(labels.subtitle)}</span>
+            <h2>${escapeHtml(labels.title)}</h2>
+            <p>${escapeHtml(labels.hint)}</p>
+            <div class="custom-shop-stats">
+              <span><b>${state.progress.moonFragments}</b> Moon</span>
+              <span><b>${ownedCount}</b>/${customizationShopItems().length} ${escapeHtml(labels.ownedShort)}</span>
+            </div>
+          </div>
+          ${options.closable ? `<button class="icon-btn" type="button" data-action="eva-room-shop-close" aria-label="${escapeAttr(evaRoomLabels().close)}">×</button>` : ""}
+        </div>
+        <div class="custom-shop-tabs" role="tablist" aria-label="${escapeAttr(labels.categories)}">
+          ${customizationCategories().map((category) => `
+            <button class="${state.shopFilters.category === category.id ? "is-active" : ""}" type="button" data-action="shop-category" data-category="${escapeAttr(category.id)}">
+              ${escapeHtml(localized({ ru: category.title_ru, en: category.title_en }))}
+            </button>
+          `).join("")}
+        </div>
+        <div class="custom-shop-controls">
+          ${shopViewFilters().map((filter) => `
+            <button class="${state.shopFilters.view === filter.id ? "is-active" : ""}" type="button" data-action="shop-filter" data-filter="${escapeAttr(filter.id)}">
+              ${escapeHtml(filter.title)}
+            </button>
+          `).join("")}
+        </div>
+        <div class="custom-shop-controls custom-shop-sort">
+          ${shopSortFilters().map((filter) => `
+            <button class="${state.shopFilters.sort === filter.id ? "is-active" : ""}" type="button" data-action="shop-sort" data-sort="${escapeAttr(filter.id)}">
+              ${escapeHtml(filter.title)}
+            </button>
+          `).join("")}
+        </div>
+        <div class="custom-shop-grid">
+          ${items.map(renderCustomizationItemCard).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.empty)}</h3></article>`}
+        </div>
+        <div class="custom-shop-history">
+          ${renderTransactions({ compact: true, limit: 6 })}
+        </div>
+      </div>
+    `;
+  }
+
+  function customizationCategories() {
+    return state.customizationCatalog?.categories?.length
+      ? state.customizationCatalog.categories
+      : [
+          { id: "all", title_ru: "Все", title_en: "All" },
+          { id: "background", title_ru: "Фоны", title_en: "Backgrounds" },
+          { id: "outfit", title_ru: "Образы", title_en: "Outfits" },
+          { id: "decoration", title_ru: "Декор", title_en: "Decorations" },
+          { id: "theme", title_ru: "Темы", title_en: "Themes" },
+          { id: "effect", title_ru: "Эффекты", title_en: "Effects" }
+        ];
+  }
+
+  function shopViewFilters() {
+    const ru = lang() === "ru";
+    return [
+      { id: "all", title: ru ? "Все" : "All" },
+      { id: "available", title: ru ? "Доступные" : "Available" },
+      { id: "owned", title: ru ? "Купленные" : "Owned" },
+      { id: "new", title: ru ? "Новые" : "New" }
+    ];
+  }
+
+  function shopSortFilters() {
+    const ru = lang() === "ru";
+    return [
+      { id: "featured", title: ru ? "Рекомендовано" : "Featured" },
+      { id: "price", title: ru ? "По цене" : "By price" },
+      { id: "rarity", title: ru ? "По редкости" : "By rarity" }
+    ];
+  }
+
+  function filteredCustomizationItems() {
+    const category = state.shopFilters.category || "all";
+    const view = state.shopFilters.view || "all";
+    const rarityRank = { common: 1, rare: 2, epic: 3, legendary: 4 };
+    let items = customizationShopItems().filter((item) => category === "all" || item.type === category);
+    if (view === "available") items = items.filter((item) => customizationItemStatus(item) === "available");
+    if (view === "owned") items = items.filter((item) => isCustomizationOwned(item.id));
+    if (view === "new") items = items.filter((item) => !state.customization?.seen?.includes(item.id));
+    if (state.shopFilters.sort === "price") items = [...items].sort((a, b) => a.price - b.price);
+    if (state.shopFilters.sort === "rarity") items = [...items].sort((a, b) => (rarityRank[b.rarity] || 0) - (rarityRank[a.rarity] || 0) || a.price - b.price);
+    return items;
+  }
+
+  function renderCustomizationItemCard(item) {
+    const status = customizationItemStatus(item);
+    const labels = shopLabels();
+    const statusText = labels.status[status] || status;
+    const action = status === "available"
+      ? `<button class="btn primary" type="button" data-action="shop-buy" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.buy)}</button>`
+      : status === "owned"
+        ? `<button class="btn" type="button" data-action="shop-select" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.select)}</button>`
+        : status === "selected"
+          ? `<button class="btn success" type="button" disabled>${escapeHtml(labels.selected)}</button>`
+          : `<button class="btn" type="button" disabled>${escapeHtml(labels.unavailable)}</button>`;
+    return `
+      <article class="custom-shop-card type-${escapeAttr(item.type)} is-${escapeAttr(status)} rarity-${escapeAttr(item.rarity)}">
+        <div class="custom-shop-preview">
+          <img src="${escapeAttr(item.preview || item.asset)}" alt="${escapeAttr(customizationItemTitle(item))}" loading="lazy" onerror="this.closest('.custom-shop-card').classList.add('is-missing')" />
+          <span class="rarity-badge">${escapeHtml(rarityLabel(item.rarity))}</span>
+        </div>
+        <div class="custom-shop-card-body">
+          <div class="custom-shop-title-row">
+            <strong>${escapeHtml(customizationItemTitle(item))}</strong>
+            <span class="status-badge">${escapeHtml(statusText)}</span>
+          </div>
+          ${item.stars ? `<div class="custom-shop-stars" aria-label="${escapeAttr(`${item.stars} stars`)}">${escapeHtml("★".repeat(Math.max(1, Math.min(5, Number(item.stars) || 1))))}</div>` : ""}
+          <p>${escapeHtml(customizationItemDescription(item))}</p>
+          ${item.type === "outfit" && customizationItemPhrase(item) ? `<blockquote class="custom-shop-phrase">${escapeHtml(customizationItemPhrase(item))}</blockquote>` : ""}
+          <div class="custom-shop-price">
+            <span>${item.price ? `${item.price} Moon` : labels.free}</span>
+            <small>${escapeHtml(typeLabel(item.type))}</small>
+          </div>
+          ${action}
+        </div>
+      </article>
+    `;
+  }
+
+  function shopLabels() {
+    const ru = lang() === "ru";
+    return ru
+      ? {
+          title: "Магазин кастомизации",
+          subtitle: "Flash Kanji Custom",
+          hint: "Фоны, образы Евы, декор, темы и эффекты за Moon Fragments.",
+          categories: "Категории магазина",
+          ownedShort: "куплено",
+          buy: "Купить",
+          select: "Выбрать",
+          selected: "Выбран",
+          unavailable: "Недоступно",
+          free: "Бесплатно",
+          locked: "Предмет пока недоступен.",
+          notEnough: "Не хватает Moon Fragments.",
+          bought: "Куплено: {item}",
+          selectedToast: "Выбрано: {item}",
+          empty: "Нет предметов по этому фильтру.",
+          status: { selected: "Выбран", owned: "Куплено", available: "Доступно", locked: "Закрыто" }
+        }
+      : {
+          title: "Customization Shop",
+          subtitle: "Flash Kanji Custom",
+          hint: "Backgrounds, Eva outfits, room decor, themes, and effects for Moon Fragments.",
+          categories: "Shop categories",
+          ownedShort: "owned",
+          buy: "Buy",
+          select: "Select",
+          selected: "Selected",
+          unavailable: "Unavailable",
+          free: "Free",
+          locked: "This item is not available yet.",
+          notEnough: "Not enough Moon Fragments.",
+          bought: "Bought: {item}",
+          selectedToast: "Selected: {item}",
+          empty: "No items match this filter.",
+          status: { selected: "Selected", owned: "Owned", available: "Available", locked: "Locked" }
+        };
+  }
+
+  function customizationItemTitle(item) {
+    return lang() === "en" ? item.title_en || item.title_ru || item.id : item.title_ru || item.title_en || item.id;
+  }
+
+  function customizationItemDescription(item) {
+    return lang() === "en" ? item.description_en || item.description_ru || "" : item.description_ru || item.description_en || "";
+  }
+
+  function customizationItemPhrase(item) {
+    return lang() === "en" ? item.phrase_en || item.phrase_ru || "" : item.phrase_ru || item.phrase_en || "";
+  }
+
+  function rarityLabel(rarity) {
+    const labels = {
+      common: lang() === "ru" ? "Common" : "Common",
+      rare: lang() === "ru" ? "Rare" : "Rare",
+      epic: lang() === "ru" ? "Epic" : "Epic",
+      legendary: lang() === "ru" ? "Legendary" : "Legendary",
+      mythic: lang() === "ru" ? "Mythic" : "Mythic"
+    };
+    return labels[rarity] || rarity;
+  }
+
+  function typeLabel(type) {
+    const ru = lang() === "ru";
+    return {
+      background: ru ? "Фон" : "Background",
+      outfit: ru ? "Образ" : "Outfit",
+      decoration: ru ? "Декор" : "Decoration",
+      theme: ru ? "Тема" : "Theme",
+      effect: ru ? "Эффект" : "Effect"
+    }[type] || type;
+  }
+
   function renderEvaAutonomyPanel(scene) {
     const labels = evaRoomLabels();
+    const live = evaLiveLabels();
     const autonomy = evaAutonomy();
     const bg = scene.bg || currentEvaRoomBackground();
     const spriteItem = getEvaSpriteShopItem(scene.sprite || state.progress.selectedEvaSprite);
+    const effectItem = customizationShopItem(scene.effect || autonomy.currentEffect);
+    const decorationItem = customizationShopItem(scene.decoration || autonomy.currentDecoration);
+    const moodLabel = evaMoodLabel(scene.mood || autonomy.mood);
     return `
-      <aside class="eva-autonomy-panel" data-eva-lines="${state.evaAutonomyLines.length}" data-eva-current="${escapeAttr(autonomy.currentLine?.id || "")}">
+      <aside class="eva-autonomy-panel eva-live-status" data-eva-lines="${state.evaAutonomyLines.length}" data-eva-current="${escapeAttr(autonomy.currentLine?.id || "")}">
         <div>
-          <span class="pill">${escapeHtml(labels.autonomyBadge)}</span>
-          <strong>${escapeHtml(isEvaAutonomyEnabled() ? labels.autonomyOn : labels.autonomyOff)}</strong>
-          <small>${escapeHtml(labels.autonomyHint)}</small>
+          <span class="pill">${escapeHtml(live.badge)}</span>
+          <strong>${escapeHtml(live.status)}</strong>
+          <small>${escapeHtml(live.hint)}</small>
         </div>
         <div class="eva-autonomy-meta">
-          <span>${escapeHtml(labels.frequency)}: ${escapeHtml(labels.frequencies[autonomy.frequency] || autonomy.frequency)}</span>
-          <span>${escapeHtml(labels.roomMode)}: ${escapeHtml(autonomy.roomMode === "auto" ? labels.auto : labels.manual)}</span>
-          <span>${escapeHtml(labels.outfitMode)}: ${escapeHtml(autonomy.outfitMode === "auto" ? labels.auto : labels.manual)}</span>
+          <span>${escapeHtml(live.mood)}: ${escapeHtml(moodLabel)}</span>
           <span>${escapeHtml(localized(bg.title || {}))}</span>
           <span>${escapeHtml(localized(spriteItem?.title || { ru: "Ева", en: "Eva" }))}</span>
-        </div>
-        <div class="eva-autonomy-actions">
-          <button class="btn ${isEvaAutonomyEnabled() ? "success" : "ghost"}" type="button" data-action="toggle-eva-autonomy">${escapeHtml(isEvaAutonomyEnabled() ? labels.disableAutonomy : labels.enableAutonomy)}</button>
-          <button class="btn" type="button" data-action="cycle-eva-autonomy">${escapeHtml(labels.changeFrequency)}</button>
-          <button class="btn" type="button" data-action="eva-autonomy-room-mode">${escapeHtml(labels.roomModeButton)}</button>
-          <button class="btn" type="button" data-action="eva-autonomy-outfit-mode">${escapeHtml(labels.outfitModeButton)}</button>
+          ${decorationItem ? `<span>${escapeHtml(customizationItemTitle(decorationItem))}</span>` : ""}
+          ${effectItem ? `<span>${escapeHtml(customizationItemTitle(effectItem))}</span>` : ""}
         </div>
       </aside>
     `;
   }
 
   function renderEvaAutonomyChoices(labels) {
+    const live = evaLiveLabels();
+    const question = evaAutonomy().currentQuestion;
+    if (question?.id) {
+      return `
+        <div class="eva-question-box">
+          <span class="pill">${escapeHtml(live.question)}</span>
+          <strong>${escapeHtml(localized(question.text))}</strong>
+          <div class="eva-choice-grid">
+            ${question.options.map((option) => `
+              <button class="btn ${option.id === question.options[0]?.id ? "primary" : "ghost"}" type="button" data-action="eva-question-answer" data-option="${escapeAttr(option.id)}">
+                ${escapeHtml(localized(option.text))}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
     return `
       <div class="eva-choice-grid">
         <button class="btn primary" type="button" data-action="eva-autonomy-next">${escapeHtml(labels.nextAutonomyLine)}</button>
-        <button class="btn ghost" type="button" data-action="eva-autonomy-clear">${escapeHtml(labels.storyDialogue)}</button>
+        <button class="btn ghost" type="button" data-action="eva-room-reset">${escapeHtml(labels.storyDialogue)}</button>
         <button class="btn" type="button" data-action="route" data-route="learn">${escapeHtml(labels.study)}</button>
       </div>
     `;
+  }
+
+  function evaLiveLabels() {
+    return lang() === "ru"
+      ? {
+          badge: "Ева рядом",
+          status: "Ева сама наблюдает за комнатой",
+          hint: "Она выбирает настроение, реплику, фон, образ и декор из открытых предметов.",
+          mood: "Настроение",
+          question: "Вопрос Евы"
+        }
+      : {
+          badge: "Eva nearby",
+          status: "Eva watches the room by herself",
+          hint: "She chooses mood, line, room, look, and decor from unlocked items.",
+          mood: "Mood",
+          question: "Eva's question"
+        };
+  }
+
+  function evaMoodLabel(mood) {
+    const ru = lang() === "ru";
+    const labels = ru
+      ? {
+          neutral: "Ровное настроение",
+          focused: "Собрана",
+          soft: "Мягче обычного",
+          strict: "Строгая",
+          tired: "Немного устала",
+          happy: "Довольна прогрессом",
+          serious: "Серьёзна",
+          mystic: "Лунное настроение",
+          cyber: "Анализирует",
+          travel: "Вспоминает дороги",
+          quiet: "Молчит рядом",
+          curious: "Заинтересована",
+          close: "Близость",
+          proud: "Гордится тобой",
+          worried: "Беспокоится",
+          reserved: "Держит дистанцию"
+        }
+      : {
+          neutral: "Steady mood",
+          focused: "Focused",
+          soft: "Softer than usual",
+          strict: "Strict",
+          tired: "A little tired",
+          happy: "Pleased with progress",
+          serious: "Serious",
+          mystic: "Moonlit mood",
+          cyber: "Analyzing",
+          travel: "Thinking of old roads",
+          quiet: "Quiet nearby",
+          curious: "Interested",
+          close: "Close",
+          proud: "Proud of you",
+          worried: "Worried",
+          reserved: "Reserved"
+        };
+    return labels[mood] || labels.neutral;
   }
 
   function renderEvaRelationshipStats() {
@@ -1547,22 +2186,22 @@
         spriteShopTitle: "Образы Евы",
         spriteBought: "Образ Евы открыт.",
         spriteSelected: "Образ Евы выбран.",
-        autonomyBadge: "Автономная Ева",
+        autonomyBadge: "Ева рядом",
         autonomyShortOn: "Ева · авто",
         autonomyShortOff: "Ева · тихо",
-        autonomyOn: "Автономность включена",
-        autonomyOff: "Автономность выключена",
+        autonomyOn: "Ева рядом",
+        autonomyOff: "Ева рядом",
         autonomyHint: "Ева сама выбирает реплики, настроение, комнату и образ без спойлеров FIS.",
         autonomySettingsHint: "Самостоятельные реплики Евы в комнате, без раскрытия сюжета.",
-        enableAutonomy: "Включить автономность",
-        disableAutonomy: "Выключить автономность",
-        changeFrequency: "Сменить частоту",
+        enableAutonomy: "Ева рядом",
+        disableAutonomy: "Ева рядом",
+        changeFrequency: "Статус Евы",
         frequency: "Частота",
         frequencies: { quiet: "тихо", normal: "нормально", active: "часто" },
         roomMode: "Комната",
         outfitMode: "Образ",
-        roomModeButton: "Комната: авто/ручная",
-        outfitModeButton: "Образ: авто/ручной",
+        roomModeButton: "Комната Евы",
+        outfitModeButton: "Образ Евы",
         auto: "авто",
         manual: "ручной",
         nextAutonomyLine: "Ещё мысль.",
@@ -1603,22 +2242,22 @@
         spriteShopTitle: "Eva Looks",
         spriteBought: "Eva look unlocked.",
         spriteSelected: "Eva look selected.",
-        autonomyBadge: "Autonomous Eva",
+        autonomyBadge: "Eva nearby",
         autonomyShortOn: "Eva · auto",
         autonomyShortOff: "Eva · quiet",
-        autonomyOn: "Autonomy enabled",
-        autonomyOff: "Autonomy disabled",
+        autonomyOn: "Eva nearby",
+        autonomyOff: "Eva nearby",
         autonomyHint: "Eva chooses lines, mood, room, and look by herself without FIS spoilers.",
         autonomySettingsHint: "Independent Eva lines in her room, without story spoilers.",
-        enableAutonomy: "Enable autonomy",
-        disableAutonomy: "Disable autonomy",
-        changeFrequency: "Change frequency",
+        enableAutonomy: "Eva nearby",
+        disableAutonomy: "Eva nearby",
+        changeFrequency: "Eva status",
         frequency: "Frequency",
         frequencies: { quiet: "quiet", normal: "normal", active: "active" },
         roomMode: "Room",
         outfitMode: "Look",
-        roomModeButton: "Room: auto/manual",
-        outfitModeButton: "Look: auto/manual",
+        roomModeButton: "Eva room",
+        outfitModeButton: "Eva look",
         auto: "auto",
         manual: "manual",
         nextAutonomyLine: "Another thought.",
@@ -1651,6 +2290,7 @@
     });
     state.progress.selectedEvaSprite ||= "idle";
     state.progress.evaAutonomy = mergeEvaAutonomy(defaultEvaAutonomy(), state.progress.evaAutonomy || {});
+    state.evaRuntime ||= defaultEvaStateV2();
     state.progress.evaRoomDialogueProgress ||= { currentNode: "intro", rewardsClaimed: {}, visited: {}, lineHistory: [] };
     state.progress.evaRoomDialogueProgress.currentNode ||= "intro";
     state.progress.evaRoomDialogueProgress.rewardsClaimed ||= {};
@@ -1779,21 +2419,51 @@
     return rel.mood;
   }
 
-  function resolveEvaSprite(sprite) {
-    if (sprite && sprite !== "relationship") return sprite;
-    const autonomy = evaAutonomy();
-    if (autonomy.outfitMode === "manual" && isEvaSpriteUnlocked(state.progress.selectedEvaSprite)) {
-      return state.progress.selectedEvaSprite;
-    }
-    const mood = evaRelationship().mood;
-    return {
+  function resolveEvaSprite(skinId, emotion = null) {
+    const normalizedSkin = skinId && skinId !== "relationship" ? skinId : null;
+    const mood = state.evaRuntime?.mood || evaRelationship().mood;
+    const desiredEmotion = emotion || state.evaRuntime?.emotion || {
       close: "shy",
       proud: "approve",
-      curious: "think",
+      curious: "thinking",
       worried: "sad",
       reserved: "idle",
       neutral: "idle"
     }[mood] || "idle";
+    const emotionSprite = evaEmotionSpriteId(desiredEmotion);
+    const candidates = [
+      normalizedSkin && `${normalizedSkin}_${desiredEmotion}`,
+      normalizedSkin && `${normalizedSkin}_${emotionSprite}`,
+      normalizedSkin,
+      emotionSprite,
+      "idle",
+      "default"
+    ].filter(Boolean);
+    const picked = candidates.find((candidate) => state.evaSprites?.[candidate] && (isEvaSpriteUnlocked(candidate) || !normalizedSkin || isEvaSpriteUnlocked(normalizedSkin)));
+    return picked || "idle";
+  }
+
+  function evaEmotionSpriteId(emotion) {
+    return {
+      neutral: "idle",
+      idle: "idle",
+      happy: "happy",
+      soft_smile: "shy",
+      thinking: "think",
+      serious: "think",
+      strict: "angry",
+      sad: "sad",
+      shy: "shy",
+      surprised: "think",
+      approve: "approve",
+      explain: "review",
+      ready: "review",
+      tired: "idle",
+      observe: "think",
+      special: "levelup",
+      proud: "proud",
+      calm: "idle"
+    }[emotion] || "idle";
   }
 
   function evaAutonomy() {
@@ -1802,17 +2472,33 @@
   }
 
   function isEvaAutonomyEnabled() {
-    return evaAutonomy().enabled !== false;
+    const autonomy = evaAutonomy();
+    autonomy.enabled = true;
+    autonomy.frequency = "normal";
+    autonomy.roomMode = "auto";
+    autonomy.outfitMode = "auto";
+    return true;
   }
 
   function evaRoomBackgrounds() {
-    return state.evaBackgrounds?.length ? state.evaBackgrounds : [{
+    const base = state.evaBackgrounds?.length ? state.evaBackgrounds : [{
       id: "bg_study_hub",
       title: { ru: "Учебная комната", en: "Study Hub" },
       file: "assets/bg/bg_study_hub.png",
       price: 0,
       defaultUnlocked: true
     }];
+    const existing = new Set(base.map((item) => item.id));
+    const shopBackgrounds = customizationShopItems()
+      .filter((item) => item.type === "background" && !existing.has(item.id))
+      .map((item) => ({
+        id: item.id,
+        title: { ru: item.title_ru, en: item.title_en },
+        file: item.asset || item.preview,
+        price: item.price,
+        defaultUnlocked: item.defaultOwned
+      }));
+    return [...base, ...shopBackgrounds];
   }
 
   function getEvaRoomBackground(id) {
@@ -1832,7 +2518,16 @@
   }
 
   function evaSpriteShopItems() {
-    const items = [
+    const catalogOutfits = customizationShopItems()
+      .filter((item) => item.type === "outfit")
+      .map((item) => ({
+        id: item.spriteId || item.id,
+        shopId: item.id,
+        title: { ru: item.title_ru, en: item.title_en },
+        price: item.price,
+        defaultUnlocked: item.defaultOwned
+      }));
+    const legacy = [
       { id: "idle", title: { ru: "Ева: спокойная", en: "Eva: Calm" }, price: 0, defaultUnlocked: true },
       { id: "default", title: { ru: "Ева: классика", en: "Eva: Classic" }, price: 0, defaultUnlocked: true },
       { id: "think", title: { ru: "Ева: размышление", en: "Eva: Thinking" }, price: 25 },
@@ -1845,8 +2540,8 @@
       { id: "reward", title: { ru: "Ева: награда", en: "Eva: Reward" }, price: 50 },
       { id: "achievement", title: { ru: "Ева: достижение", en: "Eva: Achievement" }, price: 60 },
       { id: "levelup", title: { ru: "Ева: уровень", en: "Eva: Level Up" }, price: 65 }
-    ];
-    return items.filter((item) => state.evaSprites?.[item.id]);
+    ].filter((item) => state.evaSprites?.[item.id] && !catalogOutfits.some((outfit) => outfit.id === item.id));
+    return [...catalogOutfits, ...legacy];
   }
 
   function getEvaSpriteShopItem(id) {
@@ -1861,16 +2556,24 @@
 
   function chooseEvaAutonomyBackground(line) {
     ensureEvaRoomProgress();
-    const autonomy = evaAutonomy();
-    if (autonomy.roomMode === "manual") return currentEvaRoomBackground();
-    const mood = evaRelationship().mood;
+    const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
     const moodPrefs = {
-      close: ["bg_eva_room", "bg_cafe", "bg_park", "bg_study_hub"],
-      proud: ["bg_practice_room", "bg_classroom", "bg_study_hub"],
-      curious: ["bg_library", "bg_shrine", "bg_study_hub"],
-      worried: ["bg_study_hub", "bg_evening_street"],
-      reserved: ["bg_library", "bg_study_hub"],
-      neutral: ["bg_study_hub", "bg_classroom", "bg_library"]
+      close: ["bg_cafe", "bg_park", "bg_eva_room", "bg_study_hub"],
+      proud: ["bg_practice_room", "bg_classroom", "bg_moon_room", "bg_study_hub"],
+      curious: ["bg_library", "bg_cyber_room", "bg_shrine", "bg_study_hub"],
+      worried: ["bg_study_hub", "bg_evening_street", "bg_winter_city"],
+      reserved: ["bg_library", "bg_silent_road", "bg_study_hub"],
+      focused: ["bg_classroom", "bg_practice_room", "bg_study_hub"],
+      soft: ["bg_cafe", "bg_park", "bg_study_hub"],
+      strict: ["bg_classroom", "bg_silent_road", "bg_study_hub"],
+      tired: ["bg_cafe", "bg_library", "bg_study_hub"],
+      happy: ["bg_park", "bg_cafe", "bg_moon_room", "bg_study_hub"],
+      serious: ["bg_silent_road", "bg_library", "bg_study_hub"],
+      mystic: ["bg_moon_room", "bg_shrine", "bg_study_hub"],
+      cyber: ["bg_cyber_room", "bg_library", "bg_study_hub"],
+      travel: ["bg_silent_road", "bg_evening_street", "bg_school_street", "bg_study_hub"],
+      quiet: ["bg_library", "bg_study_hub"],
+      neutral: ["bg_study_hub", "bg_classroom", "bg_library", "bg_silent_road"]
     };
     const preferred = [...(line?.preferredBackgrounds || []), ...(moodPrefs[mood] || moodPrefs.neutral)];
     const unlocked = evaRoomBackgrounds().filter((bg) => isEvaRoomBackgroundUnlocked(bg.id));
@@ -1880,16 +2583,24 @@
 
   function chooseEvaAutonomySprite(line) {
     ensureEvaRoomProgress();
-    const autonomy = evaAutonomy();
-    if (autonomy.outfitMode === "manual" && isEvaSpriteUnlocked(state.progress.selectedEvaSprite)) return state.progress.selectedEvaSprite;
-    const mood = evaRelationship().mood;
+    const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
     const moodPrefs = {
-      close: ["shy", "idle", "approve"],
-      proud: ["approve", "proud", "review"],
-      curious: ["think", "review", "idle"],
-      worried: ["sad", "idle", "think"],
-      reserved: ["idle", "default"],
-      neutral: ["idle", "think", "review", "default"]
+      close: ["casual_fox", "librarian_eva", "shy", "idle", "approve"],
+      proud: ["academy_instructor", "moon_priestess", "study_session", "approve", "proud", "review"],
+      curious: ["librarian_eva", "cyber_eva", "think", "review", "idle"],
+      worried: ["winter_traveler", "fis_mentor", "sad", "idle", "think"],
+      reserved: ["silent_road", "fis_mentor", "idle", "default"],
+      focused: ["study_session", "academy_instructor", "review", "approve", "idle"],
+      soft: ["librarian_eva", "casual_fox", "shy", "approve", "idle"],
+      strict: ["academy_instructor", "fis_mentor", "angry", "think", "idle"],
+      tired: ["winter_traveler", "idle", "default"],
+      happy: ["happy", "proud", "approve", "casual_fox"],
+      serious: ["fis_mentor", "silent_road", "think", "idle"],
+      mystic: ["moon_priestess", "shrine_maiden", "achievement", "reward"],
+      cyber: ["cyber_eva", "think", "review"],
+      travel: ["silent_road", "winter_traveler", "fis_mentor"],
+      quiet: ["fis_mentor", "idle", "default"],
+      neutral: ["fis_mentor", "study_session", "librarian_eva", "idle", "think", "review", "default"]
     };
     const preferred = [line?.sprite, ...(moodPrefs[mood] || moodPrefs.neutral)].filter(Boolean);
     return preferred.find((sprite) => isEvaSpriteUnlocked(sprite) && state.evaSprites?.[sprite]) || state.progress.selectedEvaSprite || "idle";
@@ -1931,24 +2642,138 @@
   }
 
   function evaAutonomyIntervals() {
-    return { quiet: 120000, normal: 65000, active: 30000 };
+    return { quiet: 120000, normal: randomBetween(45000, 120000), active: 45000 };
   }
 
   function startEvaAutonomyLoop() {
     if (evaAutonomyTimer) window.clearInterval(evaAutonomyTimer);
-    evaAutonomyTimer = window.setInterval(() => {
-      if (document.hidden || state.route !== "eva-room" || !state.progress) return;
-      if (maybeRunEvaAutonomy("timer")) {
-        saveProgress();
-        render();
-      }
-    }, 12000);
+    evaAutonomyTimer = window.setInterval(tickEvaAutonomy, 5000);
   }
 
   function scheduleNextEvaAutonomyLine() {
     const autonomy = evaAutonomy();
-    const interval = evaAutonomyIntervals()[autonomy.frequency] || evaAutonomyIntervals().normal;
+    const interval = evaAutonomyIntervals()[autonomy.frequency] || randomBetween(45000, 120000);
     autonomy.nextSpeakAt = Date.now() + interval;
+  }
+
+  function tickEvaAutonomy() {
+    if (document.hidden || !state.progress || !state.evaRuntime) return false;
+    const context = getEvaContext();
+    const runtime = state.evaRuntime;
+    const autonomy = evaAutonomy();
+    const now = Date.now();
+    let changed = false;
+
+    if (context.idleMs > 90000 && (!runtime.lastEvent || runtime.lastEvent.type !== "idle_timeout") && now - Number(runtime.lastPhraseAt || 0) > 60000) {
+      dispatchEvaEvent("idle_timeout", { idleMs: context.idleMs });
+      return true;
+    }
+
+    if (now - Number(runtime.lastEmotionChangeAt || 0) >= Number(runtime.cooldowns?.emotion || 18000)) {
+      const mood = calculateEvaMood(context);
+      const emotion = chooseEvaEmotion(context, mood);
+      if (mood !== runtime.mood || emotion !== runtime.emotion) {
+        runtime.mood = mood;
+        runtime.emotion = emotion;
+        autonomy.mood = mood;
+        autonomy.emotion = emotion;
+        runtime.lastEmotionChangeAt = now;
+        runtime.cooldowns.emotion = randomBetween(15000, 30000);
+        changed = true;
+      }
+    }
+
+    if (state.route === "eva-room" && now >= Number(autonomy.nextSpeakAt || 0)) {
+      const shouldStayQuiet = Math.random() < 0.14;
+      if (shouldStayQuiet) {
+        runtime.mood = "quiet";
+        runtime.emotion = "observe";
+        autonomy.mood = "quiet";
+        autonomy.emotion = "observe";
+        scheduleNextEvaAutonomyLine();
+        changed = true;
+      } else if (maybeRunEvaAutonomy("timer", { context })) {
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      saveEvaState();
+      saveProgress();
+      if (state.route === "eva-room") render();
+    }
+    return changed;
+  }
+
+  function getEvaContext(extra = {}) {
+    const today = state.progress ? todayStats() : {};
+    const runtime = state.evaRuntime || defaultEvaStateV2();
+    const hour = new Date().getHours();
+    syncEvaRuntimeInventory();
+    return {
+      route: state.route,
+      hour,
+      timeOfDay: hour < 5 ? "late_night" : hour < 11 ? "morning" : hour < 18 ? "day" : hour < 23 ? "evening" : "night",
+      correctToday: Number(today.reviews || 0) - Number(today.mistakes || 0),
+      mistakesToday: Number(today.mistakes || 0),
+      reviewsToday: Number(today.reviews || 0),
+      learnedToday: Number(today.learned || 0),
+      streak: Number(state.progress?.streak?.current || 0),
+      level: Number(state.progress?.level || 1),
+      moonFragments: Number(state.progress?.moonFragments || 0),
+      ownedSkins: runtime.ownedSkins || [],
+      ownedBackgrounds: runtime.ownedBackgrounds || [],
+      ownedEffects: runtime.ownedEffects || [],
+      ownedDecorations: runtime.ownedDecorations || [],
+      activeSkin: runtime.activeSkin || state.progress?.selectedEvaSprite || "idle",
+      activeBackground: runtime.activeBackground || state.progress?.selectedEvaRoomBackground || "bg_study_hub",
+      idleMs: Date.now() - Number(runtime.lastPlayerActionAt || Date.now()),
+      sessionMs: Date.now() - notificationUsageStartedAt,
+      lastEvent: runtime.lastEvent,
+      dueReviews: state.progress ? getDueNowCards().length : 0,
+      shopOpen: Boolean(state.evaRoomShopOpen),
+      ...extra
+    };
+  }
+
+  function calculateEvaMood(context = getEvaContext()) {
+    const eventType = context.lastEvent?.type;
+    if (eventType === "level_up" || eventType === "lesson_complete" || eventType === "streak_up") return "happy";
+    if (eventType === "item_bought" && String(context.lastEvent?.payload?.itemId || "").includes("moon")) return "mystic";
+    if (context.shopOpen || eventType === "shop_opened" || eventType === "item_bought") return "curious";
+    if (context.route === "learn" || context.route === "review" || context.dueReviews > 0) return "focused";
+    if (context.mistakesToday >= 4) return context.correctToday > context.mistakesToday ? "soft" : "strict";
+    if (context.hour >= 23 || context.hour < 5) return context.ownedEffects?.includes("effect_moon_particles") ? "mystic" : "quiet";
+    if (context.sessionMs > 35 * 60 * 1000) return "tired";
+    if (context.activeSkin === "cyber_eva" || context.ownedSkins?.includes("cyber_eva")) return "cyber";
+    if (context.activeSkin === "silent_road" || context.ownedSkins?.includes("silent_road")) return "travel";
+    if (context.route === "eva-room") return context.streak >= 7 ? "soft" : "neutral";
+    return "neutral";
+  }
+
+  function chooseEvaEmotion(context = getEvaContext(), mood = calculateEvaMood(context), reason = context.lastEvent?.type || "auto") {
+    if (reason === "answer_correct") return sample(["approve", "happy", "soft_smile"]);
+    if (reason === "answer_wrong") return sample(["thinking", "strict", "serious"]);
+    if (reason === "lesson_complete") return "approve";
+    if (reason === "level_up") return "special";
+    if (reason === "item_bought" || reason === "shop_opened") return "observe";
+    if (reason === "user_clicked_eva") return sample(["curious", "shy", "observe"]);
+    if (reason === "idle_timeout") return "observe";
+    const byMood = {
+      neutral: ["idle", "observe"],
+      focused: ["ready", "explain", "thinking"],
+      soft: ["soft_smile", "approve"],
+      strict: ["strict", "serious"],
+      tired: ["tired", "idle"],
+      happy: ["happy", "approve"],
+      serious: ["serious", "thinking"],
+      mystic: ["special", "observe"],
+      cyber: ["observe", "thinking"],
+      travel: ["ready", "observe"],
+      quiet: ["observe", "idle"],
+      curious: ["thinking", "surprised", "observe"]
+    };
+    return sample(byMood[mood] || byMood.neutral);
   }
 
   function maybeRunEvaAutonomy(reason = "auto", options = {}) {
@@ -1957,25 +2782,141 @@
     const autonomy = evaAutonomy();
     const now = Date.now();
     if (!options.force && autonomy.currentLine?.text && autonomy.nextSpeakAt && now < Number(autonomy.nextSpeakAt)) return false;
-    const line = pickEvaAutonomyLine(reason);
+    const context = options.context || getEvaContext({ lastEvent: { type: reason, payload: options.eventPayload || {} } });
+    const mood = calculateEvaMood(context);
+    const line = evaEventLine(reason) || pickEvaAutonomyLine(reason);
     if (!line) return false;
+    state.evaRuntime ||= defaultEvaStateV2();
+    state.evaRuntime.mood = mood;
+    const emotion = chooseEvaEmotion(context, mood, reason);
     const bg = chooseEvaAutonomyBackground(line);
-    const sprite = chooseEvaAutonomySprite(line);
+    const sprite = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
+    const decoration = chooseEvaAutonomyDecoration(line);
+    const effect = chooseEvaAutonomyEffect(line);
+    const question = maybeAskEvaQuestion(context, line);
     autonomy.currentLine = {
       id: line.id,
       category: line.category || "mood",
       text: line.text,
       sprite,
       background: bg.id,
-      at: new Date().toISOString()
+      decoration,
+      effect,
+      emotion,
+      at: new Date().toISOString(),
+      reason
     };
+    autonomy.currentQuestion = question;
+    autonomy.currentDecoration = decoration;
+    autonomy.currentEffect = effect;
+    autonomy.mood = mood;
+    autonomy.emotion = emotion;
     autonomy.lastSpokeAt = autonomy.currentLine.at;
     autonomy.lastRoomId = bg.id;
     autonomy.lastSprite = sprite;
     autonomy.recentLineIds = [line.id, ...(autonomy.recentLineIds || []).filter((id) => id !== line.id)].slice(0, 32);
+    state.evaRuntime ||= defaultEvaStateV2();
+    Object.assign(state.evaRuntime, {
+      mood,
+      emotion,
+      currentPhrase: autonomy.currentLine,
+      pendingQuestion: question,
+      currentSkin: sprite,
+      currentBackground: bg.id,
+      currentDecoration: decoration,
+      currentEffect: effect,
+      activeSkin: sprite,
+      activeBackground: bg.id,
+      lastPhraseAt: now,
+      lastEmotionChangeAt: now,
+      lastQuestionAt: question ? now : Number(state.evaRuntime.lastQuestionAt || 0),
+      lastVisualChangeAt: now,
+      cooldowns: {
+        ...state.evaRuntime.cooldowns,
+        emotion: randomBetween(15000, 30000),
+        phrase: randomBetween(45000, 120000),
+        question: randomBetween(3 * 60000, 7 * 60000),
+        visual: randomBetween(10 * 60000, 15 * 60000)
+      }
+    });
     scheduleNextEvaAutonomyLine();
     adjustEvaRelationship(line.relationshipDelta || { warmth: 0.1 }, `eva_autonomy:${line.id}`, { silent: true });
+    saveEvaState();
+    applyTheme();
     return true;
+  }
+
+  function evaEventLine(reason) {
+    const pools = {
+      answer_correct: [
+        { ru: "Верно.", en: "Correct." },
+        { ru: "Хорошо.", en: "Good." },
+        { ru: "Да. Именно так.", en: "Yes. Exactly." },
+        { ru: "Ты начинаешь видеть структуру.", en: "You are starting to see the structure." },
+        { ru: "Неплохо. Продолжай.", en: "Not bad. Continue." }
+      ],
+      answer_wrong: [
+        { ru: "Не совсем.", en: "Not quite." },
+        { ru: "Посмотри ещё раз.", en: "Look again." },
+        { ru: "Не угадывай. Разбери.", en: "Do not guess. Break it down." },
+        { ru: "Запомни не ответ, а причину.", en: "Remember the reason, not just the answer." },
+        { ru: "Это место стоит повторить.", en: "This part is worth repeating." }
+      ],
+      user_clicked_eva: [
+        { ru: "Да?", en: "Yes?" },
+        { ru: "Что-то нужно?", en: "Need something?" },
+        { ru: "Я слушаю.", en: "I'm listening." },
+        { ru: "Не отвлекайся слишком часто.", en: "Don't distract yourself too often." },
+        { ru: "Если нужен совет — спроси.", en: "If you need advice, ask." }
+      ],
+      idle_timeout: [
+        { ru: "Ты всё ещё здесь?", en: "Still here?" },
+        { ru: "Сделаем короткий шаг?", en: "One short step?" },
+        { ru: "Я подожду.", en: "I'll wait." },
+        { ru: "Не исчезай надолго.", en: "Don't vanish for too long." }
+      ],
+      manual: [
+        { ru: "Один шаг всё ещё шаг.", en: "One step is still a step." },
+        { ru: "Я рядом. Продолжай.", en: "I'm nearby. Continue." },
+        { ru: "Кандзи не убегут. Но лучше не заставлять их ждать.", en: "The kanji won't run. Better not keep them waiting." },
+        { ru: "Сначала форма. Потом смысл.", en: "Shape first. Meaning after." }
+      ],
+      lesson_complete: [
+        { ru: "Урок закрыт. След оставлен.", en: "Lesson complete. A mark is left." },
+        { ru: "Хорошая работа. Теперь закрепи.", en: "Good work. Now reinforce it." }
+      ],
+      level_up: [
+        { ru: "Уровень выше. Дорога стала длиннее, не легче.", en: "Level up. The road is longer, not easier." },
+        { ru: "Ты стал крепче. Это заметно.", en: "You got steadier. It shows." }
+      ],
+      item_bought: [
+        { ru: "Новая вещь. Посмотрим, приживётся ли.", en: "A new item. We'll see if it settles in." },
+        { ru: "Комната меняется. Ты тоже.", en: "The room changes. So do you." }
+      ],
+      room_opened: [
+        { ru: "Я здесь.", en: "I'm here." },
+        { ru: "Ты снова здесь. Это говорит больше, чем обещание.", en: "You're here again. That says more than a promise." },
+        { ru: "Продолжай. Я посмотрю.", en: "Continue. I'll watch." }
+      ]
+    };
+    const pool = pools[reason] || [];
+    const recent = new Set(evaAutonomy().recentLineIds || []);
+    const fresh = pool.filter((item) => !recent.has(`${reason}_${stableHash(`${item.ru || item.en}`)}`));
+    const text = sample(fresh.length ? fresh : pool);
+    if (!text) return null;
+    return {
+      id: `${reason}_${stableHash(`${text.ru || text.en}`)}`,
+      category: reason,
+      text,
+      relationshipDelta: {}
+    };
+  }
+
+  function rememberCurrentEvaLine() {
+    const autonomy = evaAutonomy();
+    const currentId = autonomy.currentLine?.id;
+    if (!currentId) return;
+    autonomy.recentLineIds = [currentId, ...(autonomy.recentLineIds || []).filter((id) => id !== currentId)].slice(0, 32);
   }
 
   function evaAutonomyCategories(reason = "auto") {
@@ -1985,6 +2926,16 @@
     const today = todayStats();
     const categories = [];
     if (reason === "return" || (!rel.lastInteractionDate && state.progress.appOpens > 1)) categories.push("fis_return", "return");
+    if (reason === "room_opened") categories.push("fis_room", "fis_observation", "room");
+    if (reason === "shop_opened" || reason === "item_bought" || reason === "item_equipped") categories.push("fis_room", "fis_reward", "reward");
+    if (reason === "answer_correct") categories.push("fis_focus", "fis_short", "study");
+    if (reason === "answer_wrong") categories.push("fis_guard", "fis_focus", "mood");
+    if (reason === "user_clicked_eva" || reason === "eva_click") categories.push("fis_observation", "fis_short", "mood");
+    if (reason === "idle_timeout") categories.push("fis_return", "fis_short", "return");
+    if (reason === "user_answered_eva_question") categories.push("fis_focus", "fis_observation");
+    if (reason === "lesson_start") categories.push("fis_study", "study", "fis_focus");
+    if (reason === "lesson_complete" || reason === "level_up" || reason === "streak_up") categories.push("fis_reward", "reward", "fis_streak");
+    if (reason === "writing_complete" || reason === "sentence_complete" || reason === "advanced_mode") categories.push("fis_observation", "fis_focus");
     if (hour >= 23 || hour < 5) categories.push("fis_night", "night");
     if (due >= 8) categories.push("fis_review", "review");
     if ((today.reviews || 0) === 0) categories.push("fis_study", "study");
@@ -2000,7 +2951,8 @@
     ensureEvaRoomProgress();
     syncEvaRelationshipFromProgress();
     const rel = evaRelationship();
-    const recent = new Set(evaAutonomy().recentLineIds || []);
+    const currentLineId = evaAutonomy().currentLine?.id;
+    const recent = new Set([currentLineId, ...(evaAutonomy().recentLineIds || [])].filter(Boolean));
     const lines = Array.isArray(state.evaAutonomyLines) ? state.evaAutonomyLines : [];
     const categories = evaAutonomyCategories(reason);
     const eligibleFor = (category, allowRecent = false) => lines.filter((line) => {
@@ -2023,6 +2975,262 @@
     return sample(fallback.length ? fallback : lines);
   }
 
+  function dispatchEvaEvent(type, payload = {}) {
+    if (!type) return;
+    const detail = { type: normalizeEvaEventType(type), payload: payload || {}, at: Date.now() };
+    handleEvaEvent(detail);
+    window.dispatchEvent(new CustomEvent("eva:event", {
+      detail: { ...detail, handledByFlashKanji: true }
+    }));
+  }
+
+  Object.assign(window, { dispatchEvaEvent });
+
+  function handleEvaEvent(detail = {}) {
+    if (!detail.type || !state.progress) return;
+    ensureEvaRoomProgress();
+    state.evaRuntime ||= defaultEvaStateV2();
+      const eventRecord = {
+      type: normalizeEvaEventType(detail.type),
+      payload: detail.payload || {},
+      at: detail.at || Date.now()
+    };
+    state.evaRuntime.lastEvent = eventRecord;
+    state.evaRuntime.eventHistory = [eventRecord, ...(state.evaRuntime.eventHistory || [])].slice(0, 80);
+    state.evaRuntime.recentEvents = [eventRecord, ...(state.evaRuntime.recentEvents || [])].slice(0, 80);
+    if (!["timer", "idle_timeout"].includes(eventRecord.type)) state.evaRuntime.lastPlayerActionAt = Date.now();
+    const delta = evaRelationshipDeltaForEvent(eventRecord.type, eventRecord.payload);
+    if (Object.keys(delta).length) adjustEvaRelationship(delta, `eva_event:${eventRecord.type}`, { silent: true });
+    const autonomy = evaAutonomy();
+    rememberCurrentEvaLine();
+    autonomy.nextSpeakAt = 0;
+    const changed = maybeRunEvaAutonomy(eventRecord.type, { force: true, eventPayload: eventRecord.payload });
+    saveEvaState();
+    saveProgress();
+    if (changed && state.route === "eva-room") render();
+  }
+
+  function normalizeEvaEventType(type) {
+    const value = String(type || "");
+    return value === "eva_click" ? "user_clicked_eva" : value;
+  }
+
+  function evaRelationshipDeltaForEvent(type, payload = {}) {
+    const eventDeltas = {
+      room_opened: { warmth: 0.2, curiosity: 0.2 },
+      shop_opened: { curiosity: 0.4 },
+      item_bought: { warmth: 0.5, curiosity: 0.8 },
+      item_equipped: { curiosity: 0.3 },
+      eva_click: { warmth: 0.35, curiosity: 0.2 },
+      user_clicked_eva: { warmth: 0.35, curiosity: 0.2 },
+      answer_correct: { trust: 0.35, discipline: 0.2 },
+      answer_wrong: { discipline: -0.45, trust: -0.15, curiosity: 0.15 },
+      lesson_start: { discipline: 0.25 },
+      lesson_complete: { warmth: 1.1, trust: 1.2, discipline: 1.1 },
+      level_up: { warmth: 1, curiosity: 0.8 },
+      streak_up: { discipline: 0.8, trust: 0.4 },
+      writing_complete: { curiosity: 0.5, discipline: 0.3 },
+      sentence_complete: { trust: 0.45, curiosity: 0.3 },
+      advanced_mode: { curiosity: 0.5, discipline: 0.4 }
+    };
+    const delta = { ...(eventDeltas[type] || {}) };
+    if (type === "answer_wrong" && payload.comboLost) delta.discipline = (delta.discipline || 0) - 0.25;
+    return delta;
+  }
+
+  function chooseEvaAutonomyDecoration(line) {
+    const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
+    const moodPrefs = {
+      close: ["deco_tea_table", "deco_lantern", "deco_moon_frame"],
+      proud: ["deco_kanji_board", "deco_bookshelf", "deco_gold_accent"],
+      curious: ["deco_bookshelf", "deco_kanji_board", "deco_tea_table"],
+      worried: ["deco_lantern", "deco_moon_frame"],
+      reserved: ["deco_lantern", "deco_bookshelf"],
+      focused: ["deco_kanji_board", "deco_bookshelf"],
+      soft: ["deco_tea_table", "deco_lantern"],
+      strict: ["deco_kanji_board", "deco_scroll"],
+      tired: ["deco_tea_table", "deco_lantern"],
+      happy: ["deco_golden_accent", "deco_moon_frame"],
+      serious: ["deco_scroll", "deco_lantern"],
+      mystic: ["deco_moon_frame", "deco_lantern"],
+      cyber: ["deco_kanji_board", "deco_bookshelf"],
+      travel: ["deco_scroll", "deco_lantern"],
+      quiet: ["deco_lantern", "deco_bookshelf"],
+      neutral: ["deco_bookshelf", "deco_tea_table", "deco_lantern"]
+    };
+    const preferred = [...(line?.preferredDecorations || []), ...(moodPrefs[mood] || moodPrefs.neutral)];
+    return pickOwnedCustomizationId("decoration", preferred);
+  }
+
+  function chooseEvaAutonomyEffect(line) {
+    const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
+    const moodPrefs = {
+      close: ["effect_golden_glow", "effect_sakura"],
+      proud: ["effect_golden_glow", "effect_moon_particles"],
+      curious: ["effect_cyber_hud", "effect_sakura"],
+      worried: ["effect_snow_particles", "effect_dust_particles"],
+      reserved: ["effect_dust_particles", "effect_snow_particles"],
+      focused: ["effect_lesson_shine", "effect_golden_glow"],
+      soft: ["effect_sakura", "effect_golden_glow"],
+      strict: ["effect_level_frame", "effect_dust_particles"],
+      tired: ["effect_snow_particles", "effect_dust_particles"],
+      happy: ["effect_golden_glow", "effect_moon_particles"],
+      serious: ["effect_dust_particles", "effect_level_frame"],
+      mystic: ["effect_moon_particles", "effect_golden_glow"],
+      cyber: ["effect_cyber_hud", "effect_lesson_shine"],
+      travel: ["effect_dust_particles", "effect_snow_particles"],
+      quiet: ["effect_moon_particles", "effect_snow_particles"],
+      neutral: ["effect_golden_glow", "effect_moon_particles"]
+    };
+    const preferred = [...(line?.preferredEffects || []), ...(moodPrefs[mood] || moodPrefs.neutral)];
+    return pickOwnedCustomizationId("effect", preferred) || "none";
+  }
+
+  function pickOwnedCustomizationId(type, preferred = []) {
+    const owned = customizationShopItems().filter((item) => item.type === type && isCustomizationOwned(item.id));
+    const picked = preferred.map((id) => owned.find((item) => item.id === id)).find(Boolean) || sample(owned);
+    return picked?.id || null;
+  }
+
+  function evaAutonomyEmotion(reason, line) {
+    const category = line?.category || "";
+    if (["answer_wrong", "streak_lost"].includes(reason) || category.includes("guard")) return "serious";
+    if (["lesson_complete", "level_up", "item_bought", "achievement"].includes(reason) || category.includes("reward")) return "proud";
+    if (["answer_correct", "sentence_complete", "writing_complete"].includes(reason)) return "approve";
+    if (category.includes("observation") || category.includes("focus")) return "thinking";
+    return {
+      close: "soft",
+      proud: "proud",
+      curious: "thinking",
+      worried: "serious",
+      reserved: "calm",
+      neutral: "calm"
+    }[evaRelationship().mood] || "calm";
+  }
+
+  function maybeAskEvaQuestion(context = getEvaContext(), line = null) {
+    const autonomy = evaAutonomy();
+    if (autonomy.currentQuestion?.id) return autonomy.currentQuestion;
+    const reason = context.lastEvent?.type || "auto";
+    const force = ["user_clicked_eva", "room_opened"].includes(reason);
+    const now = Date.now();
+    const last = Number(state.evaRuntime?.lastQuestionAt || state.evaRuntime?.lastQuestion?.at || 0);
+    const cooldown = Number(state.evaRuntime?.cooldowns?.question || randomBetween(3 * 60000, 7 * 60000));
+    if (!force && now - last < cooldown) return null;
+    if (!force && Math.random() > 0.34) return null;
+    const recent = new Set(state.evaRuntime?.questionHistory?.slice(0, 6).map((item) => item.id));
+    const pool = evaQuestionPool(reason, line).filter((item) => !recent.has(item.id));
+    const question = sample(pool.length ? pool : evaQuestionPool(reason, line));
+    if (!question) return null;
+    return {
+      ...question,
+      at: new Date().toISOString()
+    };
+  }
+
+  function maybePickEvaQuestion(reason, line) {
+    return maybeAskEvaQuestion(getEvaContext({ lastEvent: { type: reason } }), line);
+  }
+
+  function evaQuestionPool(reason = "auto") {
+    const ru = lang() === "ru";
+    const base = [
+      {
+        id: "pace",
+        text: { ru: "Сегодня держим темп или идем тише?", en: "Do we keep pace today, or move quieter?" },
+        options: [
+          { id: "steady", text: { ru: "Держим темп.", en: "Keep pace." }, reply: { ru: "Хорошо. Тогда без лишнего шума.", en: "Good. Then no extra noise." }, delta: { discipline: 0.8, trust: 0.3 } },
+          { id: "calm", text: { ru: "Тише.", en: "Quieter." }, reply: { ru: "Тоже разумно. Дорога не любит спешки.", en: "Reasonable. Roads dislike haste." }, delta: { warmth: 0.5, trust: 0.2 } }
+        ]
+      },
+      {
+        id: "review_first",
+        text: { ru: "Повторы сначала. Согласен?", en: "Reviews first. Agreed?" },
+        options: [
+          { id: "yes", text: { ru: "Согласен.", en: "Agreed." }, reply: { ru: "Тогда начнем с того, что уже почти ускользнуло.", en: "Then we start with what nearly slipped." }, delta: { discipline: 0.9, trust: 0.2 } },
+          { id: "lesson", text: { ru: "Хочу новый урок.", en: "I want a new lesson." }, reply: { ru: "Можно. Но старые следы потом догонят.", en: "We can. Old tracks will catch up later." }, delta: { curiosity: 0.6 } }
+        ]
+      },
+      {
+        id: "detail",
+        text: { ru: "Ты заметил, какой элемент повторяется в сегодняшних карточках?", en: "Did you notice which part repeats in today's cards?" },
+        options: [
+          { id: "noticed", text: { ru: "Да.", en: "Yes." }, reply: { ru: "Хорошо. Наблюдательность экономит силы.", en: "Good. Observation saves strength." }, delta: { trust: 0.6, curiosity: 0.4 } },
+          { id: "not_yet", text: { ru: "Пока нет.", en: "Not yet." }, reply: { ru: "Посмотри еще раз. Ответ часто лежит на краю знака.", en: "Look again. The answer often sits at the edge of the character." }, delta: { curiosity: 0.4, warmth: 0.2 } }
+        ]
+      }
+    ];
+    if (reason === "answer_wrong") {
+      base.unshift({
+        id: "wrong_recover",
+        text: { ru: "Ошибка была в чтении или в поспешности?", en: "Was the mistake in the reading, or in haste?" },
+        options: [
+          { id: "reading", text: { ru: "В чтении.", en: "Reading." }, reply: { ru: "Тогда слушай и повтори вслух. Коротко.", en: "Then listen and say it aloud. Briefly." }, delta: { curiosity: 0.5 } },
+          { id: "haste", text: { ru: "Поспешил.", en: "I rushed." }, reply: { ru: "Такое случается на плохих дорогах. Сбавь шаг.", en: "Happens on bad roads. Slow your step." }, delta: { discipline: 0.5, trust: 0.2 } }
+        ]
+      });
+    }
+    return base.map((item) => ({
+      ...item,
+      text: item.text || { ru: String(item.ru || ""), en: String(item.en || item.ru || "") },
+      options: item.options.map((option) => ({
+        ...option,
+        text: option.text || { ru: option.label || option.id, en: option.label || option.id },
+        reply: option.reply || { ru: ru ? "Принято." : "Noted.", en: "Noted." }
+      }))
+    }));
+  }
+
+  function handleEvaQuestionAnswer(target) {
+    ensureEvaRoomProgress();
+    const autonomy = evaAutonomy();
+    const question = autonomy.currentQuestion;
+    if (!question?.id) return;
+    answerEvaQuestion(question.id, target.dataset.option);
+  }
+
+  function answerEvaQuestion(questionId, answerId) {
+    ensureEvaRoomProgress();
+    const autonomy = evaAutonomy();
+    const question = autonomy.currentQuestion;
+    if (!question?.id || question.id !== questionId) return;
+    const option = question.options?.find((item) => item.id === answerId);
+    if (!option) return;
+    adjustEvaRelationship(option.delta || { warmth: 0.2 }, `eva_question:${question.id}`);
+    const answerRecord = {
+      id: question.id,
+      option: option.id,
+      at: new Date().toISOString()
+    };
+    state.evaRuntime ||= defaultEvaStateV2();
+    state.evaRuntime.lastQuestion = { ...answerRecord, at: Date.now() };
+    state.evaRuntime.lastQuestionAt = Date.now();
+    state.evaRuntime.pendingQuestion = null;
+    state.evaRuntime.questionHistory = [answerRecord, ...(state.evaRuntime.questionHistory || [])].slice(0, 40);
+    const bg = chooseEvaAutonomyBackground({ category: "question" });
+    const sprite = resolveEvaSprite(chooseEvaAutonomySprite({ category: "question", sprite: "approve" }), "approve");
+    autonomy.currentQuestion = null;
+    autonomy.currentLine = {
+      id: `question_reply_${question.id}_${option.id}`,
+      category: "question_reply",
+      text: option.reply,
+      sprite,
+      background: bg.id,
+      emotion: "approve",
+      at: new Date().toISOString(),
+      reason: "question_answer"
+    };
+    autonomy.lastSpokeAt = autonomy.currentLine.at;
+    autonomy.lastRoomId = bg.id;
+    autonomy.lastSprite = sprite;
+    scheduleNextEvaAutonomyLine();
+    dispatchEvaEvent("user_answered_eva_question", { questionId: question.id, answerId: option.id });
+    saveEvaState();
+    saveProgress();
+    playUxSound("notification_soft");
+    render();
+  }
+
   function currentEvaRoomScene() {
     ensureEvaRoomProgress();
     if (isEvaAutonomyEnabled()) {
@@ -2033,16 +3241,28 @@
     if (isEvaAutonomyEnabled() && !auto?.text && state.evaAutonomyLines.length) {
       const line = pickEvaAutonomyLine("render_fallback") || state.evaAutonomyLines[0];
       const bg = chooseEvaAutonomyBackground(line);
-      const sprite = chooseEvaAutonomySprite(line);
+      const context = getEvaContext({ lastEvent: { type: "render_fallback" } });
+      const mood = calculateEvaMood(context);
+      const decoration = chooseEvaAutonomyDecoration(line);
+      const effect = chooseEvaAutonomyEffect(line);
+      const emotion = chooseEvaEmotion(context, mood, "render_fallback");
+      const sprite = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
       auto = {
         id: line.id,
         category: line.category || "mood",
         text: line.text,
         sprite,
         background: bg.id,
+        decoration,
+        effect,
+        emotion,
         at: new Date().toISOString()
       };
       evaAutonomy().currentLine = auto;
+      evaAutonomy().currentDecoration = decoration;
+      evaAutonomy().currentEffect = effect;
+      evaAutonomy().mood = mood;
+      evaAutonomy().emotion = emotion;
       evaAutonomy().lastSpokeAt = auto.at;
       evaAutonomy().lastRoomId = bg.id;
       evaAutonomy().lastSprite = sprite;
@@ -2055,11 +3275,15 @@
         isAutonomy: true,
         line: auto,
         bg,
-        sprite: auto.sprite || resolveEvaSprite("relationship"),
+        sprite: resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion),
+        decoration: auto.decoration || evaAutonomy().currentDecoration,
+        effect: auto.effect || evaAutonomy().currentEffect,
+        mood: evaAutonomy().mood || evaRelationship().mood,
+        emotion: auto.emotion || evaAutonomy().emotion || "calm",
         node: {
           id: "eva_autonomy_line",
           background: bg.id,
-          sprite: auto.sprite || "relationship",
+          sprite: resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion),
           speaker: { ru: "Ева", en: "Eva" },
           text: auto.text,
           choices: []
@@ -2067,7 +3291,17 @@
       };
     }
     const bg = getEvaRoomBackground(storyNode.background) || currentEvaRoomBackground();
-    return { isAutonomy: false, line: null, bg, sprite: resolveEvaSprite(storyNode.sprite), node: storyNode };
+    return {
+      isAutonomy: false,
+      line: null,
+      bg,
+      sprite: resolveEvaSprite(storyNode.sprite, evaAutonomy().emotion),
+      decoration: evaAutonomy().currentDecoration,
+      effect: evaAutonomy().currentEffect,
+      mood: evaRelationship().mood,
+      emotion: evaAutonomy().emotion || "calm",
+      node: storyNode
+    };
   }
 
   function pickEvaRoomLine(category = "adaptive") {
@@ -2175,120 +3409,152 @@
   }
 
   function buyEvaRoomBackground(id) {
-    const bg = getEvaRoomBackground(id);
-    if (!bg) return;
-    ensureEvaRoomProgress();
-    if (state.progress.unlockedBackgrounds.includes(bg.id) || bg.defaultUnlocked || bg.price === 0) {
-      selectEvaRoomBackground(bg.id);
-      return;
-    }
-    if (state.progress.moonFragments < bg.price) {
-      playUxSound("purchase_failed");
-      toast(evaRoomLabels().notEnough);
-      return;
-    }
-    state.progress.moonFragments -= bg.price;
-    state.progress.unlockedBackgrounds.push(bg.id);
-    state.progress.transactions.unshift({
-      at: new Date().toISOString(),
-      reason: `eva_room_bg:${bg.id}`,
-      xp: 0,
-      coins: -bg.price,
-      balance: state.progress.moonFragments
-    });
-    state.progress.transactions = state.progress.transactions.slice(0, 80);
-    playUxSound("purchase_success");
-    playUxSound("item_unlock");
-    saveProgress();
-    toast(evaRoomLabels().bought);
-    render();
+    buyCustomizationItem(id);
   }
 
   function selectEvaRoomBackground(id) {
-    const bg = getEvaRoomBackground(id);
-    if (!bg) return;
-    ensureEvaRoomProgress();
-    const unlocked = state.progress.unlockedBackgrounds.includes(bg.id) || bg.defaultUnlocked || bg.price === 0;
-    if (!unlocked) return;
-    state.progress.selectedEvaRoomBackground = bg.id;
-    saveProgress();
-    playUxSound("notification_soft");
-    toast(evaRoomLabels().selectedToast);
-    render();
+    selectCustomizationItem(id);
   }
 
   function buyEvaSprite(id) {
-    const item = getEvaSpriteShopItem(id);
+    const shopItem = customizationShopItem(id) || legacyCustomizationItem(id) || outfitItemBySprite(id);
+    if (shopItem) buyCustomizationItem(shopItem.id);
+  }
+
+  function selectEvaSprite(id) {
+    const shopItem = customizationShopItem(id) || legacyCustomizationItem(id) || outfitItemBySprite(id);
+    if (shopItem) selectCustomizationItem(shopItem.id);
+  }
+
+  function isCustomizationOwned(id) {
+    if (!state.customization) hydrateCustomization();
+    const item = customizationShopItem(id) || legacyCustomizationItem(id);
+    return Boolean(item?.defaultOwned || item?.price === 0 || state.customization?.owned?.includes(item?.id || id));
+  }
+
+  function customizationSelectionSlot(item) {
+    if (!item) return null;
+    if (item.type === "background") return "background";
+    if (item.type === "outfit") return "outfit";
+    if (item.type === "theme") return "theme";
+    if (item.type === "effect") return "effect";
+    if (item.type === "decoration") return "decoration";
+    return item.type;
+  }
+
+  function isCustomizationSelected(item) {
+    const slot = customizationSelectionSlot(item);
+    return Boolean(slot && state.customization?.selected?.[slot] === item.id);
+  }
+
+  function customizationItemStatus(item) {
+    if (!item) return "locked";
+    if (!isCustomizationAvailable(item)) return "locked";
+    if (isCustomizationSelected(item)) return "selected";
+    if (isCustomizationOwned(item.id)) return "owned";
+    return "available";
+  }
+
+  function isCustomizationAvailable(item) {
+    if (!item?.unlockCondition) return true;
+    const condition = item.unlockCondition;
+    if (condition.type === "level") return state.progress.level >= Number(condition.value || 0);
+    if (condition.type === "streak") return state.progress.streak.current >= Number(condition.value || 0);
+    if (condition.type === "achievement") return Boolean(state.progress.achievements?.[condition.id]?.unlockedAt);
+    return true;
+  }
+
+  function buyCustomizationItem(id) {
+    const item = customizationShopItem(id);
     if (!item) return;
-    ensureEvaRoomProgress();
-    if (isEvaSpriteUnlocked(id)) {
-      selectEvaSprite(id);
+    if (!isCustomizationAvailable(item)) {
+      playUxSound("purchase_failed");
+      toast(shopLabels().locked);
+      return;
+    }
+    if (isCustomizationOwned(item.id)) {
+      selectCustomizationItem(item.id);
       return;
     }
     if (state.progress.moonFragments < item.price) {
       playUxSound("purchase_failed");
-      toast(evaRoomLabels().notEnough);
+      toast(shopLabels().notEnough);
       return;
     }
     state.progress.moonFragments -= item.price;
-    state.progress.unlockedEvaSprites.push(id);
-    if (!state.progress.shop.owned.includes(`eva_sprite:${id}`)) state.progress.shop.owned.push(`eva_sprite:${id}`);
+    state.customization.owned = [...new Set([...(state.customization.owned || []), item.id])];
+    state.customization.seen = [...new Set([...(state.customization.seen || []), item.id])];
     state.progress.transactions.unshift({
       at: new Date().toISOString(),
-      reason: `eva_sprite:${id}`,
+      reason: `customization:${item.type}:${item.id}`,
+      label: customizationItemTitle(item),
       xp: 0,
       coins: -item.price,
       balance: state.progress.moonFragments
     });
     state.progress.transactions = state.progress.transactions.slice(0, 80);
+    syncCustomizationToProgress();
+    saveCustomizationStorage();
+    evaluateAchievements();
+    saveProgress();
     playUxSound("purchase_success");
     playUxSound("item_unlock");
-    saveProgress();
-    toast(evaRoomLabels().spriteBought);
+    dispatchEvaEvent("item_bought", { itemId: item.id, type: item.type, title: customizationItemTitle(item), price: item.price });
+    toast(shopLabels().bought.replace("{item}", customizationItemTitle(item)));
     render();
   }
 
-  function selectEvaSprite(id) {
-    if (!isEvaSpriteUnlocked(id)) return;
-    ensureEvaRoomProgress();
-    state.progress.selectedEvaSprite = id;
-    state.progress.evaAutonomy.outfitMode = "manual";
-    state.progress.evaAutonomy.currentLine = null;
+  function selectCustomizationItem(id) {
+    const item = customizationShopItem(id);
+    if (!item || !isCustomizationOwned(item.id)) return;
+    const slot = customizationSelectionSlot(item);
+    if (!slot) return;
+    state.customization.selected[slot] = item.id;
+    if (slot === "decoration") state.customization.selected.frame = item.id;
+    if (item.type === "outfit" && item.spriteId) {
+      state.progress.selectedEvaSprite = item.spriteId;
+      state.progress.evaAutonomy.currentLine = null;
+    }
+    if (item.type === "background") {
+      state.progress.selectedEvaRoomBackground = item.id;
+      state.progress.evaAutonomy.currentLine = null;
+    }
+    syncCustomizationToProgress();
+    saveCustomizationStorage();
     saveProgress();
+    applyTheme();
     playUxSound("notification_soft");
-    toast(evaRoomLabels().spriteSelected);
+    dispatchEvaEvent("item_equipped", { itemId: item.id, type: item.type, title: customizationItemTitle(item) });
+    toast(shopLabels().selectedToast.replace("{item}", customizationItemTitle(item)));
     render();
   }
 
   function toggleEvaAutonomy() {
     const autonomy = evaAutonomy();
-    autonomy.enabled = !isEvaAutonomyEnabled();
-    if (autonomy.enabled) {
-      autonomy.nextSpeakAt = 0;
-      maybeRunEvaAutonomy("toggle", { force: true });
-    } else {
-      autonomy.currentLine = null;
-    }
+    autonomy.enabled = true;
+    autonomy.frequency = "normal";
+    autonomy.roomMode = "auto";
+    autonomy.outfitMode = "auto";
+    autonomy.nextSpeakAt = 0;
+    maybeRunEvaAutonomy("toggle", { force: true });
     saveProgress();
-    playUxSound(autonomy.enabled ? "notification_soft" : "menu_close");
-    toast(autonomy.enabled ? evaRoomLabels().autonomyOn : evaRoomLabels().autonomyOff);
+    playUxSound("notification_soft");
+    toast(evaLiveLabels().status);
     render();
   }
 
   function cycleEvaAutonomyFrequency() {
     const autonomy = evaAutonomy();
-    const order = ["quiet", "normal", "active"];
-    const next = order[(order.indexOf(autonomy.frequency) + 1) % order.length] || "normal";
-    autonomy.frequency = next;
+    autonomy.frequency = "normal";
     scheduleNextEvaAutonomyLine();
     saveProgress();
-    playUxSound("button_click");
+    playUxSound("notification_soft");
     render();
   }
 
   function toggleEvaAutonomyRoomMode() {
     const autonomy = evaAutonomy();
-    autonomy.roomMode = autonomy.roomMode === "auto" ? "manual" : "auto";
+    autonomy.roomMode = "auto";
     autonomy.currentLine = null;
     saveProgress();
     playUxSound("notification_soft");
@@ -2297,7 +3563,7 @@
 
   function toggleEvaAutonomyOutfitMode() {
     const autonomy = evaAutonomy();
-    autonomy.outfitMode = autonomy.outfitMode === "auto" ? "manual" : "auto";
+    autonomy.outfitMode = "auto";
     autonomy.currentLine = null;
     saveProgress();
     playUxSound("notification_soft");
@@ -2307,11 +3573,68 @@
   function nextEvaAutonomyLine() {
     const autonomy = evaAutonomy();
     autonomy.enabled = true;
+    rememberCurrentEvaLine();
+    autonomy.currentQuestion = null;
+    autonomy.currentLine = null;
     autonomy.nextSpeakAt = 0;
-    maybeRunEvaAutonomy("manual", { force: true });
+    forceEvaEventLine("manual");
     saveProgress();
     playUxSound("page_turn");
     render();
+  }
+
+  function forceEvaEventLine(reason = "manual") {
+    const line = evaEventLine(reason) || pickEvaAutonomyLine(reason);
+    if (!line) return false;
+    const context = getEvaContext({ lastEvent: { type: reason } });
+    const mood = calculateEvaMood(context);
+    const emotion = chooseEvaEmotion(context, mood, reason);
+    const bg = chooseEvaAutonomyBackground(line);
+    const sprite = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
+    const decoration = chooseEvaAutonomyDecoration(line);
+    const effect = chooseEvaAutonomyEffect(line);
+    const autonomy = evaAutonomy();
+    const now = Date.now();
+    autonomy.currentLine = {
+      id: line.id,
+      category: line.category || reason,
+      text: line.text,
+      sprite,
+      background: bg.id,
+      decoration,
+      effect,
+      emotion,
+      at: new Date(now).toISOString(),
+      reason
+    };
+    autonomy.currentDecoration = decoration;
+    autonomy.currentEffect = effect;
+    autonomy.mood = mood;
+    autonomy.emotion = emotion;
+    autonomy.lastSpokeAt = autonomy.currentLine.at;
+    autonomy.lastRoomId = bg.id;
+    autonomy.lastSprite = sprite;
+    autonomy.recentLineIds = [line.id, ...(autonomy.recentLineIds || []).filter((id) => id !== line.id)].slice(0, 32);
+    state.evaRuntime ||= defaultEvaStateV2();
+    Object.assign(state.evaRuntime, {
+      mood,
+      emotion,
+      currentPhrase: autonomy.currentLine,
+      pendingQuestion: null,
+      currentSkin: sprite,
+      currentBackground: bg.id,
+      currentDecoration: decoration,
+      currentEffect: effect,
+      activeSkin: sprite,
+      activeBackground: bg.id,
+      lastPhraseAt: now,
+      lastEmotionChangeAt: now,
+      lastVisualChangeAt: now
+    });
+    scheduleNextEvaAutonomyLine();
+    saveEvaState();
+    applyTheme();
+    return true;
   }
 
   function clearEvaAutonomyLine() {
@@ -3531,11 +4854,13 @@
     if (correct) {
       awardSentencePractice(prepared.exercise);
       adjustEvaRelationship({ trust: 0.8, curiosity: 0.5, discipline: 0.4 }, "sentence_correct");
+      dispatchEvaEvent("sentence_complete", { exerciseId: prepared.exercise.id, source: prepared.exercise.source || "builtin" });
       playTone("ok");
     } else {
       state.progress.totalWrong += 1;
       state.progress.correctCombo = 0;
       adjustEvaRelationship({ discipline: -0.6, curiosity: 0.2 }, "sentence_wrong");
+      dispatchEvaEvent("answer_wrong", { exerciseId: prepared.exercise.id, mode: "sentence" });
       const today = todayStats();
       today.mistakes += 1;
       state.progress.daily[todayKey()] = today;
@@ -4020,8 +5345,6 @@
   function renderStats() {
     const summary = getSummary();
     const today = todayStats();
-    const evaLabels = evaRoomLabels();
-    const autonomy = evaAutonomy();
     return `
       <section class="page">
         <div class="section-head">
@@ -4052,17 +5375,10 @@
             <div class="settings-list">
               <div class="settings-row">
                 <span>
-                  <strong>${escapeHtml(lang() === "ru" ? "Автономность Евы" : "Eva autonomy")}</strong>
-                  <small>${escapeHtml(evaLabels.autonomySettingsHint)}</small>
+                  <strong>${escapeHtml(evaLiveLabels().badge)}</strong>
+                  <small>${escapeHtml(evaLiveLabels().hint)}</small>
                 </span>
-                <button class="btn ${isEvaAutonomyEnabled() ? "success" : "ghost"}" type="button" data-action="toggle-eva-autonomy">${escapeHtml(isEvaAutonomyEnabled() ? evaLabels.autonomyOn : evaLabels.autonomyOff)}</button>
-              </div>
-              <div class="settings-row">
-                <span>
-                  <strong>${escapeHtml(evaLabels.frequency)}</strong>
-                  <small>${escapeHtml(`${evaLabels.roomMode}: ${autonomy.roomMode === "auto" ? evaLabels.auto : evaLabels.manual} · ${evaLabels.outfitMode}: ${autonomy.outfitMode === "auto" ? evaLabels.auto : evaLabels.manual}`)}</small>
-                </span>
-                <button class="btn" type="button" data-action="cycle-eva-autonomy">${escapeHtml(evaLabels.frequencies[autonomy.frequency] || autonomy.frequency)}</button>
+                <span class="pill">${escapeHtml(evaLiveLabels().status)}</span>
               </div>
               <div class="settings-row">
                 <span>
@@ -4208,34 +5524,44 @@
   }
 
   function renderShop() {
-    return `
-      <h3>${escapeHtml(t("coins"))}: ${state.progress.moonFragments}</h3>
-      <div class="shop-grid">
-        ${state.rewards.shop.map((item) => {
-          const owned = state.progress.shop.owned.includes(item.id);
-          return `
-            <button class="shop-item ${owned ? "is-owned" : ""}" type="button" data-action="buy-shop" data-id="${escapeAttr(item.id)}">
-              <strong>${escapeHtml(localized(item.name))}</strong>
-              <small>${owned ? "Owned" : `${item.cost} ◐`}</small>
-            </button>
-          `;
-        }).join("")}
-      </div>
-    `;
+    return renderCustomizationShop({ closable: false });
   }
 
-  function renderTransactions() {
+  function renderTransactions(options = {}) {
+    const limit = options.limit || 10;
+    const items = (state.progress.transactions || []).slice(0, limit);
     return `
       <h3>${escapeHtml(t("transactions"))}</h3>
       <div class="transaction-list">
-        ${state.progress.transactions.slice(0, 10).map((item) => `
+        ${items.map((item) => `
           <div class="transaction-row">
-            <strong>${escapeHtml(item.reason)}</strong>
-            <span>${item.coins >= 0 ? "+" : ""}${item.coins} ◐ · ${item.xp >= 0 ? "+" : ""}${item.xp} XP</span>
+            <div>
+              <strong>${escapeHtml(transactionTitle(item))}</strong>
+              <small>${escapeHtml(formatDate(item.at))}</small>
+            </div>
+            <span>${Number(item.coins || 0) >= 0 ? "+" : ""}${Number(item.coins || 0)} Moon · ${Number(item.xp || 0) >= 0 ? "+" : ""}${Number(item.xp || 0)} XP</span>
           </div>
         `).join("") || `<p>${escapeHtml(lang() === "ru" ? "Пока нет операций." : "No transactions yet.")}</p>`}
       </div>
     `;
+  }
+
+  function transactionTitle(item) {
+    if (item.label) return item.label;
+    const reason = String(item.reason || "");
+    const customizationMatch = reason.match(/^customization:[^:]+:(.+)$/);
+    if (customizationMatch) {
+      const shopItem = customizationShopItem(customizationMatch[1]);
+      if (shopItem) return customizationItemTitle(shopItem);
+    }
+    if (reason.startsWith("achievement:")) return lang() === "ru" ? "Достижение" : "Achievement";
+    if (reason.startsWith("daily_bonus")) return lang() === "ru" ? "Ежедневный бонус" : "Daily bonus";
+    if (reason.startsWith("sentence")) return lang() === "ru" ? "Практика предложений" : "Sentence practice";
+    if (reason.startsWith("writing")) return lang() === "ru" ? "Практика письма" : "Writing practice";
+    if (reason.startsWith("lesson")) return lang() === "ru" ? "Урок" : "Lesson";
+    if (reason.startsWith("review")) return lang() === "ru" ? "Повторение" : "Review";
+    if (reason.startsWith("shop:")) return lang() === "ru" ? "Магазин" : "Shop";
+    return lang() === "ru" ? "Операция" : "Transaction";
   }
 
   function renderRewardModal() {
@@ -4341,10 +5667,12 @@
     updateDailyStats(before, after, rating);
     updateStreak();
 
+    const previousCombo = Number(state.progress.correctCombo || 0);
     if (isForgottenRating(rating)) {
       state.progress.totalWrong += 1;
       state.progress.correctCombo = 0;
       adjustEvaRelationship({ discipline: -0.8, trust: -0.2 }, "answer_again");
+      dispatchEvaEvent("answer_wrong", { cardId: card.id, kanji: card.kanji, rating, comboLost: previousCombo > 0 });
       playTone("again");
       toast(dialogueText("eva", "wrong"));
     } else {
@@ -4353,6 +5681,7 @@
       state.progress.correctCombo += 1;
       state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
       adjustEvaRelationship({ trust: 0.35, discipline: 0.25, curiosity: after.lastDecision === "Easy" ? 0.2 : 0 }, `answer_${rating}`);
+      dispatchEvaEvent("answer_correct", { cardId: card.id, kanji: card.kanji, rating, combo: state.progress.correctCombo });
       playTone("ok");
       toast(dialogueText("eva", "correct"));
       if (state.progress.correctCombo > 0 && state.progress.correctCombo % 5 === 0) {
@@ -4491,6 +5820,7 @@
     playUxSound("lesson_complete");
     addReward(xp, coins, "lesson_completion");
     adjustEvaRelationship({ warmth: 2.4, trust: 2, discipline: 2.2, curiosity: 0.8 }, "lesson_completion");
+    dispatchEvaEvent("lesson_complete", { lessonId, xp, coins });
     queueReward({
       title: localized({ ru: "Урок завершён", en: "Lesson complete" }),
       message: dialogueText("eva", "lessonComplete"),
@@ -4542,6 +5872,19 @@
     if (character === "leya") toast(dialogueText("leya", "combo"));
   }
 
+  function handleEvaRoomSpriteClick() {
+    ensureEvaRoomProgress();
+    state.progress.secrets.evaClicks = Number(state.progress.secrets.evaClicks || 0) + 1;
+    state.evaRuntime ||= defaultEvaStateV2();
+    state.evaRuntime.clickCount = Number(state.evaRuntime.clickCount || 0) + 1;
+    dispatchEvaEvent("user_clicked_eva", { clickCount: state.evaRuntime.clickCount });
+    forceEvaEventLine("user_clicked_eva");
+    evaluateAchievements();
+    playUxSound("notification_soft");
+    saveProgress();
+    render();
+  }
+
   function recordWritingPracticeComplete() {
     if (writingSession.completed) return;
     writingSession.completed = true;
@@ -4550,6 +5893,7 @@
       state.progress.writingPractice.cards[writingSession.cardId] = (state.progress.writingPractice.cards[writingSession.cardId] || 0) + 1;
     }
     adjustEvaRelationship({ curiosity: 1, discipline: 0.8, trust: 0.4 }, "writing_complete");
+    dispatchEvaEvent("writing_complete", { cardId: writingSession.cardId });
     const unlocked = evaluateAchievements();
     saveProgress();
     if (unlocked) render();
@@ -4669,7 +6013,10 @@
     if (achievement.kind === "evaClicks") return state.progress.secrets?.evaClicks || 0;
     if (achievement.kind === "nightVisit") return state.progress.secrets?.nightVisit ? 1 : 0;
     if (achievement.kind === "appOpens") return state.progress.appOpens || 0;
-    if (achievement.kind === "shopComplete") return state.rewards?.shop?.length && state.rewards.shop.every((item) => state.progress.shop.owned.includes(item.id)) ? 1 : 0;
+    if (achievement.kind === "shopComplete") {
+      const purchasable = customizationShopItems().filter((item) => !item.defaultOwned && item.price > 0);
+      return purchasable.length && purchasable.every((item) => isCustomizationOwned(item.id)) ? 1 : 0;
+    }
     if (achievement.kind === "jlpt") {
       const cards = state.cards.filter((card) => card.jlpt === achievement.jlpt);
       return cards.length > 0 && cards.every((card) => getCardProgress(card.id).state === "Mastered") ? 1 : 0;
@@ -4725,6 +6072,7 @@
     }
     if (state.progress.level > previousLevel) {
       playUxSound("level_up");
+      dispatchEvaEvent("level_up", { level: state.progress.level, xp: state.progress.xp, moonFragments: state.progress.moonFragments });
       queueReward({
         type: "level",
         title: t("levelUp"),
@@ -4774,6 +6122,7 @@
       playUxSound("streak_reward");
       addReward(0, state.rewards.rewards.streakCoins, `streak:${state.progress.streak.current}`);
     }
+    dispatchEvaEvent("streak_up", { streak: state.progress.streak.current, lost });
   }
 
   function renderCharts() {
@@ -6122,33 +7471,11 @@
   }
 
   function buyShopItem(id) {
-    const item = state.rewards.shop.find((entry) => entry.id === id);
-    if (!item || state.progress.shop.owned.includes(id)) return;
-    if (state.progress.moonFragments < item.cost) {
-      playUxSound("purchase_failed");
-      toast(`${item.cost} ◐`);
-      return;
-    }
-    state.progress.moonFragments -= item.cost;
-    state.progress.transactions.unshift({
-      at: new Date().toISOString(),
-      reason: `shop:${item.id}`,
-      xp: 0,
-      coins: -item.cost,
-      balance: state.progress.moonFragments
-    });
-    state.progress.transactions = state.progress.transactions.slice(0, 80);
-    state.progress.shop.owned.push(id);
-    playUxSound("purchase_success");
-    playUxSound("item_unlock");
-    evaluateAchievements();
-    saveProgress();
-    toast(localized(item.name));
-    render();
+    buyCustomizationItem(id);
   }
 
   function exportProgress() {
-    const payload = { app: "Flash Kanji", exportedAt: new Date().toISOString(), progress: state.progress };
+    const payload = { app: "Flash Kanji", exportedAt: new Date().toISOString(), progress: state.progress, customization: state.customization };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -6353,6 +7680,15 @@
       const parsed = JSON.parse(await file.text());
       state.progress = mergeProgress(defaultProgress(), parsed.progress || parsed);
       hydrateProgress();
+      if (parsed.customization) {
+        state.customization = {
+          ...defaultCustomization(),
+          ...parsed.customization,
+          selected: { ...defaultCustomization().selected, ...(parsed.customization.selected || {}) }
+        };
+        saveCustomizationStorage();
+      }
+      hydrateCustomization();
       syncUxSoundSettings();
       saveProgress();
       applyTheme();
@@ -6458,6 +7794,10 @@
 
   function applyTheme() {
     document.documentElement.dataset.theme = state.progress.settings.theme;
+    document.documentElement.dataset.customTheme = state.customization?.selected?.theme || "theme_default_dark";
+    const evaEffect = state.route === "eva-room" ? state.evaRuntime?.currentEffect || evaAutonomy().currentEffect : null;
+    const usableEvaEffect = evaEffect === "none" || (evaEffect && customizationShopItem(evaEffect) && isCustomizationOwned(evaEffect)) ? evaEffect : null;
+    document.documentElement.dataset.customEffect = usableEvaEffect || state.customization?.selected?.effect || "none";
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", state.progress.settings.theme === "light" ? "#f8f7f2" : "#08080c");
   }
 
@@ -6472,6 +7812,20 @@
   function localized(value) {
     if (!value || typeof value !== "object") return String(value || "");
     return value[lang()] || value.ru || value.en || "";
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+    try {
+      return new Intl.DateTimeFormat(lang() === "ru" ? "ru-RU" : "en-US", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(value));
+    } catch {
+      return String(value).slice(0, 16);
+    }
   }
 
   function lessonTitle(lesson) {
@@ -7156,6 +8510,10 @@
 
   function sample(items) {
     return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function randomBetween(min, max) {
+    return Math.floor(Number(min) + Math.random() * (Number(max) - Number(min)));
   }
 
   function selected(value, current) {

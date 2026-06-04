@@ -1,17 +1,23 @@
 {
   "name": "Flash Kanji",
   "short_name": "Flash Kanji",
-  "description": "SRS-приложение для изучения японских кандзи N5-N1.",
+  "description": "Flash Kanji ? PWA ??? ???????? ???????? ?????? ????? SRS, ????? JLPT N5-N1, ??????, ??????? ? Eva Room.",
   "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#08080c",
   "theme_color": "#08080c",
   "lang": "ru",
-  "categories": ["education", "games"],
+  "categories": [
+    "education",
+    "games"
+  ],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -32,13 +38,37 @@
       "name": "Повторение",
       "short_name": "Повтор",
       "url": "./index.html#review",
-      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Словарь",
       "short_name": "Словарь",
       "url": "./index.html#dictionary",
-      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/og/flashkanji-preview.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "label": "Flash Kanji preview card"
+    },
+    {
+      "src": "assets/og/flashkanji-og-square.png",
+      "sizes": "1200x1200",
+      "type": "image/png",
+      "label": "Flash Kanji social preview"
     }
   ]
 }
