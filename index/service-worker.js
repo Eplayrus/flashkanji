@@ -1,4 +1,5 @@
-const CACHE_NAME = "flash-kanji-cache-v52";
+const CACHE_NAME = "flash-kanji-cache-v61";
+const SW_BUILD_VERSION = "2026-06-05-wiki-all-v1";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -43,14 +44,15 @@ const PRECACHE_URLS = [
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-04-eva-autonomy-seo-v6",
+  "./styles.css?v=2026-06-05-wiki-all-v1",
+  "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-04-eva-autonomy-seo-v6",
+  "./script.js?v=2026-06-05-wiki-all-v1",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-04-eva-autonomy-seo-v6",
+  "./src/audio/soundManager.js?v=2026-06-05-wiki-all-v1",
   "./manifest.webmanifest",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-04-eva-autonomy-seo-v6",
+  "./vendor/chart.umd.min.js?v=2026-06-05-wiki-all-v1",
   "./assets/1.png",
   "./assets/bg_1.png",
   "./assets/button.png",
@@ -198,19 +200,102 @@ const PRECACHE_URLS = [
   "./assets/shop/previews/outfit_shrine_maiden.png",
   "./assets/shop/previews/outfit_silent_road.png",
   "./assets/shop/previews/outfit_winter_traveler.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_command.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_confirm.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_determined.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_explain.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_mythic.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_observe.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_serious.png",
+  "./assets/mascots/eva/eva_cyber/eva_cyber_soft_smile.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_approve.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_encourage.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_explain.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_observe.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_ready.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_serious.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_soft_smile.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_strict.png",
+  "./assets/mascots/eva/eva_default_pack/eva_mentor_think.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_cold.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_determined.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_observe.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_serious.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_soft_smile.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_think.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_tired.png",
+  "./assets/mascots/eva/eva_jacket/eva_winter_walk.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_explain.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_observe.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_reading.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_ready.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_serious.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_shy.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_soft_smile.png",
+  "./assets/mascots/eva/eva_library/eva_librarian_tired.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_determined.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_gentle_smile.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_happy.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_prayer.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_sad.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_shy.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_surprised.png",
+  "./assets/mascots/eva/eva_miko/shrine_maiden_thinking.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_blessing.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_cast.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_determined.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_legendary.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_prayer.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_serious.png",
+  "./assets/mascots/eva/eva_moon_princess/eva_moonpriestess_soft_smile.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_determined.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_mythic.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_observe.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_ready.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_serious.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_soft.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_think.png",
+  "./assets/mascots/eva/eva_road/eva_silentroad_tired.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_confident.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_explain.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_reading.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_soft_smile.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_surprised.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_tired.png",
+  "./assets/mascots/eva/eva_school_uniform/eva_study_writing.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_approve.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_explain.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_legendary.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_observe.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_serious.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_soft_smile.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_teach.png",
+  "./assets/mascots/eva/eva_teacher_uniform/eva_academy_think.png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_00 (2).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_01 (3).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_02 (4).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_03 (5).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_03 (6).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_04 (7).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_05 (8).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_06 (9).png",
+  "./assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_57_07 (10).png",
   "./data/dialogues.json",
   "./data/dialogues/index.json",
   "./data/eva-backgrounds.json",
   "./data/eva-sprites.json",
   "./data/eva-room-dialogues.json",
   "./data/eva-autonomy-lines.json",
+  "./data/eva-expanded-dialogues.json",
   "./data/eva-fis-personality.json",
+  "./data/eva-presence.json",
   "./data/customization-shop.json",
   "./data/i18n.json",
   "./data/kanji/meta.json",
   "./data/kanji/hints.json",
   "./data/kanji/translations.json",
   "./data/kanji/stroke-order-kanjivg.json",
+  "./data/sources/kanji-page-sources.json",
   "./data/lessons.json",
   "./data/lesson-1.json",
   "./data/lesson-2.json",
@@ -355,7 +440,22 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data?.type !== "SHOW_NOTIFICATION") return;
+  const type = event.data?.type;
+  if (type === "FLASH_KANJI_FORCE_CACHE_RESET") {
+    event.waitUntil((async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+      await self.skipWaiting();
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      clients.forEach((client) => client.postMessage({
+        type: "FLASH_KANJI_CACHE_RESET_DONE",
+        cacheName: CACHE_NAME,
+        buildVersion: SW_BUILD_VERSION
+      }));
+    })());
+    return;
+  }
+  if (type !== "SHOW_NOTIFICATION") return;
   const payload = notificationPayload(event.data.notificationType, event.data);
   event.waitUntil(self.registration.showNotification(payload.title, payload.options));
 });

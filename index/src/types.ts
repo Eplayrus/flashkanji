@@ -52,6 +52,96 @@ export interface KanjiHint {
   mnemonic: Partial<Record<"ru" | "en", string>>;
 }
 
+export interface KanjiPageSourceInfo {
+  name: string;
+  url: string;
+  license: string;
+}
+
+export interface KanjiPageReadingSet {
+  onyomi: string[];
+  kunyomi: string[];
+  nanori?: string[];
+}
+
+export interface KanjiPageFactSource {
+  literal: string;
+  strokeCount: number;
+  radical: number;
+  radicalLiteral?: string;
+  radicalName?: Partial<Record<"ru" | "en", string>>;
+  grade?: number;
+  jlptOld?: number;
+  freq?: number;
+  codepoints: {
+    ucs: string;
+    unicode: string;
+    jis208?: string;
+  };
+  source: "KANJIDIC2 / EDRDG" | string;
+}
+
+export interface KanjiPageWord {
+  surface: string;
+  reading: string;
+  gloss: Partial<Record<"ru" | "en", string>>;
+  partOfSpeech?: string;
+  priority?: string[];
+  jmdictSeq: string;
+  source: "JMdict / EDRDG" | string;
+}
+
+export interface KanjiPageSentence {
+  japanese: string;
+  translation: Partial<Record<"ru" | "en", string>>;
+  sourceId: string;
+  sourceName: "Tatoeba" | string;
+  author?: string;
+  license?: string;
+  translationIds?: Partial<Record<"ru" | "en", string>>;
+}
+
+export interface KanjiPageInterfaceContext {
+  type: "chat" | "calendar" | "notification" | "task" | "settings" | "lesson" | string;
+  title: Partial<Record<"ru" | "en", string>>;
+  japanese: string;
+  translation: Partial<Record<"ru" | "en", string>>;
+}
+
+export interface KanjiPageEditorialCopy {
+  why: string;
+  confusion: string;
+  firstSeen: string;
+  focus: string;
+}
+
+export interface KanjiPageSourceItem {
+  literal: string;
+  courseCardId?: string;
+  meanings: Record<"ru" | "en", string[]>;
+  readings: KanjiPageReadingSet;
+  kanjidic2: KanjiPageFactSource;
+  jlpt: JLPTLevel;
+  modernJlptNote?: Partial<Record<"ru" | "en", string>>;
+  variants?: string[];
+  commonWords: KanjiPageWord[];
+  sentences: KanjiPageSentence[];
+  interfaceContexts: KanjiPageInterfaceContext[];
+  editorial: Record<"ru" | "en", KanjiPageEditorialCopy>;
+  related: {
+    similar?: string[];
+    sameJlptNext?: string[];
+    lessonId?: string;
+  };
+}
+
+export interface KanjiPageSourceBundle {
+  version: number;
+  updatedAt: string;
+  sources: Record<"kanjidic2" | "jmdict" | "tatoeba" | "kanjivg", KanjiPageSourceInfo>;
+  items: Record<string, KanjiPageSourceItem>;
+}
+
 export interface LessonManifestItem {
   id: string;
   file: string;

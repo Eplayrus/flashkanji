@@ -4,20 +4,21 @@
 
 ## Запуск
 
-Приложение не требует backend. Текущий статический запуск:
-
-```powershell
-python -m http.server 4173 -d index
-```
-
-Затем откройте `http://localhost:4173`.
-
-Vite-режим для следующего этапа:
+Приложение не требует backend и работает как статический frontend. Для локальной разработки:
 
 ```powershell
 cd index
 npm install
 npm run dev
+```
+
+Затем откройте адрес, который покажет Vite, обычно `http://localhost:4173`.
+
+Для обновления статической wiki по всем кандзи:
+
+```powershell
+cd index
+npm run generate:wiki
 ```
 
 ## GitHub Pages
@@ -104,4 +105,4 @@ src/
   utils/
 ```
 
-Первый этап работает как обычная статическая SPA без backend. TypeScript-типы и сервисы лежат в `src/`, Vite-конфигурация — в `vite.config.ts`, а рабочий ES2023-код находится в `script.js`. Это оставляет простой путь к будущему backend API и облачной синхронизации: заменить загрузку JSON в `DataService` на HTTP API, а LocalStorage-сервис — на синхронизируемое хранилище.
+Первый этап работает как обычная статическая SPA без backend. TypeScript-типы и сервисы лежат в `src/`, Vite-конфигурация — в `vite.config.ts`, а рабочий ES2023-код находится в `script.js`. Если позже понадобится облачная синхронизация, JSON-адаптеры и LocalStorage-сервис можно заменить на отдельный API, но текущая версия полностью работает на фронтенде и GitHub Pages.

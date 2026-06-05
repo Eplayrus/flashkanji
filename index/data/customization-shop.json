@@ -264,7 +264,10 @@
       "asset": "assets/mascots/eva/eva_school_uniform/eva_study_neutral.png",
       "preview": "assets/shop/previews/outfit_study_session.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "first_kanji"
+      },
       "legacyIds": [
         "eva_sprite:review",
         "eva_sprite:school_uniform",
@@ -288,7 +291,10 @@
       "asset": "assets/mascots/eva/eva_library/eva_librarian_neutral.png",
       "preview": "assets/shop/previews/outfit_librarian_eva.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "moon_student"
+      },
       "legacyIds": []
     },
     {
@@ -308,7 +314,10 @@
       "asset": "assets/mascots/eva/eva_miko/shrine_maiden_neutral.png",
       "preview": "assets/shop/previews/outfit_shrine_maiden.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "discipline_week"
+      },
       "legacyIds": [
         "eva_sprite:kimono",
         "outfit_kimono"
@@ -331,7 +340,10 @@
       "asset": "assets/mascots/eva/eva_jacket/eva_winter_neutral.png",
       "preview": "assets/shop/previews/outfit_winter_traveler.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "strong_memory"
+      },
       "legacyIds": [
         "eva_sprite:proud",
         "eva_sprite:winter_outfit",
@@ -355,7 +367,10 @@
       "asset": "assets/mascots/eva/fox_eva/ChatGPT Image 3 июн. 2026 г., 17_56_59 (1).png",
       "preview": "assets/shop/previews/outfit_casual_fox.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "eva_watches"
+      },
       "legacyIds": [
         "eva_sprite:casual_fox",
         "eva_sprite:happy",
@@ -379,7 +394,10 @@
       "asset": "assets/mascots/eva/eva_teacher_uniform/eva_academy_neutral.png",
       "preview": "assets/shop/previews/outfit_academy_instructor.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "level_wanderer"
+      },
       "legacyIds": [
         "eva_sprite:approve",
         "eva_sprite:correct",
@@ -404,7 +422,10 @@
       "asset": "assets/mascots/eva/eva_moon_princess/eva_moonpriestess_neutral.png",
       "preview": "assets/shop/previews/outfit_moon_priestess.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "moon_cycle"
+      },
       "legacyIds": [
         "eva_sprite:achievement",
         "eva_sprite:levelup",
@@ -431,7 +452,10 @@
       "asset": "assets/mascots/eva/eva_cyber/eva_cyber_neutral.png",
       "preview": "assets/shop/previews/outfit_cyber_eva.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "moon_memory"
+      },
       "legacyIds": []
     },
     {
@@ -451,7 +475,10 @@
       "asset": "assets/mascots/eva/eva_road/eva_silentroad_neutral.png",
       "preview": "assets/shop/previews/outfit_silent_road.png",
       "defaultOwned": false,
-      "unlockCondition": null,
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "kanji_sage"
+      },
       "legacyIds": [
         "eva_sprite:angry",
         "eva_sprite:reward",
