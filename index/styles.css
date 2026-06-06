@@ -328,6 +328,14 @@ textarea:focus-visible {
   box-shadow: 0 24px 60px var(--shadow);
 }
 
+.hero-panel > .eyebrow,
+.hero-panel > .hero-title,
+.hero-panel > .hero-subtitle,
+.hero-panel > .hero-actions {
+  position: relative;
+  z-index: 4;
+}
+
 .hero-panel::before {
   content: "";
   position: absolute;
@@ -530,12 +538,12 @@ textarea:focus-visible {
 
 .hero-decoration {
   position: absolute;
-  right: clamp(116px, 22vw, 236px);
-  bottom: 10px;
-  z-index: 2;
-  width: clamp(58px, 12vw, 112px);
+  right: clamp(12px, 4vw, 36px);
+  bottom: clamp(8px, 2vw, 18px);
+  z-index: 1;
+  width: clamp(46px, 10vw, 92px);
   pointer-events: none;
-  opacity: 0.94;
+  opacity: 0.7;
 }
 
 .hero-decoration img {
@@ -549,21 +557,21 @@ textarea:focus-visible {
 .hero-decoration.deco-deco_scroll,
 .hero-decoration.deco-deco_moon_frame,
 .hero-decoration.deco-deco_golden_accent {
-  right: clamp(184px, 30vw, 330px);
-  bottom: 44px;
-  width: clamp(66px, 13vw, 126px);
+  right: clamp(16px, 5vw, 48px);
+  bottom: clamp(16px, 4vw, 44px);
+  width: clamp(54px, 11vw, 108px);
 }
 
 .hero-decoration.deco-deco_lantern {
-  right: clamp(198px, 32vw, 350px);
-  bottom: 118px;
-  width: clamp(50px, 9vw, 92px);
+  right: clamp(92px, 17vw, 178px);
+  bottom: clamp(110px, 19vw, 160px);
+  width: clamp(38px, 7vw, 74px);
 }
 
 .hero-decoration.deco-deco_tea_table {
-  right: clamp(138px, 24vw, 260px);
+  right: clamp(10px, 4vw, 40px);
   bottom: 0;
-  width: clamp(82px, 15vw, 148px);
+  width: clamp(66px, 13vw, 126px);
 }
 
 .reward-mascot {
@@ -3740,6 +3748,35 @@ textarea:focus-visible {
 }
 
 @media (max-width: 620px) {
+  .hero-decoration {
+    right: 8px;
+    bottom: 8px;
+    width: 52px;
+    opacity: 0.46;
+  }
+
+  .hero-decoration.deco-deco_bookshelf,
+  .hero-decoration.deco-deco_kanji_board,
+  .hero-decoration.deco-deco_scroll,
+  .hero-decoration.deco-deco_moon_frame,
+  .hero-decoration.deco-deco_golden_accent {
+    right: 8px;
+    bottom: 34px;
+    width: 58px;
+  }
+
+  .hero-decoration.deco-deco_lantern {
+    right: 104px;
+    bottom: 120px;
+    width: 34px;
+  }
+
+  .hero-decoration.deco-deco_tea_table {
+    right: 4px;
+    bottom: 4px;
+    width: 64px;
+  }
+
   .eva-room-entry {
     grid-template-columns: 76px minmax(0, 1fr);
   }

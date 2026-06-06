@@ -8,7 +8,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-06-decor-png-v1";
+  const BUILD_VERSION = "2026-06-06-pwa-decor-eva-v1";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
@@ -148,6 +148,8 @@
   let deferredPwaInstallPrompt = null;
   let notificationPromptTimer = 0;
   let evaAutonomyTimer = 0;
+  let evaSpriteRotationTimer = 0;
+  let evaSpriteRotationTick = Math.floor(Date.now() / 60000);
   let lastEvaDirectActionAt = 0;
   let moonCheatBuffer = "";
   let recentEvaMascotLineIds = [];
@@ -290,6 +292,7 @@
       render();
       registerServiceWorker();
       startEvaAutonomyLoop();
+      startEvaSpriteRotationLoop();
       scheduleNotificationPromptCheck();
       prepareDailyNotifications();
     } catch (error) {
@@ -2709,7 +2712,7 @@
     const emotionSprites = evaEmotionSpriteCandidates(desiredEmotion);
     const skinCandidates = [...new Set([normalizedSkin, selectedSkin].filter(Boolean))];
     const candidates = [
-      ...skinCandidates.flatMap((skin) => emotionSprites.map((sprite) => `${skin}_${sprite}`)),
+      ...skinCandidates.flatMap((skin) => evaSkinnedSpriteCandidates(skin, emotionSprites)),
       ...skinCandidates,
       ...emotionSprites,
       "idle",
@@ -2717,6 +2720,42 @@
     ].filter(Boolean);
     const picked = candidates.find((candidate) => state.evaSprites?.[candidate] && (isEvaSpriteUnlocked(candidate) || !normalizedSkin || isEvaSpriteUnlocked(normalizedSkin)));
     return picked || "idle";
+  }
+
+  function evaSkinnedSpriteCandidates(skin, emotionSprites = []) {
+    const skinId = String(skin || "");
+    if (!skinId) return [];
+    const direct = emotionSprites
+      .map((sprite) => `${skinId}_${sprite}`)
+      .filter((candidate) => state.evaSprites?.[candidate]);
+    const outfit = outfitItemBySprite(skinId);
+    if (!outfit || outfit.defaultOwned || direct.length <= 1) return direct;
+    return rotateEvaSpriteCandidates(direct);
+  }
+
+  function rotateEvaSpriteCandidates(candidates = []) {
+    const unique = [...new Set(candidates.filter(Boolean))];
+    if (unique.length <= 1) return unique;
+    const offset = evaSpriteRotationTick % unique.length;
+    return [...unique.slice(offset), ...unique.slice(0, offset)];
+  }
+
+  function selectedEvaOutfitCanRotate() {
+    const skin = selectedEvaSkinId();
+    const outfit = outfitItemBySprite(skin);
+    if (!outfit || outfit.defaultOwned) return false;
+    return Object.keys(state.evaSprites || {}).some((key) => key.startsWith(`${skin}_`));
+  }
+
+  function startEvaSpriteRotationLoop() {
+    if (evaSpriteRotationTimer) window.clearInterval(evaSpriteRotationTimer);
+    evaSpriteRotationTimer = window.setInterval(() => {
+      const nextTick = Math.floor(Date.now() / 60000);
+      if (nextTick === evaSpriteRotationTick) return;
+      evaSpriteRotationTick = nextTick;
+      if (document.hidden || !selectedEvaOutfitCanRotate()) return;
+      if (state.route === "home" || state.route === "eva-room") render();
+    }, 30000);
   }
 
   function evaEmotionSpriteCandidates(emotion) {

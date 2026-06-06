@@ -1,5 +1,5 @@
-const CACHE_NAME = "flash-kanji-cache-v65";
-const SW_BUILD_VERSION = "2026-06-06-decor-png-v1";
+const CACHE_NAME = "flash-kanji-cache-v66";
+const SW_BUILD_VERSION = "2026-06-06-pwa-decor-eva-v1";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -44,15 +44,16 @@ const PRECACHE_URLS = [
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-06-decor-png-v1",
+  "./styles.css?v=2026-06-06-pwa-decor-eva-v1",
   "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-06-decor-png-v1",
+  "./script.js?v=2026-06-06-pwa-decor-eva-v1",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-06-decor-png-v1",
+  "./src/audio/soundManager.js?v=2026-06-06-pwa-decor-eva-v1",
   "./manifest.webmanifest",
+  "./manifest.webmanifest?v=2026-06-06-pwa-decor-eva-v1",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-06-decor-png-v1",
+  "./vendor/chart.umd.min.js?v=2026-06-06-pwa-decor-eva-v1",
   "./assets/1.png",
   "./assets/bg_1.png",
   "./assets/button.png",
