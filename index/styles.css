@@ -476,6 +476,7 @@ textarea:focus-visible {
 
 .hero-mascot {
   position: absolute;
+  z-index: 3;
   right: -18px;
   bottom: -8px;
   width: min(58vw, 300px);
@@ -525,6 +526,44 @@ textarea:focus-visible {
 .hero-mascot .speech {
   right: 134px;
   bottom: 118px;
+}
+
+.hero-decoration {
+  position: absolute;
+  right: clamp(116px, 22vw, 236px);
+  bottom: 10px;
+  z-index: 2;
+  width: clamp(58px, 12vw, 112px);
+  pointer-events: none;
+  opacity: 0.94;
+}
+
+.hero-decoration img {
+  display: block;
+  width: 100%;
+  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.52));
+}
+
+.hero-decoration.deco-deco_bookshelf,
+.hero-decoration.deco-deco_kanji_board,
+.hero-decoration.deco-deco_scroll,
+.hero-decoration.deco-deco_moon_frame,
+.hero-decoration.deco-deco_golden_accent {
+  right: clamp(184px, 30vw, 330px);
+  bottom: 44px;
+  width: clamp(66px, 13vw, 126px);
+}
+
+.hero-decoration.deco-deco_lantern {
+  right: clamp(198px, 32vw, 350px);
+  bottom: 118px;
+  width: clamp(50px, 9vw, 92px);
+}
+
+.hero-decoration.deco-deco_tea_table {
+  right: clamp(138px, 24vw, 260px);
+  bottom: 0;
+  width: clamp(82px, 15vw, 148px);
 }
 
 .reward-mascot {
@@ -3465,8 +3504,32 @@ textarea:focus-visible {
   object-fit: cover;
 }
 
-.custom-shop-card:is(.rarity-epic, .rarity-legendary) .custom-shop-preview img {
+.custom-shop-card.type-background .custom-shop-preview {
+  min-height: clamp(220px, 38vw, 360px);
+}
+
+.custom-shop-card.type-background .custom-shop-preview img {
+  min-height: clamp(220px, 38vw, 360px);
   aspect-ratio: 4 / 5;
+  object-position: center;
+}
+
+.custom-shop-card:is(.type-theme, .type-effect, .type-decoration) .custom-shop-preview {
+  min-height: clamp(180px, 28vw, 260px);
+}
+
+.custom-shop-card:is(.type-theme, .type-effect, .type-decoration) .custom-shop-preview img {
+  min-height: clamp(180px, 28vw, 260px);
+  aspect-ratio: 16 / 10;
+  object-position: center;
+}
+
+.custom-shop-card:is(.rarity-epic, .rarity-legendary, .rarity-mythic) .custom-shop-preview img {
+  aspect-ratio: 4 / 5;
+}
+
+.custom-shop-card:is(.type-theme, .type-effect, .type-decoration):is(.rarity-epic, .rarity-legendary, .rarity-mythic) .custom-shop-preview img {
+  aspect-ratio: 16 / 10;
 }
 
 .custom-shop-card.type-outfit .custom-shop-preview {
@@ -3610,18 +3673,60 @@ textarea:focus-visible {
 
 .eva-room-decoration {
   position: absolute;
-  left: clamp(12px, 4vw, 28px);
-  top: clamp(76px, 14vh, 132px);
-  z-index: 3;
-  width: clamp(72px, 16vw, 128px);
-  opacity: 0.86;
+  left: clamp(18px, 5vw, 64px);
+  bottom: clamp(112px, 18svh, 184px);
+  z-index: 1;
+  width: clamp(118px, 20vw, 230px);
+  opacity: 0.96;
   pointer-events: none;
 }
 
 .eva-room-decoration img {
+  display: block;
   width: 100%;
-  border-radius: 8px;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.38));
+  filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.54));
+}
+
+.eva-room-decoration.deco-deco_bookshelf {
+  left: auto;
+  right: clamp(18px, 4vw, 56px);
+  bottom: clamp(118px, 18svh, 190px);
+  width: clamp(142px, 22vw, 270px);
+}
+
+.eva-room-decoration.deco-deco_tea_table {
+  left: clamp(54px, 12vw, 190px);
+  bottom: clamp(74px, 12svh, 136px);
+  width: clamp(160px, 24vw, 310px);
+}
+
+.eva-room-decoration.deco-deco_lantern {
+  left: clamp(22px, 6vw, 92px);
+  top: clamp(44px, 8svh, 86px);
+  bottom: auto;
+  width: clamp(86px, 12vw, 150px);
+}
+
+.eva-room-decoration.deco-deco_kanji_board,
+.eva-room-decoration.deco-deco_scroll,
+.eva-room-decoration.deco-deco_moon_frame,
+.eva-room-decoration.deco-deco_golden_accent {
+  left: clamp(20px, 5vw, 78px);
+  top: clamp(58px, 9svh, 110px);
+  bottom: auto;
+  width: clamp(126px, 18vw, 220px);
+}
+
+.eva-room-decoration.deco-deco_golden_accent {
+  opacity: 0.72;
+  mix-blend-mode: screen;
+}
+
+.eva-room-decoration.deco-deco_plant {
+  left: auto;
+  right: clamp(30px, 8vw, 132px);
+  bottom: clamp(104px, 15svh, 164px);
+  width: clamp(112px, 17vw, 204px);
 }
 
 .eva-bg-card strong,

@@ -8,7 +8,8 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-06-room-bg-v1";
+  const BUILD_VERSION = "2026-06-06-decor-png-v1";
+  const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
   const DATA_URLS = {
@@ -148,6 +149,7 @@
   let notificationPromptTimer = 0;
   let evaAutonomyTimer = 0;
   let lastEvaDirectActionAt = 0;
+  let moonCheatBuffer = "";
   let recentEvaMascotLineIds = [];
   const notificationTimers = new Map();
   const notificationUsageStartedAt = Date.now();
@@ -171,6 +173,7 @@
   document.addEventListener("input", handleInput);
   document.addEventListener("change", handleInput);
   document.addEventListener("keydown", handleKeydown);
+  window.flashKanjiFarmMoon = (amount = 5000) => grantMoonCheat(amount);
   importInput.addEventListener("change", handleImportFile);
   window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   window.addEventListener("appinstalled", handlePwaInstallAccepted);
@@ -1631,6 +1634,8 @@
   }
 
   function handleKeydown(event) {
+    if (handleMoonCheatKey(event)) return;
+
     if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.navMenu)) {
       state.detailCardId = null;
       state.rewardModal = null;
@@ -1645,6 +1650,29 @@
     state.readingCheck.value = readingInput.value;
     state.readingCheck.cardId = readingInput.dataset.id || state.activeCardId;
     checkActiveCardReading();
+  }
+
+  function handleMoonCheatKey(event) {
+    const target = event.target;
+    if (target?.closest?.("input, textarea, select, [contenteditable='true']")) return false;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) return false;
+    moonCheatBuffer = `${moonCheatBuffer}${event.key.toLowerCase()}`.slice(-MOON_CHEAT_CODE.length);
+    if (moonCheatBuffer !== MOON_CHEAT_CODE) return false;
+    moonCheatBuffer = "";
+    grantMoonCheat(5000);
+    return true;
+  }
+
+  function grantMoonCheat(amount = 5000) {
+    const value = Math.max(1, Math.min(999999, Math.floor(Number(amount) || 5000)));
+    if (!state.progress) return 0;
+    addReward(0, value, "cheat:moon_farm");
+    evaluateAchievements();
+    saveProgress();
+    playUxSound("moon_fragment_gain");
+    toast(lang() === "ru" ? `Чит активирован: +${value} Moon` : `Cheat activated: +${value} Moon`);
+    render();
+    return state.progress.moonFragments;
   }
 
   function setRoute(route, focus = null) {
@@ -1833,6 +1861,7 @@
               <button class="btn" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
             </div>
             ${renderMascot("eva", "normal", "welcome", "hero-mascot")}
+            ${renderHeroDecoration()}
           </section>
 
           <section class="metric-grid" aria-label="summary">
@@ -2022,14 +2051,30 @@
   }
 
   function renderEvaRoomDecoration(scene = {}) {
-    const decorationId = scene.decoration || evaAutonomy().currentDecoration || state.customization?.selected?.decoration || state.customization?.selected?.frame;
-    const item = customizationShopItem(decorationId);
-    if (!item || item.type !== "decoration" || !isCustomizationOwned(item.id)) return "";
+    const item = selectedDecorationItem(scene);
+    if (!item) return "";
     return `
-      <div class="eva-room-decoration" aria-label="${escapeAttr(customizationItemTitle(item))}">
+      <div class="eva-room-decoration deco-${escapeAttr(item.id)}" aria-label="${escapeAttr(customizationItemTitle(item))}">
         <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" />
       </div>
     `;
+  }
+
+  function renderHeroDecoration() {
+    const item = selectedDecorationItem();
+    if (!item) return "";
+    return `
+      <div class="hero-decoration deco-${escapeAttr(item.id)}" aria-label="${escapeAttr(customizationItemTitle(item))}">
+        <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" />
+      </div>
+    `;
+  }
+
+  function selectedDecorationItem(scene = {}) {
+    const decorationId = scene.decoration || evaAutonomy().currentDecoration || state.customization?.selected?.decoration || state.customization?.selected?.frame;
+    const item = customizationShopItem(decorationId);
+    if (!item || item.type !== "decoration" || !isCustomizationOwned(item.id)) return null;
+    return item;
   }
 
   function renderCustomizationShop(options = {}) {
@@ -3467,13 +3512,13 @@
   function chooseEvaAutonomyEffect(line) {
     const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
     const moodPrefs = {
-      close: ["effect_golden_glow", "effect_sakura"],
+      close: ["effect_golden_glow", "effect_sakura_particles"],
       proud: ["effect_golden_glow", "effect_moon_particles"],
-      curious: ["effect_cyber_hud", "effect_sakura"],
+      curious: ["effect_cyber_hud", "effect_sakura_particles"],
       worried: ["effect_snow_particles", "effect_dust_particles"],
       reserved: ["effect_dust_particles", "effect_snow_particles"],
       focused: ["effect_lesson_shine", "effect_golden_glow"],
-      soft: ["effect_sakura", "effect_golden_glow"],
+      soft: ["effect_sakura_particles", "effect_golden_glow"],
       strict: ["effect_level_frame", "effect_dust_particles"],
       tired: ["effect_snow_particles", "effect_dust_particles"],
       happy: ["effect_golden_glow", "effect_moon_particles"],
