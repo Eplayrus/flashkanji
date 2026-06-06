@@ -17,6 +17,7 @@
   --shadow: rgba(0, 0, 0, 0.45);
   --kanji-font: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
   --ui-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --app-room-bg: url("assets/bg/bg_study_hub.png");
 }
 
 [data-theme="light"] {
@@ -124,18 +125,21 @@ textarea:focus-visible {
   min-height: 100svh;
   isolation: isolate;
   background:
-    linear-gradient(140deg, rgba(255, 56, 92, 0.11), transparent 36%),
-    linear-gradient(25deg, rgba(57, 217, 138, 0.07), transparent 52%),
-    var(--bg);
+    linear-gradient(140deg, rgba(255, 56, 92, 0.14), transparent 36%),
+    linear-gradient(25deg, rgba(57, 217, 138, 0.08), transparent 52%),
+    color-mix(in srgb, var(--bg), transparent 8%);
 }
 
 .scene-bg {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background: url("assets/bg_1.png") center / cover no-repeat;
-  opacity: 0.32;
-  filter: saturate(1.06) contrast(1.06);
+  background:
+    var(--app-room-bg) center / cover no-repeat,
+    url("assets/bg_1.png") center / cover no-repeat;
+  opacity: 0.5;
+  filter: saturate(1.08) contrast(1.04);
+  transform: scale(1.02);
 }
 
 .scene-bg::after {
@@ -143,7 +147,9 @@ textarea:focus-visible {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(3, 3, 6, 0.55), rgba(3, 3, 6, 0.9)),
+    radial-gradient(circle at 52% 20%, rgba(255, 225, 90, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(3, 3, 6, 0.5), rgba(3, 3, 6, 0.92)),
+    linear-gradient(90deg, rgba(3, 3, 6, 0.58), transparent 28%, transparent 70%, rgba(3, 3, 6, 0.58)),
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 17px);
 }
 
@@ -212,7 +218,7 @@ textarea:focus-visible {
 }
 
 [data-theme="light"] .scene-bg {
-  opacity: 0.12;
+  opacity: 0.2;
 }
 
 [data-theme="light"] .scene-bg::after {

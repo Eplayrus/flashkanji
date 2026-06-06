@@ -1,5 +1,5 @@
-const CACHE_NAME = "flash-kanji-cache-v61";
-const SW_BUILD_VERSION = "2026-06-05-wiki-all-v1";
+const CACHE_NAME = "flash-kanji-cache-v62";
+const SW_BUILD_VERSION = "2026-06-06-room-bg-v1";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -44,15 +44,15 @@ const PRECACHE_URLS = [
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-05-wiki-all-v1",
+  "./styles.css?v=2026-06-06-room-bg-v1",
   "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-05-wiki-all-v1",
+  "./script.js?v=2026-06-06-room-bg-v1",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-05-wiki-all-v1",
+  "./src/audio/soundManager.js?v=2026-06-06-room-bg-v1",
   "./manifest.webmanifest",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-05-wiki-all-v1",
+  "./vendor/chart.umd.min.js?v=2026-06-06-room-bg-v1",
   "./assets/1.png",
   "./assets/bg_1.png",
   "./assets/button.png",

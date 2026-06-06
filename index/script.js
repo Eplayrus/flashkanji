@@ -8,7 +8,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-05-wiki-all-v1";
+  const BUILD_VERSION = "2026-06-06-room-bg-v1";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
   const DATA_URLS = {
@@ -1071,6 +1071,7 @@
 
   function syncEvaRuntimeInventory() {
     if (!state.evaRuntime || !state.progress) return;
+    const selectedBackground = state.progress.selectedEvaRoomBackground || state.customization?.selected?.background || "bg_study_hub";
     const ownedItems = customizationShopItems().filter((item) => isCustomizationOwned(item.id));
     state.evaRuntime.ownedSkins = [...new Set([
       "idle",
@@ -1085,8 +1086,9 @@
     ].filter(Boolean))];
     state.evaRuntime.ownedEffects = [...new Set(ownedItems.filter((item) => item.type === "effect").map((item) => item.id))];
     state.evaRuntime.ownedDecorations = [...new Set(ownedItems.filter((item) => item.type === "decoration").map((item) => item.id))];
+    state.evaRuntime.currentBackground = selectedBackground;
     state.evaRuntime.activeSkin = state.evaRuntime.currentSkin || state.progress.selectedEvaSprite || "idle";
-    state.evaRuntime.activeBackground = state.evaRuntime.currentBackground || state.progress.selectedEvaRoomBackground || "bg_study_hub";
+    state.evaRuntime.activeBackground = selectedBackground;
   }
 
   function normalizeEvaRoomDialogueData(payload) {
@@ -1952,7 +1954,7 @@
     syncEvaRelationshipFromProgress();
     const scene = currentEvaRoomScene();
     const node = scene.node;
-    const bg = scene.bg || getEvaRoomBackground(node.background) || currentEvaRoomBackground();
+    const bg = currentEvaRoomBackground() || scene.bg || getEvaRoomBackground(node.background);
     const sprite = evaSpritePath(scene.sprite || resolveEvaSprite(node.sprite));
     const labels = evaRoomLabels();
     const liveLabels = evaLiveLabels();
@@ -2774,7 +2776,7 @@
 
   function currentEvaRoomBackground() {
     ensureEvaRoomProgress();
-    const selected = state.progress.selectedEvaRoomBackground;
+    const selected = state.progress.selectedEvaRoomBackground || state.customization?.selected?.background;
     return getEvaRoomBackground(selected) || getEvaRoomBackground("bg_study_hub");
   }
 
@@ -3971,10 +3973,16 @@
       state.progress.selectedEvaSprite = item.spriteId;
       state.progress.evaAutonomy.currentLine = null;
     }
-    if (item.type === "background") {
-      state.progress.selectedEvaRoomBackground = item.id;
-      state.progress.evaAutonomy.currentLine = null;
+  if (item.type === "background") {
+    state.progress.selectedEvaRoomBackground = item.id;
+    if (state.evaRuntime) {
+      state.evaRuntime.currentBackground = item.id;
+      state.evaRuntime.activeBackground = item.id;
+      state.evaRuntime.memory ||= defaultEvaMemory();
+      state.evaRuntime.memory.preferredEvaRoomBackground = item.id;
     }
+    state.progress.evaAutonomy.currentLine = null;
+  }
     syncCustomizationToProgress();
     saveCustomizationStorage();
     saveProgress();
@@ -8648,10 +8656,18 @@
   function applyTheme() {
     document.documentElement.dataset.theme = state.progress.settings.theme;
     document.documentElement.dataset.customTheme = state.customization?.selected?.theme || "theme_default_dark";
+    const roomBackground = currentEvaRoomBackground();
+    document.documentElement.dataset.customRoom = roomBackground?.id || "bg_study_hub";
+    document.documentElement.style.setProperty("--app-room-bg", cssImageUrl(roomBackground?.file || "assets/bg/bg_study_hub.png"));
     const evaEffect = state.route === "eva-room" ? state.evaRuntime?.currentEffect || evaAutonomy().currentEffect : null;
     const usableEvaEffect = evaEffect === "none" || (evaEffect && customizationShopItem(evaEffect) && isCustomizationOwned(evaEffect)) ? evaEffect : null;
     document.documentElement.dataset.customEffect = usableEvaEffect || state.customization?.selected?.effect || "none";
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", state.progress.settings.theme === "light" ? "#f8f7f2" : "#08080c");
+  }
+
+  function cssImageUrl(value) {
+    const safe = String(value || "").replace(/["\\\n\r]/g, "");
+    return `url("${safe || "assets/bg/bg_study_hub.png"}")`;
   }
 
   function t(key) {
