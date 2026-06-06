@@ -4100,3 +4100,126 @@ textarea:focus-visible {
     animation: none !important;
   }
 }
+
+/* =========================================================
+   MOBILE HERO FIX
+   Prevent Eva speech bubble from overlapping the FLASH KANJI title
+   Paste-safe override: keep this block at the VERY END of styles.css.
+   ========================================================= */
+@media (max-width: 620px) {
+  .hero-panel {
+    min-height: 430px;
+  }
+
+  .hero-panel > .eyebrow,
+  .hero-panel > .hero-title,
+  .hero-panel > .hero-subtitle,
+  .hero-panel > .hero-actions {
+    position: relative;
+    z-index: 6;
+  }
+
+  .hero-title {
+    max-width: 7.2ch;
+    font-size: clamp(3.15rem, 21vw, 6.2rem);
+    line-height: 0.86;
+  }
+
+  .hero-subtitle {
+    max-width: min(68%, 25ch);
+  }
+
+  .hero-actions {
+    max-width: 68%;
+  }
+
+  .hero-mascot {
+    z-index: 4;
+    right: -38px;
+    bottom: -10px;
+    width: min(52vw, 230px);
+    height: 300px;
+    pointer-events: auto;
+  }
+
+  .hero-mascot img {
+    width: min(48vw, 205px);
+    max-height: 300px;
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    right: 2px !important;
+    bottom: 104px !important;
+    width: clamp(116px, 34vw, 148px) !important;
+    max-width: 148px !important;
+    padding: 9px 10px !important;
+    font-size: clamp(0.72rem, 3.2vw, 0.86rem) !important;
+    line-height: 1.2 !important;
+    z-index: 7 !important;
+    overflow-wrap: anywhere;
+    box-shadow: 0 12px 26px var(--shadow);
+  }
+
+  .speech::after {
+    right: -7px;
+    bottom: 16px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .hero-panel {
+    min-height: 430px;
+    padding: 14px;
+  }
+
+  .hero-title {
+    max-width: 6.8ch;
+    font-size: clamp(3rem, 20vw, 5.4rem);
+  }
+
+  .hero-subtitle,
+  .hero-actions {
+    max-width: 64%;
+  }
+
+  .hero-mascot {
+    right: -50px;
+    width: 220px;
+  }
+
+  .hero-mascot img {
+    width: 196px;
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    right: 0 !important;
+    bottom: 102px !important;
+    width: 122px !important;
+    max-width: 122px !important;
+    padding: 8px 9px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .hero-subtitle,
+  .hero-actions {
+    max-width: 60%;
+  }
+
+  .hero-mascot {
+    right: -58px;
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    width: 112px !important;
+    max-width: 112px !important;
+    font-size: 0.68rem !important;
+  }
+}
+
