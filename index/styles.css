@@ -506,9 +506,9 @@ textarea:focus-visible {
 
 .speech {
   position: absolute;
-  right: 134px;
+  right: clamp(0px, 25vw, 134px);
   bottom: 118px;
-  width: min(48vw, 205px);
+  width: clamp(120px, 40vw, 205px);
   padding: 12px 13px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -532,7 +532,7 @@ textarea:focus-visible {
 }
 
 .hero-mascot .speech {
-  right: 134px;
+  right: clamp(0px, 25vw, 134px);
   bottom: 118px;
 }
 
@@ -3939,8 +3939,8 @@ textarea:focus-visible {
   }
 
   .speech {
-    right: 106px;
-    width: 176px;
+    right: clamp(0px, 25vw, 106px);
+    width: clamp(120px, 40vw, 176px);
   }
 
   .reward-mascot .speech {
