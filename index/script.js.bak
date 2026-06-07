@@ -12,10 +12,6 @@
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
-      // Guard key for one-time forced PWA cache reset.
-      // When set to "done", the app will skip resetting caches on subsequent loads.
-      const FORCE_PWA_CACHE_RESET_FLAG = "flashKanji.forcePwaCacheReset.v1";
-
   const DATA_URLS = {
     lessons: "data/lessons.json",
     dialogues: "data/dialogues.json",
@@ -214,8 +210,7 @@
   boot();
 
   async function boot() {
-    if (await forcePwaCacheResetIfNeeded()) return;
-if (await refreshStaleAppCache()) return;
+    if (await refreshStaleAppCache()) return;
     app.innerHTML = renderLoading();
     state.progress = loadProgress();
     syncUxSoundSettings();
@@ -333,51 +328,7 @@ if (await refreshStaleAppCache()) return;
     }
   }
 
-  
-      /**
-       * Force resetting PWA caches and reloading the page.
-       * This helper will delete all caches and instruct service workers
-       * to reset their internal caches. It only runs once per user based on
-       * the FORCE_PWA_CACHE_RESET_FLAG. After running it reloads
-       * the page so new parameters take effect.
-       */
-      async function forcePwaCacheResetIfNeeded() {
-        try {
-          const done = localStorage.getItem(FORCE_PWA_CACHE_RESET_FLAG);
-          if (done === 'done') return false;
-          // Mark as done to avoid repeated resets
-          localStorage.setItem(FORCE_PWA_CACHE_RESET_FLAG, 'done');
-          // Clear all caches via the Cache Storage API
-          if ('caches' in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map((key) => caches.delete(key)));
-          }
-          // Notify service workers to reset their internal caches and update them
-          if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map(async (registration) => {
-              try {
-                if (registration.active) {
-                  // Post the same message the service worker listens for to trigger cache clearing
-                  registration.active.postMessage('FLASH_KANJI_FORCE_CACHE_RESET');
-                }
-              } catch (_) {
-                /* ignore */
-              }
-              // Request the worker to update itself
-              await registration.update().catch(() => null);
-            }));
-          }
-          // Reload the page to apply updates
-          location.reload();
-          return true;
-        } catch (error) {
-          console.warn('Force cache reset failed.', error);
-          return false;
-        }
-      }
-
-async function loadCourse() {
+  async function loadCourse() {
     const manifest = await fetchJson(DATA_URLS.lessons);
     const payloads = await Promise.all(manifest.lessons.map(async (lesson) => ({
       manifestLesson: lesson,
