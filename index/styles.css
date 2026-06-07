@@ -4369,3 +4369,79 @@ textarea:focus-visible {
   }
 }
 
+/* ============================================================
+   HERO LAYER FIX
+   Eva sprite + speech bubble are always above hero UI.
+   Put this block at the VERY END of styles.css.
+   ============================================================ */
+
+.hero-panel {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+/* Всё содержимое героя — назад */
+.hero-panel > .eyebrow,
+.hero-panel > .hero-title,
+.hero-panel > .hero-subtitle,
+.hero-panel > .hero-actions {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Декор — самый задний слой */
+.hero-decoration,
+.hero-panel::before {
+  z-index: 1 !important;
+}
+
+/* Ева — перед текстом и кнопками */
+.hero-mascot {
+  position: absolute !important;
+  z-index: 30 !important;
+}
+
+/* Сам PNG спрайта тоже поверх */
+.hero-mascot img {
+  position: absolute !important;
+  z-index: 31 !important;
+}
+
+/* Облако диалога — самый верхний слой внутри hero */
+.hero-mascot .speech,
+.hero-panel > .speech,
+.hero-panel .speech {
+  position: absolute !important;
+  z-index: 40 !important;
+}
+
+/* Хвостик облака тоже поверх */
+.hero-mascot .speech::after,
+.hero-panel > .speech::after,
+.hero-panel .speech::after {
+  z-index: 41 !important;
+}
+
+/* На мобилке не даём старым фикс-блокам перебить слои */
+@media (max-width: 620px) {
+  .hero-panel > .eyebrow,
+  .hero-panel > .hero-title,
+  .hero-panel > .hero-subtitle,
+  .hero-panel > .hero-actions {
+    z-index: 2 !important;
+  }
+
+  .hero-mascot {
+    z-index: 30 !important;
+  }
+
+  .hero-mascot img {
+    z-index: 31 !important;
+  }
+
+  .hero-mascot .speech,
+  .hero-panel > .speech,
+  .hero-panel .speech {
+    z-index: 40 !important;
+  }
+}
