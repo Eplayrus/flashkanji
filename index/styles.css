@@ -484,7 +484,17 @@ textarea:focus-visible {
 
 .hero-mascot {
   position: absolute;
-  z-index: 3;
+  /*
+   * Remove the explicit z-index here so the mascot does not create its own
+   * stacking context. When an absolutely positioned element has a
+   * z-index of `auto`, it participates in the stacking context of its
+   * ancestor (`.hero-panel`). This allows child elements to layer above
+   * sibling content when they declare a z-index. Without this change the
+   * speech bubble (a child of `.hero-mascot`) would always remain behind
+   * the hero title because its parent’s z-index (3) kept the entire
+   * mascot group beneath the title.
+   */
+  z-index: auto;
   right: -18px;
   bottom: -8px;
   width: min(58vw, 300px);
@@ -502,6 +512,15 @@ textarea:focus-visible {
   object-fit: contain;
   object-position: right bottom;
   filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.66));
+
+  /*
+   * Place the mascot image behind the hero title but above decorative
+   * elements. By assigning a lower z-index than the speech bubble and
+   * hero title, the image remains unobtrusive while the bubble can
+   * overlay the title when necessary. This only takes effect because
+   * `.hero-mascot` no longer creates a stacking context.
+   */
+  z-index: 2;
 }
 
 .speech {
@@ -516,6 +535,14 @@ textarea:focus-visible {
   box-shadow: 0 16px 34px var(--shadow);
   color: var(--text);
   font-weight: 700;
+  /*
+   * Ensure the speech bubble appears above other hero content.
+   * Without an explicit z‑index the bubble inherits its parent stacking
+   * context (from `.hero-mascot`) which sits below the hero title.
+   * Assigning a higher z‑index ensures the bubble floats above the
+   * large hero title and logo.
+   */
+  z-index: 5;
 }
 
 .speech::after {
@@ -534,6 +561,15 @@ textarea:focus-visible {
 .hero-mascot .speech {
   right: 134px;
   bottom: 118px;
+
+  /*
+   * Elevate the speech bubble above both the mascot image and the hero
+   * title. A higher z-index ensures the bubble doesn’t slip behind
+   * either element once `.hero-mascot` stops creating its own stacking
+   * context. Without this, the bubble could still be obscured when the
+   * page layout compresses or when other styles override stacking.
+   */
+  z-index: 6;
 }
 
 .hero-decoration {
