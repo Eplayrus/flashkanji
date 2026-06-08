@@ -4101,130 +4101,462 @@ textarea:focus-visible {
   }
 }
 
-
 /* =========================================================
-   FINAL UNIFIED MOBILE HERO & EVA FIX (V3)
-   Обеспечивает правильное позиционирование крупной Евы, облака и кнопок.
+   MOBILE HERO FIX
+   Prevent Eva speech bubble from overlapping the FLASH KANJI title
+   Paste-safe override: keep this block at the VERY END of styles.css.
    ========================================================= */
-
-/* Жесткая фиксация слоев для всех устройств */
-.hero-panel {
-  position: relative !important;
-  isolation: isolate !important;
-}
-.hero-panel > .eyebrow,
-.hero-panel > .hero-title,
-.hero-panel > .hero-subtitle {
-  position: relative !important;
-  z-index: 10 !important;
-}
-.hero-decoration,
-.hero-panel::before {
-  z-index: 1 !important;
-}
-.hero-mascot {
-  z-index: 20 !important;
-}
-.hero-mascot img {
-  z-index: 21 !important;
-}
-.hero-mascot .speech,
-.speech,
-.hero-panel > .speech {
-  z-index: 30 !important;
-}
-.hero-mascot .speech::after,
-.speech::after,
-.hero-panel > .speech::after {
-  z-index: 31 !important;
-}
-
-/* Адаптив для планшетов и мобильных */
-@media (max-width: 768px) {
+@media (max-width: 620px) {
   .hero-panel {
-    min-height: 580px !important; /* Даем больше высоты, чтобы уместить крупную Еву и элементы */
-  }
-  .hero-title {
-    font-size: clamp(2.5rem, 15vw, 4.2rem) !important;
-    line-height: 0.9 !important;
-    max-width: 8ch !important;
-  }
-  .hero-subtitle {
-    max-width: 58% !important; 
-    font-size: clamp(0.8rem, 3vw, 0.95rem) !important;
-    line-height: 1.3 !important;
-  }
-  
-  /* Фиксируем кнопки строго в левом нижнем углу */
-  .hero-actions {
-    position: absolute !important;
-    bottom: 20px !important;
-    left: 18px !important;
-    z-index: 45 !important; /* Всегда поверх облака и фона, чтобы быть кликабельными */
-    max-width: calc(100% - 150px) !important; /* Оставляем место Еве справа */
-    margin-top: 0 !important;
-    pointer-events: auto !important;
+    min-height: 430px;
   }
 
-  /* Контейнер маскота */
+  .hero-panel > .eyebrow,
+  .hero-panel > .hero-title,
+  .hero-panel > .hero-subtitle,
+  .hero-panel > .hero-actions {
+    position: relative;
+    z-index: 6;
+  }
+
+  .hero-title {
+    max-width: 7.2ch;
+    font-size: clamp(3.15rem, 21vw, 6.2rem);
+    line-height: 0.86;
+  }
+
+  .hero-subtitle {
+    max-width: min(68%, 25ch);
+  }
+
+  .hero-actions {
+    max-width: 68%;
+  }
+
+  .hero-mascot {
+    z-index: 4;
+    right: -38px;
+    bottom: -10px;
+    width: min(52vw, 230px);
+    height: 300px;
+    pointer-events: auto;
+  }
+
+  .hero-mascot img {
+    width: min(48vw, 205px);
+    max-height: 300px;
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    right: 2px !important;
+    bottom: 104px !important;
+    width: clamp(116px, 34vw, 148px) !important;
+    max-width: 148px !important;
+    padding: 9px 10px !important;
+    font-size: clamp(0.72rem, 3.2vw, 0.86rem) !important;
+    line-height: 1.2 !important;
+    z-index: 7 !important;
+    overflow-wrap: anywhere;
+    box-shadow: 0 12px 26px var(--shadow);
+  }
+
+  .speech::after {
+    right: -7px;
+    bottom: 16px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .hero-panel {
+    min-height: 430px;
+    padding: 14px;
+  }
+
+  .hero-title {
+    max-width: 6.8ch;
+    font-size: clamp(3rem, 20vw, 5.4rem);
+  }
+
+  .hero-subtitle,
+  .hero-actions {
+    max-width: 64%;
+  }
+
+  .hero-mascot {
+    right: -50px;
+    width: 220px;
+  }
+
+  .hero-mascot img {
+    width: 196px;
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    right: 0 !important;
+    bottom: 102px !important;
+    width: 122px !important;
+    max-width: 122px !important;
+    padding: 8px 9px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .hero-subtitle,
+  .hero-actions {
+    max-width: 60%;
+  }
+
+  .hero-mascot {
+    right: -58px;
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    width: 112px !important;
+    max-width: 112px !important;
+    font-size: 0.68rem !important;
+  }
+}
+
+
+/* ============================================================
+   HERO MOBILE FIX v2
+   Fix: speech bubble no longer covers Eva sprite on phones.
+   Put this block at the VERY END of index/styles.css.
+   ============================================================ */
+
+@media (max-width: 620px) {
+  .hero-panel {
+    min-height: 580px !important;
+  }
+
+  .hero-panel > .eyebrow,
+  .hero-panel > .hero-title,
+  .hero-panel > .hero-subtitle,
+  .hero-panel > .hero-actions {
+    position: relative !important;
+    z-index: 4 !important;
+  }
+
+  .hero-title {
+    max-width: 9ch !important;
+  }
+
+  .hero-subtitle {
+    max-width: 58% !important;
+  }
+
+  .hero-actions {
+    max-width: 46% !important;
+  }
+
   .hero-mascot {
     position: absolute !important;
-    right: -15px !important;
-    bottom: 0 !important;
-    width: clamp(160px, 43vw, 270px) !important; /* Увеличили спрайт Евы по ширине */
-    height: 95% !important; /* Ева занимает почти всю высоту карточки */
-    max-height: none !important;
-    display: block !important;
-    pointer-events: none !important; /* Критично: клики проходят сквозь прозрачные области! */
+    right: -38px !important;
+    bottom: 6px !important;
+    z-index: 5 !important;
+    width: 220px !important;
+    height: 340px !important;
+    pointer-events: auto !important;
   }
 
   .hero-mascot img {
     position: absolute !important;
     right: 0 !important;
     bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    max-height: none !important;
+    width: 150px !important;
+    max-width: 150px !important;
+    max-height: 300px !important;
     object-fit: contain !important;
     object-position: right bottom !important;
-    pointer-events: auto !important; /* Сама Ева остается кликабельной */
   }
 
-  /* Облако реплики Евы */
-  .hero-mascot .speech,
-  .speech {
+  .hero-mascot .speech {
     position: absolute !important;
-    width: clamp(170px, 52vw, 240px) !important; /* Более компактные размеры */
-    right: clamp(120px, 35vw, 210px) !important; /* Строго слева от Евы */
-    bottom: clamp(175px, 42vw, 250px) !important; /* Подняли выше, полностью освобождая кнопки */
-    padding: 10px 12px !important;
-    font-size: clamp(0.75rem, 3.2vw, 0.88rem) !important;
-    line-height: 1.25 !important;
-    pointer-events: auto !important;
+    right: 150px !important;
+    bottom: 128px !important;
+    z-index: 6 !important;
+    width: 132px !important;
+    max-width: 132px !important;
+    padding: 9px 10px !important;
+    font-size: 0.74rem !important;
+    line-height: 1.22 !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  .hero-mascot .speech::after {
+    right: -7px !important;
+    bottom: 18px !important;
   }
 }
 
-/* Узкие экраны телефонов (iPhone SE и т.д.) */
-@media (max-width: 420px) {
+@media (max-width: 390px) {
   .hero-panel {
-    min-height: 540px !important;
+    min-height: 560px !important;
   }
+
+  .hero-title {
+    max-width: 8.5ch !important;
+  }
+
   .hero-subtitle {
-    max-width: 55% !important;
+    max-width: 56% !important;
   }
+
   .hero-actions {
-    bottom: 18px !important;
-    left: 14px !important;
-    max-width: calc(100% - 130px) !important; /* Избегаем нахлеста на ноги крупной Евы */
+    max-width: 48% !important;
+  }
+
+  .hero-mascot {
+    right: -42px !important;
+    bottom: 4px !important;
+    width: 210px !important;
+    height: 330px !important;
+  }
+
+  .hero-mascot img {
+    width: 142px !important;
+    max-width: 142px !important;
+    max-height: 290px !important;
+  }
+
+  .hero-mascot .speech {
+    right: 142px !important;
+    bottom: 126px !important;
+    width: 126px !important;
+    max-width: 126px !important;
+    padding: 8px 9px !important;
+    font-size: 0.71rem !important;
+    line-height: 1.2 !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .hero-panel {
+    min-height: 545px !important;
+  }
+
+  .hero-subtitle {
+    max-width: 54% !important;
+  }
+
+  .hero-mascot {
+    right: -46px !important;
+    width: 190px !important;
+    height: 315px !important;
+  }
+
+  .hero-mascot img {
+    width: 130px !important;
+    max-width: 130px !important;
+    max-height: 270px !important;
+  }
+
+  .hero-mascot .speech {
+    right: 132px !important;
+    bottom: 122px !important;
+    width: 116px !important;
+    max-width: 116px !important;
+    padding: 7px 8px !important;
+    font-size: 0.68rem !important;
+  }
+}
+
+/* ============================================================
+   HERO LAYER FIX
+   Eva sprite + speech bubble are always above hero UI.
+   Put this block at the VERY END of styles.css.
+   ============================================================ */
+
+.hero-panel {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+/* Всё содержимое героя — назад */
+.hero-panel > .eyebrow,
+.hero-panel > .hero-title,
+.hero-panel > .hero-subtitle,
+.hero-panel > .hero-actions {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Декор — самый задний слой */
+.hero-decoration,
+.hero-panel::before {
+  z-index: 1 !important;
+}
+
+/* Ева — перед текстом и кнопками */
+.hero-mascot {
+  position: absolute !important;
+  z-index: 30 !important;
+}
+
+/* Сам PNG спрайта тоже поверх */
+.hero-mascot img {
+  position: absolute !important;
+  z-index: 31 !important;
+}
+
+/* Облако диалога — самый верхний слой внутри hero */
+.hero-mascot .speech,
+.hero-panel > .speech,
+.hero-panel .speech {
+  position: absolute !important;
+  z-index: 40 !important;
+}
+
+/* Хвостик облака тоже поверх */
+.hero-mascot .speech::after,
+.hero-panel > .speech::after,
+.hero-panel .speech::after {
+  z-index: 41 !important;
+}
+
+/* На мобилке не даём старым фикс-блокам перебить слои */
+@media (max-width: 620px) {
+  .hero-panel > .eyebrow,
+  .hero-panel > .hero-title,
+  .hero-panel > .hero-subtitle,
+  .hero-panel > .hero-actions {
+    z-index: 2 !important;
+  }
+
+  .hero-mascot {
+    z-index: 30 !important;
+  }
+
+  .hero-mascot img {
+    z-index: 31 !important;
+  }
+
+  .hero-mascot .speech,
+  .hero-panel > .speech,
+  .hero-panel .speech {
+    z-index: 40 !important;
+  }
+}
+
+/* Responsive layout adjustments for small screens */
+@media (max-width: 600px) {
+  .hero-grid,
+  .metric-grid,
+  .lesson-grid,
+  .dictionary-grid,
+  .stats-grid,
+  .writing-layout,
+  .sentence-builder-grid,
+  .sentence-tiles {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile hero-block adjustments */
+
+@media (max-width: 768px) {
+  /* Reduce hero heading size on small screens */
+  .hero-title {
+    font-size: clamp(2.8rem, 12vw, 5.2rem);
+    line-height: 0.9;
+  }
+  /* Reposition the mascot and allow it to scale down */
+  .hero-mascot {
+    right: clamp(-8px, -2vw, -12px);
+    bottom: clamp(-4px, 3vw, 20px);
+    width: min(52vw, 260px);
+    height: auto;
+  }
+  .hero-mascot img {
+    width: min(42vw, 220px);
+    max-height: 280px;
+  }
+  /* Constrain the speech bubble and bring it closer on small screens */
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(130px, 48vw, 200px);
+    right: clamp(0px, 10vw, 48px);
+    bottom: clamp(90px, 20vw, 130px);
+  }
+}
+@media (max-width: 480px) {
+  /* Further reduce title size for phones */
+  .hero-title {
+    font-size: clamp(2.2rem, 14vw, 4rem);
   }
   .hero-mascot {
-    width: clamp(130px, 41vw, 170px) !important;
-    right: -10px !important;
+    width: min(58vw, 220px);
+  }
+  .hero-mascot img {
+    width: min(46vw, 200px);
   }
   .hero-mascot .speech,
   .speech {
-    width: clamp(165px, 60vw, 220px) !important;
-    right: clamp(100px, 36vw, 150px) !important;
-    bottom: clamp(155px, 38vw, 190px) !important; /* Корректируем высоту на ультра-узких дисплеях */
+    width: clamp(120px, 56vw, 180px);
+    right: clamp(0px, 6vw, 32px);
+  }
+}
+
+/* Patched z-index for hero speech bubble
+   Ensures the speech bubble and its tail render above the mascot and logo */
+.hero-panel > .speech,
+.hero-panel .speech,
+.hero-mascot .speech {
+  z-index: 50 !important;
+}
+
+.hero-panel > .speech::after,
+.hero-panel .speech::after,
+.hero-mascot .speech::after {
+  z-index: 51 !important;
+}
+
+/* Mobile Eva scale fix: adjust mascot size and position on small screens */
+@media (max-width: 768px) {
+  .hero-mascot {
+    position: absolute !important;
+    right: clamp(8px, 3vw, 24px) !important;
+    bottom: clamp(18px, 4vw, 42px) !important;
+    width: clamp(118px, 32vw, 220px) !important;
+    height: auto !important;
+    max-height: 72% !important;
+    z-index: 4 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+  }
+  .hero-mascot img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+  }
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(180px, 48vw, 270px) !important;
+    right: clamp(110px, 28vw, 190px) !important;
+    bottom: clamp(120px, 25vw, 180px) !important;
+    z-index: 5 !important;
+  }
+}
+@media (max-width: 420px) {
+  .hero-mascot {
+    width: clamp(112px, 34vw, 160px) !important;
+    right: clamp(6px, 2vw, 16px) !important;
+    bottom: clamp(20px, 5vw, 38px) !important;
+  }
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(170px, 56vw, 240px) !important;
+    right: clamp(95px, 30vw, 150px) !important;
+    bottom: clamp(125px, 32vw, 165px) !important;
   }
 }

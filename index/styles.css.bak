@@ -4459,3 +4459,163 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile hero-block adjustments */
+
+@media (max-width: 768px) {
+  /* Reduce hero heading size on small screens */
+  .hero-title {
+    font-size: clamp(2.8rem, 12vw, 5.2rem);
+    line-height: 0.9;
+  }
+  /* Reposition the mascot and allow it to scale down */
+  .hero-mascot {
+    right: clamp(-8px, -2vw, -12px);
+    bottom: clamp(-4px, 3vw, 20px);
+    width: min(52vw, 260px);
+    height: auto;
+  }
+  .hero-mascot img {
+    width: min(42vw, 220px);
+    max-height: 280px;
+  }
+  /* Constrain the speech bubble and bring it closer on small screens */
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(130px, 48vw, 200px);
+    right: clamp(0px, 10vw, 48px);
+    bottom: clamp(90px, 20vw, 130px);
+  }
+}
+@media (max-width: 480px) {
+  /* Further reduce title size for phones */
+  .hero-title {
+    font-size: clamp(2.2rem, 14vw, 4rem);
+  }
+  .hero-mascot {
+    width: min(58vw, 220px);
+  }
+  .hero-mascot img {
+    width: min(46vw, 200px);
+  }
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(120px, 56vw, 180px);
+    right: clamp(0px, 6vw, 32px);
+  }
+}
+
+/* Patched z-index for hero speech bubble
+   Ensures the speech bubble and its tail render above the mascot and logo */
+.hero-panel > .speech,
+.hero-panel .speech,
+.hero-mascot .speech {
+  z-index: 50 !important;
+}
+
+.hero-panel > .speech::after,
+.hero-panel .speech::after,
+.hero-mascot .speech::after {
+  z-index: 51 !important;
+}
+
+/* Mobile Eva scale fix: adjust mascot size and position on small screens */
+@media (max-width: 768px) {
+  .hero-mascot {
+    position: absolute !important;
+    right: clamp(8px, 3vw, 24px) !important;
+    bottom: clamp(18px, 4vw, 42px) !important;
+    width: clamp(118px, 32vw, 220px) !important;
+    height: auto !important;
+    max-height: 72% !important;
+    z-index: 4 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+  }
+  .hero-mascot img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+  }
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(180px, 48vw, 270px) !important;
+    right: clamp(110px, 28vw, 190px) !important;
+    bottom: clamp(120px, 25vw, 180px) !important;
+    z-index: 5 !important;
+  }
+}
+@media (max-width: 420px) {
+  .hero-mascot {
+    width: clamp(112px, 34vw, 160px) !important;
+    right: clamp(6px, 2vw, 16px) !important;
+    bottom: clamp(20px, 5vw, 38px) !important;
+  }
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(170px, 56vw, 240px) !important;
+    right: clamp(95px, 30vw, 150px) !important;
+    bottom: clamp(125px, 32vw, 165px) !important;
+  }
+}
+
+
+/* /* eva mobile patch */
+ * Responsive adjustments for the Eva mascot and speech bubble on mobile.
+ *
+ * These overrides ensure that the mascot remains inside the hero panel
+ * without overlapping the page title or action buttons.  CSS `clamp()`
+ * functions provide fluid sizing based on the viewport width.  The
+ * existing desktop styles remain in effect outside of these media queries.
+ */
+@media (max-width: 768px) {
+  .hero-mascot {
+    position: absolute;
+    /* Place Eva inside the hero panel on the right side */
+    right: clamp(8px, 3vw, 24px);
+    bottom: clamp(18px, 4vw, 42px);
+    /* Fluid width: roughly one third of the hero panel but never too small */
+    width: clamp(118px, 29vw, 180px);
+    /* Let height scale with the width; limit maximum height to stay within panel */
+    height: auto;
+    max-height: 72%;
+    z-index: 4;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+
+  .hero-mascot img {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  /* Tweak speech bubble positioning and width for smaller screens */
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(180px, 48vw, 270px);
+    right: clamp(110px, 28vw, 190px);
+    bottom: clamp(120px, 25vw, 180px);
+    z-index: 5;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero-mascot {
+    /* Narrower phones: reduce width and adjust offsets further */
+    width: clamp(112px, 34vw, 150px);
+    right: clamp(6px, 2vw, 16px);
+    bottom: clamp(20px, 5vw, 38px);
+  }
+
+  .hero-mascot .speech,
+  .speech {
+    width: clamp(170px, 56vw, 240px);
+    right: clamp(95px, 30vw, 150px);
+    bottom: clamp(125px, 32vw, 165px);
+  }
+}
