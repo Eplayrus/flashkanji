@@ -1,9 +1,9 @@
-﻿import os
+import os
 import shutil
 import re
 
 def find_css_file():
-    # Возможные пути до styles.css в стандартных проектах
+    # Ищем styles.css в стандартных директориях проекта
     search_paths = [
         "styles.css", 
         "public/styles.css", 
@@ -28,7 +28,7 @@ def main():
 
     backup_path = css_path + ".bak"
     
-    # 1. Создаем бэкап (если его нет)
+    # 1. Создаем бэкап (если его еще нет)
     if not os.path.exists(backup_path):
         shutil.copy2(css_path, backup_path)
         print(f"✅ Создан бэкап: {backup_path}")
@@ -39,24 +39,22 @@ def main():
     with open(css_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # 3. Ищем начало конфликтных патчей (или нашего предыдущего патча)
-    # Ищем строку /* =========================================================
-    #               MOBILE HERO FIX (любые вариации и V2/V3)
+    # 3. Ищем начало конфликтных патчей или нашей предыдущей версии
     regex_pattern = r'/\*\s*={10,}\s*\n\s*(FINAL UNIFIED )?MOBILE HERO( & EVA)? FIX[\s\S]*'
     match = re.search(regex_pattern, content)
 
     if match:
-        print("🗑️ Найдена старая версия фикса адаптива. Заменяем на обновленную (V3)...")
+        print("🗑️ Найдена старая версия фикса. Заменяем на ультра-крупную Еву (V4)...")
         clean_content = content[:match.start()].rstrip()
     else:
-        print("⚠️ Старые маркеры патчей не найдены. Фикс будет добавлен в самый конец файла.")
+        print("⚠️ Предыдущие маркеры патчей не найдены. Фикс будет добавлен в конец файла.")
         clean_content = content.rstrip()
 
-    # 4. Новый чистый блок CSS
+    # 4. Новый оптимизированный блок CSS для максимального размера Евы
     new_css = """
 /* =========================================================
-   FINAL UNIFIED MOBILE HERO & EVA FIX (V3)
-   Обеспечивает правильное позиционирование крупной Евы, облака и кнопок.
+   FINAL UNIFIED MOBILE HERO & EVA FIX (V4 - ULTRA LARGE)
+   Обеспечивает позиционирование ОЧЕНЬ крупной Евы без перекрытия кнопок.
    ========================================================= */
 
 /* Жесткая фиксация слоев для всех устройств */
@@ -94,7 +92,7 @@ def main():
 /* Адаптив для планшетов и мобильных */
 @media (max-width: 768px) {
   .hero-panel {
-    min-height: 580px !important; /* Даем больше высоты, чтобы уместить крупную Еву и элементы */
+    min-height: 590px !important; /* Немного увеличили высоту блока для гигантского спрайта */
   }
   .hero-title {
     font-size: clamp(2.5rem, 15vw, 4.2rem) !important;
@@ -102,32 +100,32 @@ def main():
     max-width: 8ch !important;
   }
   .hero-subtitle {
-    max-width: 58% !important; 
+    max-width: 55% !important; /* Слегка сузили текст, освобождая центр под облако диалога */
     font-size: clamp(0.8rem, 3vw, 0.95rem) !important;
     line-height: 1.3 !important;
   }
   
-  /* Фиксируем кнопки строго в левом нижнем углу */
+  /* Кнопки в левом нижнем углу */
   .hero-actions {
     position: absolute !important;
-    bottom: 20px !important;
+    bottom: 22px !important;
     left: 18px !important;
-    z-index: 45 !important; /* Всегда поверх облака и фона, чтобы быть кликабельными */
-    max-width: calc(100% - 150px) !important; /* Оставляем место Еве справа */
+    z-index: 45 !important;
+    max-width: calc(100% - 160px) !important; /* Жестко ограничиваем ширину кнопок, чтобы они не заходили под Еву */
     margin-top: 0 !important;
     pointer-events: auto !important;
   }
 
-  /* Контейнер маскота */
+  /* Контейнер маскота Евы */
   .hero-mascot {
     position: absolute !important;
-    right: -15px !important;
-    bottom: 0 !important;
-    width: clamp(160px, 43vw, 270px) !important; /* Увеличили спрайт Евы по ширине */
-    height: 95% !important; /* Ева занимает почти всю высоту карточки */
+    right: -25px !important; /* Больше сдвигаем вправо, чтобы огромный спрайт не мешал интерфейсу */
+    bottom: -15px !important; /* Чуть припускаем ноги за границу карточки для эффекта объема */
+    width: clamp(200px, 48vw, 320px) !important; /* Увеличили минимальную и максимальную ширину! */
+    height: 100% !important; /* Максимальный размер по высоте */
     max-height: none !important;
     display: block !important;
-    pointer-events: none !important; /* Критично: клики проходят сквозь прозрачные области! */
+    pointer-events: none !important; /* Клики проходят насквозь */
   }
 
   .hero-mascot img {
@@ -139,18 +137,18 @@ def main():
     max-height: none !important;
     object-fit: contain !important;
     object-position: right bottom !important;
-    pointer-events: auto !important; /* Сама Ева остается кликабельной */
+    pointer-events: auto !important; /* Сама Ева кликабельна */
   }
 
   /* Облако реплики Евы */
   .hero-mascot .speech,
   .speech {
     position: absolute !important;
-    width: clamp(170px, 52vw, 240px) !important; /* Более компактные размеры */
-    right: clamp(120px, 35vw, 210px) !important; /* Строго слева от Евы */
-    bottom: clamp(175px, 42vw, 250px) !important; /* Подняли выше, полностью освобождая кнопки */
+    width: clamp(160px, 46vw, 220px) !important; /* Оптимальная ширина */
+    right: clamp(125px, 41vw, 200px) !important; /* Смещено левее относительно укрупненного тела Евы */
+    bottom: clamp(190px, 44vw, 260px) !important; /* Поднято выше к голове, полностью открывая кнопки */
     padding: 10px 12px !important;
-    font-size: clamp(0.75rem, 3.2vw, 0.88rem) !important;
+    font-size: clamp(0.75rem, 3vw, 0.88rem) !important;
     line-height: 1.25 !important;
     pointer-events: auto !important;
   }
@@ -159,25 +157,25 @@ def main():
 /* Узкие экраны телефонов (iPhone SE и т.д.) */
 @media (max-width: 420px) {
   .hero-panel {
-    min-height: 540px !important;
+    min-height: 550px !important;
   }
   .hero-subtitle {
-    max-width: 55% !important;
+    max-width: 52% !important;
   }
   .hero-actions {
     bottom: 18px !important;
     left: 14px !important;
-    max-width: calc(100% - 130px) !important; /* Избегаем нахлеста на ноги крупной Евы */
+    max-width: calc(100% - 150px) !important; /* Защита от наезжания на ноги */
   }
   .hero-mascot {
-    width: clamp(130px, 41vw, 170px) !important;
-    right: -10px !important;
+    width: clamp(160px, 46vw, 190px) !important; /* Максимальное масштабирование на телефонах */
+    right: -20px !important;
   }
   .hero-mascot .speech,
   .speech {
-    width: clamp(165px, 60vw, 220px) !important;
-    right: clamp(100px, 36vw, 150px) !important;
-    bottom: clamp(155px, 38vw, 190px) !important; /* Корректируем высоту на ультра-узких дисплеях */
+    width: clamp(150px, 54vw, 200px) !important;
+    right: clamp(115px, 40vw, 150px) !important;
+    bottom: clamp(180px, 42vw, 210px) !important; /* Балансируем облако над кнопками */
   }
 }
 """
@@ -187,7 +185,7 @@ def main():
         f.write(clean_content + "\n\n" + new_css)
     
     print(f"✅ Файл успешно обновлен: {css_path}")
-    print("🚀 Изменения применены (Ева увеличена, облако поднято). Проверьте отображение на мобильном устройстве.")
+    print("🚀 Изменения применены. Ева стала значительно больше, а облако и кнопки разведены.")
 
 if __name__ == "__main__":
     main()

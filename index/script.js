@@ -9635,3 +9635,97 @@ async function loadCourse() {
     return escapeHtml(value);
   }
 })();
+
+/**
+ * ЧАСТЬ 1: Безопасный клиентский скрипт регистрации Service Worker.
+ * Этот код размещается в основном JS-файле (index.js / App.jsx) или подключается в index.html.
+ */
+
+const APP_VERSION = 'v1.0.2'; // Меняйте версию при каждом деплое
+
+function registerServiceWorkerWithCacheBuster() {
+  if ('serviceWorker' in navigator) {
+    // КРИТИЧЕСКИЙ ФИКС: Запоминаем, управлял ли уже сервис-воркер страницей при загрузке.
+    // Если "wasControlled" равен false, значит это первая установка приложения пользователем.
+    // В таком случае перезагрузка страницы НЕ нужна и только сломает инициализацию React!
+    const wasControlled = !!navigator.serviceWorker.controller;
+
+    // Регистрируем sw.js без query-параметров, так как Vite/Webpack могут отдавать 404 на пути с "?"
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker зарегистрирован с версией:', APP_VERSION);
+
+        // Проверяем наличие обновлений SW в фоновом режиме
+        registration.update();
+
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              // Если новый SW успешно скачался и установился
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('Доступно новое обновление! Активируем...');
+                // Даем команду новому SW немедленно занять рабочее место
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('Ошибка регистрации Service Worker:', error);
+      });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // Перезагружаем страницу ТОЛЬКО если старая версия SW заменяется на новую.
+      // Если это просто первичная активация SW для нового пользователя — не трогаем вкладку!
+      if (wasControlled && !refreshing) {
+        refreshing = true;
+        console.log('PWA успешно обновлено до версии:', APP_VERSION);
+        window.location.reload(); // Мягкая перезагрузка для подтягивания нового кэша
+      }
+    });
+  }
+}
+
+// Запуск после полной загрузки всех ресурсов страницы
+window.addEventListener('load', () => {
+  registerServiceWorkerWithCacheBuster();
+});
+
+
+/**
+ * ЧАСТЬ 2: Обработчики для sw.js (в корневом файле вашего сервис-воркера).
+ */
+
+/*
+// Код ниже должен находиться внутри вашего sw.js:
+
+const CACHE_NAME = 'flash-kanji-cache-v1.0.2'; // Версия кэша должна совпадать с APP_VERSION
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting()); // Позволяет новому SW сразу активироваться
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[Service Worker] Удаление старого кэша:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim()) // Захватывает управление вкладками без перезагрузки
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+*/
