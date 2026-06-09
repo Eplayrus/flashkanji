@@ -3,7 +3,22 @@
     "id": "bulk-n3-19",
     "title": "N3: медиа и общество 19",
     "jlpt": "N3",
-    "order": 36
+    "order": 36,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -45,7 +60,25 @@
       "onyomi": "びょう",
       "onyomi_romaji": "byou",
       "kunyomi": "ねこ",
-      "kunyomi_romaji": "neko"
+      "kunyomi_romaji": "neko",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: кошка, кот; кошачий; слова: 猫又, 子猫."
+      }
     },
     {
       "id": 10593,
@@ -86,7 +119,25 @@
       "onyomi": "き",
       "onyomi_romaji": "ki",
       "kunyomi": "いく / いくつ / いくら",
-      "kunyomi_romaji": "iku / ikutsu / ikura"
+      "kunyomi_romaji": "iku / ikutsu / ikura",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: how far, how long, how many, how much; слова: 幾つ, 幾つか."
+      }
     }
   ]
 }

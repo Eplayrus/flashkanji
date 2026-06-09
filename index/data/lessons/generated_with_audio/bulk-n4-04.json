@@ -3,7 +3,22 @@
     "id": "bulk-n4-04",
     "title": "N4: повседневные интерфейсы 04",
     "jlpt": "N4",
-    "order": 13
+    "order": 13,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -41,7 +56,50 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10132-shina.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10132-shina.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: вещь; товар; качество (вещи); англ. опора: goods, refinement, dignity, article; слова: 作品, 需品, 食品表示, 乳製品.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ヒン",
+          "kunyomi": "しな",
+          "meaning_en": "goods, refinement, dignity, article",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "食品表示",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "乳製品",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ヒン",
+      "kunyomi": "しな"
     },
     {
       "id": 10133,
@@ -78,7 +136,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10133-kei.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10133-kei.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: план; замысел; (перед числом:) всего, итого, в сумме; англ. опора: plot, plan, scheme, measure; слова: 家計, 術計, 時計, 小計, 合計.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ケイ",
+          "kunyomi": "( / ) はか(る)",
+          "meaning_en": "plot, plan, scheme, measure",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "時計",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "小計",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "合計",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ケイ",
+      "kunyomi": "( / ) はか(る)"
     },
     {
       "id": 10134,
@@ -115,7 +223,50 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10134-shi.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10134-shi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: смерть, кончина; англ. опора: death, die; слова: 死面, 死海, 死ぬ, 死んだ.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "シ",
+          "kunyomi": "( / ) し(ぬ)",
+          "meaning_en": "death, die",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "死ぬ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "死んだ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "シ",
+      "kunyomi": "( / ) し(ぬ)"
     },
     {
       "id": 10135,
@@ -152,7 +303,55 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10135-toku.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10135-toku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: special; англ. опора: special; слова: 特典, 特性, 特定技能, 教材の特, 節の特.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "トク",
+          "meaning_en": "special",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "特定技能",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "教材の特",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "節の特",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "トク"
     },
     {
       "id": 10136,
@@ -189,7 +388,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10136-watashi.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10136-watashi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: я; мой; англ. опора: private, I, me; слова: 私室, 私印, 今の私, の学今の私, 私の町.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "シ",
+          "kunyomi": "わたくし /  わたし",
+          "meaning_en": "private, I, me",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "今の私",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "の学今の私",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "私の町",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "シ",
+      "kunyomi": "わたくし /  わたし"
     },
     {
       "id": 10137,
@@ -226,7 +475,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10137-hajimeru.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10137-hajimeru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: begin, commence; англ. опора: commence, begin; слова: 始動, 始終, 始まる, 始める, 始めた.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "シ",
+          "kunyomi": "( / ) はじ(める)",
+          "meaning_en": "commence, begin",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "始まる",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "始める",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "始めた",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "シ",
+      "kunyomi": "( / ) はじ(める)"
     },
     {
       "id": 10138,
@@ -263,7 +562,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10138-chou.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10138-chou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: династия; царствование; англ. опора: morning; слова: 朝鮮, 朝顔, 毎朝, 朝青龍, 朝ご飯の定番.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "チョウ",
+          "kunyomi": "あさ",
+          "meaning_en": "morning",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "毎朝",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "朝青龍",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "朝ご飯の定番",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "チョウ",
+      "kunyomi": "あさ"
     },
     {
       "id": 10139,
@@ -300,7 +649,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10139-un.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10139-un.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: участь, судьба; успех, удача; англ. опора: carry, luck, destiny, fate, transport; слова: 悲運, 運河, 運動する, 運命, 運命の赤い糸.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ウン",
+          "kunyomi": "( / ) はこ(ぶ)",
+          "meaning_en": "carry, luck, destiny, fate, transport",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "運動する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "運命",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "運命の赤い糸",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ウン",
+      "kunyomi": "( / ) はこ(ぶ)"
     },
     {
       "id": 10140,
@@ -337,7 +736,50 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10140-tsui.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10140-tsui.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: конец; (обр.) кончина; англ. опора: end, finish; слова: 終末, 始終, 終わる, で終わる.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "シュウ",
+          "kunyomi": "( / ) お(わる)",
+          "meaning_en": "end, finish",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "終わる",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "で終わる",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "シュウ",
+      "kunyomi": "( / ) お(わる)"
     },
     {
       "id": 10141,
@@ -374,7 +816,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10141-dai.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10141-dai.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: (в геогр. названиях) плато, возвышенность; уровень (цен); англ. опора: pedestal, a stand, counter for machines and vehicles; слова: 台木, 尊台, 台風, 舞台, 洗面台.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ダイ /  タイ",
+          "kunyomi": "うてな",
+          "meaning_en": "pedestal, a stand, counter for machines and vehicles",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "台風",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "舞台",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "洗面台",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ダイ /  タイ",
+      "kunyomi": "うてな"
     },
     {
       "id": 10142,
@@ -411,7 +903,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10142-hiroi.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10142-hiroi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: broad, spacious, wide; англ. опора: wide, broad, spacious; слова: 広大, 広東, 広い, 広島県, 家賃や広さ.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "コウ",
+          "kunyomi": "( / ) ひろ(い)",
+          "meaning_en": "wide, broad, spacious",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "広い",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "広島県",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "家賃や広さ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "コウ",
+      "kunyomi": "( / ) ひろ(い)"
     },
     {
       "id": 10143,
@@ -448,7 +990,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10143-zumai.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10143-zumai.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: dwell, inhabit, live, reside; англ. опора: dwell, reside, live, inhabit; слова: 居住権, 住宅地, 住所, 住みやすい, どこに住む.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ジュウ /  チュウ",
+          "kunyomi": "( / ) す(む)",
+          "meaning_en": "dwell, reside, live, inhabit",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "住所",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "住みやすい",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "どこに住む",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ジュウ /  チュウ",
+      "kunyomi": "( / ) す(む)"
     },
     {
       "id": 10144,
@@ -485,7 +1077,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10144-ma.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10144-ma.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: правда, истина; англ. опора: true, reality, Buddhist sect; слова: 真の, 真鯵, 写真やイラス, ことばや写真, この写真.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "シン",
+          "kunyomi": "ま /  まこと",
+          "meaning_en": "true, reality, Buddhist sect",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "写真やイラス",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "ことばや写真",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "この写真",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "シン",
+      "kunyomi": "ま /  まこと"
     },
     {
       "id": 10145,
@@ -522,7 +1164,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10145-yuu.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10145-yuu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: обладание; ゆうする; англ. опора: possess, have, exist, happen; слова: 有煙炭, 有段者, 有名, 有給休暇, 桜で有.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ユウ /  ウ",
+          "kunyomi": "( / ) あ(る)",
+          "meaning_en": "possess, have, exist, happen",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "有名",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "有給休暇",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "桜で有",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ユウ /  ウ",
+      "kunyomi": "( / ) あ(る)"
     },
     {
       "id": 10146,
@@ -559,7 +1251,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10146-kuchi.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10146-kuchi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: рот; уста, губы; брать (класть) в рот; есть, пить; (ср. то же) 2; англ. опора: mouth; слова: 口糧, 口受, 北口, 入口, 山口.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "コウ",
+          "kunyomi": "くち",
+          "meaning_en": "mouth",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "北口",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "入口",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "山口",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "コウ",
+      "kunyomi": "くち"
     },
     {
       "id": 10147,
@@ -596,7 +1338,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10147-shou.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10147-shou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: ; мало, немного; англ. опора: few, little; слова: 少佐, 少将, 少ない, 少し, 少なく.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ショウ",
+          "kunyomi": "( / ) / ( / ) すく(ない) /  すこ(し)",
+          "meaning_en": "few, little",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "少ない",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "少し",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "少なく",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ショウ",
+      "kunyomi": "( / ) / ( / ) すく(ない) /  すこ(し)"
     },
     {
       "id": 10148,
@@ -633,7 +1425,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10148-chou.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10148-chou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: тё: (мера длины = 109,09 м); ちょうぶ【町歩】; англ. опора: town, village, block, street; слова: 町民, 裏町, 私の町, どんな町, 町について.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "チョウ",
+          "kunyomi": "まち",
+          "meaning_en": "town, village, block, street",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "私の町",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "どんな町",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "町について",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "チョウ",
+      "kunyomi": "まち"
     },
     {
       "id": 10149,
@@ -670,7 +1512,55 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10149-ryou.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10149-ryou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: fee, materials; англ. опора: fee, materials; слова: 料亭, 塗料, おいしい料理, 無料, 料理教室.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "リョウ",
+          "meaning_en": "fee, materials",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "おいしい料理",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "無料",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "料理教室",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "リョウ"
     },
     {
       "id": 10150,
@@ -707,7 +1597,55 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10150-kou.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10150-kou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: работа; англ. опора: craft, construction; слова: 図工, 技工, 工場で働く, 工場で働いて, 工場.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "コウ /  ク /  グ",
+          "meaning_en": "craft, construction",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "工場で働く",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "工場で働いて",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "工場",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "コウ /  ク /  グ"
     },
     {
       "id": 10151,
@@ -744,7 +1682,57 @@
         "Nintendo eShop"
       ],
       "interface_use": "Встречается в словах уровня N4: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n4/bulk-n4-04/10151-date.mp3"
+      "audio": "/audio/kanji/n4/bulk-n4-04/10151-date.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: строить; англ. опора: build; слова: 建具, 建値, 建物, 建物・場所, 一戸建て.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ケン /  コン",
+          "kunyomi": "( / ) た(てる)",
+          "meaning_en": "build",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "建物",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "建物・場所",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "一戸建て",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ケン /  コン",
+      "kunyomi": "( / ) た(てる)"
     }
   ]
 }

@@ -3,7 +3,22 @@
     "id": "bulk-n3-03",
     "title": "N3: медиа и общество 03",
     "jlpt": "N3",
-    "order": 20
+    "order": 20,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -45,7 +60,55 @@
       "onyomi": "か",
       "onyomi_romaji": "ka",
       "kunyomi": "くわえる / くわわる",
-      "kunyomi_romaji": "kuwaeru / kuwawaru"
+      "kunyomi_romaji": "kuwaeru / kuwawaru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: прибавление; плюс; (мат.) сложение; англ. опора: add, addition, increase, join; слова: 五加, 加給, 参加する, 室に参加, 室に参加して.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "カ",
+          "kunyomi": "( / ) くわ(える)",
+          "meaning_en": "add, addition, increase, join",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "参加する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "室に参加",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "室に参加して",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10273,
@@ -86,7 +149,55 @@
       "onyomi": "じゅ",
       "onyomi_romaji": "ju",
       "kunyomi": "うけ / うかる / うける",
-      "kunyomi_romaji": "uke / ukaru / ukeru"
+      "kunyomi_romaji": "uke / ukaru / ukeru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: принимать, answer (phone), catch, get; англ. опора: accept, undergo, answer (phone), take; слова: 口受, 受戒, 受付, 受理番号, 受身.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "ジュ",
+          "kunyomi": "( / ) う(ける)",
+          "meaning_en": "accept, undergo, answer (phone), take",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "受付",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "受理番号",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "受身",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10274,
@@ -127,7 +238,55 @@
       "onyomi": "きょう / こう / しょく / ぞく",
       "onyomi_romaji": "kyou / kou / shoku / zoku",
       "kunyomi": "つぐない / つづく / つづける",
-      "kunyomi_romaji": "tsugunai / tsuzuku / tsuzukeru"
+      "kunyomi_romaji": "tsugunai / tsuzuku / tsuzukeru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: продолжать, sequel, series; англ. опора: continue, series, sequel; слова: 続稿, 続柄, 接続, 接続の表現, 文に接続して.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "ゾク",
+          "kunyomi": "つづ(く)",
+          "meaning_en": "continue, series, sequel",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "接続",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "接続の表現",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "文に接続して",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10275,
@@ -168,7 +327,48 @@
       "onyomi": "しん",
       "onyomi_romaji": "shin",
       "kunyomi": "すすむ / すすめる",
-      "kunyomi_romaji": "susumu / susumeru"
+      "kunyomi_romaji": "susumu / susumeru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: продвигаться, proceed, progress, promote; англ. опора: advance, proceed; слова: 上進, 進路, 進撃の巨人, 進む.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "シン",
+          "kunyomi": "( / ) すす(む)",
+          "meaning_en": "advance, proceed",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "進撃の巨人",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "進む",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10276,
@@ -209,7 +409,55 @@
       "onyomi": "さく / しゅ / す / すう / そく",
       "onyomi_romaji": "saku / shu / su / suu / soku",
       "kunyomi": "かず / かぞえる / しばしば / せめる / わずらわしい",
-      "kunyomi_romaji": "kazu / kazoeru / shibashiba / semeru / wazurawashii"
+      "kunyomi_romaji": "kazu / kazoeru / shibashiba / semeru / wazurawashii",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: число; цифра; численность; (ср.) すうてき【数的】; англ. опора: number, strength, fate, law, figures; слова: 常数, 口数, 数字, 人数, 回数.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "スウ",
+          "kunyomi": "( / ) かず /  かぞ(える)",
+          "meaning_en": "number, strength, fate, law, figures",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "数字",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "人数",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "回数",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10277,
@@ -250,7 +498,55 @@
       "onyomi": "き",
       "onyomi_romaji": "ki",
       "kunyomi": "しるす",
-      "kunyomi_romaji": "shirusu"
+      "kunyomi_romaji": "shirusu",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: хроника, летопись; записки; описание; (ср.) きする【記する】; англ. опора: scribe, account, narrative; слова: 雑記, 記号, 自由に記, 記入する, で記.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "キ",
+          "kunyomi": "( / ) しる(す)",
+          "meaning_en": "scribe, account, narrative",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "自由に記",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "記入する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "で記",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10278,
@@ -291,7 +587,48 @@
       "onyomi": "しょ",
       "onyomi_romaji": "sho",
       "kunyomi": "そめる / ぞめ / うい / はじめ / はじめて",
-      "kunyomi_romaji": "someru / zome / ui / hajime / hajimete"
+      "kunyomi_romaji": "someru / zome / ui / hajime / hajimete",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: начало; первый; новый; англ. опора: first time, beginning; слова: 初志, 初婚, 最初, 書き初め.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "ショ",
+          "kunyomi": "( / ) / はじ(め) / はつ",
+          "meaning_en": "first time, beginning",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "最初",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "書き初め",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10279,
@@ -332,7 +669,55 @@
       "onyomi": "し",
       "onyomi_romaji": "shi",
       "kunyomi": "さし / さす / ゆび",
-      "kunyomi_romaji": "sashi / sasu / yubi"
+      "kunyomi_romaji": "sashi / sasu / yubi",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: палец; англ. опора: finger, point to, indicate; слова: 指頭, 小指, どんな指示, 指定席, 文脈指示.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "シ",
+          "kunyomi": "( / ) ゆび / さ(す)",
+          "meaning_en": "finger, point to, indicate",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "どんな指示",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "指定席",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "文脈指示",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10280,
@@ -373,7 +758,41 @@
       "onyomi": "し",
       "onyomi_romaji": "shi",
       "kunyomi": "かう / ささえる / つかえる",
-      "kunyomi_romaji": "kau / sasaeru / tsukaeru"
+      "kunyomi_romaji": "kau / sasaeru / tsukaeru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: branch, branch radical (no. 65), support, sustain; англ. опора: branch, support, sustain; слова: 支庁, 支隊, 金の支払.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "シ",
+          "kunyomi": "( / ) ささ(える)",
+          "meaning_en": "branch, support, sustain",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "金の支払",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10281,
@@ -414,7 +833,55 @@
       "onyomi": "さん",
       "onyomi_romaji": "san",
       "kunyomi": "うまれる / うむ / うぶ / むす",
-      "kunyomi_romaji": "umareru / umu / ubu / musu"
+      "kunyomi_romaji": "umareru / umu / ubu / musu",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: роды; рожать; англ. опора: products, bear, give birth; слова: 産物, 逆産, お土産, 不動産会社, 不動産.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "サン",
+          "kunyomi": "( / ) / ( / ) う(む) /  む(す)",
+          "meaning_en": "products, bear, give birth",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "お土産",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "不動産会社",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "不動産",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10282,
@@ -455,7 +922,55 @@
       "onyomi": "てん",
       "onyomi_romaji": "ten",
       "kunyomi": "さす / たてる / つく / つける / とぼす",
-      "kunyomi_romaji": "sasu / tateru / tsuku / tsukeru / tobosu"
+      "kunyomi_romaji": "sasu / tateru / tsuku / tsukeru / tobosu",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: точка (в частности, в иероглифах); запятая; англ. опора: spot, point, mark; слова: 原点, 視点, 時点, 過去の時点, 交差点.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "テン",
+          "kunyomi": "( / ) つ(ける)",
+          "meaning_en": "spot, point, mark",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "時点",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "過去の時点",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "交差点",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10283,
@@ -496,7 +1011,41 @@
       "onyomi": "さい / せい",
       "onyomi_romaji": "sai / sei",
       "kunyomi": "すます / ずみ / すまない / すむ / すくう",
-      "kunyomi_romaji": "sumasu / zumi / sumanai / sumu / sukuu"
+      "kunyomi_romaji": "sumasu / zumi / sumanai / sumu / sukuu",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: come to an end, excusable, finish, need not; англ. опора: settle, relieve, finish; слова: 未済, 経済界, バブル経済.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "サイ / セイ",
+          "kunyomi": "( / ) す(む)",
+          "meaning_en": "settle, relieve, finish",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "バブル経済",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10284,
@@ -537,7 +1086,54 @@
       "onyomi": "かつ",
       "onyomi_romaji": "katsu",
       "kunyomi": "いかす / いきる / いける",
-      "kunyomi_romaji": "ikasu / ikiru / ikeru"
+      "kunyomi_romaji": "ikasu / ikiru / ikeru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: приведение в чувство, оживление; англ. опора: living; слова: 活歴, 死活, で生活し, 生活の日本語, 活の日本語.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "カツ",
+          "meaning_en": "living",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "で生活し",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "生活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10285,
@@ -578,7 +1174,55 @@
       "onyomi": "げん",
       "onyomi_romaji": "gen",
       "kunyomi": "はら",
-      "kunyomi_romaji": "hara"
+      "kunyomi_romaji": "hara",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: поле; равнина; степь; англ. опора: original, primitive, field; слова: 原隊, 原点, 原因・理由, 原因によって, 原稿.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "ゲン",
+          "kunyomi": "はら",
+          "meaning_en": "original, primitive, field",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "原因・理由",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "原因によって",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "原稿",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10286,
@@ -619,7 +1263,55 @@
       "onyomi": "きょう",
       "onyomi_romaji": "kyou",
       "kunyomi": "ども / とも / ともに",
-      "kunyomi_romaji": "domo / tomo / tomoni"
+      "kunyomi_romaji": "domo / tomo / tomoni",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: (после сущ. обозначающего два, редко три понятия) и… и…; (что-л.) включая (ещё что-л.; иногда не переводится); (после сокращённых названий стран придаёт им предметное значение:); англ. опора: together, both, neither; слова: 共生, 共存, 共感, 公共の入浴施, 共同.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "キョウ",
+          "kunyomi": "とも",
+          "meaning_en": "together, both, neither",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "共感",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "公共の入浴施",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "共同",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10287,
@@ -660,7 +1352,41 @@
       "onyomi": "とく",
       "onyomi_romaji": "toku",
       "kunyomi": "うる / える",
-      "kunyomi_romaji": "uru / eru"
+      "kunyomi_romaji": "uru / eru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: выгода; прибыль; выгодный; прибыльный, доходный; англ. опора: gain, get, find, earn, acquire, can, may, able to, profit; слова: 得分, 所得, 得意.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "トク",
+          "kunyomi": "( / ) え(る)",
+          "meaning_en": "gain, get, find, earn, acquire, can, may, able to, profit",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "得意",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10288,
@@ -701,7 +1427,55 @@
       "onyomi": "かい / げ",
       "onyomi_romaji": "kai / ge",
       "kunyomi": "さとる / とかす / とく / とける / ほどく",
-      "kunyomi_romaji": "satoru / tokasu / toku / tokeru / hodoku"
+      "kunyomi_romaji": "satoru / tokasu / toku / tokeru / hodoku",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: ; объяснение; комментарии; англ. опора: unravel, explanation; слова: 略解, 金解禁, 相互理解, 解答, 解する.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "カイ / ゲ",
+          "kunyomi": "( / ) / ( / ) と(く) / ほど(く)",
+          "meaning_en": "unravel, explanation",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "相互理解",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "解答",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "解する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10289,
@@ -742,7 +1516,55 @@
       "onyomi": "こう",
       "onyomi_romaji": "kou",
       "kunyomi": "かう / かわす / こもごも / まざる / まじる",
-      "kunyomi_romaji": "kau / kawasu / komogomo / mazaru / majiru"
+      "kunyomi_romaji": "kau / kawasu / komogomo / mazaru / majiru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: рубеж (напр. двух эпох, веков); переходный период; англ. опора: mingle, mixing, association, coming & going; слова: 交情, 直交, 交流基金, 交換, 国際交流協会.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "コウ",
+          "kunyomi": "( / ) / ( / ) / ( / ) まじ(わる) /  ま(ぜる) /  か(わす)",
+          "meaning_en": "mingle, mixing, association, coming & going",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "交流基金",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "交換",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "国際交流協会",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10290,
@@ -783,7 +1605,54 @@
       "onyomi": "し",
       "onyomi_romaji": "shi",
       "kunyomi": "",
-      "kunyomi_romaji": ""
+      "kunyomi_romaji": "",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: ; средства, ресурсы; капиталы; фонды; материалы; англ. опора: assets, resources, capital, funds, data, be conducive to; слова: 労資, 資本金, 在留資格, の資, 資料.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "シ",
+          "meaning_en": "assets, resources, capital, funds, data, be conducive to",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "在留資格",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "の資",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "資料",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10291,
@@ -824,7 +1693,55 @@
       "onyomi": "しゃ / よ",
       "onyomi_romaji": "sha / yo",
       "kunyomi": "あらかじめ",
-      "kunyomi_romaji": "arakajime"
+      "kunyomi_romaji": "arakajime",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: I, beforehand, myself, previous; англ. опора: beforehand, previous, myself, I; слова: 予震, 予後, 天気予報, 予防法など, 開花予想.",
+        "jlpt_reference": {
+          "jlpt": "N3",
+          "onyomi": "ヨ /  シャ",
+          "kunyomi": "( / ) あらかじ(め)",
+          "meaning_en": "beforehand, previous, myself, I",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "天気予報",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "予防法など",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "開花予想",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     }
   ]
 }

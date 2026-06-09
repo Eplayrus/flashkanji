@@ -3,7 +3,22 @@
     "id": "bulk-n3-06",
     "title": "N3: медиа и общество 06",
     "jlpt": "N3",
-    "order": 23
+    "order": 23,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -41,7 +56,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10332-nou.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10332-nou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: способности; способный; слова: 低能児, 万能薬, 特定技能, 定技能, 可能形.",
+        "textbook_examples": [
+          {
+            "word": "特定技能",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "定技能",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "可能形",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10333,
@@ -78,7 +134,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10333-kurai.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10333-kurai.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: (суф. после числ.) около; (часто не переводится); (послелог) настолько; так…, что; слова: 順位, 変位, 地位の上下, 役職の地位, 位に選ばれ.",
+        "textbook_examples": [
+          {
+            "word": "地位の上下",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "役職の地位",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "位に選ばれ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10334,
@@ -115,7 +212,41 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10334-oki.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10334-oki.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: deposit, employ, keep, leave behind; слова: 置換, 措置, 置く, に置き換える.",
+        "textbook_examples": [
+          {
+            "word": "置く",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "に置き換える",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10335,
@@ -152,7 +283,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10335-nagasu.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10335-nagasu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: a sink, current, flow, forfeit; слова: 急流, 直流, 交流基金, 話の流, 国際交流協会.",
+        "textbook_examples": [
+          {
+            "word": "交流基金",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "話の流",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "国際交流協会",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10336,
@@ -189,7 +361,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10336-kaku.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10336-kaku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: разряд, ранг; положение; ценз; правило; норма; слова: 格式, 欠格, 在留資格, 格等, 合格する.",
+        "textbook_examples": [
+          {
+            "word": "在留資格",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "格等",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "合格する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10337,
@@ -226,7 +439,34 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10337-utagau.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10337-utagau.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: be suspicious, distrust, doubt, вопрос; слова: 疑雲, 猜疑, 疑問詞.",
+        "textbook_examples": [
+          {
+            "word": "疑問詞",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10338,
@@ -263,7 +503,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10338-ayamachi.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10338-ayamachi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: error, exceed, go beyond, overdo; слова: 過半, 濾過器, 非過去・過去, 過去の時点, 非過去.",
+        "textbook_examples": [
+          {
+            "word": "非過去・過去",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "過去の時点",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "非過去",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10339,
@@ -300,7 +581,34 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10339-kyoku.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10339-kyoku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: управление; бюро; [центральная] телефонная станция; слова: 本局, 局報, 郵便局.",
+        "textbook_examples": [
+          {
+            "word": "郵便局",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10340,
@@ -337,7 +645,34 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10340-ppanashi.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10340-ppanashi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: banish, emit, огонь, liberate; слова: 放す, 放下, 追放する.",
+        "textbook_examples": [
+          {
+            "word": "追放する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10341,
@@ -374,7 +709,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10341-tsune.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10341-tsune.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: постоянство; постоянно; (ср.) つねなき; слова: 常数, 常客, 日本の日常, 非常に強い風, 通常.",
+        "textbook_examples": [
+          {
+            "word": "日本の日常",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "非常に強い風",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "通常",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10342,
@@ -411,7 +787,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10342-jou.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10342-jou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: письмо; послание (чаще в сложн. сл.); положение, обстоятельства, состояние; вид; слова: 賞状, 賀状, りの状, 病名や症状, 状態か.",
+        "textbook_examples": [
+          {
+            "word": "りの状",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "病名や症状",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "状態か",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10343,
@@ -448,7 +865,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10343-kyuu.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10343-kyuu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: (счётный суф. для электроламп, радиоламп); слова: 球場, 綿球, 野球, 高校野球, 球団.",
+        "textbook_examples": [
+          {
+            "word": "野球",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "高校野球",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "球団",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10344,
@@ -485,7 +943,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10344-shoku.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10344-shoku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: профессия, работа, специальность; быть по профессии (кем-л.); слова: 教職, 職権, 役職の地位, 職場の昼, 職場で大.",
+        "textbook_examples": [
+          {
+            "word": "役職の地位",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "職場の昼",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "職場で大",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10345,
@@ -522,7 +1021,34 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10345-azukaru.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10345-azukaru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: award, bestow, причина, gift; слова: 与力, 与え, 与える.",
+        "textbook_examples": [
+          {
+            "word": "与える",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10346,
@@ -559,7 +1085,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10346-tomo.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10346-tomo.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: спутник; сопровождать; слова: 子供服, 女子供, 画像提供元, に提供した, 間に提供する.",
+        "textbook_examples": [
+          {
+            "word": "画像提供元",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "に提供した",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "間に提供する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10347,
@@ -596,7 +1163,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10347-yaku.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10347-yaku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: служба, должность; назначение; (театр.) роль; слова: 助役, 役夫, おくと役, 役職の地位, 動に役.",
+        "textbook_examples": [
+          {
+            "word": "おくと役",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "役職の地位",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "動に役",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10348,
@@ -633,7 +1241,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10348-kamau.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10348-kamau.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: appearance, строить, posture, set up; слова: 面構え, 構成主義, 教材の構成, 各課の構成, の流れや構成.",
+        "textbook_examples": [
+          {
+            "word": "教材の構成",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "各課の構成",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "の流れや構成",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10349,
@@ -670,7 +1319,34 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10349-saku.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10349-saku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: comparatively, резать, делить, proportion; слова: 割子, 割れ, 割り勘.",
+        "textbook_examples": [
+          {
+            "word": "割り勘",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10350,
@@ -707,7 +1383,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10350-tsuieru.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10350-tsuieru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: consume, cost, expense, spend; слова: 会費, 食費, 費用, 消費期限, 消費税.",
+        "textbook_examples": [
+          {
+            "word": "費用",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "消費期限",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "消費税",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10351,
@@ -744,7 +1461,48 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-06/10351-tsuki.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-06/10351-tsuki.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: adhere, append, attach, refer to; слова: 納付書, 膠付け, 奥付, 受付, 交付する.",
+        "textbook_examples": [
+          {
+            "word": "奥付",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "受付",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "交付する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     }
   ]
 }

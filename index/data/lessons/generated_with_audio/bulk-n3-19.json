@@ -3,7 +3,22 @@
     "id": "bulk-n3-19",
     "title": "N3: медиа и общество 19",
     "jlpt": "N3",
-    "order": 36
+    "order": 36,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -41,7 +56,25 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-19/10592-neko.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-19/10592-neko.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: кошка, кот; кошачий; слова: 猫又, 子猫."
+      }
     },
     {
       "id": 10593,
@@ -78,7 +111,25 @@
         "Steam"
       ],
       "interface_use": "Встречается в словах уровня N3: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n3/bulk-n3-19/10593-iku.mp3"
+      "audio": "/audio/kanji/n3/bulk-n3-19/10593-iku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: how far, how long, how many, how much; слова: 幾つ, 幾つか."
+      }
     }
   ]
 }

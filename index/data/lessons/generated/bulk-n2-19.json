@@ -3,7 +3,22 @@
     "id": "bulk-n2-19",
     "title": "N2: сложные тексты 19",
     "jlpt": "N2",
-    "order": 55
+    "order": 55,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -45,7 +60,48 @@
       "onyomi": "こう",
       "onyomi_romaji": "kou",
       "kunyomi": "がえんじる",
-      "kunyomi_romaji": "gaenjiru"
+      "kunyomi_romaji": "gaenjiru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: agreement, comply with, consent; слова: 肯定的, 首肯, 肯定, 肯定文, 肯定形の活用.",
+        "textbook_examples": [
+          {
+            "word": "肯定",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "肯定文",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "肯定形の活用",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10955,
@@ -86,7 +142,25 @@
       "onyomi": "そう",
       "onyomi_romaji": "sou",
       "kunyomi": "はしゃぐ",
-      "kunyomi_romaji": "hashagu"
+      "kunyomi_romaji": "hashagu",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: dry up, parch; слова: 高燥地, 乾燥卵."
+      }
     },
     {
       "id": 10956,
@@ -127,7 +201,25 @@
       "onyomi": "ちく",
       "onyomi_romaji": "chiku",
       "kunyomi": "",
-      "kunyomi_romaji": ""
+      "kunyomi_romaji": "",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: domestic fowl and animals, livestock; слова: 畜類, 役畜."
+      }
     },
     {
       "id": 10957,
@@ -168,7 +260,25 @@
       "onyomi": "きょう / しょう",
       "onyomi_romaji": "kyou / shou",
       "kunyomi": "さしはさむ / はさまる / はさむ / わきばさむ",
-      "kunyomi_romaji": "sashihasamu / hasamaru / hasamu / wakibasamu"
+      "kunyomi_romaji": "sashihasamu / hasamaru / hasamu / wakibasamu",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: between, pinch; слова: 挟む, 挟まる."
+      }
     },
     {
       "id": 10958,
@@ -209,7 +319,25 @@
       "onyomi": "どん",
       "onyomi_romaji": "don",
       "kunyomi": "くもる",
-      "kunyomi_romaji": "kumoru"
+      "kunyomi_romaji": "kumoru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: cloud up, cloudy weather; слова: 曇り, 雨曇."
+      }
     },
     {
       "id": 10959,
@@ -250,7 +378,25 @@
       "onyomi": "てき",
       "onyomi_romaji": "teki",
       "kunyomi": "しずく / したたる",
-      "kunyomi_romaji": "shizuku / shitataru"
+      "kunyomi_romaji": "shizuku / shitataru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: капля; слова: 数滴, 滴る."
+      }
     },
     {
       "id": 10960,
@@ -291,7 +437,25 @@
       "onyomi": "し",
       "onyomi_romaji": "shi",
       "kunyomi": "うかがう",
-      "kunyomi_romaji": "ukagau"
+      "kunyomi_romaji": "ukagau",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: спрашивать, implore, inquire, pay respects; слова: 伺う, 伺い書."
+      }
     }
   ]
 }

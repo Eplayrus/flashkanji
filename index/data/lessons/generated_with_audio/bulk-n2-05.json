@@ -3,7 +3,22 @@
     "id": "bulk-n2-05",
     "title": "N2: сложные тексты 05",
     "jlpt": "N2",
-    "order": 41
+    "order": 41,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -41,7 +56,48 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10674-ken.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10674-ken.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: облигация; билет; купон; талон; англ. опора: ticket; слова: 食券, 売券, 発券する, ト券.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "ケン",
+          "meaning_en": "ticket",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "発券する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "ト券",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ケン"
     },
     {
       "id": 10675,
@@ -78,7 +134,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10675-hen.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10675-hen.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: том; часть (книги); глава; (после имени составителя или названия организации) составлено (таким-то; о сборнике и т. п.); англ. опора: compilation; knit; braid; twist; editing; слова: 掌編, 編隊.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "ヘン",
+          "kunyomi": "( / ) あ(む)",
+          "meaning_en": "compilation; knit; braid; twist; editing",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "ヘン",
+      "kunyomi": "( / ) あ(む)"
     },
     {
       "id": 10676,
@@ -115,7 +198,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10676-sagasu.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10676-sagasu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: locate, look for, search; англ. опора: search; look for; locate; слова: 枕捜し, 捜索隊.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "ソウ",
+          "kunyomi": "( / ) さが(す)",
+          "meaning_en": "search; look for; locate",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "ソウ",
+      "kunyomi": "( / ) さが(す)"
     },
     {
       "id": 10677,
@@ -152,7 +262,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10677-take.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10677-take.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: бамбук; дудочка, свирель (из бамбука); англ. опора: bamboo; слова: 青竹, 筮竹.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "チク",
+          "kunyomi": "たけ",
+          "meaning_en": "bamboo",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "チク",
+      "kunyomi": "たけ"
     },
     {
       "id": 10678,
@@ -189,7 +326,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10678-koeru.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10678-koeru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: super-, transcend, ultra-; англ. опора: transcend; super-; ultra-; слова: 超大型, 超党派.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "チョウ",
+          "kunyomi": "( / ) こ(える)",
+          "meaning_en": "transcend; super-; ultra-",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "チョウ",
+      "kunyomi": "( / ) こ(える)"
     },
     {
       "id": 10679,
@@ -226,7 +390,50 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10679-nami.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10679-nami.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: среднее, средний уровень; средний, обыкновенный, заурядный; англ. опора: row, and, besides; слова: 並ぶ, 並び, 萩の街並み, 並盛り.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "ヘイ",
+          "kunyomi": "( / ) / ( / ) な(み) / なみ / なら(べる)",
+          "meaning_en": "row, and, besides",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "萩の街並み",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "並盛り",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ヘイ",
+      "kunyomi": "( / ) / ( / ) な(み) / なみ / なら(べる)"
     },
     {
       "id": 10680,
@@ -263,7 +470,32 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10680-ryou.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10680-ryou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: cure, heal; англ. опора: heal; cure; слова: 療養地, 医療費.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "リョウ",
+          "meaning_en": "heal; cure",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "リョウ"
     },
     {
       "id": 10681,
@@ -300,7 +532,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10681-toru.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10681-toru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: fetch, pick, брать, take up; англ. опора: pick; take; fetch; take up; слова: 採草, 採算.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "サイ",
+          "kunyomi": "( / ) と(る)",
+          "meaning_en": "pick; take; fetch; take up",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "サイ",
+      "kunyomi": "( / ) と(る)"
     },
     {
       "id": 10682,
@@ -337,7 +596,57 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10682-mori.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10682-mori.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: роща, лесок; лес; ((тж.) 杜) храмовая роща (вокруг синтоистского храма); англ. опора: forest, woods; слова: 青森, 青森県, 大森, 大森ハイツ, の大森ハイツ.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "シン",
+          "kunyomi": "もり",
+          "meaning_en": "forest, woods",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "大森",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "大森ハイツ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "の大森ハイツ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "シン",
+      "kunyomi": "もり"
     },
     {
       "id": 10683,
@@ -374,7 +683,43 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10683-kisou.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10683-kisou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: bid, bout, compete with, contest; англ. опора: compete with; bid; contest; race; слова: 競泳, 競演, 競争する.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "キョウ /  ケイ",
+          "kunyomi": "( / ) / ( / ) きそ(う) /  せ(る)",
+          "meaning_en": "compete with; bid; contest; race",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "競争する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "キョウ /  ケイ",
+      "kunyomi": "( / ) / ( / ) きそ(う) /  せ(る)"
     },
     {
       "id": 10684,
@@ -411,7 +756,55 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10684-kai.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10684-kai.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: concern oneself with, jammed in, mediate, shellfish; англ. опора: jammed in; shellfish; mediate; слова: 介鱗, 紹介所, スタッフ紹介, 自己紹介, 介語.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "カイ",
+          "meaning_en": "jammed in; shellfish; mediate",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "スタッフ紹介",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "自己紹介",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "介語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "カイ"
     },
     {
       "id": 10685,
@@ -448,7 +841,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10685-kon.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10685-kon.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: упорство, настойчивость; стойкость; энергия; (мат.) корень; англ. опора: root; radical; слова: 語根, 根基.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "コン",
+          "kunyomi": "ね",
+          "meaning_en": "root; radical",
+          "source": "JLPTsensei kanji list"
+        }
+      },
+      "onyomi": "コン",
+      "kunyomi": "ね"
     },
     {
       "id": 10686,
@@ -485,7 +905,41 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10686-han.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10686-han.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: marketing, продавать, trade; англ. опора: marketing, sell, trade; слова: 販売術, 販売網, 家電量販店.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "ハン",
+          "meaning_en": "marketing, sell, trade",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "家電量販店",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "ハン"
     },
     {
       "id": 10687,
@@ -522,7 +976,48 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10687-reki.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10687-reki.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: ; れきぜん (～たる); англ. опора: curriculum; continuation; passage of time; слова: 活歴, 略歴, 注文履歴, 歴史.",
+        "jlpt_reference": {
+          "jlpt": "N2",
+          "onyomi": "レキ",
+          "meaning_en": "curriculum; continuation; passage of time",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "注文履歴",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "歴史",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      },
+      "onyomi": "レキ"
     },
     {
       "id": 10688,
@@ -559,7 +1054,41 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10688-hata.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10688-hata.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: или; слова: 賊将, 将兵, 将棋, 将来.",
+        "textbook_examples": [
+          {
+            "word": "将棋",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "将来",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10689,
@@ -596,7 +1125,25 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10689-fuku.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10689-fuku.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: (гл. обр. с числ.) какэмоно; слова: 中幅, 小幅."
+      }
     },
     {
       "id": 10690,
@@ -633,7 +1180,48 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10690-han.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10690-han.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: all, carrier, carry, general; слова: 先般, 一般に, 一般社員など, 一般攻撃魔法, 般攻撃魔法.",
+        "textbook_examples": [
+          {
+            "word": "一般社員など",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "一般攻撃魔法",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "般攻撃魔法",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10691,
@@ -670,7 +1258,25 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10691-bou.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10691-bou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: exchange, trade; слова: 貿易港, 貿易業."
+      }
     },
     {
       "id": 10692,
@@ -707,7 +1313,48 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10692-kou.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10692-kou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: association, club, lecture; слова: 講師, 講習, 興味のある講, 講堂, 講談社.",
+        "textbook_examples": [
+          {
+            "word": "興味のある講",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "講堂",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "講談社",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10693,
@@ -744,7 +1391,34 @@
         "LinkedIn"
       ],
       "interface_use": "Встречается в словах уровня N2: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n2/bulk-n2-05/10693-hayashi.mp3"
+      "audio": "/audio/kanji/n2/bulk-n2-05/10693-hayashi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: лес; слова: 芸林, 梅林, 林さん.",
+        "textbook_examples": [
+          {
+            "word": "林さん",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     }
   ]
 }

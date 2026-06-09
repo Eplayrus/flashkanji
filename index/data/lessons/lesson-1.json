@@ -3,7 +3,22 @@
     "id": "lesson-1",
     "title": "N5: первые интерфейсы",
     "jlpt": "N5",
-    "order": 1
+    "order": 1,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -46,7 +61,55 @@
       "onyomi_romaji": "jitsu / nichi",
       "kunyomi": "か / び / ひ",
       "kunyomi_romaji": "ka / bi / hi",
-      "audio": "./audio/kanji/n5/lesson-1/1-hi.mp3"
+      "audio": "./audio/kanji/n5/lesson-1/1-hi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: день, солнце; англ. опора: day, sun, Japan, counter for days; слова: 日本, 今日, な今日, 生活の日本語, すでに日本.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ニチ, ジツ",
+          "kunyomi": "ひ / び / か",
+          "meaning_en": "day, sun, Japan, counter for days",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "な今日",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "生活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "すでに日本",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 2,
@@ -87,7 +150,55 @@
       "onyomi_romaji": "gatsu / getsu",
       "kunyomi": "つき",
       "kunyomi_romaji": "tsuki",
-      "audio": "./audio/kanji/n5/lesson-1/2-tsuki.mp3"
+      "audio": "./audio/kanji/n5/lesson-1/2-tsuki.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: месяц, луна; англ. опора: month, moon; слова: 月曜日, 一月, 旧暦の正月, 月ごろ, 月に来ました.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ゲツ /  ガツ",
+          "kunyomi": "つき",
+          "meaning_en": "month, moon",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "旧暦の正月",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "月ごろ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "月に来ました",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 3,
@@ -126,7 +237,55 @@
       "onyomi": "じん / にん",
       "onyomi_romaji": "jin / nin",
       "kunyomi": "と / り / ひと",
-      "kunyomi_romaji": "to / ri / hito"
+      "kunyomi_romaji": "to / ri / hito",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: человек; англ. опора: person; слова: 日本人, 一人, 人的情, た人など, 日本人の名前.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ジン /  ニン",
+          "kunyomi": "ひと",
+          "meaning_en": "person",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "人的情",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "た人など",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "日本人の名前",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 4,
@@ -168,7 +327,55 @@
       "onyomi_romaji": "hon",
       "kunyomi": "もと",
       "kunyomi_romaji": "moto",
-      "audio": "./audio/kanji/n5/lesson-1/4-moto.mp3"
+      "audio": "./audio/kanji/n5/lesson-1/4-moto.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: книга, основа; англ. опора: book, present, true, counter for long cylindrical things; слова: 本屋, 日本, 生活の日本語, すでに日本, 活の日本語.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ホン",
+          "kunyomi": "もと",
+          "meaning_en": "book, present, true, counter for long cylindrical things",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "生活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "すでに日本",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     }
   ]
 }

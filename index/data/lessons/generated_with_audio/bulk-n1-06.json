@@ -3,7 +3,22 @@
     "id": "bulk-n1-06",
     "title": "N1: продвинутый корпус 06",
     "jlpt": "N1",
-    "order": 61
+    "order": 61,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -41,7 +56,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11061-shou.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11061-shou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: яркий, shining; слова: 昭代, 昭和."
+      }
     },
     {
       "id": 11062,
@@ -78,7 +111,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11062-sutaru.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11062-sutaru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: abandon, abolish, cessation, discarding; слова: 廃石, 廃鶏."
+      }
     },
     {
       "id": 11063,
@@ -115,7 +166,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11063-kare.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11063-kare.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: Italy, that one; слова: 紀伊, 伊語."
+      }
     },
     {
       "id": 11064,
@@ -152,7 +221,34 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11064-e.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11064-e.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: бухта; узкий морской залив; лиман; слова: 江戸, 堀江, 江口さん.",
+        "textbook_examples": [
+          {
+            "word": "江口さん",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11065,
@@ -189,7 +285,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11065-ryou.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11065-ryou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: colleague, companion, official; слова: 僚艦, 同僚."
+      }
     },
     {
       "id": 11066,
@@ -226,7 +340,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11066-kichi.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11066-kichi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: счастье, удача; счастливый, удачливый; слова: 吉兆, 吉日."
+      }
     },
     {
       "id": 11067,
@@ -263,7 +395,48 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11067-sakaru.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11067-sakaru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: boom, copulate, prosper; слова: 盛事, 盛衰, 大盛り, 盛り, 特盛り.",
+        "textbook_examples": [
+          {
+            "word": "大盛り",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "盛り",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "特盛り",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11068,
@@ -300,7 +473,34 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11068-ou.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11068-ou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: emperor; слова: 皇室, 皇典, 皇居.",
+        "textbook_examples": [
+          {
+            "word": "皇居",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Z_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11069,
@@ -337,7 +537,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11069-nozomu.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11069-nozomu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: attend, call on, confront, лицо; слова: 臨休, 臨終."
+      }
     },
     {
       "id": 11070,
@@ -374,7 +592,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11070-fumaeru.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11070-fumaeru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: appraise, carry through, evade payment, step; слова: 踏み跡, 舞踏曲."
+      }
     },
     {
       "id": 11071,
@@ -411,7 +647,34 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11071-kowasu.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11071-kowasu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: break, demolition, destroy; слова: 損壊, 壊す, 壊れた.",
+        "textbook_examples": [
+          {
+            "word": "壊れた",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11072,
@@ -448,7 +711,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11072-sai.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11072-sai.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: bond, debt, loan; слова: 負債, 公債."
+      }
     },
     {
       "id": 11073,
@@ -485,7 +766,48 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11073-kyou.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11073-kyou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: интерес; удовольствие, развлечение; веселье; (ср.) きょうがる, きょうじる; слова: 中興, 興国, 興味のある講, 興味, 興奮.",
+        "textbook_examples": [
+          {
+            "word": "興味のある講",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "興味",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "興奮",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11074,
@@ -522,7 +844,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11074-minamoto.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11074-minamoto.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: исток; (перен.) истоки; источник (напр. идей); слова: 法源, 電源."
+      }
     },
     {
       "id": 11075,
@@ -559,7 +899,34 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11075-gi.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11075-gi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: церемония, торжество; дело, случай; слова: 略儀, 律儀, 地球儀.",
+        "textbook_examples": [
+          {
+            "word": "地球儀",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11076,
@@ -596,7 +963,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11076-kizu.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11076-kizu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: genesis, hurt, injury, originate; слова: 裂創, 銃創."
+      }
     },
     {
       "id": 11077,
@@ -633,7 +1018,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11077-sawaru.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11077-sawaru.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: harm, hinder, hurt; слова: 内障, 故障."
+      }
     },
     {
       "id": 11078,
@@ -670,7 +1073,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11078-tsugu.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11078-tsugu.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: продолжать, graft (tree), inherit, patch; слова: 継泳, 継母."
+      }
     },
     {
       "id": 11079,
@@ -707,7 +1128,34 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11079-kin.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11079-kin.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: сухожилие; мускул, мышца; слова: 金筋, 粗筋, 背筋.",
+        "textbook_examples": [
+          {
+            "word": "背筋",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11080,
@@ -744,7 +1192,25 @@
         "Enterprise tools"
       ],
       "interface_use": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": "/audio/kanji/n1/bulk-n1-06/11080-arasou.mp3"
+      "audio": "/audio/kanji/n1/bulk-n1-06/11080-arasou.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: бороться, война; слова: 乱闘, 闘鶏."
+      }
     }
   ]
 }

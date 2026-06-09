@@ -3,7 +3,22 @@
     "id": "lesson-3",
     "title": "N4: действия",
     "jlpt": "N4",
-    "order": 3
+    "order": 3,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
   },
   "items": [
     {
@@ -45,7 +60,41 @@
       "onyomi": "ばい",
       "onyomi_romaji": "bai",
       "kunyomi": "かう",
-      "kunyomi_romaji": "kau"
+      "kunyomi_romaji": "kau",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: покупать; слова: 買い物, 購入, 食事や買い物, 一日中買い.",
+        "textbook_examples": [
+          {
+            "word": "食事や買い物",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "一日中買い",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 10,
@@ -86,7 +135,55 @@
       "onyomi_romaji": "bai",
       "kunyomi": "うる / うれる",
       "kunyomi_romaji": "uru / ureru",
-      "audio": "./audio/kanji/n4/lesson-3/10-bai.mp3"
+      "audio": "./audio/kanji/n4/lesson-3/10-bai.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: продавать; англ. опора: sell; слова: 売店, 発売, 売る, 発売中, 発売元.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "バイ",
+          "kunyomi": "( / ) う(る)",
+          "meaning_en": "sell",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "売る",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "発売中",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "発売元",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 11,
@@ -127,7 +224,55 @@
       "onyomi_romaji": "shi",
       "kunyomi": "つかい / づかい / つかう",
       "kunyomi_romaji": "tsukai / zukai / tsukau",
-      "audio": "./audio/kanji/n4/lesson-3/11-shi.mp3"
+      "audio": "./audio/kanji/n4/lesson-3/11-shi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: использовать; англ. опора: use, order, messenger, ambassador; слова: 使用, 使い方, よく使, 教材の使い方, 使う.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "シ",
+          "kunyomi": "( / ) つか(う)",
+          "meaning_en": "use, order, messenger, ambassador",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "よく使",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "教材の使い方",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "使う",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     },
     {
       "id": 12,
@@ -167,7 +312,55 @@
       "onyomi": "そう",
       "onyomi_romaji": "sou",
       "kunyomi": "おくる",
-      "kunyomi_romaji": "okuru"
+      "kunyomi_romaji": "okuru",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: отправлять; англ. опора: escort, send; слова: 送信, 放送, 送る, 強制送還, 送信する.",
+        "jlpt_reference": {
+          "jlpt": "N4",
+          "onyomi": "ソウ",
+          "kunyomi": "( / ) おく(る)",
+          "meaning_en": "escort, send",
+          "source": "JLPTsensei kanji list"
+        },
+        "textbook_examples": [
+          {
+            "word": "送る",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "強制送還",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "送信する",
+            "reading": "",
+            "translation_ru": "",
+            "source": "ZZ_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
     }
   ]
 }
