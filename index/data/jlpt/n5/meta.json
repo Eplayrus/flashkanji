@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "level": "N5",
+  "title": {
+    "ru": "JLPT N5",
+    "en": "JLPT N5"
+  },
+  "description": {
+    "ru": "80 базовых кандзи, 10 уроков, SRS-повторение, письмо, активное вспоминание и финальный тест.",
+    "en": "80 core kanji, 10 lessons, SRS review, writing, active recall, and a final test."
+  },
+  "principle": {
+    "ru": "Не учи кандзи как голые символы. Иди по цепочке: кандзи -> значение -> чтение в слове -> пример предложения -> упражнение -> письмо -> SRS-повторение.",
+    "en": "Do not learn kanji as bare symbols. Move through the chain: kanji -> meaning -> reading in a word -> example sentence -> exercise -> writing -> SRS review."
+  },
+  "kanjiCount": 80,
+  "lessonCount": 10,
+  "kanjiPerLesson": 8,
+  "pdfUrl": "docs/flashkanji_N5_expanded_textbook.pdf",
+  "source": {
+    "ru": "Flash Kanji N5 expanded textbook",
+    "en": "Flash Kanji N5 expanded textbook"
+  },
+  "reviewPlan": [
+    { "day": 1, "label": { "ru": "первый возврат", "en": "first return" } },
+    { "day": 3, "label": { "ru": "короткая проверка", "en": "short check" } },
+    { "day": 7, "label": { "ru": "недельное закрепление", "en": "weekly lock-in" } },
+    { "day": 14, "label": { "ru": "устойчивое повторение", "en": "stable review" } },
+    { "day": 30, "label": { "ru": "месячный контроль", "en": "monthly check" } }
+  ],
+  "rewards": {
+    "addToSrsXp": 4,
+    "knowXp": 6,
+    "hardXp": 2,
+    "exerciseXp": 7,
+    "exerciseMoon": 1,
+    "lessonCompleteXp": 45,
+    "lessonCompleteMoon": 6,
+    "finalTestXp": 120,
+    "finalTestMoon": 20
+  }
+}

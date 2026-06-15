@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   "use strict";
 
   const STORAGE_KEY = "flashKanji.progress.v2";
@@ -8,7 +8,8 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-06-pwa-decor-eva-v1";
+  const BUILD_VERSION = "2026-06-15-stable-session-v25";
+  const EVA_DEFAULT_PACK = "eva_default_pack";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
@@ -30,8 +31,46 @@
     vocabulary: "data/vocabulary/index.json",
     sentences: "data/sentences/index.json",
     achievements: "data/achievements/index.json",
+    jlptCatalog: "data/jlpt/index.json",
     jlptLessons: "data/jlpt-lessons.json",
     jlptPracticeLessons: "data/jlpt-practice-lessons.json",
+    n5Meta: "data/jlpt/n5/meta.json",
+    n5Lessons: "data/jlpt/n5/lessons.json",
+    n5Kanji: "data/jlpt/n5/kanji.json",
+    n5Exercises: "data/jlpt/n5/exercises.json",
+    n5FinalTest: "data/jlpt/n5/final-test.json",
+    n4Meta: "data/jlpt/n4/meta.json",
+    n4Lessons: "data/jlpt/n4/lessons.json",
+    n4Kanji: "data/jlpt/n4/kanji.json",
+    n4Grammar: "data/jlpt/n4/grammar.json",
+    n4Exercises: "data/jlpt/n4/exercises.json",
+    n4Reading: "data/jlpt/n4/reading.json",
+    n4Listening: "data/jlpt/n4/listening.json",
+    n4FinalTest: "data/jlpt/n4/final-test.json",
+    n3Meta: "data/jlpt/n3/meta.json",
+    n3Lessons: "data/jlpt/n3/lessons.json",
+    n3Kanji: "data/jlpt/n3/kanji.json",
+    n3Grammar: "data/jlpt/n3/grammar.json",
+    n3Exercises: "data/jlpt/n3/exercises.json",
+    n3Reading: "data/jlpt/n3/reading.json",
+    n3Listening: "data/jlpt/n3/listening.json",
+    n3FinalTest: "data/jlpt/n3/final-test.json",
+    n2Meta: "data/jlpt/n2/meta.json",
+    n2Lessons: "data/jlpt/n2/lessons.json",
+    n2Kanji: "data/jlpt/n2/kanji.json",
+    n2Grammar: "data/jlpt/n2/grammar.json",
+    n2Exercises: "data/jlpt/n2/exercises.json",
+    n2Reading: "data/jlpt/n2/reading.json",
+    n2Listening: "data/jlpt/n2/listening.json",
+    n2FinalTest: "data/jlpt/n2/final-test.json",
+    n1Meta: "data/jlpt/n1/meta.json",
+    n1Lessons: "data/jlpt/n1/lessons.json",
+    n1Kanji: "data/jlpt/n1/kanji.json",
+    n1Grammar: "data/jlpt/n1/grammar.json",
+    n1Exercises: "data/jlpt/n1/exercises.json",
+    n1Reading: "data/jlpt/n1/reading.json",
+    n1Listening: "data/jlpt/n1/listening.json",
+    n1FinalTest: "data/jlpt/n1/final-test.json",
     monetization: "data/monetization/catalog.json",
     customizationShop: "data/customization-shop.json",
     evaBackgrounds: "data/eva-backgrounds.json",
@@ -40,11 +79,13 @@
     evaAutonomyLines: "data/eva-autonomy-lines.json",
     evaExpandedDialogues: "data/eva-expanded-dialogues.json",
     evaFisPersonality: "data/eva-fis-personality.json",
-    evaPresence: "data/eva-presence.json"
+    evaPresence: "data/eva-presence.json",
+    evaRoomDecorLayouts: "data/eva-room-decor-layouts.json"
   };
 
   const ratingLabels = { forgot: "Forgot", remember: "Remember", again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
   const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
+  const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
   const commonExampleTranslationsEn = {
     nihon: "Japan",
     kyou: "today",
@@ -86,7 +127,7 @@
     hibiku: "to sound, to resonate"
   };
   const sentenceRewardFallback = { xp: 12, coins: 2 };
-  const routes = ["home", "learn", "review", "dictionary", "kanji", "writing", "stats", "achievements", "eva-room", "jlpt-lesson"];
+  const routes = ["home", "learn", "review", "dictionary", "kanji", "writing", "stats", "achievements", "eva-room", "jlpt-lesson", "textbooks"];
   const DICTIONARY_INITIAL_LIMIT = 72;
   const DICTIONARY_INCREMENT = 96;
 
@@ -107,8 +148,46 @@
     sentenceExercises: [],
     achievements: [],
     achievementCategories: [],
+    jlptCatalog: { version: 1, generatedAt: null, items: [] },
     jlptLessons: [],
     jlptPracticeLessons: [],
+    n5Meta: null,
+    n5Textbook: null,
+    n5KanjiCatalog: [],
+    n5Exercises: null,
+    n5FinalTest: null,
+    n4Meta: null,
+    n4Textbook: null,
+    n4KanjiCatalog: [],
+    n4Grammar: [],
+    n4Exercises: null,
+    n4Reading: [],
+    n4Listening: [],
+    n4FinalTest: null,
+    n3Meta: null,
+    n3Textbook: null,
+    n3KanjiCatalog: [],
+    n3Grammar: [],
+    n3Exercises: null,
+    n3Reading: [],
+    n3Listening: [],
+    n3FinalTest: null,
+    n2Meta: null,
+    n2Textbook: null,
+    n2KanjiCatalog: [],
+    n2Grammar: [],
+    n2Exercises: null,
+    n2Reading: [],
+    n2Listening: [],
+    n2FinalTest: null,
+    n1Meta: null,
+    n1Textbook: null,
+    n1KanjiCatalog: [],
+    n1Grammar: [],
+    n1Exercises: null,
+    n1Reading: [],
+    n1Listening: [],
+    n1FinalTest: null,
     monetization: null,
     customizationCatalog: { categories: [], items: [] },
     customization: null,
@@ -124,12 +203,19 @@
     progress: null,
     activeLessonId: null,
     activeJlptLesson: null,
+    activeTextbookLevel: readTextbookRouteLevel() || null,
+    activeTextbookSubroute: readTextbookRouteSubroute() || null,
     activeCardId: null,
     kanjiPageId: readKanjiRouteId(),
     revealed: false,
     detailCardId: null,
     rewardModal: null,
     rewardQueue: [],
+    homeEvaDisplaySprite: null,
+    evaRoomDisplaySprite: null,
+    rewardEvaDisplaySprite: null,
+    finalTestModal: null,
+    finalTestBusy: false,
     charts: [],
     filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" },
     dictionaryVisibleCount: DICTIONARY_INITIAL_LIMIT,
@@ -137,6 +223,7 @@
     sentencePractice: { activeId: null, selected: [], checked: false, result: null, tileKeys: [] },
     readingCheck: { cardId: null, value: "", status: null, message: "" },
     writingStep: 0,
+    activeLearnJlpt: "all",
     navMenu: null,
     pendingFocus: null,
     pwaInstallPrompt: loadPwaInstallPromptState(),
@@ -146,7 +233,9 @@
 
   let audioContext = null;
   let activeKanjiAudio = null;
-  let lastAutoAudioKey = "";
+
+  const kanjiAudioCache = new Map();
+  const KANJI_AUDIO_CACHE_MAX = 48;
   let lastUxSoundAt = 0;
   let toastTimer = 0;
   let deferredPwaInstallPrompt = null;
@@ -183,6 +272,8 @@
   importInput.addEventListener("change", handleImportFile);
   window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   window.addEventListener("appinstalled", handlePwaInstallAccepted);
+  window.addEventListener("scroll", syncScrollToggleButton, { passive: true });
+  window.addEventListener("resize", syncScrollToggleButton);
   window.addEventListener("eva:event", (event) => {
     if (event.detail?.handledByFlashKanji) return;
     handleEvaEvent(event.detail || {});
@@ -197,15 +288,26 @@
   window.addEventListener("hashchange", () => {
     const route = readRouteHash();
     const kanjiPageId = readKanjiRouteId();
-    if (route !== state.route || (route === "kanji" && kanjiPageId !== state.kanjiPageId)) {
+    const textbookLevel = route === "textbooks" ? readTextbookRouteLevel() : null;
+    const textbookSubroute = route === "textbooks" ? readTextbookRouteSubroute() : null;
+    if (
+      route !== state.route
+      || (route === "kanji" && kanjiPageId !== state.kanjiPageId)
+      || (route === "textbooks" && textbookLevel !== state.activeTextbookLevel)
+      || (route === "textbooks" && textbookSubroute !== state.activeTextbookSubroute)
+    ) {
       state.route = route;
       state.kanjiPageId = route === "kanji" ? kanjiPageId : null;
+      state.activeTextbookLevel = route === "textbooks" ? textbookLevel : null;
+      state.activeTextbookSubroute = route === "textbooks" ? textbookSubroute : null;
       state.detailCardId = null;
       state.revealed = false;
       state.navMenu = null;
       state.pendingFocus = null;
       if (route !== "eva-room") state.evaRoomShopOpen = false;
       resetReadingCheck();
+      onEvaPanelRouteEnter(route);
+      scrollPageToTop();
       render();
       if (route === "eva-room") dispatchEvaEvent("room_opened");
     }
@@ -223,7 +325,7 @@ if (await refreshStaleAppCache()) return;
     applyTheme();
 
     try {
-      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, achievements, jlptLessons, jlptPracticeLessons, monetization, customizationShop, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaExpandedDialogues, evaFisPersonality, evaPresence] = await Promise.all([
+      const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, achievements, jlptCatalog, jlptLessons, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, n1Meta, n1Lessons, n1Kanji, n1Grammar, n1Exercises, n1Reading, n1Listening, n1FinalTest, monetization, customizationShop, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaExpandedDialogues, evaFisPersonality, evaPresence, evaRoomDecorLayouts] = await Promise.all([
         loadCourse(),
         fetchJson(DATA_URLS.i18n),
         fetchJson(DATA_URLS.dialogues),
@@ -237,8 +339,46 @@ if (await refreshStaleAppCache()) return;
         fetchJson(DATA_URLS.vocabulary),
         fetchJson(DATA_URLS.sentences),
         fetchJson(DATA_URLS.achievements),
+        fetchJson(DATA_URLS.jlptCatalog),
         fetchJson(DATA_URLS.jlptLessons),
         fetchJson(DATA_URLS.jlptPracticeLessons),
+        fetchJson(DATA_URLS.n5Meta),
+        fetchJson(DATA_URLS.n5Lessons),
+        fetchJson(DATA_URLS.n5Kanji),
+        fetchJson(DATA_URLS.n5Exercises),
+        fetchJson(DATA_URLS.n5FinalTest),
+        fetchJson(DATA_URLS.n4Meta),
+        fetchJson(DATA_URLS.n4Lessons),
+        fetchJson(DATA_URLS.n4Kanji),
+        fetchJson(DATA_URLS.n4Grammar),
+        fetchJson(DATA_URLS.n4Exercises),
+        fetchJson(DATA_URLS.n4Reading),
+        fetchJson(DATA_URLS.n4Listening),
+        fetchJson(DATA_URLS.n4FinalTest),
+        fetchJson(DATA_URLS.n3Meta),
+        fetchJson(DATA_URLS.n3Lessons),
+        fetchJson(DATA_URLS.n3Kanji),
+        fetchJson(DATA_URLS.n3Grammar),
+        fetchJson(DATA_URLS.n3Exercises),
+        fetchJson(DATA_URLS.n3Reading),
+        fetchJson(DATA_URLS.n3Listening),
+        fetchJson(DATA_URLS.n3FinalTest),
+        fetchJson(DATA_URLS.n2Meta),
+        fetchJson(DATA_URLS.n2Lessons),
+        fetchJson(DATA_URLS.n2Kanji),
+        fetchJson(DATA_URLS.n2Grammar),
+        fetchJson(DATA_URLS.n2Exercises),
+        fetchJson(DATA_URLS.n2Reading),
+        fetchJson(DATA_URLS.n2Listening),
+        fetchJson(DATA_URLS.n2FinalTest),
+        fetchJson(DATA_URLS.n1Meta),
+        fetchJson(DATA_URLS.n1Lessons),
+        fetchJson(DATA_URLS.n1Kanji),
+        fetchJson(DATA_URLS.n1Grammar),
+        fetchJson(DATA_URLS.n1Exercises),
+        fetchJson(DATA_URLS.n1Reading),
+        fetchJson(DATA_URLS.n1Listening),
+        fetchJson(DATA_URLS.n1FinalTest),
         fetchJson(DATA_URLS.monetization),
         fetchJson(DATA_URLS.customizationShop),
         fetchJson(DATA_URLS.evaBackgrounds),
@@ -247,7 +387,8 @@ if (await refreshStaleAppCache()) return;
         fetchJson(DATA_URLS.evaAutonomyLines),
         fetchJson(DATA_URLS.evaExpandedDialogues),
         fetchJson(DATA_URLS.evaFisPersonality),
-        fetchJson(DATA_URLS.evaPresence)
+        fetchJson(DATA_URLS.evaPresence),
+        fetchJson(DATA_URLS.evaRoomDecorLayouts)
       ]);
       const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
       state.lessons = course.lessons;
@@ -257,8 +398,51 @@ if (await refreshStaleAppCache()) return;
       state.rewards = rewards;
       state.achievements = achievementBundle.items;
       state.achievementCategories = achievementBundle.categories;
+      state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
       state.jlptLessons = normalizeJlptLessons(jlptLessons);
       state.jlptPracticeLessons = normalizeJlptPracticeLessons(jlptPracticeLessons);
+      state.n5Meta = normalizeN5Meta(n5Meta);
+      state.n5Textbook = normalizeN5Textbook(n5Lessons);
+      state.n5KanjiCatalog = normalizeN5KanjiCatalog(n5Kanji);
+      applyN5CatalogToCards();
+      state.n5Exercises = normalizeN5ExerciseConfig(n5Exercises);
+      state.n5FinalTest = normalizeN5FinalTest(n5FinalTest);
+      state.n4Meta = normalizeN4Meta(n4Meta);
+      state.n4Textbook = normalizeN4Textbook(n4Lessons);
+      state.n4KanjiCatalog = normalizeN4KanjiCatalog(n4Kanji);
+      state.n4Grammar = normalizeN4Grammar(n4Grammar);
+      state.n4Exercises = normalizeN4ExerciseConfig(n4Exercises);
+      state.n4Reading = normalizeN4Collection(n4Reading);
+      state.n4Listening = normalizeN4Collection(n4Listening);
+      state.n4FinalTest = normalizeN4FinalTest(n4FinalTest);
+      applyN4CatalogToCards();
+      state.n3Meta = normalizeN3Meta(n3Meta);
+      state.n3Textbook = normalizeN3Textbook(n3Lessons);
+      state.n3KanjiCatalog = normalizeN3KanjiCatalog(n3Kanji);
+      state.n3Grammar = normalizeN3Grammar(n3Grammar);
+      state.n3Exercises = normalizeN3ExerciseConfig(n3Exercises);
+      state.n3Reading = normalizeN3Collection(n3Reading);
+      state.n3Listening = normalizeN3Collection(n3Listening);
+      state.n3FinalTest = normalizeN3FinalTest(n3FinalTest);
+      applyN3CatalogToCards();
+      state.n2Meta = normalizeN2Meta(n2Meta);
+      state.n2Textbook = normalizeN2Textbook(n2Lessons);
+      state.n2KanjiCatalog = normalizeN2KanjiCatalog(n2Kanji);
+      state.n2Grammar = normalizeN2Grammar(n2Grammar);
+      state.n2Exercises = normalizeN2ExerciseConfig(n2Exercises);
+      state.n2Reading = normalizeN2Collection(n2Reading);
+      state.n2Listening = normalizeN2Collection(n2Listening);
+      state.n2FinalTest = normalizeN2FinalTest(n2FinalTest);
+      applyN2CatalogToCards();
+      state.n1Meta = normalizeN1Meta(n1Meta);
+      state.n1Textbook = normalizeN1Textbook(n1Lessons);
+      state.n1KanjiCatalog = normalizeN1KanjiCatalog(n1Kanji);
+      state.n1Grammar = normalizeN1Grammar(n1Grammar);
+      state.n1Exercises = normalizeN1ExerciseConfig(n1Exercises);
+      state.n1Reading = normalizeN1Collection(n1Reading);
+      state.n1Listening = normalizeN1Collection(n1Listening);
+      state.n1FinalTest = normalizeN1FinalTest(n1FinalTest);
+      applyN1CatalogToCards();
       state.rewards.achievements = state.achievements;
       state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
       state.kanjiMeta = kanjiMeta.items || {};
@@ -277,6 +461,7 @@ if (await refreshStaleAppCache()) return;
       state.evaSprites = evaSprites || {};
       state.evaFisPersonality = evaFisPersonality || null;
       state.evaPresence = evaPresenceData;
+      state.evaRoomDecorLayouts = normalizeEvaRoomDecorLayouts(evaRoomDecorLayouts);
       state.evaRoomDialogues = mergeEvaFisRoomNodes(evaRoomData.nodes, evaFisRoomData.nodes, evaFisPersonality?.introChoices || []);
       state.evaRoomLines = [...evaRoomData.lines, ...evaFisRoomData.lines, ...evaPresenceData.roomLines];
       state.evaAutonomyLines = [
@@ -311,22 +496,15 @@ if (await refreshStaleAppCache()) return;
       const previous = localStorage.getItem(BUILD_STORAGE_KEY);
       localStorage.setItem(BUILD_STORAGE_KEY, BUILD_VERSION);
       if (!previous || previous === BUILD_VERSION) return false;
-      const guardKey = `${BUILD_STORAGE_KEY}:reloaded:${BUILD_VERSION}`;
-      if (sessionStorage.getItem(guardKey)) return false;
-      sessionStorage.setItem(guardKey, "1");
       if ("caches" in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map((key) => caches.delete(key)));
       }
       if ("serviceWorker" in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(async (registration) => {
-          requestServiceWorkerCacheReset(registration);
-          await registration.update().catch(() => null);
-        }));
+        await Promise.all(registrations.map((registration) => registration.update().catch(() => null)));
       }
-      location.reload();
-      return true;
+      return false;
     } catch (error) {
       console.warn("App cache version check failed.", error);
       return false;
@@ -344,51 +522,43 @@ if (await refreshStaleAppCache()) return;
       async function forcePwaCacheResetIfNeeded() {
         try {
           const done = localStorage.getItem(FORCE_PWA_CACHE_RESET_FLAG);
-          if (done === 'done') return false;
-          // Mark as done to avoid repeated resets
-          localStorage.setItem(FORCE_PWA_CACHE_RESET_FLAG, 'done');
-          // Clear all caches via the Cache Storage API
-          if ('caches' in window) {
+          if (done === "done") return false;
+          localStorage.setItem(FORCE_PWA_CACHE_RESET_FLAG, "done");
+          if ("caches" in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map((key) => caches.delete(key)));
           }
-          // Notify service workers to reset their internal caches and update them
-          if ('serviceWorker' in navigator) {
+          if ("serviceWorker" in navigator) {
             const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map(async (registration) => {
-              try {
-                if (registration.active) {
-                  // Post the same message the service worker listens for to trigger cache clearing
-                  registration.active.postMessage('FLASH_KANJI_FORCE_CACHE_RESET');
-                }
-              } catch (_) {
-                /* ignore */
-              }
-              // Request the worker to update itself
-              await registration.update().catch(() => null);
-            }));
+            await Promise.all(registrations.map((registration) => registration.update().catch(() => null)));
           }
-          // Reload the page to apply updates
-          location.reload();
-          return true;
+          return false;
         } catch (error) {
-          console.warn('Force cache reset failed.', error);
+          console.warn("Force cache reset failed.", error);
           return false;
         }
       }
 
-async function loadCourse() {
+  async function loadCourse() {
     const manifest = await fetchJson(DATA_URLS.lessons);
-    const payloads = await Promise.all(manifest.lessons.map(async (lesson) => ({
-      manifestLesson: lesson,
-      payload: await fetchJson(lesson.file)
-    })));
+    const lessonsSource = Array.isArray(manifest?.lessons) ? manifest.lessons : [];
+    const payloads = await Promise.all(lessonsSource.map(async (lesson) => {
+      try {
+        return {
+          manifestLesson: lesson,
+          payload: await fetchJson(lesson.file)
+        };
+      } catch (error) {
+        console.warn(`Skipping lesson data: ${lesson?.file || "unknown lesson file"}`, error);
+        return null;
+      }
+    }));
 
-    const lessons = payloads.map(({ manifestLesson, payload }) => ({
+    const lessons = payloads.filter(Boolean).map(({ manifestLesson, payload }) => ({
       ...manifestLesson,
       ...payload.lesson,
       file: manifestLesson.file,
-      items: payload.items.map((item) => normalizeCard(item, payload.lesson.id))
+      items: Array.isArray(payload.items) ? payload.items.map((item) => normalizeCard(item, payload.lesson.id)) : []
     }));
 
     const cards = lessons.flatMap((lesson) => lesson.items.map((item) => ({
@@ -401,9 +571,53 @@ async function loadCourse() {
   }
 
   async function fetchJson(url) {
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Cannot load ${url}`);
-    return response.json();
+    const candidates = buildJsonUrlCandidates(url);
+    let lastError = null;
+    for (const candidate of candidates) {
+      try {
+        const response = await fetch(candidate, { cache: "no-store" });
+        if (!response.ok) {
+          lastError = new Error(`Cannot load ${candidate}`);
+          continue;
+        }
+        const text = await response.text();
+        try {
+          return JSON.parse(text);
+        } catch (parseError) {
+          lastError = parseError;
+          console.warn(`Invalid JSON from ${candidate}. Trying fallback paths.`, parseError);
+        }
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    console.warn(`Falling back to empty data for ${url}.`, lastError);
+    return {
+      version: 1,
+      languages: ["ru", "en"],
+      ui: {},
+      items: [],
+      lessons: [],
+      lesson: {},
+      achievements: [],
+      categories: []
+    };
+  }
+
+  function buildJsonUrlCandidates(url) {
+    const raw = String(url || "").trim();
+    if (!raw) return [raw];
+    if (/^https?:\/\//i.test(raw) || raw.startsWith("file:")) return [raw];
+    const clean = raw.replace(/^\.\/+/, "").replace(/^\.\.\/+/, "").replace(/^\/+/, "");
+    const candidates = [
+      raw,
+      `./${clean}`,
+      `../${clean}`,
+      `index/${clean}`,
+      `/index/${clean}`,
+      `/${clean}`
+    ];
+    return [...new Set(candidates.filter(Boolean))];
   }
 
   function normalizeCard(item, lessonId) {
@@ -470,12 +684,83 @@ async function loadCourse() {
         outfit: "outfit_default_assassin",
         theme: "theme_default_dark",
         decoration: null,
+        decorations: [],
         frame: null,
         effect: null
       },
       seen: [],
       updatedAt: new Date().toISOString()
     };
+  }
+
+  function normalizeEvaRoomDecorLayouts(payload = {}) {
+    const rooms = payload?.rooms && typeof payload.rooms === "object" ? payload.rooms : {};
+    const normalizedRooms = {};
+    Object.entries(rooms).forEach(([roomId, entries]) => {
+      if (!Array.isArray(entries)) return;
+      normalizedRooms[String(roomId)] = entries.map((entry, index) => ({
+        id: String(entry.id || ""),
+        x: Number(entry.x ?? 50),
+        y: Number(entry.y ?? 20),
+        w: Number(entry.w ?? 14),
+        layer: Number(entry.layer ?? 0),
+        flip: Boolean(entry.flip),
+        opacity: entry.opacity == null ? null : Number(entry.opacity),
+        slot: Number(entry.slot ?? index),
+        narrow: entry.narrow ? {
+          x: Number(entry.narrow.x ?? entry.x ?? 50),
+          y: Number(entry.narrow.y ?? entry.y ?? 20),
+          w: Number(entry.narrow.w ?? entry.w ?? 14)
+        } : null
+      })).filter((entry) => entry.id);
+    });
+    return {
+      version: Number(payload?.version || 1),
+      rooms: normalizedRooms
+    };
+  }
+
+  function isDecorationUnlocked(item) {
+    return Boolean(item?.type === "decoration" && isCustomizationAvailable(item));
+  }
+
+  function selectedDecorations() {
+    if (!state.customization) hydrateCustomization();
+    const list = Array.isArray(state.customization?.selected?.decorations)
+      ? state.customization.selected.decorations.map(String)
+      : [];
+    if (list.length) {
+      return list.filter((id) => {
+        const item = customizationShopItem(id);
+        return item?.type === "decoration" && isDecorationUnlocked(item);
+      });
+    }
+    const legacy = normalizeCustomizationItemId(state.customization?.selected?.decoration || state.customization?.selected?.frame);
+    const legacyItem = customizationShopItem(legacy);
+    return legacyItem && isDecorationUnlocked(legacyItem) ? [legacyItem.id] : [];
+  }
+
+  function isDecorationSelected(id) {
+    return selectedDecorations().includes(String(id || ""));
+  }
+
+  function normalizeSelectedDecorations(selected = {}) {
+    let list = Array.isArray(selected.decorations) ? selected.decorations.map(String) : [];
+    if (!list.length && selected.decoration) list = [String(selected.decoration)];
+    if (!list.length && selected.frame) list = [String(selected.frame)];
+    return [...new Set(list.filter((id) => {
+      const item = customizationShopItem(id);
+      return item?.type === "decoration" && isDecorationUnlocked(item);
+    }))];
+  }
+
+  function syncLegacyDecorationSelection() {
+    if (!state.customization?.selected) return;
+    const list = selectedDecorations();
+    state.customization.selected.decorations = list;
+    state.customization.selected.decoration = list[0] || null;
+    if (!list.length) state.customization.selected.frame = null;
+    else if (state.customization.selected.frame) state.customization.selected.frame = list[0];
   }
 
   function readCustomizationStorage() {
@@ -541,8 +826,10 @@ async function loadCourse() {
     if (!owned.has(selected.background)) selected.background = "bg_study_hub";
     if (!owned.has(selected.outfit)) selected.outfit = "outfit_default_assassin";
     if (!owned.has(selected.theme)) selected.theme = "theme_default_dark";
-    if (selected.decoration && !owned.has(selected.decoration)) selected.decoration = null;
     if (selected.effect && !owned.has(selected.effect)) selected.effect = null;
+    selected.decorations = normalizeSelectedDecorations(selected);
+    selected.decoration = selected.decorations[0] || null;
+    if (!selected.decorations.length) selected.frame = null;
 
     state.customization = {
       owned: [...owned],
@@ -583,7 +870,8 @@ async function loadCourse() {
       background: selected.background || null,
       outfit: selected.outfit || null,
       theme: selected.theme || null,
-      decoration: selected.decoration || selected.frame || null,
+      decoration: selected.decorations?.[0] || selected.decoration || selected.frame || null,
+      decorations: selected.decorations || [],
       effect: selected.effect || null
     };
   }
@@ -612,7 +900,8 @@ async function loadCourse() {
       background: normalizeCustomizationItemId(selected.background),
       outfit: normalizeCustomizationItemId(selected.outfit),
       theme: normalizeCustomizationItemId(selected.theme),
-      decoration: normalizeCustomizationItemId(selected.decoration || selected.frame),
+      decoration: normalizeCustomizationItemId(selected.decorations?.[0] || selected.decoration || selected.frame),
+      decorations: normalizeSelectedDecorations(selected),
       effect: normalizeCustomizationItemId(selected.effect)
     };
   }
@@ -643,6 +932,31 @@ async function loadCourse() {
     })).filter((item) => item.jlpt);
   }
 
+  function normalizeJlptCatalog(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return {
+      version: Number(payload?.version || 1),
+      generatedAt: payload?.generatedAt || null,
+      items: items.map((item) => ({
+        ...item,
+        jlpt: String(item.jlpt || "").toUpperCase(),
+        slug: String(item.slug || String(item.jlpt || "").toLowerCase()),
+        title: item.title || { ru: item.displayTitle?.ru || item.jlpt || "JLPT", en: item.displayTitle?.en || item.jlpt || "JLPT" },
+        displayTitle: item.displayTitle || item.title || { ru: item.jlpt || "JLPT", en: item.jlpt || "JLPT" },
+        description: item.description || { ru: "", en: "" },
+        goal: item.goal || { ru: "", en: "" },
+        recommendedCycle: item.recommendedCycle || { ru: "", en: "" },
+        previousLevels: Array.isArray(item.previousLevels) ? item.previousLevels : [],
+        nextLevels: Array.isArray(item.nextLevels) ? item.nextLevels : [],
+        lessonIds: Array.isArray(item.lessonIds) ? item.lessonIds : [],
+        files: item.files || {},
+        lessonCount: Number(item.lessonCount || 0),
+        kanjiCount: Number(item.kanjiCount || 0),
+        cardCount: Number(item.cardCount || 0)
+      })).filter((item) => item.jlpt).sort((a, b) => LEVEL_ORDER.indexOf(a.jlpt) - LEVEL_ORDER.indexOf(b.jlpt))
+    };
+  }
+
   function normalizeJlptPracticeLessons(payload) {
     const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
     return items.map((item) => ({
@@ -654,6 +968,999 @@ async function loadCourse() {
       drills: Array.isArray(item.drills) ? item.drills : [],
       sources: Array.isArray(item.sources) ? item.sources : []
     })).filter((item) => item.jlpt);
+  }
+
+  function normalizeN5Meta(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N5",
+      title: payload?.title || { ru: "JLPT N5", en: "JLPT N5" },
+      description: payload?.description || { ru: "", en: "" },
+      principle: payload?.principle || { ru: "", en: "" },
+      kanjiCount: Number(payload?.kanjiCount || 80),
+      lessonCount: Number(payload?.lessonCount || 10),
+      kanjiPerLesson: Number(payload?.kanjiPerLesson || 8),
+      pdfUrl: payload?.pdfUrl || "docs/flashkanji_N5_expanded_textbook.pdf",
+      reviewPlan: Array.isArray(payload?.reviewPlan) ? payload.reviewPlan : [],
+      rewards: {
+        addToSrsXp: 4,
+        knowXp: 6,
+        hardXp: 2,
+        exerciseXp: 7,
+        exerciseMoon: 1,
+        lessonCompleteXp: 45,
+        lessonCompleteMoon: 6,
+        finalTestXp: 120,
+        finalTestMoon: 20,
+        ...(payload?.rewards || {})
+      }
+    };
+  }
+
+  function normalizeN5Textbook(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    return {
+      version: Number(payload?.version || 1),
+      level: "N5",
+      textbook: payload?.textbook || {},
+      items: items.map((item, index) => ({
+        ...item,
+        id: String(item.id || `n5-lesson-${index + 1}`),
+        order: Number(item.order || index + 1),
+        title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+        theme: item.theme || item.title || { ru: "", en: "" },
+        kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
+        goal: item.goal || { ru: "", en: "" },
+        sentences: Array.isArray(item.sentences) ? item.sentences : [],
+        writing: Array.isArray(item.writing) ? item.writing.map(String).filter(Boolean) : [],
+        reviewAfterDays: Array.isArray(item.reviewAfterDays) ? item.reviewAfterDays.map(Number).filter(Boolean) : [1, 3, 7, 14, 30]
+      })).filter((item) => item.kanji.length)
+    };
+  }
+
+  function normalizeN5KanjiCatalog(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item) => ({
+      ...item,
+      id: String(item.id || item.courseCardId || item.kanji || ""),
+      courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+      kanji: String(item.kanji || ""),
+      meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
+      readings: item.readings || {},
+      examples: Array.isArray(item.examples) ? item.examples : [],
+      jlpt: "N5"
+    })).filter((item) => item.kanji);
+  }
+
+  function applyN5CatalogToCards() {
+    if (!Array.isArray(state.n5KanjiCatalog) || !state.n5KanjiCatalog.length) return;
+    const detailsByKanji = new Map(state.n5KanjiCatalog.map((item) => [item.kanji, item]));
+    state.cards = state.cards.map((card) => {
+      const detail = detailsByKanji.get(card.kanji);
+      if (!detail) return card;
+      const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
+      if (level && level !== "N5") return card;
+      return mergeN5CardDetail(card, detail);
+    });
+  }
+
+  function mergeN5CardDetail(card, detail) {
+    const readings = detail.readings || {};
+    const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
+    const examples = (detail.examples || []).map((example) => ({
+      ...example,
+      translation: example.translation_ru || example.translation || ""
+    }));
+    const firstExample = examples[0] || {};
+    const strokeOrder = Array.isArray(detail.strokeOrder)
+      ? detail.strokeOrder.map((step) => step.description_ru || step.description_en || "").filter(Boolean)
+      : card.stroke_order;
+    return {
+      ...card,
+      jlpt: "N5",
+      meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
+      meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
+      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
+      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
+      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
+      examples: examples.length ? examples : card.examples,
+      apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
+      interface_use: detail.interfaceUse || card.interface_use || "",
+      interface_use_en: detail.interfaceUseEn || detail.interfaceUse || card.interface_use_en || card.interface_use || "",
+      strokes: Number(detail.strokes || card.strokes || 0),
+      stroke_order: strokeOrder,
+      meta: { ...(card.meta || {}), ...(detail.meta || {}) },
+      n5Detail: detail
+    };
+  }
+
+  function normalizeN5ExerciseConfig(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N5",
+      types: Array.isArray(payload?.types) ? payload.types : [],
+      lessonQuestionCount: Number(payload?.lessonQuestionCount || 6),
+      reviewModes: Array.isArray(payload?.reviewModes) ? payload.reviewModes : []
+    };
+  }
+
+  function normalizeN5FinalTest(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N5",
+      title: payload?.title || { ru: "Финальный тест JLPT N5", en: "JLPT N5 Final Test" },
+      description: payload?.description || { ru: "", en: "" },
+      questionCount: Number(payload?.questionCount || 24),
+      passingPercent: Number(payload?.passingPercent || 80),
+      types: Array.isArray(payload?.types) && payload.types.length ? payload.types : ["meaning", "reading", "sentence", "kanji", "word", "srs"],
+      rewards: {
+        completeXp: 120,
+        completeMoon: 20,
+        passXp: 80,
+        passMoon: 12,
+        ...(payload?.rewards || {})
+      }
+    };
+  }
+
+  function normalizeN4Meta(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N4",
+      title: payload?.title || { ru: "JLPT N4", en: "JLPT N4" },
+      description: payload?.description || { ru: "", en: "" },
+      principle: payload?.principle || { ru: "", en: "" },
+      kanjiCount: Number(payload?.kanjiCount || 170),
+      lessonCount: Number(payload?.lessonCount || 17),
+      kanjiPerLesson: Number(payload?.kanjiPerLesson || 10),
+      grammarCount: Number(payload?.grammarCount || 48),
+      readingCount: Number(payload?.readingCount || 0),
+      listeningCount: Number(payload?.listeningCount || 0),
+      pdfUrl: payload?.pdfUrl || "docs/flashkanji_N4_textbook_flashkanji_space.pdf",
+      reviewPlan: Array.isArray(payload?.reviewPlan) ? payload.reviewPlan : [],
+      n5Bridge: Array.isArray(payload?.n5Bridge) ? payload.n5Bridge.map(String).filter(Boolean) : [],
+      rewards: {
+        addToSrsXp: 5,
+        knowXp: 7,
+        hardXp: 2,
+        exerciseXp: 9,
+        exerciseMoon: 1,
+        grammarXp: 10,
+        grammarMoon: 1,
+        lessonCompleteXp: 65,
+        lessonCompleteMoon: 8,
+        readingXp: 35,
+        readingMoon: 4,
+        listeningXp: 30,
+        listeningMoon: 3,
+        finalTestXp: 180,
+        finalTestMoon: 35,
+        ...(payload?.rewards || {})
+      }
+    };
+  }
+
+  function normalizeN4Textbook(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    return {
+      version: Number(payload?.version || 1),
+      level: "N4",
+      textbook: payload?.textbook || {},
+      items: items.map((item, index) => ({
+        ...item,
+        id: String(item.id || `n4-lesson-${index + 1}`),
+        order: Number(item.order || index + 1),
+        title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+        theme: item.theme || item.title || { ru: "", en: "" },
+        kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
+        goal: item.goal || { ru: "", en: "" },
+        durationMinutes: Number(item.durationMinutes || 30),
+        grammarFocus: Array.isArray(item.grammarFocus) ? item.grammarFocus.map(String).filter(Boolean) : [],
+        sentences: Array.isArray(item.sentences) ? item.sentences : [],
+        writing: Array.isArray(item.writing) ? item.writing.map(String).filter(Boolean) : [],
+        reviewAfterDays: Array.isArray(item.reviewAfterDays) ? item.reviewAfterDays.map(Number).filter(Boolean) : [1, 3, 7, 14, 30, 45]
+      })).filter((item) => item.kanji.length)
+    };
+  }
+
+  function normalizeN4KanjiCatalog(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item) => ({
+      ...item,
+      id: String(item.id || item.courseCardId || item.kanji || ""),
+      courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+      kanji: String(item.kanji || ""),
+      meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
+      readings: item.readings || {},
+      examples: Array.isArray(item.examples) ? item.examples : Array.isArray(item.words) ? item.words : [],
+      jlpt: "N4",
+      lessonId: item.lessonId || item.lesson_id || null
+    })).filter((item) => item.kanji);
+  }
+
+  function applyN4CatalogToCards() {
+    if (!Array.isArray(state.n4KanjiCatalog) || !state.n4KanjiCatalog.length) return;
+    const detailsByKanji = new Map(state.n4KanjiCatalog.map((item) => [item.kanji, item]));
+    const n4KanjiInCards = new Set();
+    state.cards = state.cards.map((card) => {
+      const detail = detailsByKanji.get(card.kanji);
+      if (!detail) return card;
+      const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
+      const isN4Card = level === "N4" || String(card.id) === detail.courseCardId || String(card.id) === detail.id;
+      if (!isN4Card) return card;
+      n4KanjiInCards.add(detail.kanji);
+      return mergeN4CardDetail(card, detail);
+    });
+    state.n4KanjiCatalog.forEach((detail) => {
+      if (n4KanjiInCards.has(detail.kanji)) return;
+      state.cards.push(mergeN4CardDetail({
+        id: detail.courseCardId || detail.id,
+        kanji: detail.kanji,
+        lessonId: detail.lessonId,
+        jlpt: "N4",
+        examples: [],
+        source: "n4-catalog"
+      }, detail));
+      n4KanjiInCards.add(detail.kanji);
+    });
+  }
+
+  function mergeN4CardDetail(card, detail) {
+    const readings = detail.readings || {};
+    const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
+    const examples = (detail.examples || []).map((example) => ({
+      ...example,
+      translation: example.translation_ru || example.translation || example.translation_en || ""
+    }));
+    const firstExample = examples[0] || {};
+    const strokeOrder = Array.isArray(detail.strokeOrder)
+      ? detail.strokeOrder.map((step) => typeof step === "string" ? step : step.description_ru || step.description_en || "").filter(Boolean)
+      : card.stroke_order;
+    return {
+      ...card,
+      id: String(card.id || detail.courseCardId || detail.id),
+      jlpt: "N4",
+      lessonId: card.lessonId || detail.lessonId || null,
+      meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
+      meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
+      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
+      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
+      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
+      examples: examples.length ? examples : card.examples,
+      apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
+      interface_use: detail.interfaceUse || card.interface_use || "",
+      interface_use_en: detail.interfaceUseEn || detail.interfaceUse || card.interface_use_en || card.interface_use || "",
+      strokes: Number(detail.strokes || card.strokes || 0),
+      stroke_order: strokeOrder,
+      meta: { ...(card.meta || {}), ...(detail.meta || {}) },
+      n4Detail: detail
+    };
+  }
+
+  function normalizeN4Grammar(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n4-grammar-${String(index + 1).padStart(2, "0")}`),
+      level: "N4",
+      order: Number(item.order || index + 1),
+      pattern: String(item.pattern || item.id || ""),
+      title: item.title || { ru: item.pattern || "", en: item.pattern || "" },
+      explanation: item.explanation || { ru: "", en: "" },
+      formula: String(item.formula || ""),
+      examples: Array.isArray(item.examples) ? item.examples : [],
+      question: item.question || { ru: "", en: "" },
+      answer: String(item.answer || ""),
+      options: Array.isArray(item.options) ? item.options.map(String).filter(Boolean) : []
+    })).filter((item) => item.pattern);
+  }
+
+  function normalizeN4ExerciseConfig(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N4",
+      lessonQuestionCount: Number(payload?.lessonQuestionCount || 8),
+      types: Array.isArray(payload?.types) ? payload.types : [],
+      reviewModes: Array.isArray(payload?.reviewModes) ? payload.reviewModes : []
+    };
+  }
+
+  function normalizeN4Collection(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n4-item-${index + 1}`),
+      title: item.title || { ru: item.id || "", en: item.id || "" },
+      questions: Array.isArray(item.questions) ? item.questions : item.question ? [{
+        prompt: item.question,
+        answer: item.answer,
+        options: Array.isArray(item.options) ? item.options : []
+      }] : []
+    })).filter((item) => item.id);
+  }
+
+  function normalizeN4FinalTest(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N4",
+      title: payload?.title || { ru: "Финальный тест JLPT N4", en: "JLPT N4 Final Test" },
+      description: payload?.description || { ru: "", en: "" },
+      questionCount: Number(payload?.questionCount || 32),
+      passingPercent: Number(payload?.passingPercent || 80),
+      kanjiPool: Array.isArray(payload?.kanjiPool) ? payload.kanjiPool.map(String).filter(Boolean) : [],
+      grammarPool: Array.isArray(payload?.grammarPool) ? payload.grammarPool.map(String).filter(Boolean) : [],
+      readingPool: Array.isArray(payload?.readingPool) ? payload.readingPool.map(String).filter(Boolean) : [],
+      types: Array.isArray(payload?.types) && payload.types.length ? payload.types : ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"],
+      rewards: {
+        completeXp: Number(payload?.rewards?.xp || payload?.rewards?.completeXp || 180),
+        completeMoon: Number(payload?.rewards?.moon || payload?.rewards?.completeMoon || 35),
+        passXp: Number(payload?.rewards?.passXp || 90),
+        passMoon: Number(payload?.rewards?.passMoon || 15)
+      }
+    };
+  }
+
+  function normalizeN3Meta(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N3",
+      title: payload?.title || { ru: "JLPT N3", en: "JLPT N3" },
+      description: payload?.description || { ru: "", en: "" },
+      principle: payload?.principle || { ru: "", en: "" },
+      kanjiCount: Number(payload?.kanjiCount || 370),
+      lessonCount: Number(payload?.lessonCount || 37),
+      kanjiPerLesson: Number(payload?.kanjiPerLesson || 10),
+      grammarCount: Number(payload?.grammarCount || 80),
+      readingCount: Number(payload?.readingCount || 0),
+      listeningCount: Number(payload?.listeningCount || 0),
+      pdfUrl: payload?.pdfUrl || "docs/flashkanji_N3_textbook_flashkanji_space.pdf",
+      reviewPlan: Array.isArray(payload?.reviewPlan) ? payload.reviewPlan : [],
+      n5Bridge: Array.isArray(payload?.n5Bridge) ? payload.n5Bridge.map(String).filter(Boolean) : [],
+      rewards: {
+        addToSrsXp: 6,
+        knowXp: 8,
+        hardXp: 2,
+        exerciseXp: 10,
+        exerciseMoon: 1,
+        grammarXp: 11,
+        grammarMoon: 1,
+        lessonCompleteXp: 75,
+        lessonCompleteMoon: 9,
+        readingXp: 38,
+        readingMoon: 4,
+        listeningXp: 34,
+        listeningMoon: 4,
+        finalTestXp: 220,
+        finalTestMoon: 40,
+        ...(payload?.rewards || {})
+      }
+    };
+  }
+
+  function normalizeN3Textbook(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    return {
+      version: Number(payload?.version || 1),
+      level: "N3",
+      textbook: payload?.textbook || {},
+      items: items.map((item, index) => ({
+        ...item,
+        id: String(item.id || `n3-lesson-${index + 1}`),
+        order: Number(item.order || index + 1),
+        title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+        theme: item.theme || item.title || { ru: "", en: "" },
+        kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
+        goal: item.goal || { ru: "", en: "" },
+        durationMinutes: Number(item.durationMinutes || 30),
+        grammarFocus: Array.isArray(item.grammarFocus) ? item.grammarFocus.map(String).filter(Boolean) : [],
+        sentences: Array.isArray(item.sentences) ? item.sentences : [],
+        writing: Array.isArray(item.writing) ? item.writing.map(String).filter(Boolean) : [],
+        reviewAfterDays: Array.isArray(item.reviewAfterDays) ? item.reviewAfterDays.map(Number).filter(Boolean) : [1, 3, 7, 14, 30, 45, 60]
+      })).filter((item) => item.kanji.length)
+    };
+  }
+
+  function normalizeN3KanjiCatalog(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item) => ({
+      ...item,
+      id: String(item.id || item.courseCardId || item.kanji || ""),
+      courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+      kanji: String(item.kanji || ""),
+      meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
+      readings: item.readings || {},
+      examples: Array.isArray(item.examples) ? item.examples : Array.isArray(item.words) ? item.words : [],
+      jlpt: "N3",
+      lessonId: item.lessonId || item.lesson_id || null
+    })).filter((item) => item.kanji);
+  }
+
+  function applyN3CatalogToCards() {
+    if (!Array.isArray(state.n3KanjiCatalog) || !state.n3KanjiCatalog.length) return;
+    const detailsByKanji = new Map(state.n3KanjiCatalog.map((item) => [item.kanji, item]));
+    const n3KanjiInCards = new Set();
+    state.cards = state.cards.map((card) => {
+      const detail = detailsByKanji.get(card.kanji);
+      if (!detail) return card;
+      const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
+      const isN3Card = level === "N3" || String(card.id) === detail.courseCardId || String(card.id) === detail.id;
+      if (!isN3Card) return card;
+      n3KanjiInCards.add(detail.kanji);
+      return mergeN3CardDetail(card, detail);
+    });
+    state.n3KanjiCatalog.forEach((detail) => {
+      if (n3KanjiInCards.has(detail.kanji)) return;
+      state.cards.push(mergeN3CardDetail({
+        id: detail.courseCardId || detail.id,
+        kanji: detail.kanji,
+        lessonId: detail.lessonId,
+        jlpt: "N3",
+        examples: [],
+        source: "n3-catalog"
+      }, detail));
+      n3KanjiInCards.add(detail.kanji);
+    });
+  }
+
+  function mergeN3CardDetail(card, detail) {
+    const readings = detail.readings || {};
+    const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
+    const examples = (detail.examples || []).map((example) => ({
+      ...example,
+      translation: example.translation_ru || example.translation || example.translation_en || ""
+    }));
+    const firstExample = examples[0] || {};
+    const strokeOrder = Array.isArray(detail.strokeOrder)
+      ? detail.strokeOrder.map((step) => typeof step === "string" ? step : step.description_ru || step.description_en || "").filter(Boolean)
+      : card.stroke_order;
+    return {
+      ...card,
+      id: String(card.id || detail.courseCardId || detail.id),
+      jlpt: "N3",
+      lessonId: card.lessonId || detail.lessonId || null,
+      meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
+      meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
+      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
+      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
+      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
+      examples: examples.length ? examples : card.examples,
+      apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
+      interface_use: detail.interfaceUse || card.interface_use || "",
+      interface_use_en: detail.interfaceUseEn || detail.interfaceUse || card.interface_use_en || card.interface_use || "",
+      strokes: Number(detail.strokes || card.strokes || 0),
+      stroke_order: strokeOrder,
+      meta: { ...(card.meta || {}), ...(detail.meta || {}) },
+      n3Detail: detail
+    };
+  }
+
+  function normalizeN3Grammar(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n3-grammar-${String(index + 1).padStart(2, "0")}`),
+      level: "N3",
+      order: Number(item.order || index + 1),
+      pattern: String(item.pattern || item.id || ""),
+      title: item.title || { ru: item.pattern || "", en: item.pattern || "" },
+      explanation: item.explanation || { ru: "", en: "" },
+      formula: String(item.formula || ""),
+      examples: Array.isArray(item.examples) ? item.examples : [],
+      question: item.question || { ru: "", en: "" },
+      answer: String(item.answer || ""),
+      options: Array.isArray(item.options) ? item.options.map(String).filter(Boolean) : []
+    })).filter((item) => item.pattern);
+  }
+
+  function normalizeN3ExerciseConfig(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N3",
+      lessonQuestionCount: Number(payload?.lessonQuestionCount || 8),
+      types: Array.isArray(payload?.types) ? payload.types : [],
+      reviewModes: Array.isArray(payload?.reviewModes) ? payload.reviewModes : []
+    };
+  }
+
+  function normalizeN3Collection(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n3-item-${index + 1}`),
+      title: item.title || { ru: item.id || "", en: item.id || "" },
+      questions: Array.isArray(item.questions) ? item.questions : item.question ? [{
+        prompt: item.question,
+        answer: item.answer,
+        options: Array.isArray(item.options) ? item.options : []
+      }] : []
+    })).filter((item) => item.id);
+  }
+
+  function normalizeN3FinalTest(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N3",
+      title: payload?.title || { ru: "Финальный тест JLPT N3", en: "JLPT N3 Final Test" },
+      description: payload?.description || { ru: "", en: "" },
+      questionCount: Number(payload?.questionCount || 40),
+      passingPercent: Number(payload?.passingPercent || 80),
+      kanjiPool: Array.isArray(payload?.kanjiPool) ? payload.kanjiPool.map(String).filter(Boolean) : [],
+      grammarPool: Array.isArray(payload?.grammarPool) ? payload.grammarPool.map(String).filter(Boolean) : [],
+      readingPool: Array.isArray(payload?.readingPool) ? payload.readingPool.map(String).filter(Boolean) : [],
+      types: Array.isArray(payload?.types) && payload.types.length ? payload.types : ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"],
+      rewards: {
+        completeXp: Number(payload?.rewards?.xp || payload?.rewards?.completeXp || 220),
+        completeMoon: Number(payload?.rewards?.moon || payload?.rewards?.completeMoon || 40),
+        passXp: Number(payload?.rewards?.passXp || 110),
+        passMoon: Number(payload?.rewards?.passMoon || 18)
+      }
+    };
+  }
+
+  function normalizeAchievementData(payload, fallback = []) {
+    const rawItems = Array.isArray(payload?.achievements) && payload.achievements.length ? payload.achievements : fallback;
+    const categories = Array.isArray(payload?.categories) ? payload.categories.map((category) => ({
+      id: String(category.id),
+      title: category.title || { ru: category.id, en: category.id },
+      icon: category.icon || "moon"
+    })) : [];
+    const items = rawItems.map((item) => normalizeAchievement(item));
+    const known = new Set(categories.map((category) => category.id));
+    items.forEach((item) => {
+      if (!known.has(item.category)) {
+        known.add(item.category);
+        categories.push({ id: item.category, title: { ru: item.category, en: item.category }, icon: item.icon || "moon" });
+      }
+    });
+    return { categories, items };
+  }
+
+  function normalizeAchievement(item) {
+    const rewardXp = Number(item.rewardXp ?? item.xp ?? 0);
+    const rewardFragments = Number(item.rewardFragments ?? item.coins ?? 0);
+    return {
+      ...item,
+      id: String(item.id),
+      category: item.category || item.kind || "learning",
+      title: item.title || item.name || { ru: item.id, en: item.id },
+      description: item.description || { ru: "", en: "" },
+      icon: item.icon || "moon",
+      kind: item.kind || "learned",
+      target: Number(item.target || 1),
+      rewardXp,
+      rewardFragments,
+      unlocked: Boolean(item.unlocked),
+      secret: Boolean(item.secret)
+    };
+  }
+
+  function detectInitialLanguage() {
+    const languages = [navigator.language, ...(navigator.languages || [])]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+    return languages.some((value) => value === "ru" || value.startsWith("ru-") || value === "be" || value.startsWith("be-")) ? "ru" : "en";
+  }
+
+  function normalizeN2Meta(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N2",
+      title: payload?.title || { ru: "JLPT N2", en: "JLPT N2" },
+      description: payload?.description || { ru: "", en: "" },
+      principle: payload?.principle || { ru: "", en: "" },
+      kanjiCount: Number(payload?.kanjiCount || 380),
+      lessonCount: Number(payload?.lessonCount || 38),
+      kanjiPerLesson: Number(payload?.kanjiPerLesson || 10),
+      grammarCount: Number(payload?.grammarCount || 120),
+      readingCount: Number(payload?.readingCount || 46),
+      listeningCount: Number(payload?.listeningCount || 6),
+      pdfUrl: payload?.pdfUrl || "docs/flashkanji_N2_textbook_flashkanji_space.pdf",
+      reviewPlan: Array.isArray(payload?.reviewPlan) ? payload.reviewPlan : [],
+      n5Bridge: Array.isArray(payload?.n5Bridge) ? payload.n5Bridge.map(String).filter(Boolean) : [],
+      rewards: {
+        addToSrsXp: 7,
+        knowXp: 9,
+        hardXp: 2,
+        exerciseXp: 11,
+        exerciseMoon: 1,
+        grammarXp: 12,
+        grammarMoon: 1,
+        lessonCompleteXp: 85,
+        lessonCompleteMoon: 10,
+        readingXp: 42,
+        readingMoon: 4,
+        listeningXp: 38,
+        listeningMoon: 4,
+        finalTestXp: 260,
+        finalTestMoon: 48,
+        ...(payload?.rewards || {})
+      }
+    };
+  }
+
+  function normalizeN2Textbook(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    return {
+      version: Number(payload?.version || 1),
+      level: "N2",
+      textbook: payload?.textbook || {},
+      items: items.map((item, index) => ({
+        ...item,
+        id: String(item.id || `n2-lesson-${index + 1}`),
+        order: Number(item.order || index + 1),
+        title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+        theme: item.theme || item.title || { ru: "", en: "" },
+        kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
+        goal: item.goal || { ru: "", en: "" },
+        durationMinutes: Number(item.durationMinutes || 30),
+        grammarFocus: Array.isArray(item.grammarFocus) ? item.grammarFocus.map(String).filter(Boolean) : [],
+        sentences: Array.isArray(item.sentences) ? item.sentences : [],
+        writing: Array.isArray(item.writing) ? item.writing.map(String).filter(Boolean) : [],
+        reviewAfterDays: Array.isArray(item.reviewAfterDays) ? item.reviewAfterDays.map(Number).filter(Boolean) : [1, 3, 7, 14, 30, 60, 90]
+      })).filter((item) => item.kanji.length)
+    };
+  }
+
+  function normalizeN2KanjiCatalog(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item) => ({
+      ...item,
+      id: String(item.id || item.courseCardId || item.kanji || ""),
+      courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+      kanji: String(item.kanji || ""),
+      meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
+      readings: item.readings || {},
+      examples: Array.isArray(item.examples) ? item.examples : Array.isArray(item.words) ? item.words : [],
+      jlpt: "N2",
+      lessonId: item.lessonId || item.lesson_id || null
+    })).filter((item) => item.kanji);
+  }
+
+  function applyN2CatalogToCards() {
+    if (!Array.isArray(state.n2KanjiCatalog) || !state.n2KanjiCatalog.length) return;
+    const detailsByKanji = new Map(state.n2KanjiCatalog.map((item) => [item.kanji, item]));
+    const n2KanjiInCards = new Set();
+    state.cards = state.cards.map((card) => {
+      const detail = detailsByKanji.get(card.kanji);
+      if (!detail) return card;
+      const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
+      const isN2Card = level === "N2" || String(card.id) === detail.courseCardId || String(card.id) === detail.id;
+      if (!isN2Card) return card;
+      n2KanjiInCards.add(detail.kanji);
+      return mergeN2CardDetail(card, detail);
+    });
+    state.n2KanjiCatalog.forEach((detail) => {
+      if (n2KanjiInCards.has(detail.kanji)) return;
+      state.cards.push(mergeN2CardDetail({
+        id: detail.courseCardId || detail.id,
+        kanji: detail.kanji,
+        lessonId: detail.lessonId,
+        jlpt: "N2",
+        examples: [],
+        source: "n2-catalog"
+      }, detail));
+      n2KanjiInCards.add(detail.kanji);
+    });
+  }
+
+  function mergeN2CardDetail(card, detail) {
+    const readings = detail.readings || {};
+    const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
+    const examples = (detail.examples || []).map((example) => ({
+      ...example,
+      translation: example.translation_ru || example.translation || example.translation_en || ""
+    }));
+    const firstExample = examples[0] || {};
+    const strokeOrder = Array.isArray(detail.strokeOrder)
+      ? detail.strokeOrder.map((step) => typeof step === "string" ? step : step.description_ru || step.description_en || "").filter(Boolean)
+      : card.stroke_order;
+    return {
+      ...card,
+      id: String(card.id || detail.courseCardId || detail.id),
+      jlpt: "N2",
+      lessonId: card.lessonId || detail.lessonId || null,
+      meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
+      meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
+      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
+      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
+      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
+      examples: examples.length ? examples : card.examples,
+      apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
+      interface_use: detail.interfaceUse || card.interface_use || "",
+      interface_use_en: detail.interfaceUseEn || detail.interfaceUse || card.interface_use_en || card.interface_use || "",
+      strokes: Number(detail.strokes || card.strokes || 0),
+      stroke_order: strokeOrder,
+      meta: { ...(card.meta || {}), ...(detail.meta || {}) },
+      n2Detail: detail
+    };
+  }
+
+  function normalizeN2Grammar(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n2-grammar-${String(index + 1).padStart(2, "0")}`),
+      level: "N2",
+      order: Number(item.order || index + 1),
+      pattern: String(item.pattern || item.id || ""),
+      title: item.title || { ru: item.pattern || "", en: item.pattern || "" },
+      explanation: item.explanation || { ru: "", en: "" },
+      formula: String(item.formula || ""),
+      examples: Array.isArray(item.examples) ? item.examples : [],
+      question: item.question || { ru: "", en: "" },
+      answer: String(item.answer || ""),
+      options: Array.isArray(item.options) ? item.options.map(String).filter(Boolean) : []
+    })).filter((item) => item.pattern);
+  }
+
+  function normalizeN2ExerciseConfig(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N2",
+      lessonQuestionCount: Number(payload?.lessonQuestionCount || 8),
+      types: Array.isArray(payload?.types) ? payload.types : [],
+      reviewModes: Array.isArray(payload?.reviewModes) ? payload.reviewModes : []
+    };
+  }
+
+  function normalizeN2Collection(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n2-item-${index + 1}`),
+      title: item.title || { ru: item.id || "", en: item.id || "" },
+      questions: Array.isArray(item.questions) ? item.questions : item.question ? [{
+        prompt: item.question,
+        answer: item.answer,
+        options: Array.isArray(item.options) ? item.options : []
+      }] : []
+    })).filter((item) => item.id);
+  }
+
+  function normalizeN2FinalTest(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N2",
+      title: payload?.title || { ru: "Финальный тест JLPT N2", en: "JLPT N2 Final Test" },
+      description: payload?.description || { ru: "", en: "" },
+      questionCount: Number(payload?.questionCount || 40),
+      passingPercent: Number(payload?.passingPercent || 80),
+      kanjiPool: Array.isArray(payload?.kanjiPool) ? payload.kanjiPool.map(String).filter(Boolean) : [],
+      grammarPool: Array.isArray(payload?.grammarPool) ? payload.grammarPool.map(String).filter(Boolean) : [],
+      readingPool: Array.isArray(payload?.readingPool) ? payload.readingPool.map(String).filter(Boolean) : [],
+      types: Array.isArray(payload?.types) && payload.types.length ? payload.types : ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"],
+      rewards: {
+        completeXp: Number(payload?.rewards?.xp || payload?.rewards?.completeXp || 260),
+        completeMoon: Number(payload?.rewards?.moon || payload?.rewards?.completeMoon || 48),
+        passXp: Number(payload?.rewards?.passXp || 130),
+        passMoon: Number(payload?.rewards?.passMoon || 20)
+      }
+    };
+  }
+
+  function normalizeN1Meta(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N1",
+      title: payload?.title || { ru: "JLPT N1", en: "JLPT N1" },
+      description: payload?.description || { ru: "", en: "" },
+      principle: payload?.principle || { ru: "", en: "" },
+      kanjiCount: Number(payload?.kanjiCount || 1047),
+      currentKanjiCount: Number(payload?.currentKanjiCount || 220),
+      lessonCount: Number(payload?.lessonCount || 53),
+      currentLessonCount: Number(payload?.currentLessonCount || 11),
+      kanjiPerLesson: Number(payload?.kanjiPerLesson || 20),
+      grammarCount: Number(payload?.grammarCount || 150),
+      readingCount: Number(payload?.readingCount || 1),
+      listeningCount: Number(payload?.listeningCount || 1),
+      writingGoal: Number(payload?.writingGoal || 53),
+      pdfUrl: payload?.pdfUrl || "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+      reviewPlan: Array.isArray(payload?.reviewPlan) ? payload.reviewPlan : [],
+      prerequisiteCheck: Array.isArray(payload?.prerequisiteCheck) ? payload.prerequisiteCheck : [],
+      rewards: {
+        addToSrsXp: 8,
+        knowXp: 11,
+        hardXp: 2,
+        exerciseXp: 13,
+        exerciseMoon: 1,
+        grammarXp: 14,
+        grammarMoon: 1,
+        lessonCompleteXp: 110,
+        lessonCompleteMoon: 14,
+        readingXp: 55,
+        readingMoon: 5,
+        listeningXp: 45,
+        listeningMoon: 4,
+        diagnosticXp: 25,
+        diagnosticMoon: 3,
+        finalTestXp: 320,
+        finalTestMoon: 60,
+        ...(payload?.rewards || {})
+      }
+    };
+  }
+
+  function normalizeN1Textbook(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    return {
+      version: Number(payload?.version || 1),
+      level: "N1",
+      textbook: payload?.textbook || {},
+      items: items.map((item, index) => ({
+        ...item,
+        id: String(item.id || `n1-lesson-${index + 1}`),
+        order: Number(item.order || index + 1),
+        title: item.title?.ru || item.title?.en
+          ? item.title
+          : { ru: item.title || `N1: урок ${index + 1}`, en: item.titleEn || `N1 lesson ${index + 1}` },
+        theme: item.theme || item.title || { ru: "", en: "" },
+        kanji: Array.isArray(item.kanji)
+          ? item.kanji.map(String).filter(Boolean)
+          : Array.isArray(item.sampleKanji) ? item.sampleKanji.map(String).filter(Boolean) : [],
+        goal: item.goal || { ru: item.summary || "", en: item.summaryEn || item.summary || "" },
+        durationMinutes: Number(item.durationMinutes || 45),
+        grammarFocus: Array.isArray(item.grammarFocus) ? item.grammarFocus.map(String).filter(Boolean) : [],
+        collocations: Array.isArray(item.collocations) ? item.collocations : [],
+        sentences: Array.isArray(item.sentences) ? item.sentences : [],
+        writing: Array.isArray(item.writing) ? item.writing.map(String).filter(Boolean) : [],
+        miniReadingId: item.miniReadingId || "",
+        reviewAfterDays: Array.isArray(item.reviewAfterDays) ? item.reviewAfterDays.map(Number).filter(Boolean) : [1, 3, 7, 14, 30, 60, 90]
+      })).filter((item) => item.kanji.length)
+    };
+  }
+
+  function normalizeN1KanjiCatalog(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item) => ({
+      ...item,
+      id: String(item.id || item.courseCardId || item.kanji || ""),
+      courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+      kanji: String(item.kanji || ""),
+      meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
+      readings: item.readings || {},
+      examples: Array.isArray(item.examples) ? item.examples : Array.isArray(item.words) ? item.words : [],
+      jlpt: "N1",
+      lessonId: item.lessonId || item.lesson_id || null
+    })).filter((item) => item.kanji);
+  }
+
+  function applyN1CatalogToCards() {
+    if (!Array.isArray(state.n1KanjiCatalog) || !state.n1KanjiCatalog.length) return;
+    const detailsByKanji = new Map(state.n1KanjiCatalog.map((item) => [item.kanji, item]));
+    const n1KanjiInCards = new Set();
+    state.cards = state.cards.map((card) => {
+      const detail = detailsByKanji.get(card.kanji);
+      if (!detail) return card;
+      const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
+      const isN1Card = level === "N1" || String(card.id) === detail.courseCardId || String(card.id) === detail.id;
+      if (!isN1Card) return card;
+      n1KanjiInCards.add(detail.kanji);
+      return mergeN1CardDetail(card, detail);
+    });
+    state.n1KanjiCatalog.forEach((detail) => {
+      if (n1KanjiInCards.has(detail.kanji)) return;
+      state.cards.push(mergeN1CardDetail({
+        id: detail.courseCardId || detail.id,
+        kanji: detail.kanji,
+        lessonId: detail.lessonId,
+        jlpt: "N1",
+        examples: [],
+        source: "n1-catalog"
+      }, detail));
+      n1KanjiInCards.add(detail.kanji);
+    });
+  }
+
+  function mergeN1CardDetail(card, detail) {
+    const readings = detail.readings || {};
+    const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
+    const looksCorrupt = (value) => typeof value === "string" && /\?{3,}/.test(value);
+    const cleanText = (...values) => values.map((value) => String(value || "").trim()).find((value) => value && !looksCorrupt(value)) || "";
+    const examples = (detail.examples || []).filter((example) => {
+      return !looksCorrupt(example.word) && !looksCorrupt(example.reading) && !looksCorrupt(example.translation_ru || example.translation || example.translation_en);
+    }).map((example) => ({
+      ...example,
+      translation: cleanText(example.translation_ru, example.translation, example.translation_en)
+    }));
+    const firstExample = examples[0] || {};
+    const strokeOrder = Array.isArray(detail.strokeOrder)
+      ? detail.strokeOrder.map((step) => typeof step === "string" ? step : step.description_ru || step.description_en || "").filter(Boolean)
+      : card.stroke_order;
+    return {
+      ...card,
+      id: String(card.id || detail.courseCardId || detail.id),
+      jlpt: "N1",
+      lessonId: card.lessonId || detail.lessonId || null,
+      meaning_ru: cleanText(card.meaning_ru, detail.meaning?.ru, detail.meaning_ru),
+      meaning_en: cleanText(card.meaning_en, detail.meaning?.en, detail.meaning?.ru, card.meaning_ru),
+      onyomi: arrayText(readings.onyomi) || detail.onyomi || card.onyomi || "",
+      onyomi_romaji: arrayText(readings.onyomiRomaji || readings.onyomi_romaji) || detail.onyomi_romaji || card.onyomi_romaji || "",
+      kunyomi: arrayText(readings.kunyomi) || detail.kunyomi || card.kunyomi || "",
+      kunyomi_romaji: arrayText(readings.kunyomiRomaji || readings.kunyomi_romaji) || detail.kunyomi_romaji || card.kunyomi_romaji || "",
+      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || detail.hiragana || firstExample.reading || card.hiragana || "",
+      romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || detail.romaji || firstExample.romaji || card.romaji || "",
+      examples: examples.length ? examples : card.examples,
+      apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
+      interface_use: cleanText(detail.interfaceUse, detail.interface_use, card.interface_use),
+      interface_use_en: cleanText(detail.interfaceUseEn, detail.interfaceUse, card.interface_use_en, card.interface_use),
+      strokes: Number(detail.strokes || card.strokes || 0),
+      stroke_order: strokeOrder,
+      audio: detail.audio || card.audio || "",
+      meta: { ...(card.meta || {}), ...(detail.meta || {}) },
+      n1Detail: detail
+    };
+  }
+
+  function normalizeN1Grammar(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.flatMap((item, index) => {
+      if (item.kind === "overview") return [];
+      return [{
+        ...item,
+        id: String(item.id || `n1-grammar-${String(index + 1).padStart(2, "0")}`),
+        level: "N1",
+        order: Number(item.order || index + 1),
+        pattern: String(item.pattern || item.id || ""),
+        title: item.title || { ru: item.pattern || item.id || "", en: item.pattern || item.id || "" },
+        explanation: item.explanation || item.summary || { ru: "", en: "" },
+        formula: String(item.formula || ""),
+        examples: Array.isArray(item.examples) ? item.examples : [],
+        question: item.question || { ru: "", en: "" },
+        answer: String(item.answer || ""),
+        options: Array.isArray(item.options) ? item.options.map(String).filter(Boolean) : []
+      }];
+    }).filter((item) => item.pattern || item.id);
+  }
+
+  function normalizeN1ExerciseConfig(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N1",
+      lessonQuestionCount: Number(payload?.lessonQuestionCount || 12),
+      types: Array.isArray(payload?.types) ? payload.types : [],
+      reviewModes: Array.isArray(payload?.reviewModes) ? payload.reviewModes : [],
+      lessonOverlays: Array.isArray(payload?.lessonOverlays) ? payload.lessonOverlays : [],
+      diagnostic: Array.isArray(payload?.diagnostic) ? payload.diagnostic : []
+    };
+  }
+
+  function normalizeN1Collection(payload) {
+    const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+    return items.map((item, index) => ({
+      ...item,
+      id: String(item.id || `n1-item-${index + 1}`),
+      title: item.title || { ru: item.id || "", en: item.id || "" },
+      questions: Array.isArray(item.questions) ? item.questions : item.question ? [{
+        prompt: item.question,
+        answer: item.answer,
+        options: Array.isArray(item.options) ? item.options : []
+      }] : []
+    })).filter((item) => item.id);
+  }
+
+  function normalizeN1FinalTest(payload) {
+    return {
+      version: Number(payload?.version || 1),
+      level: "N1",
+      title: payload?.title || { ru: "Финальный тест JLPT N1", en: "JLPT N1 Final Test" },
+      description: payload?.description || { ru: "", en: "" },
+      questionCount: Number(payload?.questionCount || 45),
+      passingPercent: Number(payload?.passingPercent || 82),
+      kanjiPool: Array.isArray(payload?.kanjiPool) ? payload.kanjiPool.map(String).filter(Boolean) : [],
+      grammarPool: Array.isArray(payload?.grammarPool) ? payload.grammarPool.map(String).filter(Boolean) : [],
+      readingPool: Array.isArray(payload?.readingPool) ? payload.readingPool.map(String).filter(Boolean) : [],
+      types: Array.isArray(payload?.types) && payload.types.length ? payload.types : ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"],
+      rewards: {
+        completeXp: Number(payload?.rewards?.xp || payload?.rewards?.completeXp || 320),
+        completeMoon: Number(payload?.rewards?.moon || payload?.rewards?.completeMoon || 60),
+        passXp: Number(payload?.rewards?.passXp || 160),
+        passMoon: Number(payload?.rewards?.passMoon || 25)
+      }
+    };
   }
 
   function normalizeAchievementData(payload, fallback = []) {
@@ -718,6 +2025,8 @@ async function loadCourse() {
       appOpens: 0,
       totalMoonFragmentsEarned: 0,
       cards: {},
+      seenCards: {},
+      seenKanji: {},
       daily: {},
       favorites: {},
       transactions: [],
@@ -747,11 +2056,18 @@ async function loadCourse() {
         customStatus: ""
       },
       jlptLessonPractice: { activeIds: {}, selected: {}, checked: {}, results: {}, completed: {} },
+      jlptModuleEva: defaultJlptModuleEvaProgress(),
+      n5Course: defaultN5CourseProgress(),
+      n4Course: defaultN4CourseProgress(),
+      n3Course: defaultN3CourseProgress(),
+      n2Course: defaultN2CourseProgress(),
+      n1Course: defaultN1CourseProgress(),
       unlockedBackgrounds: ["bg_study_hub"],
       selectedEvaRoomBackground: "bg_study_hub",
       unlockedEvaSprites: ["idle", "default"],
       selectedEvaSprite: "idle",
       evaRoomDialogueProgress: { currentNode: "intro", rewardsClaimed: {}, visited: {}, lineHistory: [] },
+      evaRoomQuiz: { answered: 0, correct: 0, wrong: 0, streak: 0, rewarded: {}, history: [] },
       evaAutonomy: defaultEvaAutonomy(),
       evaRelationship: defaultEvaRelationship(),
       shop: { owned: [], equipped: {} }
@@ -778,6 +2094,8 @@ async function loadCourse() {
       version: APP_VERSION,
       settings: { ...base.settings, ...(saved.settings || {}) },
       cards: { ...base.cards, ...(saved.cards || {}) },
+      seenCards: { ...base.seenCards, ...(saved.seenCards || {}) },
+      seenKanji: { ...base.seenKanji, ...(saved.seenKanji || {}) },
       daily: { ...base.daily, ...(saved.daily || {}) },
       favorites: { ...base.favorites, ...(saved.favorites || {}) },
       transactions: Array.isArray(saved.transactions) ? saved.transactions : base.transactions,
@@ -793,6 +2111,12 @@ async function loadCourse() {
       secrets: { ...base.secrets, ...(saved.secrets || {}) },
       sentencePractice: mergeSentencePractice(base.sentencePractice, saved.sentencePractice || {}),
       jlptLessonPractice: mergeJlptLessonPractice(base.jlptLessonPractice, saved.jlptLessonPractice || {}),
+      jlptModuleEva: mergeJlptModuleEvaProgress(base.jlptModuleEva, saved.jlptModuleEva || {}),
+      n5Course: mergeN5CourseProgress(base.n5Course, saved.n5Course || {}),
+      n4Course: mergeN4CourseProgress(base.n4Course, saved.n4Course || {}),
+      n3Course: mergeN3CourseProgress(base.n3Course, saved.n3Course || {}),
+      n2Course: mergeN2CourseProgress(base.n2Course, saved.n2Course || {}),
+      n1Course: mergeN1CourseProgress(base.n1Course, saved.n1Course || {}),
       unlockedBackgrounds: [...new Set([...(base.unlockedBackgrounds || []), ...((saved.unlockedBackgrounds) || [])])],
       selectedEvaRoomBackground: saved.selectedEvaRoomBackground || base.selectedEvaRoomBackground,
       unlockedEvaSprites: [...new Set([...(base.unlockedEvaSprites || []), ...((saved.unlockedEvaSprites) || []), ...(((saved.shop && saved.shop.owned) || []).filter((item) => String(item).startsWith("eva_sprite:")).map((item) => String(item).replace("eva_sprite:", "")))])],
@@ -804,12 +2128,715 @@ async function loadCourse() {
         visited: { ...base.evaRoomDialogueProgress.visited, ...((saved.evaRoomDialogueProgress && saved.evaRoomDialogueProgress.visited) || {}) },
         lineHistory: Array.isArray(saved.evaRoomDialogueProgress?.lineHistory) ? saved.evaRoomDialogueProgress.lineHistory : base.evaRoomDialogueProgress.lineHistory || []
       },
+      evaRoomQuiz: {
+        ...base.evaRoomQuiz,
+        ...(saved.evaRoomQuiz || {}),
+        rewarded: { ...base.evaRoomQuiz.rewarded, ...((saved.evaRoomQuiz && saved.evaRoomQuiz.rewarded) || {}) },
+        history: Array.isArray(saved.evaRoomQuiz?.history) ? saved.evaRoomQuiz.history.slice(0, 40) : base.evaRoomQuiz.history
+      },
       evaAutonomy: mergeEvaAutonomy(base.evaAutonomy, saved.evaAutonomy || {}),
       evaRelationship: mergeEvaRelationship(base.evaRelationship, saved.evaRelationship || {}),
       shop: {
         owned: [...new Set([...(base.shop.owned || []), ...((saved.shop && saved.shop.owned) || [])])],
         equipped: { ...base.shop.equipped, ...((saved.shop && saved.shop.equipped) || {}) }
       }
+    };
+  }
+
+  function defaultJlptModuleEvaState(level = "N5") {
+    const key = String(level || "N5").toUpperCase();
+    return {
+      level: key,
+      collapsed: true,
+      phase: "intro",
+      sawGreeting: false,
+      sawCompletion: false,
+      dialogueTurns: 0,
+      questionSequence: 0,
+      currentQuestion: null,
+      selectedAnswerId: null,
+      questionOutcome: null,
+      reactionText: { ru: "", en: "" },
+      lastVisitedLessonId: null,
+      lastVisitedView: "overview",
+      lastQuestionCardId: null,
+      lastQuestionAt: null,
+      lastAnsweredAt: null,
+      lastCompletedAt: null,
+      recentQuestionCardIds: [],
+      displaySprite: null
+    };
+  }
+
+  function defaultJlptModuleEvaProgress() {
+    return {
+      N5: defaultJlptModuleEvaState("N5"),
+      N4: defaultJlptModuleEvaState("N4"),
+      N3: defaultJlptModuleEvaState("N3"),
+      N2: defaultJlptModuleEvaState("N2"),
+      N1: defaultJlptModuleEvaState("N1")
+    };
+  }
+
+  function mergeJlptModuleEvaState(base, saved) {
+    const normalizeText = (value, fallback = {}) => {
+      if (typeof value === "string") {
+        return { ru: value, en: value };
+      }
+      return {
+        ru: String(value?.ru || fallback?.ru || ""),
+        en: String(value?.en || fallback?.en || "")
+      };
+    };
+    const normalizeQuestion = (question) => {
+      if (!question || typeof question !== "object") return null;
+      return {
+        ...question,
+        text: normalizeText(question.text, base.currentQuestion?.text || {}),
+        answerText: normalizeText(question.answerText, base.currentQuestion?.answerText || {}),
+        options: Array.isArray(question.options)
+          ? question.options.map((option) => ({
+            ...option,
+            text: normalizeText(option.text, {}),
+            reply: normalizeText(option.reply, {})
+          }))
+          : []
+      };
+    };
+    const validPhases = new Set(["intro", "context", "question", "reaction", "completion", "idle"]);
+    const phase = validPhases.has(String(saved?.phase || "")) ? String(saved.phase) : base.phase;
+    return {
+      ...base,
+      ...(saved || {}),
+      level: base.level,
+      collapsed: Boolean(saved?.collapsed ?? base.collapsed),
+      phase,
+      sawGreeting: Boolean(saved?.sawGreeting ?? base.sawGreeting),
+      sawCompletion: Boolean(saved?.sawCompletion ?? base.sawCompletion),
+      dialogueTurns: Number(saved?.dialogueTurns ?? base.dialogueTurns ?? 0),
+      questionSequence: Number(saved?.questionSequence ?? base.questionSequence ?? 0),
+      currentQuestion: normalizeQuestion(saved?.currentQuestion || base.currentQuestion),
+      selectedAnswerId: saved?.selectedAnswerId || base.selectedAnswerId || null,
+      questionOutcome: ["correct", "wrong"].includes(saved?.questionOutcome) ? saved.questionOutcome : (base.questionOutcome || null),
+      reactionText: normalizeText(saved?.reactionText, base.reactionText || {}),
+      lastVisitedLessonId: saved?.lastVisitedLessonId || base.lastVisitedLessonId || null,
+      lastVisitedView: saved?.lastVisitedView || base.lastVisitedView || "overview",
+      lastQuestionCardId: saved?.lastQuestionCardId || base.lastQuestionCardId || null,
+      lastQuestionAt: saved?.lastQuestionAt || base.lastQuestionAt || null,
+      lastAnsweredAt: saved?.lastAnsweredAt || base.lastAnsweredAt || null,
+      lastCompletedAt: saved?.lastCompletedAt || base.lastCompletedAt || null,
+      recentQuestionCardIds: Array.isArray(saved?.recentQuestionCardIds)
+        ? saved.recentQuestionCardIds.map(String).filter(Boolean).slice(0, 12)
+        : Array.isArray(base.recentQuestionCardIds)
+          ? base.recentQuestionCardIds.map(String).filter(Boolean).slice(0, 12)
+          : [],
+      displaySprite: typeof saved?.displaySprite === "string" ? saved.displaySprite : (base.displaySprite || null)
+    };
+  }
+
+  function mergeJlptModuleEvaProgress(base, saved) {
+    const levels = ["N5", "N4", "N3", "N2", "N1"];
+    return levels.reduce((result, level) => {
+      result[level] = mergeJlptModuleEvaState(base?.[level] || defaultJlptModuleEvaState(level), saved?.[level] || {});
+      return result;
+    }, {});
+  }
+
+  function ensureJlptModuleEvaState(level) {
+    const key = String(level || "").toUpperCase();
+    state.progress.jlptModuleEva ||= defaultJlptModuleEvaProgress();
+    if (!state.progress.jlptModuleEva[key]) {
+      state.progress.jlptModuleEva[key] = defaultJlptModuleEvaState(key || "N5");
+    }
+    return state.progress.jlptModuleEva[key];
+  }
+
+  function jlptModuleSpec(level) {
+    const key = String(level || "").toUpperCase();
+    if (key === "N5") {
+      return { level: key, labels: n5Labels(), course: n5Course(), lessons: n5Lessons(), lessonById: n5LessonById, currentLesson: n5CurrentLesson(), allCards: n5AllCards, textbook: state.n5Textbook, progress: n5ProgressSummary };
+    }
+    if (key === "N4") {
+      return { level: key, labels: n4Labels(), course: n4Course(), lessons: n4Lessons(), lessonById: n4LessonById, currentLesson: n4CurrentLesson(), allCards: n4AllCards, textbook: state.n4Textbook, progress: n4ProgressSummary };
+    }
+    if (key === "N3") {
+      return { level: key, labels: n3Labels(), course: n3Course(), lessons: n3Lessons(), lessonById: n3LessonById, currentLesson: n3CurrentLesson(), allCards: n3AllCards, textbook: state.n3Textbook, progress: n3ProgressSummary };
+    }
+    if (key === "N2") {
+      return { level: key, labels: n2Labels(), course: n2Course(), lessons: n2Lessons(), lessonById: n2LessonById, currentLesson: n2CurrentLesson(), allCards: n2AllCards, textbook: state.n2Textbook, progress: n2ProgressSummary };
+    }
+    if (key === "N1") {
+      return { level: key, labels: n1Labels(), course: n1Course(), lessons: n1Lessons(), lessonById: n1LessonById, currentLesson: n1CurrentLesson(), allCards: n1AllCards, textbook: state.n1Textbook, progress: n1ProgressSummary };
+    }
+    return null;
+  }
+
+  function jlptModuleSummary(level, spec = null, moduleState = null, pageContext = {}) {
+    const resolvedSpec = spec || jlptModuleSpec(level);
+    if (!resolvedSpec) return null;
+    const course = resolvedSpec.course;
+    const allCards = typeof resolvedSpec.allCards === "function" ? resolvedSpec.allCards() : [];
+    const studied = new Set(Object.keys(course?.studiedKanji || {}));
+    allCards.forEach((card) => {
+      if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
+    });
+    const completedLessons = Object.keys(course?.completedLessons || {}).length;
+    const totalLessons = resolvedSpec.lessons.length || Number(resolvedSpec.textbook?.lessonCount || 0);
+    const difficult = Object.keys(course?.difficultKanji || {}).length;
+    const currentLesson = pageContext.lesson || resolvedSpec.currentLesson || null;
+    const lastLesson = moduleState?.lastVisitedLessonId ? resolvedSpec.lessonById(moduleState.lastVisitedLessonId) : currentLesson;
+    const reviews = allCards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0);
+    const finalPassed = Boolean(course?.finalTest?.passed);
+    const lessonsComplete = totalLessons > 0 && completedLessons >= totalLessons;
+    const complete = finalPassed || lessonsComplete;
+    return {
+      level: resolvedSpec.level,
+      title: localized(resolvedSpec.textbook?.displayTitle || resolvedSpec.textbook?.title || { ru: resolvedSpec.level, en: resolvedSpec.level }),
+      currentLesson,
+      lastLesson,
+      totalLessons,
+      completedLessons,
+      totalCards: allCards.length,
+      studied: studied.size,
+      difficult,
+      reviews,
+      finalPassed,
+      lessonsComplete,
+      complete,
+      questionPoolSize: jlptModuleEligibleCards(level, resolvedSpec, moduleState, pageContext).length
+    };
+  }
+
+  function jlptModuleEligibleCards(level, spec = null, moduleState = null, pageContext = {}) {
+    const resolvedSpec = spec || jlptModuleSpec(level);
+    if (!resolvedSpec) return [];
+    const course = resolvedSpec.course;
+    const allCards = typeof resolvedSpec.allCards === "function" ? resolvedSpec.allCards() : [];
+    const seenKanji = state.progress?.seenKanji || {};
+    const completedLessons = course?.completedLessons || {};
+    const studiedKanji = course?.studiedKanji || {};
+    const difficultKanji = course?.difficultKanji || {};
+    const activeLessonId = String(pageContext.lesson?.id || resolvedSpec.currentLesson?.id || course?.currentLessonId || moduleState?.lastVisitedLessonId || "");
+    const visitedLessonIds = new Set([activeLessonId, String(moduleState?.lastVisitedLessonId || "")].filter(Boolean));
+    const pool = allCards.filter((card) => {
+      if (!card?.id || !card.kanji) return false;
+      const lessonId = String(card.lessonId || "");
+      const seenInModule = Boolean(
+        studiedKanji[card.kanji]
+        || difficultKanji[card.kanji]
+        || seenKanji[card.kanji]
+        || cardProgressWasTouched(card)
+      );
+      const completedLesson = lessonId && Boolean(completedLessons[lessonId]);
+      const visitedLesson = lessonId && visitedLessonIds.has(lessonId);
+      return seenInModule || completedLesson || visitedLesson;
+    });
+    return uniqueEvaKanjiCards(pool);
+  }
+
+  function jlptModuleCardPriority(level, card, spec = null, moduleState = null, pageContext = {}) {
+    const resolvedSpec = spec || jlptModuleSpec(level);
+    if (!resolvedSpec || !card) return 999;
+    const course = resolvedSpec.course;
+    const lessonId = String(card.lessonId || "");
+    const activeLessonId = String(pageContext.lesson?.id || resolvedSpec.currentLesson?.id || course?.currentLessonId || "");
+    const lastVisitedLessonId = String(moduleState?.lastVisitedLessonId || "");
+    if (lessonId && lessonId === activeLessonId) return 0;
+    if (lessonId && lessonId === lastVisitedLessonId) return 1;
+    if (course?.difficultKanji?.[card.kanji]) return 2;
+    if (course?.studiedKanji?.[card.kanji]) return 3;
+    if (cardProgressWasTouched(card)) return 4;
+    return 5;
+  }
+
+  function jlptModuleQuestionLine(level, context = {}, moduleState = null, summary = null, question = null) {
+    const resolvedSpec = jlptModuleSpec(level);
+    if (!resolvedSpec) return { ru: "", en: "" };
+    const labels = resolvedSpec.labels || {};
+    const lesson = context.lesson || resolvedSpec.currentLesson || null;
+    const lessonTitle = lesson ? localized(lesson.title || {}) : "";
+    const lessonOrder = lesson?.order || "";
+    const lastLesson = summary?.lastLesson || null;
+    const lastLessonTitle = lastLesson ? localized(lastLesson.title || {}) : "";
+    const view = String(context.view || "overview");
+    const pageName = {
+      overview: lang() === "ru" ? "обзоре уровня" : "the level overview",
+      lesson: lang() === "ru" ? "уроке" : "lesson",
+      lessons: lang() === "ru" ? "списке уроков" : "lesson list",
+      review: lang() === "ru" ? "повторении" : "review",
+      final: lang() === "ru" ? "финальном тесте" : "final test",
+      kanji: lang() === "ru" ? "каталоге кандзи" : "kanji catalog",
+      grammar: lang() === "ru" ? "грамматике" : "grammar",
+      reading: lang() === "ru" ? "чтении" : "reading",
+      listening: lang() === "ru" ? "аудировании" : "listening",
+      diagnostic: lang() === "ru" ? "диагностике" : "diagnostic"
+    }[view] || (lang() === "ru" ? "странице" : "this page");
+    if (!moduleState || moduleState.phase === "intro") {
+      return lang() === "ru"
+        ? { ru: `Привет. Это ${resolvedSpec.level}. Я буду задавать вопросы только по материалу, который ты уже видел.`, en: `Hi. This is ${resolvedSpec.level}. I'll only ask about material you've already seen.` }
+        : { ru: `Hi. This is ${resolvedSpec.level}. I'll only ask about material you've already seen.`, en: `Hi. This is ${resolvedSpec.level}. I'll only ask about material you've already seen.` };
+    }
+    if (moduleState.phase === "context") {
+      if (summary?.complete) {
+        return lang() === "ru"
+          ? { ru: `${resolvedSpec.level} уже пройден. Могу дать ещё один короткий вопрос для закрепления или просто постоять рядом.`, en: `${resolvedSpec.level} is already complete. I can still give you one short check or simply keep you company.` }
+          : { ru: `${resolvedSpec.level} is already complete. I can still give you one short check or simply keep you company.`, en: `${resolvedSpec.level} is already complete. I can still give you one short check or simply keep you company.` };
+      }
+      const lastLessonPhrase = lastLessonTitle ? (lang() === "ru" ? ` Последний визит был в урок ${lastLesson.order || ""}${lastLessonTitle ? ` · ${lastLessonTitle}` : ""}.` : ` Your last visit was lesson ${lastLesson.order || ""}${lastLessonTitle ? ` · ${lastLessonTitle}` : ""}.`) : "";
+      if (view === "lesson" && lesson) {
+        return lang() === "ru"
+          ? { ru: `Открыт урок ${lessonOrder}${lessonTitle ? ` · ${lessonTitle}` : ""}. Я спрошу только по кандзи, которые ты уже видел здесь.`, en: `Lesson ${lessonOrder}${lessonTitle ? ` · ${lessonTitle}` : ""} is open. I'll only ask about kanji you've already seen here.` }
+          : { ru: `Lesson ${lessonOrder}${lessonTitle ? ` · ${lessonTitle}` : ""} is open. I'll only ask about kanji you've already seen here.`, en: `Lesson ${lessonOrder}${lessonTitle ? ` · ${lessonTitle}` : ""} is open. I'll only ask about kanji you've already seen here.` };
+      }
+      if (view === "review") {
+        return lang() === "ru"
+          ? { ru: `Сейчас повтор ${resolvedSpec.level}. Это хороший момент, чтобы проверить знакомые кандзи без спешки.${lastLessonPhrase}`, en: `This is ${resolvedSpec.level} review. It's a good moment to check familiar kanji at an easy pace.${lastLessonPhrase}` }
+          : { ru: `This is ${resolvedSpec.level} review. It's a good moment to check familiar kanji at an easy pace.${lastLessonPhrase}`, en: `This is ${resolvedSpec.level} review. It's a good moment to check familiar kanji at an easy pace.${lastLessonPhrase}` };
+      }
+      if (view === "final") {
+        return lang() === "ru"
+          ? { ru: `Финальный тест ${resolvedSpec.level} держит планку. Я дам вопрос только по знакомому материалу, чтобы он был честным.${lastLessonPhrase}`, en: `The ${resolvedSpec.level} final test keeps the bar high. I'll only ask from familiar material so it stays fair.${lastLessonPhrase}` }
+          : { ru: `The ${resolvedSpec.level} final test keeps the bar high. I'll only ask from familiar material so it stays fair.${lastLessonPhrase}`, en: `The ${resolvedSpec.level} final test keeps the bar high. I'll only ask from familiar material so it stays fair.${lastLessonPhrase}` };
+      }
+      if (view === "kanji" || view === "grammar" || view === "reading" || view === "listening" || view === "diagnostic" || view === "lessons") {
+        return lang() === "ru"
+          ? { ru: `Это ${pageName}. Тут есть опора для следующего вопроса, но я всё равно ограничусь тем, что уже было в модуле.${lastLessonPhrase}`, en: `This is ${pageName}. It gives us a base for the next question, but I'll still stay within what you've already seen in this module.${lastLessonPhrase}` }
+          : { ru: `This is ${pageName}. It gives us a base for the next question, but I'll still stay within what you've already seen in this module.${lastLessonPhrase}`, en: `This is ${pageName}. It gives us a base for the next question, but I'll still stay within what you've already seen in this module.${lastLessonPhrase}` };
+      }
+      return lang() === "ru"
+        ? { ru: `У ${resolvedSpec.level} сейчас ${summary?.completedLessons || 0}/${summary?.totalLessons || 0} уроков и ${summary?.studied || 0}/${summary?.totalCards || 0} знакомых кандзи.${lastLessonPhrase}`, en: `${resolvedSpec.level} currently has ${summary?.completedLessons || 0}/${summary?.totalLessons || 0} lessons and ${summary?.studied || 0}/${summary?.totalCards || 0} familiar kanji.${lastLessonPhrase}` }
+        : { ru: `${resolvedSpec.level} currently has ${summary?.completedLessons || 0}/${summary?.totalLessons || 0} lessons and ${summary?.studied || 0}/${summary?.totalCards || 0} familiar kanji.${lastLessonPhrase}`, en: `${resolvedSpec.level} currently has ${summary?.completedLessons || 0}/${summary?.totalLessons || 0} lessons and ${summary?.studied || 0}/${summary?.totalCards || 0} familiar kanji.${lastLessonPhrase}` };
+    }
+    if (moduleState.phase === "question" && question) {
+      return lang() === "ru"
+        ? { ru: `Выбирай значение для кандзи ${question.kanji}. Я не выйду за пределы материала, который ты уже видел.`, en: `Choose the meaning for ${question.kanji}. I won't go beyond material you've already seen.` }
+        : { ru: `Choose the meaning for ${question.kanji}. I won't go beyond material you've already seen.`, en: `Choose the meaning for ${question.kanji}. I won't go beyond material you've already seen.` };
+    }
+    if (moduleState.phase === "reaction" && question) {
+      const feedback = normalizeEvaText(moduleState.reactionText || question.answerText || {});
+      return feedback;
+    }
+    if (moduleState.phase === "completion") {
+      return lang() === "ru"
+        ? { ru: `${resolvedSpec.level} закрыт. Ты уже дошёл до конца и можешь повторять материал в своём темпе.`, en: `${resolvedSpec.level} is complete. You've reached the end and can review material at your own pace.` }
+        : { ru: `${resolvedSpec.level} is complete. You've reached the end and can review material at your own pace.`, en: `${resolvedSpec.level} is complete. You've reached the end and can review material at your own pace.` };
+    }
+    return lang() === "ru"
+      ? { ru: `Пока у меня нет вопроса: открой урок или пройди ещё немного модуля, и я подхвачу знакомый кандзи.`, en: `I don't have a question yet: open a lesson or move a bit further through the module, and I'll pick a familiar kanji.` }
+      : { ru: `I don't have a question yet: open a lesson or move a bit further through the module, and I'll pick a familiar kanji.`, en: `I don't have a question yet: open a lesson or move a bit further through the module, and I'll pick a familiar kanji.` };
+  }
+
+  function normalizeEvaText(value, fallback = {}) {
+    if (typeof value === "string") {
+      return { ru: value, en: value };
+    }
+    return {
+      ru: String(value?.ru || fallback?.ru || ""),
+      en: String(value?.en || fallback?.en || "")
+    };
+  }
+
+  function buildJlptModuleQuestion(level, spec = null, moduleState = null, pageContext = {}) {
+    const resolvedSpec = spec || jlptModuleSpec(level);
+    const resolvedState = moduleState || ensureJlptModuleEvaState(level);
+    if (!resolvedSpec) return null;
+    if (resolvedState.currentQuestion && resolvedState.currentQuestion.kind === "kanji_meaning" && Array.isArray(resolvedState.currentQuestion.options) && resolvedState.currentQuestion.options.length) {
+      return resolvedState.currentQuestion;
+    }
+    const eligible = jlptModuleEligibleCards(level, resolvedSpec, resolvedState, pageContext);
+    if (eligible.length < 2) return null;
+    const recent = new Set((resolvedState.recentQuestionCardIds || []).map(String));
+    const pool = eligible.filter((card) => !recent.has(String(card.id)));
+    const candidatePool = pool.length ? pool : eligible;
+    const prioritySorted = [...candidatePool].sort((a, b) => {
+      const aPriority = jlptModuleCardPriority(level, a, resolvedSpec, resolvedState, pageContext);
+      const bPriority = jlptModuleCardPriority(level, b, resolvedSpec, resolvedState, pageContext);
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return stableHash(`${level}:${resolvedState.questionSequence}:${a.id}`) - stableHash(`${level}:${resolvedState.questionSequence}:${b.id}`);
+    });
+    const card = prioritySorted[0];
+    if (!card) return null;
+    const question = buildEvaKanjiMeaningQuestion(card, eligible, `${level}:${resolvedState.questionSequence}`);
+    if (!question) return null;
+    return {
+      ...question,
+      level,
+      lessonId: card.lessonId || null,
+      source: "jlpt_module",
+      view: String(pageContext.view || "overview")
+    };
+  }
+
+  function finalizeJlptModuleQuestion(moduleState) {
+    const question = moduleState.currentQuestion;
+    if (!question?.cardId) return;
+    const cardId = String(question.cardId);
+    const history = Array.isArray(moduleState.recentQuestionCardIds) ? moduleState.recentQuestionCardIds.map(String).filter(Boolean) : [];
+    moduleState.recentQuestionCardIds = [cardId, ...history.filter((item) => item !== cardId)].slice(0, 12);
+  }
+
+  function jlptModuleResolvedLessonId(level, subroute) {
+    const spec = jlptModuleSpec(level);
+    if (!spec) return null;
+    const raw = String(subroute || "").toLowerCase();
+    if (!raw || ["review", "final-test", "kanji", "grammar", "reading", "listening", "lessons", "diagnostic"].includes(raw)) {
+      return spec.currentLesson?.id || spec.course?.currentLessonId || null;
+    }
+    const lesson = spec.lessonById(raw);
+    return lesson?.id || spec.lessonById(String(subroute || "").trim())?.id || (spec.course?.currentLessonId || null);
+  }
+
+  function rememberJlptModuleVisit(level, lessonId = null, view = "overview") {
+    const moduleState = ensureJlptModuleEvaState(level);
+    const nextLessonId = lessonId ? String(lessonId) : null;
+    const nextView = String(view || "overview");
+    let changed = false;
+    if (nextLessonId && moduleState.lastVisitedLessonId !== nextLessonId) {
+      moduleState.lastVisitedLessonId = nextLessonId;
+      changed = true;
+    }
+    if (moduleState.lastVisitedView !== nextView) {
+      moduleState.lastVisitedView = nextView;
+      changed = true;
+    }
+    if (changed) saveProgress();
+    return moduleState;
+  }
+
+  function defaultN5CourseProgress() {
+    return {
+      currentLessonId: "n5-lesson-1",
+      completedLessons: {},
+      studiedKanji: {},
+      srsKanji: {},
+      difficultKanji: {},
+      kanjiMistakes: {},
+      wordMistakes: {},
+      completedExercises: {},
+      exerciseResults: {},
+      writingPractice: {},
+      activeReviewMode: "due",
+      finalTest: {
+        answers: {},
+        completedAt: null,
+        score: 0,
+        percent: 0,
+        passed: false,
+        mistakes: [],
+        attempts: 0
+      },
+      customSentences: []
+    };
+  }
+
+  function mergeN5CourseProgress(base, saved) {
+    return {
+      ...base,
+      ...(saved || {}),
+      currentLessonId: saved?.currentLessonId || base.currentLessonId,
+      completedLessons: { ...base.completedLessons, ...(saved?.completedLessons || {}) },
+      studiedKanji: { ...base.studiedKanji, ...(saved?.studiedKanji || {}) },
+      srsKanji: { ...base.srsKanji, ...(saved?.srsKanji || {}) },
+      difficultKanji: { ...base.difficultKanji, ...(saved?.difficultKanji || {}) },
+      kanjiMistakes: { ...base.kanjiMistakes, ...(saved?.kanjiMistakes || {}) },
+      wordMistakes: { ...base.wordMistakes, ...(saved?.wordMistakes || {}) },
+      completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
+      exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
+      writingPractice: { ...base.writingPractice, ...(saved?.writingPractice || {}) },
+      activeReviewMode: saved?.activeReviewMode || base.activeReviewMode,
+      finalTest: {
+        ...base.finalTest,
+        ...(saved?.finalTest || {}),
+        answers: { ...base.finalTest.answers, ...((saved?.finalTest && saved.finalTest.answers) || {}) },
+        mistakes: Array.isArray(saved?.finalTest?.mistakes) ? saved.finalTest.mistakes : base.finalTest.mistakes
+      },
+      customSentences: Array.isArray(saved?.customSentences) ? saved.customSentences : base.customSentences
+    };
+  }
+
+  function defaultN4CourseProgress() {
+    return {
+      opened: false,
+      currentLessonId: "n4-lesson-1",
+      completedLessons: {},
+      studiedKanji: {},
+      srsKanji: {},
+      difficultKanji: {},
+      kanjiMistakes: {},
+      wordMistakes: {},
+      completedExercises: {},
+      exerciseResults: {},
+      completedGrammar: {},
+      grammarResults: {},
+      completedReading: {},
+      readingAnswers: {},
+      completedListening: {},
+      listeningAnswers: {},
+      writingPractice: {},
+      activeReviewMode: "due",
+      finalTest: {
+        answers: {},
+        completedAt: null,
+        score: 0,
+        percent: 0,
+        passed: false,
+        mistakes: [],
+        attempts: 0
+      },
+      customSentences: []
+    };
+  }
+
+  function mergeN4CourseProgress(base, saved) {
+    return {
+      ...base,
+      ...(saved || {}),
+      opened: Boolean(saved?.opened || base.opened),
+      currentLessonId: saved?.currentLessonId || base.currentLessonId,
+      completedLessons: { ...base.completedLessons, ...(saved?.completedLessons || {}) },
+      studiedKanji: { ...base.studiedKanji, ...(saved?.studiedKanji || {}) },
+      srsKanji: { ...base.srsKanji, ...(saved?.srsKanji || {}) },
+      difficultKanji: { ...base.difficultKanji, ...(saved?.difficultKanji || {}) },
+      kanjiMistakes: { ...base.kanjiMistakes, ...(saved?.kanjiMistakes || {}) },
+      wordMistakes: { ...base.wordMistakes, ...(saved?.wordMistakes || {}) },
+      completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
+      exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
+      completedGrammar: { ...base.completedGrammar, ...(saved?.completedGrammar || {}) },
+      grammarResults: { ...base.grammarResults, ...(saved?.grammarResults || {}) },
+      completedReading: { ...base.completedReading, ...(saved?.completedReading || {}) },
+      readingAnswers: { ...base.readingAnswers, ...(saved?.readingAnswers || {}) },
+      completedListening: { ...base.completedListening, ...(saved?.completedListening || {}) },
+      listeningAnswers: { ...base.listeningAnswers, ...(saved?.listeningAnswers || {}) },
+      writingPractice: { ...base.writingPractice, ...(saved?.writingPractice || {}) },
+      activeReviewMode: saved?.activeReviewMode || base.activeReviewMode,
+      finalTest: {
+        ...base.finalTest,
+        ...(saved?.finalTest || {}),
+        answers: { ...base.finalTest.answers, ...((saved?.finalTest && saved.finalTest.answers) || {}) },
+        mistakes: Array.isArray(saved?.finalTest?.mistakes) ? saved.finalTest.mistakes : base.finalTest.mistakes
+      },
+      customSentences: Array.isArray(saved?.customSentences) ? saved.customSentences : base.customSentences
+    };
+  }
+
+  function defaultN3CourseProgress() {
+    return {
+      opened: false,
+      currentLessonId: "n3-lesson-1",
+      completedLessons: {},
+      studiedKanji: {},
+      srsKanji: {},
+      difficultKanji: {},
+      kanjiMistakes: {},
+      wordMistakes: {},
+      completedExercises: {},
+      exerciseResults: {},
+      completedGrammar: {},
+      grammarResults: {},
+      completedReading: {},
+      readingAnswers: {},
+      completedListening: {},
+      listeningAnswers: {},
+      writingPractice: {},
+      activeReviewMode: "due",
+      finalTest: {
+        answers: {},
+        completedAt: null,
+        score: 0,
+        percent: 0,
+        passed: false,
+        mistakes: [],
+        attempts: 0
+      },
+      customSentences: []
+    };
+  }
+
+  function mergeN3CourseProgress(base, saved) {
+    return {
+      ...base,
+      ...(saved || {}),
+      opened: Boolean(saved?.opened || base.opened),
+      currentLessonId: saved?.currentLessonId || base.currentLessonId,
+      completedLessons: { ...base.completedLessons, ...(saved?.completedLessons || {}) },
+      studiedKanji: { ...base.studiedKanji, ...(saved?.studiedKanji || {}) },
+      srsKanji: { ...base.srsKanji, ...(saved?.srsKanji || {}) },
+      difficultKanji: { ...base.difficultKanji, ...(saved?.difficultKanji || {}) },
+      kanjiMistakes: { ...base.kanjiMistakes, ...(saved?.kanjiMistakes || {}) },
+      wordMistakes: { ...base.wordMistakes, ...(saved?.wordMistakes || {}) },
+      completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
+      exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
+      completedGrammar: { ...base.completedGrammar, ...(saved?.completedGrammar || {}) },
+      grammarResults: { ...base.grammarResults, ...(saved?.grammarResults || {}) },
+      completedReading: { ...base.completedReading, ...(saved?.completedReading || {}) },
+      readingAnswers: { ...base.readingAnswers, ...(saved?.readingAnswers || {}) },
+      completedListening: { ...base.completedListening, ...(saved?.completedListening || {}) },
+      listeningAnswers: { ...base.listeningAnswers, ...(saved?.listeningAnswers || {}) },
+      writingPractice: { ...base.writingPractice, ...(saved?.writingPractice || {}) },
+      activeReviewMode: saved?.activeReviewMode || base.activeReviewMode,
+      finalTest: {
+        ...base.finalTest,
+        ...(saved?.finalTest || {}),
+        answers: { ...base.finalTest.answers, ...((saved?.finalTest && saved.finalTest.answers) || {}) },
+        mistakes: Array.isArray(saved?.finalTest?.mistakes) ? saved.finalTest.mistakes : base.finalTest.mistakes
+      },
+      customSentences: Array.isArray(saved?.customSentences) ? saved.customSentences : base.customSentences
+    };
+  }
+
+  function defaultN2CourseProgress() {
+    return {
+      opened: false,
+      currentLessonId: "n2-lesson-1",
+      completedLessons: {},
+      studiedKanji: {},
+      srsKanji: {},
+      difficultKanji: {},
+      kanjiMistakes: {},
+      wordMistakes: {},
+      completedExercises: {},
+      exerciseResults: {},
+      completedGrammar: {},
+      grammarResults: {},
+      completedReading: {},
+      readingAnswers: {},
+      completedListening: {},
+      listeningAnswers: {},
+      writingPractice: {},
+      activeReviewMode: "due",
+      finalTest: {
+        answers: {},
+        completedAt: null,
+        score: 0,
+        percent: 0,
+        passed: false,
+        mistakes: [],
+        attempts: 0
+      },
+      customSentences: []
+    };
+  }
+
+  function mergeN2CourseProgress(base, saved) {
+    return {
+      ...base,
+      ...(saved || {}),
+      opened: Boolean(saved?.opened || base.opened),
+      currentLessonId: saved?.currentLessonId || base.currentLessonId,
+      completedLessons: { ...base.completedLessons, ...(saved?.completedLessons || {}) },
+      studiedKanji: { ...base.studiedKanji, ...(saved?.studiedKanji || {}) },
+      srsKanji: { ...base.srsKanji, ...(saved?.srsKanji || {}) },
+      difficultKanji: { ...base.difficultKanji, ...(saved?.difficultKanji || {}) },
+      kanjiMistakes: { ...base.kanjiMistakes, ...(saved?.kanjiMistakes || {}) },
+      wordMistakes: { ...base.wordMistakes, ...(saved?.wordMistakes || {}) },
+      completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
+      exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
+      completedGrammar: { ...base.completedGrammar, ...(saved?.completedGrammar || {}) },
+      grammarResults: { ...base.grammarResults, ...(saved?.grammarResults || {}) },
+      completedReading: { ...base.completedReading, ...(saved?.completedReading || {}) },
+      readingAnswers: { ...base.readingAnswers, ...(saved?.readingAnswers || {}) },
+      completedListening: { ...base.completedListening, ...(saved?.completedListening || {}) },
+      listeningAnswers: { ...base.listeningAnswers, ...(saved?.listeningAnswers || {}) },
+      writingPractice: { ...base.writingPractice, ...(saved?.writingPractice || {}) },
+      activeReviewMode: saved?.activeReviewMode || base.activeReviewMode,
+      finalTest: {
+        ...base.finalTest,
+        ...(saved?.finalTest || {}),
+        answers: { ...base.finalTest.answers, ...((saved?.finalTest && saved.finalTest.answers) || {}) },
+        mistakes: Array.isArray(saved?.finalTest?.mistakes) ? saved.finalTest.mistakes : base.finalTest.mistakes
+      },
+      customSentences: Array.isArray(saved?.customSentences) ? saved.customSentences : base.customSentences
+    };
+  }
+
+  function defaultN1CourseProgress() {
+    return {
+      opened: false,
+      currentLessonId: "bulk-n1-01",
+      completedLessons: {},
+      studiedKanji: {},
+      srsKanji: {},
+      difficultKanji: {},
+      kanjiMistakes: {},
+      wordMistakes: {},
+      completedExercises: {},
+      exerciseResults: {},
+      completedGrammar: {},
+      grammarResults: {},
+      completedReading: {},
+      readingAnswers: {},
+      completedListening: {},
+      listeningAnswers: {},
+      writingPractice: {},
+      diagnostic: {
+        answers: {},
+        completedAt: null,
+        strong: [],
+        weak: [],
+        recommendedLevels: [],
+        weakTopicsInSrs: false
+      },
+      activeReviewMode: "due",
+      finalTest: {
+        answers: {},
+        completedAt: null,
+        score: 0,
+        percent: 0,
+        passed: false,
+        mistakes: [],
+        attempts: 0,
+        correctAnswers: 0,
+        incorrectAnswers: 0,
+        unansweredAnswers: 0,
+        totalQuestions: 0,
+        mistakeQuestionIds: [],
+        bestScore: 0,
+        lastScore: 0,
+        passedAt: null,
+        lastRewardXp: 0,
+        lastRewardMoon: 0
+      },
+      customSentences: []
+    };
+  }
+
+  function mergeN1CourseProgress(base, saved) {
+    return {
+      ...base,
+      ...(saved || {}),
+      opened: Boolean(saved?.opened || base.opened),
+      currentLessonId: saved?.currentLessonId || base.currentLessonId,
+      completedLessons: { ...base.completedLessons, ...(saved?.completedLessons || {}) },
+      studiedKanji: { ...base.studiedKanji, ...(saved?.studiedKanji || {}) },
+      srsKanji: { ...base.srsKanji, ...(saved?.srsKanji || {}) },
+      difficultKanji: { ...base.difficultKanji, ...(saved?.difficultKanji || {}) },
+      kanjiMistakes: { ...base.kanjiMistakes, ...(saved?.kanjiMistakes || {}) },
+      wordMistakes: { ...base.wordMistakes, ...(saved?.wordMistakes || {}) },
+      completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
+      exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
+      completedGrammar: { ...base.completedGrammar, ...(saved?.completedGrammar || {}) },
+      grammarResults: { ...base.grammarResults, ...(saved?.grammarResults || {}) },
+      completedReading: { ...base.completedReading, ...(saved?.completedReading || {}) },
+      readingAnswers: { ...base.readingAnswers, ...(saved?.readingAnswers || {}) },
+      completedListening: { ...base.completedListening, ...(saved?.completedListening || {}) },
+      listeningAnswers: { ...base.listeningAnswers, ...(saved?.listeningAnswers || {}) },
+      writingPractice: { ...base.writingPractice, ...(saved?.writingPractice || {}) },
+      diagnostic: {
+        ...base.diagnostic,
+        ...(saved?.diagnostic || {}),
+        answers: { ...base.diagnostic.answers, ...((saved?.diagnostic && saved.diagnostic.answers) || {}) },
+        strong: Array.isArray(saved?.diagnostic?.strong) ? saved.diagnostic.strong : base.diagnostic.strong,
+        weak: Array.isArray(saved?.diagnostic?.weak) ? saved.diagnostic.weak : base.diagnostic.weak,
+        recommendedLevels: Array.isArray(saved?.diagnostic?.recommendedLevels) ? saved.diagnostic.recommendedLevels : base.diagnostic.recommendedLevels
+      },
+      activeReviewMode: saved?.activeReviewMode || base.activeReviewMode,
+      finalTest: {
+        ...base.finalTest,
+        ...(saved?.finalTest || {}),
+        answers: { ...base.finalTest.answers, ...((saved?.finalTest && saved.finalTest.answers) || {}) },
+        mistakes: Array.isArray(saved?.finalTest?.mistakes) ? saved.finalTest.mistakes : base.finalTest.mistakes
+      },
+      customSentences: Array.isArray(saved?.customSentences) ? saved.customSentences : base.customSentences
     };
   }
 
@@ -1288,7 +3315,11 @@ async function loadCourse() {
       totalPositiveFragmentsFromHistory()
     );
     ensureEvaRoomProgress();
+    reconcileStudyStreak();
     syncEvaRelationshipFromProgress();
+    ensureN5CourseProgress();
+    ensureN4CourseProgress();
+    ensureN3CourseProgress();
     const firstUnlocked = state.lessons.find((lesson) => isLessonUnlocked(lesson));
     if (!state.activeLessonId) state.activeLessonId = firstUnlocked?.id || state.lessons[0]?.id || null;
   }
@@ -1327,10 +3358,146 @@ async function loadCourse() {
     return state.progress.cards[id];
   }
 
+  function markKanjiSeen(card, source = "seen") {
+    if (!state.progress || !card?.id) return false;
+    ensureEvaRoomProgress();
+    const now = new Date().toISOString();
+    let changed = false;
+    const cardId = String(card.id);
+    if (!state.progress.seenCards[cardId]) {
+      state.progress.seenCards[cardId] = now;
+      changed = true;
+    }
+    if (card.kanji && !state.progress.seenKanji[card.kanji]) {
+      state.progress.seenKanji[card.kanji] = { at: now, cardId, source, jlpt: card.jlpt || "" };
+      changed = true;
+    }
+    return changed;
+  }
+
+  function markKanjiSeenAndSave(card, source = "seen") {
+    if (markKanjiSeen(card, source)) saveProgress();
+  }
+
+  function markJlptLessonKanjiSeen(level, lesson, source = "jlpt_lesson") {
+    if (!lesson) return false;
+    const cards = jlptCardsForLesson(level, lesson);
+    const changed = cards.reduce((anyChanged, card) => markKanjiSeen(card, source) || anyChanged, false);
+    if (changed) saveProgress();
+    return changed;
+  }
+
+  function jlptCardsForLesson(level, lesson) {
+    const key = String(level || "").toUpperCase();
+    if (key === "N5") return n5CardsForLesson(lesson);
+    if (key === "N4") return n4CardsForLesson(lesson);
+    if (key === "N3") return n3CardsForLesson(lesson);
+    if (key === "N2") return n2CardsForLesson(lesson);
+    if (key === "N1" && typeof n1CardsForLesson === "function") return n1CardsForLesson(lesson);
+    return (lesson?.kanji || []).map((kanji) => state.cards.find((card) => card.kanji === kanji && String(card.jlpt || "").toUpperCase() === key)).filter(Boolean);
+  }
+
+  function cardProgressWasTouched(card) {
+    const progress = state.progress?.cards?.[String(card?.id || "")];
+    if (!progress) return false;
+    if (progress.state && progress.state !== "New") return true;
+    return Boolean(
+      progress.lastReviewedAt
+      || progress.lastReview
+      || Number(progress.reviews || 0) > 0
+      || Number(progress.reviewCount || 0) > 0
+      || Number(progress.correct || 0) > 0
+      || Number(progress.wrong || 0) > 0
+      || Number(progress.lapses || 0) > 0
+    );
+  }
+
+  function evaRoomQuizProgress() {
+    ensureEvaRoomProgress();
+    return state.progress.evaRoomQuiz;
+  }
+
+  function evaAllKanjiQuestionCards() {
+    const groups = [
+      state.cards || [],
+      typeof n5AllCards === "function" ? n5AllCards() : [],
+      typeof n4AllCards === "function" ? n4AllCards() : [],
+      typeof n3AllCards === "function" ? n3AllCards() : [],
+      typeof n2AllCards === "function" ? n2AllCards() : [],
+      typeof n1AllCards === "function" ? n1AllCards() : []
+    ];
+    return uniqueEvaKanjiCards(groups.flat().filter(Boolean));
+  }
+
+  function evaEligibleKanjiCards() {
+    if (!state.progress) return [];
+    ensureEvaRoomProgress();
+    const seenCards = new Set(Object.keys(state.progress.seenCards || {}));
+    const seenKanji = new Set(Object.keys(state.progress.seenKanji || {}));
+    const completedLessons = new Set(Object.keys(state.progress.lessonCompletions || {}));
+    const courseKanji = evaSeenJlptKanjiSet();
+    const candidates = evaAllKanjiQuestionCards().filter((card) => {
+      if (!card?.id || !card.kanji || !cardMeaningForLang(card, "ru") || !cardMeaningForLang(card, "en")) return false;
+      const level = String(card.jlpt || "").toUpperCase();
+      return seenCards.has(String(card.id))
+        || seenKanji.has(card.kanji)
+        || cardProgressWasTouched(card)
+        || completedLessons.has(card.lessonId)
+        || courseKanji.has(`${level}:${card.kanji}`)
+        || courseKanji.has(card.kanji);
+    });
+    return uniqueEvaKanjiCards(candidates);
+  }
+
+  function evaSeenJlptKanjiSet() {
+    const result = new Set();
+    const add = (level, kanji) => {
+      if (!kanji) return;
+      const normalized = String(level || "").toUpperCase();
+      result.add(String(kanji));
+      if (normalized) result.add(`${normalized}:${kanji}`);
+    };
+    evaJlptCourseSpecs().forEach((spec) => {
+      const course = spec.course();
+      Object.keys(course.studiedKanji || {}).forEach((kanji) => add(spec.level, kanji));
+      Object.keys(course.completedLessons || {}).forEach((lessonId) => {
+        const lesson = spec.lessonById(lessonId);
+        (lesson?.kanji || []).forEach((kanji) => add(spec.level, kanji));
+      });
+    });
+    return result;
+  }
+
+  function evaJlptCourseSpecs() {
+    return [
+      { level: "N5", course: n5Course, lessonById: n5LessonById, markStudied: markN5KanjiStudied, markDifficult: markN5KanjiDifficult },
+      { level: "N4", course: n4Course, lessonById: n4LessonById, markStudied: markN4KanjiStudied, markDifficult: markN4KanjiDifficult },
+      { level: "N3", course: n3Course, lessonById: n3LessonById, markStudied: markN3KanjiStudied, markDifficult: markN3KanjiDifficult },
+      { level: "N2", course: n2Course, lessonById: n2LessonById, markStudied: markN2KanjiStudied, markDifficult: markN2KanjiDifficult },
+      ...(typeof n1Course === "function" ? [{ level: "N1", course: n1Course, lessonById: n1LessonById, markStudied: markN1KanjiStudied, markDifficult: markN1KanjiDifficult }] : [])
+    ];
+  }
+
+  function uniqueEvaKanjiCards(cards) {
+    const seen = new Set();
+    return cards.filter((card) => {
+      const key = `${card.kanji}:${cardMeaningForLang(card, "ru")}:${cardMeaningForLang(card, "en")}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function handleClick(event) {
     if (event.target.classList?.contains("detail-backdrop")) {
       playUxSound("menu_close");
       state.detailCardId = null;
+      render();
+      return;
+    }
+    if (event.target.classList?.contains("final-test-backdrop")) {
+      state.finalTestModal = null;
+      state.finalTestBusy = false;
       render();
       return;
     }
@@ -1347,7 +3514,7 @@ async function loadCourse() {
 
     const action = target.dataset.action;
     const id = target.dataset.id;
-    if (["eva-click", "eva-autonomy-next"].includes(action) && Date.now() - lastEvaDirectActionAt < 280) return;
+    if (["eva-click", "eva-autonomy-next", "eva-question-answer", "eva-jlpt-toggle", "eva-jlpt-next", "eva-jlpt-answer"].includes(action) && Date.now() - lastEvaDirectActionAt < 280) return;
     recordEvaPlayerActivity(action);
     playActionSound(action, target);
 
@@ -1371,6 +3538,31 @@ async function loadCourse() {
       state.navMenu = null;
       render();
     }
+    if (action === "close-final-test-modal") {
+      state.finalTestModal = null;
+      state.finalTestBusy = false;
+      state.pendingFocus = null;
+      render();
+    }
+    if (action === "final-test-focus-missing") {
+      const focus = target.dataset.focus || state.finalTestModal?.focusSelector || null;
+      state.finalTestModal = null;
+      state.finalTestBusy = false;
+      state.pendingFocus = focus;
+      render();
+    }
+    if (action === "final-test-force-submit") {
+      const level = String(target.dataset.level || state.finalTestModal?.level || "N5").toUpperCase();
+      if (level === "N4") submitN4FinalTest(true);
+      else if (level === "N3") submitN3FinalTest(true);
+      else if (level === "N2") submitN2FinalTest(true);
+      else if (level === "N1") submitN1FinalTest(true);
+      else submitN5FinalTest(true);
+    }
+    if (action === "scroll-page-edge") {
+      if ((target.dataset.direction || getScrollToggleDirection()) === "up") scrollPageToTop();
+      else scrollPageToBottom();
+    }
     if (action === "theme") toggleTheme();
     if (action === "language") toggleLanguage();
     if (action === "sound") toggleSound();
@@ -1391,6 +3583,17 @@ async function loadCourse() {
       state.dictionaryVisibleCount = DICTIONARY_INITIAL_LIMIT;
       render();
     }
+    if (action === "set-learn-jlpt") {
+      state.activeLearnJlpt = String(target.dataset.jlpt || "all").toUpperCase();
+      const lessons = learnLessonsForFilter();
+      ensureActiveLearnLesson(lessons);
+      state.activeCardId = null;
+      state.revealed = false;
+      resetReadingCheck();
+      const scrollY = window.scrollY;
+      render();
+      window.scrollTo(0, scrollY);
+    }
     if (action === "dictionary-load-more") {
       state.dictionaryVisibleCount += DICTIONARY_INCREMENT;
       render();
@@ -1398,6 +3601,24 @@ async function loadCourse() {
     if (action === "toggle-favorite") toggleFavorite(id);
     if (action === "eva-room-choice") handleEvaRoomChoice(target);
     if (action === "eva-question-answer") handleEvaQuestionAnswer(target);
+    if (action === "eva-jlpt-toggle") {
+      event.preventDefault();
+      event.stopPropagation();
+      handleJlptModuleToggle(target);
+      return;
+    }
+    if (action === "eva-jlpt-next") {
+      event.preventDefault();
+      event.stopPropagation();
+      handleJlptModuleNext(target);
+      return;
+    }
+    if (action === "eva-jlpt-answer") {
+      event.preventDefault();
+      event.stopPropagation();
+      handleJlptModuleAnswer(target);
+      return;
+    }
     if (action === "eva-room-reset") resetEvaRoomDialogue();
     if (action === "toggle-eva-autonomy") toggleEvaAutonomy();
     if (action === "cycle-eva-autonomy") cycleEvaAutonomyFrequency();
@@ -1432,6 +3653,8 @@ async function loadCourse() {
     }
     if (action === "shop-buy") buyCustomizationItem(id);
     if (action === "shop-select") selectCustomizationItem(id);
+    if (action === "shop-clear-effect") clearCustomizationEffect(id);
+    if (action === "shop-clear-item") clearCustomizationItem(id);
     if (action === "clear-writing") clearWritingCanvas();
     if (action === "undo-writing") undoWritingStroke();
     if (action === "check-writing") checkWritingPractice(true);
@@ -1454,6 +3677,99 @@ async function loadCourse() {
     if (action === "clear-jlpt-practice") clearJlptLessonPractice();
     if (action === "check-jlpt-practice") checkJlptLessonPractice();
     if (action === "next-jlpt-practice") nextJlptLessonPractice();
+    if (action === "n5-open-lesson") openN5Lesson(id);
+    if (action === "n5-overview") openN5Overview();
+    if (action === "n5-review") openN5Review(target.dataset.mode || null);
+    if (action === "n5-answer") answerN5Exercise(target);
+    if (action === "n5-check-input") checkN5InputExercise(id);
+    if (action === "n5-srs") handleN5SrsAction(id, target.dataset.rating || "good");
+    if (action === "n5-writing-done") markN5Writing(id);
+    if (action === "n5-complete-lesson") completeN5Lesson(id);
+    if (action === "n5-final-answer") answerN5FinalQuestion(target);
+    if (action === "n5-final-submit") submitN5FinalTest();
+    if (action === "n5-final-reset") resetN5FinalTest();
+    if (action === "n4-open-lesson") openN4Lesson(id);
+    if (action === "n4-overview") openN4Overview();
+    if (action === "n4-review") openN4Review(target.dataset.mode || null);
+    if (action === "n4-kanji") openN4KanjiList();
+    if (action === "n4-grammar") openN4Grammar();
+    if (action === "n4-reading") openN4Reading();
+    if (action === "n4-listening") openN4Listening();
+    if (action === "n4-final") openN4FinalTest();
+    if (action === "n4-answer") answerN4Exercise(target);
+    if (action === "n4-check-input") checkN4InputExercise(id);
+    if (action === "n4-srs") handleN4SrsAction(id, target.dataset.rating || "good");
+    if (action === "n4-writing-done") markN4Writing(id);
+    if (action === "n4-complete-lesson") completeN4Lesson(id);
+    if (action === "n4-grammar-complete") completeN4Grammar(id, target.dataset.value || "");
+    if (action === "n4-reading-complete") completeN4Reading(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n4-listening-complete") completeN4Listening(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n4-final-answer") answerN4FinalQuestion(target);
+    if (action === "n4-final-submit") submitN4FinalTest();
+    if (action === "n4-final-reset") resetN4FinalTest();
+    if (action === "n3-open-lesson") openN3Lesson(id);
+    if (action === "n3-overview") openN3Overview();
+    if (action === "n3-review") openN3Review(target.dataset.mode || null);
+    if (action === "n3-kanji") openN3KanjiList();
+    if (action === "n3-grammar") openN3Grammar();
+    if (action === "n3-reading") openN3Reading();
+    if (action === "n3-listening") openN3Listening();
+    if (action === "n3-final") openN3FinalTest();
+    if (action === "n3-answer") answerN3Exercise(target);
+    if (action === "n3-check-input") checkN3InputExercise(id);
+    if (action === "n3-srs") handleN3SrsAction(id, target.dataset.rating || "good");
+    if (action === "n3-writing-done") markN3Writing(id);
+    if (action === "n3-complete-lesson") completeN3Lesson(id);
+    if (action === "n3-grammar-complete") completeN3Grammar(id, target.dataset.value || "");
+    if (action === "n3-reading-complete") completeN3Reading(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n3-listening-complete") completeN3Listening(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n3-final-answer") answerN3FinalQuestion(target);
+    if (action === "n3-final-submit") submitN3FinalTest();
+    if (action === "n3-final-reset") resetN3FinalTest();
+    if (action === "n2-open-lesson") openN2Lesson(id);
+    if (action === "n2-overview") openN2Overview();
+    if (action === "n2-review") openN2Review(target.dataset.mode || null);
+    if (action === "n2-kanji") openN2KanjiList();
+    if (action === "n2-grammar") openN2Grammar();
+    if (action === "n2-reading") openN2Reading();
+    if (action === "n2-listening") openN2Listening();
+    if (action === "n2-final") openN2FinalTest();
+    if (action === "n2-answer") answerN2Exercise(target);
+    if (action === "n2-check-input") checkN2InputExercise(id);
+    if (action === "n2-srs") handleN2SrsAction(id, target.dataset.rating || "good");
+    if (action === "n2-writing-done") markN2Writing(id);
+    if (action === "n2-complete-lesson") completeN2Lesson(id);
+    if (action === "n2-grammar-complete") completeN2Grammar(id, target.dataset.value || "");
+    if (action === "n2-reading-complete") completeN2Reading(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n2-listening-complete") completeN2Listening(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n2-final-answer") answerN2FinalQuestion(target);
+    if (action === "n2-final-submit") submitN2FinalTest();
+    if (action === "n2-final-reset") resetN2FinalTest();
+    if (action === "n1-open-lesson") openN1Lesson(id);
+    if (action === "n1-overview") openN1Overview();
+    if (action === "n1-lessons") openN1Lessons();
+    if (action === "n1-diagnostic") openN1Diagnostic();
+    if (action === "n1-review") openN1Review(target.dataset.mode || null);
+    if (action === "n1-kanji") openN1KanjiList();
+    if (action === "n1-grammar") openN1Grammar();
+    if (action === "n1-reading") openN1Reading();
+    if (action === "n1-listening") openN1Listening();
+    if (action === "n1-final") openN1FinalTest();
+    if (action === "n1-self-check") markN1SelfCheck(id, target.dataset.value || "");
+    if (action === "n1-answer") answerN1Exercise(target);
+    if (action === "n1-check-input") checkN1InputExercise(id);
+    if (action === "n1-srs") handleN1SrsAction(id, target.dataset.rating || "good");
+    if (action === "n1-writing-done") markN1Writing(id);
+    if (action === "n1-complete-lesson") completeN1Lesson(id);
+    if (action === "n1-grammar-complete") completeN1Grammar(id, target.dataset.value || "");
+    if (action === "n1-reading-complete") completeN1Reading(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n1-listening-complete") completeN1Listening(id, target.dataset.question || "", target.dataset.value || "");
+    if (action === "n1-diagnostic-answer") answerN1Diagnostic(target);
+    if (action === "n1-diagnostic-submit") submitN1Diagnostic();
+    if (action === "n1-diagnostic-srs") addN1DiagnosticWeakTopicsToSrs();
+    if (action === "n1-final-answer") answerN1FinalQuestion(target);
+    if (action === "n1-final-submit") submitN1FinalTest();
+    if (action === "n1-final-reset") resetN1FinalTest();
     if (action === "play-kanji-audio") {
       const card = findCard(id) || findCard(state.activeCardId);
       if (card) playKanjiAudio(card);
@@ -1461,6 +3777,13 @@ async function loadCourse() {
     if (action === "open-jlpt-lesson") {
       const jlpt = String(target.dataset.jlpt || "").toUpperCase();
       if (jlptLessonByLevel(jlpt)) {
+        if (!isTextbookUnlocked(jlpt)) {
+          state.activeTextbookLevel = jlpt;
+          state.activeJlptLesson = jlpt;
+          setRoute("textbooks");
+          toast(textbookUnlockText(jlpt));
+          return;
+        }
         state.activeJlptLesson = jlpt;
         setRoute("jlpt-lesson");
       }
@@ -1468,13 +3791,30 @@ async function loadCourse() {
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
       state.rewardModal = state.rewardQueue.shift() || null;
-      if (state.rewardModal) showRewardFeedback(state.rewardModal);
+      if (state.rewardModal) {
+        rollRewardEvaSprite();
+        showRewardFeedback(state.rewardModal);
+      }
       render();
     }
     if (action === "set-goal") {
-      state.progress.settings.dailyGoal = Number(target.dataset.goal);
+      const goal = Number(target.dataset.goal);
+      if (!state.rewards.dailyGoals.includes(goal)) return;
+      state.progress.settings.dailyGoal = goal;
+      const today = todayStats();
+      if (today.goalClaimed && today.reviews < goal) {
+        today.goalClaimed = false;
+        state.progress.daily[todayKey()] = today;
+        if (state.progress.streak.lastStudyDate === todayKey()) {
+          const prev = findLastGoalMetDateBefore(todayKey());
+          state.progress.streak.lastStudyDate = prev;
+          state.progress.streak.current = prev ? countConsecutiveGoalDays(prev) : 0;
+        }
+      } else if (!today.goalClaimed && today.reviews >= goal) {
+        checkDailyGoal();
+      }
       saveProgress();
-      toast(`${t("dailyGoal")}: ${state.progress.settings.dailyGoal}`);
+      toast(`${t("dailyGoal")}: ${goal}`);
       render();
     }
     if (action === "buy-shop") buyCustomizationItem(id);
@@ -1496,13 +3836,16 @@ async function loadCourse() {
         dispatchEvaEvent("lesson_start", { lessonId: id, jlpt: lesson.jlpt });
         setRoute("learn");
       } else {
+        const scrollY = window.scrollY;
         render();
+        window.scrollTo(0, scrollY);
       }
     }
     if (action === "show-answer") {
+      markKanjiSeenAndSave(findCard(state.activeCardId), "show_answer");
       state.revealed = true;
       resetReadingCheck();
-      render();
+      render({ mode: "soft", animate: false });
     }
     if (action === "check-reading") {
       const input = document.getElementById(`readingCheck-${id || state.activeCardId}`);
@@ -1514,6 +3857,7 @@ async function loadCourse() {
     }
     if (action === "rate") rateActiveCard(target.dataset.rating);
     if (action === "open-card") {
+      markKanjiSeenAndSave(findCard(id), "card_details");
       state.detailCardId = id;
       render();
     }
@@ -1525,6 +3869,7 @@ async function loadCourse() {
     if (action === "study-card") {
       const card = findCard(id);
       if (!card) return;
+      markKanjiSeenAndSave(card, "study_card");
       state.activeLessonId = card.lessonId;
       state.activeCardId = card.id;
       state.revealed = false;
@@ -1535,6 +3880,7 @@ async function loadCourse() {
     if (action === "write-card") {
       const card = findCard(id);
       if (!card) return;
+      markKanjiSeenAndSave(card, "writing_card");
       state.activeLessonId = card.lessonId;
       state.activeCardId = card.id;
       state.detailCardId = null;
@@ -1569,6 +3915,120 @@ async function loadCourse() {
     if (!lineId || state.evaRuntime.textRevealSkippedLineId === lineId) return;
     state.evaRuntime.textRevealSkippedLineId = lineId;
     saveEvaState();
+    render();
+  }
+
+  function handleJlptModuleToggle(target) {
+    const level = String(target?.dataset?.level || state.activeTextbookLevel || "N5").toUpperCase();
+    const moduleState = ensureJlptModuleEvaState(level);
+    const wasCollapsed = moduleState.collapsed;
+    moduleState.collapsed = !moduleState.collapsed;
+    if (wasCollapsed && !moduleState.collapsed) rollJlptModuleEvaSprite(level);
+    moduleState.dialogueTurns = Number(moduleState.dialogueTurns || 0) + 1;
+    saveProgress();
+    render();
+  }
+
+  function handleJlptModuleNext(target) {
+    const level = String(target?.dataset?.level || state.activeTextbookLevel || "N5").toUpperCase();
+    const spec = jlptModuleSpec(level);
+    if (!spec) return;
+    const moduleState = ensureJlptModuleEvaState(level);
+    const pageContext = {
+      view: moduleState.lastVisitedView || "overview",
+      lesson: moduleState.lastVisitedLessonId ? spec.lessonById(moduleState.lastVisitedLessonId) || null : spec.currentLesson || null,
+      textbook: spec.textbook
+    };
+    const summaryBefore = jlptModuleSummary(level, spec, moduleState, pageContext);
+    if (moduleState.collapsed) {
+      moduleState.collapsed = false;
+      rollJlptModuleEvaSprite(level);
+      moduleState.dialogueTurns = Number(moduleState.dialogueTurns || 0) + 1;
+      saveProgress();
+      render();
+      return;
+    }
+    moduleState.dialogueTurns = Number(moduleState.dialogueTurns || 0) + 1;
+    if (moduleState.phase === "question" && !moduleState.questionOutcome) return;
+    if (moduleState.phase === "intro") {
+      moduleState.sawGreeting = true;
+      moduleState.phase = summaryBefore.complete ? "completion" : "context";
+      saveProgress();
+      render();
+      return;
+    }
+    if (moduleState.phase === "reaction") {
+      finalizeJlptModuleQuestion(moduleState);
+      moduleState.currentQuestion = null;
+      moduleState.selectedAnswerId = null;
+      moduleState.questionOutcome = null;
+      moduleState.reactionText = { ru: "", en: "" };
+      moduleState.phase = "context";
+    }
+    if (moduleState.phase === "completion") {
+      moduleState.phase = "context";
+    }
+    const summary = jlptModuleSummary(level, spec, moduleState, pageContext);
+    if (summary.complete) {
+      moduleState.phase = "completion";
+      moduleState.sawCompletion = true;
+      moduleState.lastCompletedAt = new Date().toISOString();
+      saveProgress();
+      render();
+      return;
+    }
+    const question = buildJlptModuleQuestion(level, spec, moduleState, pageContext);
+    if (question) {
+      moduleState.currentQuestion = question;
+      moduleState.selectedAnswerId = null;
+      moduleState.questionOutcome = null;
+      moduleState.reactionText = { ru: "", en: "" };
+      moduleState.lastQuestionCardId = question.cardId || null;
+      moduleState.lastQuestionAt = question.at || new Date().toISOString();
+      moduleState.questionSequence = Number(moduleState.questionSequence || 0) + 1;
+      moduleState.phase = "question";
+      const card = findCard(question.cardId) || (typeof spec.allCards === "function" ? spec.allCards().find((item) => String(item.id) === String(question.cardId)) : null);
+      if (card) markKanjiSeenAndSave(card, "jlpt_eva_question");
+      saveProgress();
+      render();
+      return;
+    }
+    moduleState.phase = moduleState.sawGreeting ? "idle" : "intro";
+    saveProgress();
+    render();
+  }
+
+  function handleJlptModuleAnswer(target) {
+    const level = String(target?.dataset?.level || state.activeTextbookLevel || "N5").toUpperCase();
+    const spec = jlptModuleSpec(level);
+    if (!spec) return;
+    const moduleState = ensureJlptModuleEvaState(level);
+    const question = moduleState.currentQuestion;
+    if (!question || moduleState.phase !== "question") return;
+    const optionId = String(target?.dataset?.option || "");
+    if (!optionId) return;
+    const option = (question.options || []).find((item) => String(item.id) === optionId);
+    if (!option) return;
+    moduleState.dialogueTurns = Number(moduleState.dialogueTurns || 0) + 1;
+    moduleState.selectedAnswerId = option.id;
+    moduleState.questionOutcome = option.correct ? "correct" : "wrong";
+    moduleState.reactionText = normalizeEvaText(option.reply || question.answerText || {});
+    moduleState.phase = "reaction";
+    moduleState.lastAnsweredAt = new Date().toISOString();
+    const card = findCard(question.cardId) || (typeof spec.allCards === "function" ? spec.allCards().find((item) => String(item.id) === String(question.cardId)) : null);
+    if (card) {
+      markKanjiSeenAndSave(card, "jlpt_eva_answer");
+      if (option.correct) markEvaQuizCardStudied(card);
+      else markEvaQuizCardDifficult(card);
+    }
+    dispatchEvaEvent(option.correct ? "answer_correct" : "answer_wrong", {
+      mode: "jlpt_module",
+      level,
+      cardId: question.cardId || null,
+      kanji: question.kanji || "",
+      questionId: question.id || null
+    });
+    saveProgress();
     render();
   }
 
@@ -1608,8 +4068,12 @@ async function loadCourse() {
       playUxSound("menu_close");
       return;
     }
-    if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate", "open-jlpt-lesson"].includes(action)) {
+    if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate", "open-jlpt-lesson", "n5-open-lesson", "n5-overview", "n5-review", "n4-open-lesson", "n4-overview", "n4-review", "n4-kanji", "n4-grammar", "n4-reading", "n4-listening", "n4-final", "n3-open-lesson", "n3-overview", "n3-review", "n3-kanji", "n3-grammar", "n3-reading", "n3-listening", "n3-final", "n2-open-lesson", "n2-overview", "n2-review", "n2-kanji", "n2-grammar", "n2-reading", "n2-listening", "n2-final", "n1-open-lesson", "n1-overview", "n1-lessons", "n1-diagnostic", "n1-review", "n1-kanji", "n1-grammar", "n1-reading", "n1-listening", "n1-final", "eva-jlpt-toggle", "eva-jlpt-next"].includes(action)) {
       playUxSound("page_turn");
+      return;
+    }
+    if (["n5-answer", "n5-check-input", "n5-srs", "n5-writing-done", "n5-complete-lesson", "n5-final-answer", "n5-final-submit", "n4-answer", "n4-check-input", "n4-srs", "n4-writing-done", "n4-complete-lesson", "n4-grammar-complete", "n4-reading-complete", "n4-listening-complete", "n4-final-answer", "n4-final-submit", "n3-answer", "n3-check-input", "n3-srs", "n3-writing-done", "n3-complete-lesson", "n3-grammar-complete", "n3-reading-complete", "n3-listening-complete", "n3-final-answer", "n3-final-submit", "n2-answer", "n2-check-input", "n2-srs", "n2-writing-done", "n2-complete-lesson", "n2-grammar-complete", "n2-reading-complete", "n2-listening-complete", "n2-final-answer", "n2-final-submit", "n1-answer", "n1-check-input", "n1-srs", "n1-writing-done", "n1-complete-lesson", "n1-grammar-complete", "n1-reading-complete", "n1-listening-complete", "n1-final-answer", "n1-final-submit", "n1-diagnostic-answer", "n1-diagnostic-submit", "n1-diagnostic-srs", "eva-jlpt-answer"].includes(action)) {
+      playUxSound("button_click");
       return;
     }
     if (["pwa-install", "notification-allow", "set-goal"].includes(action)) {
@@ -1688,9 +4152,10 @@ async function loadCourse() {
   function handleKeydown(event) {
     if (handleMoonCheatKey(event)) return;
 
-    if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.navMenu)) {
+    if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.navMenu)) {
       state.detailCardId = null;
       state.rewardModal = null;
+      state.finalTestModal = null;
       state.navMenu = null;
       render();
       return;
@@ -1727,16 +4192,25 @@ async function loadCourse() {
     return state.progress.moonFragments;
   }
 
-  function setRoute(route, focus = null) {
+  function setRoute(route, focus = null, subroute = null) {
     state.route = routes.includes(route) ? route : "home";
-    if (location.hash !== `#${state.route}`) history.replaceState(null, "", `#${state.route}`);
+    state.activeTextbookLevel = state.route === "textbooks" ? (subroute ? String(subroute).toUpperCase() : null) : null;
+    state.activeTextbookSubroute = null;
+    const nextHash = state.route === "textbooks" && state.activeTextbookLevel
+      ? `#textbooks/${encodeURIComponent(state.activeTextbookLevel)}`
+      : `#${state.route}`;
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
     if (state.route !== "kanji") state.kanjiPageId = null;
     state.detailCardId = null;
     state.revealed = false;
     state.navMenu = null;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
     state.pendingFocus = focus;
     if (state.route !== "eva-room") state.evaRoomShopOpen = false;
     resetReadingCheck();
+    onEvaPanelRouteEnter(state.route);
+    scrollPageToTop();
     render();
     if (state.route === "eva-room") dispatchEvaEvent("room_opened");
   }
@@ -1750,15 +4224,26 @@ async function loadCourse() {
     state.revealed = false;
     state.navMenu = null;
     state.pendingFocus = null;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
     state.evaRoomShopOpen = false;
     resetReadingCheck();
     const nextHash = `#kanji/${encodeURIComponent(card.id)}`;
     if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    scrollPageToTop();
     render();
-    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
   }
 
-  function render() {
+  function renderPreservingScroll(options = {}) {
+    const scrollY = window.scrollY;
+    render(options);
+    window.scrollTo(0, scrollY);
+  }
+
+  function render(options = {}) {
+    const mode = options.mode || "full";
+    if (mode === "soft" && refreshStudyRouteSoft(options)) return;
+
     destroyCharts();
     syncChrome();
 
@@ -1766,11 +4251,9 @@ async function loadCourse() {
     if (state.route === "home") html = renderHome();
     if (state.route === "learn") {
       html = renderLearn();
-      if (state.pendingFocus !== "lesson-tabs") requestAnimationFrame(autoPlayActiveKanjiAudio);
     }
     if (state.route === "review") {
       html = renderReview();
-      if (state.pendingFocus !== "sentence-practice") requestAnimationFrame(autoPlayActiveKanjiAudio);
     }
     if (state.route === "dictionary") html = renderDictionary();
     if (state.route === "kanji") html = renderKanjiPage();
@@ -1785,14 +4268,311 @@ async function loadCourse() {
     if (state.route === "achievements") html = renderAchievementsPage();
     if (state.route === "eva-room") html = renderEvaRoom();
     if (state.route === "jlpt-lesson") html = renderJlptLessonPage();
+    if (state.route === "textbooks") html = renderTextbooksPage();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
-    document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal));
-    requestAnimationFrame(applyPendingFocus);
+    const jlptEvaContext = resolveJlptEvaPageContext();
+    const jlptEvaExpanded = Boolean(jlptEvaContext && !ensureJlptModuleEvaState(jlptEvaContext.level).collapsed);
+    document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal));
+    document.body.classList.toggle("jlpt-eva-dock-expanded", jlptEvaExpanded);
+    requestAnimationFrame(() => {
+      applyPendingFocus();
+      syncScrollToggleButton();
+      syncCyberHudEffects();
+    });
   }
 
+  function syncCyberHudEffects() {
+    window.CyberHUDEffect?.syncAll?.();
+  }
+
+  function resolveStudySurfaceModel() {
+    if (state.route === "review") {
+      const due = getDueNowCards();
+      if (!state.activeCardId || !due.some((card) => card.id === state.activeCardId)) {
+        state.activeCardId = due[0]?.id || null;
+      }
+      const card = state.activeCardId ? findCard(state.activeCardId) : null;
+      return {
+        route: "review",
+        card,
+        queueCount: due.length,
+        cardHtml: card ? renderStudyCard(card) : renderNoReview(),
+        sideHtml: renderStudySidePanel(card, due.length),
+        queueLabel: `${due.length} ${t("cardsToday")}`
+      };
+    }
+
+    if (state.route === "learn") {
+      const lessons = learnLessonsForFilter();
+      const lesson = ensureActiveLearnLesson(lessons);
+      const lessonUnlocked = Boolean(lesson && isLessonUnlocked(lesson));
+      const candidates = lessonUnlocked ? getStudyCandidates(lesson.id, false) : [];
+      if (!state.activeCardId || !candidates.some((item) => item.id === state.activeCardId)) {
+        state.activeCardId = candidates[0]?.id || null;
+      }
+      const card = lessonUnlocked && state.activeCardId ? findCard(state.activeCardId) : null;
+      return {
+        route: "learn",
+        card,
+        queueCount: candidates.length,
+        cardHtml: lessonUnlocked
+          ? (card ? renderStudyCard(card) : renderLessonDone(lesson))
+          : renderLessonLocked(lesson),
+        sideHtml: lessonUnlocked
+          ? renderStudySidePanel(card, candidates.length)
+          : renderStudySidePanel(null, 0)
+      };
+    }
+
+    return null;
+  }
+
+  function refreshGlobalOverlaysSoft() {
+    const overlays = renderGlobalOverlays();
+    const existing = document.querySelector(".modal-layer");
+    if (overlays) {
+      if (existing) existing.outerHTML = overlays;
+      else app.insertAdjacentHTML("beforeend", overlays);
+    } else if (existing) {
+      existing.remove();
+    }
+    const jlptEvaContext = resolveJlptEvaPageContext();
+    const jlptEvaExpanded = Boolean(jlptEvaContext && !ensureJlptModuleEvaState(jlptEvaContext.level).collapsed);
+    document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal));
+    document.body.classList.toggle("jlpt-eva-dock-expanded", jlptEvaExpanded);
+  }
+
+  function refreshStudyRouteSoft(options = {}) {
+    const model = resolveStudySurfaceModel();
+    if (!model) return false;
+
+    const page = app.querySelector(".page");
+    const layout = page?.querySelector("[data-study-surface]");
+    const cardHost = layout?.querySelector("[data-study-card-host]");
+    const sideHost = layout?.querySelector("[data-study-side-host]");
+    if (!layout || !cardHost || !sideHost) return false;
+
+    const scrollY = window.scrollY;
+    const animate = options.animate !== false;
+
+    if (animate) layout.classList.add("is-shadow-rebooting");
+
+    cardHost.innerHTML = model.cardHtml;
+    sideHost.outerHTML = model.sideHtml;
+
+    if (model.route === "review") {
+      const queueEl = page.querySelector("[data-review-queue-count]");
+      if (queueEl) queueEl.textContent = model.queueLabel;
+    }
+
+    refreshGlobalOverlaysSoft();
+    syncChrome();
+
+    requestAnimationFrame(() => {
+      if (animate) {
+        window.setTimeout(() => layout.classList.remove("is-shadow-rebooting"), 360);
+      }
+      applyPendingFocus();
+      syncScrollToggleButton();
+      syncCyberHudEffects();
+      window.scrollTo(0, scrollY);
+    });
+
+    return true;
+  }
+
+  function shadowReboot(scope = "session", options = {}) {
+    const scrollY = window.scrollY;
+    const route = options.route || state.route;
+
+    if (scope === "session" || scope === "srs" || scope === "study" || scope === "all") {
+      state.revealed = false;
+      state.activeCardId = null;
+      resetReadingCheck();
+      stopKanjiAudio();
+    }
+
+    if (scope === "sentence" || scope === "all") {
+      const practice = sentencePracticeProgress();
+      practice.selected = [];
+      practice.checked = false;
+      practice.result = null;
+      practice.tileKeys = [];
+      practice.customMessage = "";
+      practice.customStatus = "";
+    }
+
+    if (scope === "all") {
+      state.detailCardId = null;
+      state.rewardModal = null;
+      state.finalTestModal = null;
+      state.finalTestBusy = false;
+      state.navMenu = null;
+      state.pendingFocus = null;
+    }
+
+    if (route === "review" || route === "learn") {
+      render({ mode: "soft", animate: options.animate !== false });
+    } else {
+      render();
+    }
+
+    window.scrollTo(0, scrollY);
+    return true;
+  }
+
+  window.flashKanjiShadowReboot = shadowReboot;
+
   function renderGlobalOverlays() {
-    const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}`;
+    const overlays = `${renderJlptEvaBottomDock()}${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
     return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
+  }
+
+  function jlptEvaSupportedLevels() {
+    return new Set(["N5", "N4", "N3", "N2", "N1"]);
+  }
+
+  function resolveJlptEvaPageContext() {
+    if (state.route === "jlpt-lesson") {
+      const level = String(state.activeJlptLesson || "").toUpperCase();
+      if (!jlptEvaSupportedLevels().has(level)) return null;
+      return {
+        level,
+        view: "lesson",
+        lesson: jlptLessonByLevel(level),
+        textbook: jlptCatalogByLevel(level)
+      };
+    }
+    if (state.route !== "textbooks") return null;
+    const level = String(state.activeTextbookLevel || "").toUpperCase();
+    if (!jlptEvaSupportedLevels().has(level)) return null;
+    const textbook = jlptCatalogByLevel(level) || null;
+    const spec = jlptModuleSpec(level);
+    const subroute = String(state.activeTextbookSubroute || "").toLowerCase();
+    const viewMap = {
+      "final-test": "final",
+      final: "final",
+      review: "review",
+      kanji: "kanji",
+      grammar: "grammar",
+      reading: "reading",
+      listening: "listening",
+      lessons: "lessons",
+      diagnostic: "diagnostic"
+    };
+    let view = viewMap[subroute] || "overview";
+    let lesson = spec?.currentLesson || null;
+    if (!viewMap[subroute] && subroute && spec?.lessonById) {
+      const matched = spec.lessonById(subroute);
+      if (matched) {
+        view = "lesson";
+        lesson = matched;
+      }
+    }
+    rememberJlptModuleVisit(level, lesson?.id || jlptModuleResolvedLessonId(level, subroute), view);
+    return { level, view, lesson, textbook };
+  }
+
+  function renderJlptEvaTab(level, options = {}) {
+    const key = String(level || state.activeTextbookLevel || "N5").toUpperCase();
+    const moduleState = ensureJlptModuleEvaState(key);
+    const inline = options.inline ? " jlpt-eva-tab-inline" : "";
+    const active = !moduleState.collapsed ? " is-active" : "";
+    const label = lang() === "ru" ? "Открыть панель Евы" : "Open Eva panel";
+    return `
+      <button class="jlpt-eva-tab${inline}${active}" type="button" data-action="eva-jlpt-toggle" data-level="${escapeAttr(key)}" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">EVA</button>
+    `;
+  }
+
+  function renderJlptEvaBottomDock() {
+    const context = resolveJlptEvaPageContext();
+    if (!context) return "";
+    const moduleState = ensureJlptModuleEvaState(context.level);
+    const openLabel = lang() === "ru" ? "Открыть панель Евы" : "Open Eva panel";
+
+    if (moduleState.collapsed) {
+      return `
+        <button class="jlpt-eva-open-btn" type="button" data-action="eva-jlpt-toggle" data-level="${escapeAttr(context.level)}" aria-label="${escapeAttr(openLabel)}" title="${escapeAttr(openLabel)}">
+          <span class="jlpt-eva-open-btn-badge">Eva</span>
+          <span class="jlpt-eva-open-btn-level">${escapeHtml(context.level)}</span>
+        </button>
+      `;
+    }
+
+    const panel = renderJlptEvaPanel(context.level, context);
+    if (!panel) return "";
+    const roomLabel = lang() === "ru" ? "Комната" : "Room";
+    return `
+      <aside class="jlpt-eva-dock is-expanded" role="complementary" aria-label="${escapeAttr(lang() === "ru" ? "Панель Евы JLPT" : "JLPT Eva panel")}">
+        <div class="jlpt-eva-dock-head">
+          <span class="jlpt-eva-dock-badge">Eva</span>
+          <button class="btn ghost jlpt-eva-room-link" type="button" data-action="route" data-route="eva-room" aria-label="${escapeAttr(roomLabel)}">${escapeHtml(roomLabel)}</button>
+        </div>
+        ${panel}
+      </aside>
+    `;
+  }
+
+  function scrollPageToTop() {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function scrollPageToBottom() {
+    if (typeof window === "undefined") return;
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    window.scrollTo({ top: maxScroll, behavior: "auto" });
+  }
+
+  function canPageScroll() {
+    if (typeof window === "undefined" || !document.documentElement) return false;
+    return document.documentElement.scrollHeight > window.innerHeight + 24;
+  }
+
+  function getScrollToggleDirection() {
+    if (!canPageScroll()) return null;
+    return window.scrollY > 32 ? "up" : "down";
+  }
+
+  function renderScrollToggleButton() {
+    const direction = getScrollToggleDirection() || "down";
+    const hidden = canPageScroll() ? "" : " hidden";
+    const ru = lang() === "ru";
+    const label = direction === "up"
+      ? ru ? "Наверх" : "Scroll to top"
+      : ru ? "Вниз" : "Scroll to bottom";
+    const icon = direction === "up" ? "↑" : "↓";
+    return `
+      <button class="scroll-position-toggle scroll-position-toggle-${direction}" type="button" data-action="scroll-page-edge" data-direction="${direction}" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}"${hidden}>
+        <span class="scroll-position-toggle-icon" aria-hidden="true">${escapeHtml(icon)}</span>
+        <span class="scroll-position-toggle-label">${escapeHtml(label)}</span>
+      </button>
+    `;
+  }
+
+  function syncScrollToggleButton() {
+    const button = $('[data-action="scroll-page-edge"]');
+    if (!button) return;
+    const direction = getScrollToggleDirection();
+    if (!direction) {
+      button.hidden = true;
+      return;
+    }
+    button.hidden = false;
+    button.dataset.direction = direction;
+    button.classList.toggle("scroll-position-toggle-up", direction === "up");
+    button.classList.toggle("scroll-position-toggle-down", direction === "down");
+    const icon = button.querySelector(".scroll-position-toggle-icon");
+    if (icon) icon.textContent = direction === "up" ? "↑" : "↓";
+    const label = button.querySelector(".scroll-position-toggle-label");
+    if (label) label.textContent = lang() === "ru"
+      ? (direction === "up" ? "Наверх" : "Вниз")
+      : (direction === "up" ? "Top" : "Bottom");
+    const aria = lang() === "ru"
+      ? (direction === "up" ? "Подняться вверх" : "Опуститься вниз")
+      : (direction === "up" ? "Scroll to top" : "Scroll to bottom");
+    button.setAttribute("aria-label", aria);
+    button.setAttribute("title", aria);
   }
 
   function hasNavMenu(route) {
@@ -1813,7 +4593,8 @@ async function loadCourse() {
     const items = {
       learn: [
         { route: "learn", focus: "lesson-card", icon: "文", title: ru ? "Текущий урок" : "Current lesson", text: ru ? "Карточки и новые кандзи." : "Cards and new kanji." },
-        { route: "learn", focus: "lesson-tabs", icon: "段", title: ru ? "Выбор урока" : "Lesson list", text: ru ? "Перейти к списку уроков." : "Jump to lesson picker." }
+        { route: "learn", focus: "lesson-tabs", icon: "段", title: ru ? "Выбор урока" : "Lesson list", text: ru ? "Перейти к списку уроков." : "Jump to lesson picker." },
+        { route: "textbooks", focus: "textbook-grid", icon: "冊", title: ru ? "Учебники" : "Textbooks", text: ru ? "Открыть страницы учебников JLPT." : "Open JLPT textbook pages." }
       ],
       review: [
         { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "SRS-карточки на сегодня." : "Today’s SRS queue." },
@@ -1881,7 +4662,10 @@ async function loadCourse() {
   function syncChrome() {
     $$(".nav-btn").forEach((button) => {
       const route = button.dataset.route;
-      const active = route === state.route || (route === "stats" && state.route === "achievements") || (route === "dictionary" && state.route === "kanji");
+      const active = route === state.route
+        || (route === "learn" && state.route === "textbooks")
+        || (route === "stats" && state.route === "achievements")
+        || (route === "dictionary" && state.route === "kanji");
       button.classList.toggle("is-active", active);
       button.classList.toggle("has-menu", hasNavMenu(route));
       button.setAttribute("aria-expanded", state.navMenu === route ? "true" : "false");
@@ -1900,6 +4684,7 @@ async function loadCourse() {
     const daily = getDailyLesson();
     const reviewQueue = getDueNowCards().length;
     const newAvailable = getUnlockedNewCards().length;
+    const homeScene = homeEvaScene();
 
     return `
       <section class="page">
@@ -1911,8 +4696,9 @@ async function loadCourse() {
             <div class="hero-actions">
               <button class="btn primary" type="button" data-action="start-due">▶ ${escapeHtml(t("study"))}</button>
               <button class="btn" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
+              <button class="btn ghost" type="button" data-action="route" data-route="textbooks">冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
             </div>
-            ${renderMascot("eva", "normal", "welcome", "hero-mascot")}
+            ${renderHomeEvaPanel(homeScene)}
             ${renderHeroDecoration()}
           </section>
 
@@ -1961,12 +4747,193 @@ async function loadCourse() {
     `;
   }
 
+  function homeEvaScene() {
+    ensureHomeEvaDialogue();
+    const autonomy = evaAutonomy();
+    const line = autonomy.currentLine || state.evaRuntime?.currentPhrase || null;
+    const question = activeEvaQuestion();
+    const speaker = localized(getMascot("eva").name || { ru: "Ева", en: "Eva" });
+    const mood = state.evaRuntime?.mood || autonomy.mood || evaRelationship().mood;
+    const emotion = state.evaRuntime?.emotion || autonomy.emotion || line?.emotion || "calm";
+    const presenceState = line?.state || state.evaRuntime?.presenceState || (question ? "wait_choice" : "speak");
+    const sprite = state.homeEvaDisplaySprite || rollHomeEvaSprite();
+    return {
+      line,
+      question,
+      speaker,
+      mood,
+      emotion,
+      presenceState,
+      sprite
+    };
+  }
+
+  function ensureHomeEvaDialogue() {
+    ensureEvaRoomProgress();
+    const autonomy = evaAutonomy();
+    if (autonomy.currentLine?.text || state.evaRuntime?.currentPhrase?.text) return autonomy.currentLine || state.evaRuntime.currentPhrase;
+    forceEvaEventLine("manual");
+    return evaAutonomy().currentLine || state.evaRuntime?.currentPhrase || null;
+  }
+
+  function renderHomeEvaPanel(scene) {
+    const labels = evaRoomLabels();
+    const live = evaLiveLabels();
+    const modeLabel = scene.question
+      ? (lang() === "ru" ? "Вопрос" : "Question")
+      : (lang() === "ru" ? "Диалог" : "Dialogue");
+    const line = scene.line || { text: { ru: "Я здесь.", en: "I'm here." } };
+    const lineId = line.id || "home_eva_line";
+    return `
+      <section class="home-eva-vn" role="region" aria-label="${escapeAttr(lang() === "ru" ? "Диалог Евы" : "Eva dialogue")}" data-home-eva-mode="${escapeAttr(scene.question ? "question" : "dialogue")}" data-eva-state="${escapeAttr(scene.presenceState)}" data-eva-mood="${escapeAttr(scene.mood)}" data-eva-emotion="${escapeAttr(scene.emotion)}">
+        <div class="home-eva-copy">
+          <div class="home-eva-meta">
+            <strong>${escapeHtml(scene.speaker)}</strong>
+            <span class="pill">${escapeHtml(modeLabel)}</span>
+          </div>
+          ${renderEvaDialogueText(localized(line.text || { ru: "Я здесь.", en: "I'm here." }), lineId)}
+          ${scene.question ? `
+            <div class="eva-question-box home-eva-question">
+              <span class="pill">${escapeHtml(live.question)}</span>
+              <strong>${escapeHtml(localized(scene.question.text))}</strong>
+              <div class="eva-choice-grid">
+                ${scene.question.options.map((option) => `
+                  <button class="btn ${option.id === scene.question.options[0]?.id ? "primary" : "ghost"}" type="button" data-action="eva-question-answer" data-option="${escapeAttr(option.id)}">
+                    ${escapeHtml(localized(option.text))}
+                  </button>
+                `).join("")}
+              </div>
+            </div>
+          ` : `
+            <div class="home-eva-actions">
+              <button class="btn primary" type="button" data-action="eva-autonomy-next" aria-label="${escapeAttr(labels.nextAutonomyLine)}" title="${escapeAttr(labels.nextAutonomyLine)}">→</button>
+            </div>
+          `}
+        </div>
+        <button class="home-eva-avatar" type="button" data-action="eva-click" data-character="eva" aria-label="${escapeAttr(scene.speaker)}">
+          <img class="${escapeAttr(evaSpriteMotionClass({ line: scene.line, isAutonomy: true, mood: scene.mood, emotion: scene.emotion }))}" src="${escapeAttr(scene.sprite)}" alt="${escapeAttr(scene.speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.png'" />
+        </button>
+      </section>
+    `;
+  }
+
+  function renderJlptEvaPanel(level, pageContext = {}) {
+    const spec = jlptModuleSpec(level);
+    if (!spec) return "";
+    const moduleState = ensureJlptModuleEvaState(level);
+    const summary = jlptModuleSummary(level, spec, moduleState, pageContext);
+    const question = moduleState.currentQuestion && ["question", "reaction"].includes(moduleState.phase) ? moduleState.currentQuestion : null;
+    const view = String(pageContext.view || "overview");
+    const line = jlptModuleQuestionLine(level, pageContext, moduleState, summary, question);
+    const speaker = localized(getMascot("eva").name || { ru: "Ева", en: "Eva" });
+    const emotion = summary.complete
+      ? "proud"
+      : moduleState.phase === "reaction" && moduleState.questionOutcome === "wrong"
+        ? "serious"
+        : moduleState.phase === "question"
+          ? "serious"
+          : "calm";
+    const mood = summary.complete
+      ? "happy"
+      : moduleState.phase === "reaction" && moduleState.questionOutcome === "wrong"
+        ? "concerned"
+        : moduleState.phase === "question"
+          ? "thinking"
+          : "calm";
+    const presenceState = moduleState.phase === "question" ? "wait_choice" : moduleState.phase === "reaction" ? "react" : "speak";
+    const sprite = jlptModuleEvaSprite(level);
+    const lineId = `jlpt_${level}_${moduleState.phase}_${question?.id || moduleState.questionSequence || moduleState.dialogueTurns}`;
+    const collapseLabel = moduleState.collapsed
+      ? (lang() === "ru" ? "Открыть панель" : "Open panel")
+      : (lang() === "ru" ? "Свернуть" : "Collapse");
+    const viewLabel = {
+      overview: lang() === "ru" ? "Обзор" : "Overview",
+      lesson: lang() === "ru" ? "Урок" : "Lesson",
+      lessons: lang() === "ru" ? "Список" : "Lessons",
+      review: lang() === "ru" ? "Повтор" : "Review",
+      final: lang() === "ru" ? "Финал" : "Final",
+      kanji: lang() === "ru" ? "Кандзи" : "Kanji",
+      grammar: lang() === "ru" ? "Грамматика" : "Grammar",
+      reading: lang() === "ru" ? "Чтение" : "Reading",
+      listening: lang() === "ru" ? "Аудирование" : "Listening",
+      diagnostic: lang() === "ru" ? "Диагностика" : "Diagnostic"
+    }[view] || (lang() === "ru" ? "Раздел" : "Section");
+    const currentLesson = pageContext.lesson || summary.currentLesson || null;
+    const lastLesson = summary.lastLesson || null;
+    const showQuestion = Boolean(question);
+    const answerLocked = moduleState.phase !== "question";
+    const nextActionLabel = moduleState.phase === "reaction"
+      ? (lang() === "ru" ? "Следующий" : "Next")
+      : moduleState.phase === "completion"
+        ? (lang() === "ru" ? "Повторить" : "Repeat")
+        : moduleState.phase === "intro"
+          ? (lang() === "ru" ? "Дальше" : "Next")
+          : (lang() === "ru" ? "Спросить" : "Ask");
+
+    if (moduleState.collapsed) return "";
+
+    return `
+      <section class="home-eva-vn jlpt-eva-vn jlpt-eva-vn-expanded" role="region" aria-label="${escapeAttr(lang() === "ru" ? `Диалог Евы ${spec.level}` : `Eva dialogue ${spec.level}`)}" data-jlpt-level="${escapeAttr(spec.level)}" data-jlpt-view="${escapeAttr(view)}" data-jlpt-phase="${escapeAttr(moduleState.phase)}" data-eva-state="${escapeAttr(presenceState)}" data-eva-mood="${escapeAttr(mood)}" data-eva-emotion="${escapeAttr(emotion)}">
+        <div class="home-eva-copy jlpt-eva-copy">
+          <div class="home-eva-meta jlpt-eva-meta">
+            <strong>${escapeHtml(speaker)}</strong>
+            <span class="pill">${escapeHtml(spec.level)}</span>
+            <span class="pill">${escapeHtml(viewLabel)}</span>
+            <span class="pill">${escapeHtml(`${summary.completedLessons}/${summary.totalLessons || 0}`)}</span>
+            <span class="pill">${escapeHtml(`${summary.studied}/${summary.totalCards || 0}`)}</span>
+            ${currentLesson ? `<span class="pill">${escapeHtml(localized(currentLesson.title || {}))}</span>` : ""}
+            ${lastLesson && lastLesson.id !== currentLesson?.id ? `<span class="pill">${escapeHtml(lang() === "ru" ? "Последний" : "Last")}: ${escapeHtml(localized(lastLesson.title || {}))}</span>` : ""}
+            <button class="btn ghost jlpt-eva-toggle" type="button" data-action="eva-jlpt-toggle" data-level="${escapeAttr(spec.level)}" aria-label="${escapeAttr(collapseLabel)}" title="${escapeAttr(collapseLabel)}">−</button>
+          </div>
+
+          ${renderEvaDialogueText(localized(line), lineId)}
+
+          ${showQuestion ? `
+            <div class="eva-question-box home-eva-question jlpt-eva-question">
+              <span class="pill">${escapeHtml(lang() === "ru" ? "Вопрос" : "Question")}</span>
+              <strong>${escapeHtml(localized(question.text || {}))}</strong>
+              <div class="eva-choice-grid">
+                ${(question.options || []).map((option) => {
+                  const selected = moduleState.selectedAnswerId === option.id;
+                  const active = !answerLocked;
+                  const className = active ? "ghost" : option.correct ? "success" : selected ? "warning" : "ghost";
+                  return `
+                    <button class="btn ${className}" type="button" data-action="eva-jlpt-answer" data-level="${escapeAttr(spec.level)}" data-option="${escapeAttr(option.id)}" ${active ? "" : "disabled aria-disabled=\"true\""}>
+                      ${escapeHtml(localized(option.text || {}))}
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          ` : ""}
+
+          ${moduleState.phase === "reaction" ? `
+            <div class="jlpt-eva-reaction">
+              <span class="pill ${moduleState.questionOutcome === "correct" ? "success-pill" : "danger-pill"}">${escapeHtml(moduleState.questionOutcome === "correct" ? (lang() === "ru" ? "Верно" : "Correct") : (lang() === "ru" ? "Почти" : "Almost"))}</span>
+              ${moduleState.reactionText?.ru || moduleState.reactionText?.en ? renderEvaDialogueText(localized(moduleState.reactionText), `${lineId}_reaction`) : ""}
+            </div>
+          ` : ""}
+
+          <div class="home-eva-actions jlpt-eva-actions">
+            ${moduleState.phase !== "question" ? `<button class="btn primary" type="button" data-action="eva-jlpt-next" data-level="${escapeAttr(spec.level)}" aria-label="${escapeAttr(nextActionLabel)}" title="${escapeAttr(nextActionLabel)}">→</button>` : ""}
+          </div>
+        </div>
+
+        <button class="home-eva-avatar jlpt-eva-avatar" type="button" data-action="eva-jlpt-next" data-level="${escapeAttr(spec.level)}" aria-label="${escapeAttr(nextActionLabel)}" title="${escapeAttr(nextActionLabel)}">
+          <img class="${escapeAttr(evaSpriteMotionClass({ line: { state: presenceState }, isAutonomy: true, mood, emotion }))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.png'" />
+        </button>
+      </section>
+    `;
+  }
+
   function renderStreakCard() {
     const checkpoints = [1, 7, 30, 100];
+    const goalMet = todayStats().goalClaimed;
     return `
       <article class="metric streak-card">
         <span>${escapeHtml(t("streak"))}</span>
         <strong>${state.progress.streak.current}</strong>
+        <small>${escapeHtml(goalMet ? t("streakGoalDone") : t("streakGoalHint"))}</small>
         <div class="streak-dots">
           ${checkpoints.map((day) => `<span class="${state.progress.streak.current >= day ? "is-hit" : ""}">${day}</span>`).join("")}
         </div>
@@ -2036,7 +5003,7 @@ async function loadCourse() {
     const scene = currentEvaRoomScene();
     const node = scene.node;
     const bg = currentEvaRoomBackground() || scene.bg || getEvaRoomBackground(node.background);
-    const sprite = evaSpritePath(scene.sprite || resolveEvaSprite(node.sprite));
+    const sprite = state.evaRoomDisplaySprite || rollEvaRoomSprite();
     const labels = evaRoomLabels();
     const liveLabels = evaLiveLabels();
     const choices = Array.isArray(node.choices) ? node.choices : [];
@@ -2062,7 +5029,7 @@ async function loadCourse() {
           <button class="eva-sprite-button" type="button" data-action="eva-click" aria-label="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}">
             <img class="${escapeAttr(evaSpriteMotionClass(scene))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.png'" />
           </button>
-          ${renderEvaRoomDecoration(scene)}
+          ${renderEvaRoomDecorations(scene)}
           <div class="eva-dialogue-box">
             <div class="eva-dialogue-meta">
               <strong>${escapeHtml(localized(node.speaker || { ru: "Ева", en: "Eva" }))}</strong>
@@ -2102,14 +5069,51 @@ async function loadCourse() {
     `;
   }
 
-  function renderEvaRoomDecoration(scene = {}) {
-    const item = selectedDecorationItem(scene);
-    if (!item) return "";
+  function evaRoomDecorLayout(bgId) {
+    const roomId = normalizeCustomizationItemId(bgId) || "bg_study_hub";
+    const layouts = state.evaRoomDecorLayouts?.rooms || {};
+    return Array.isArray(layouts[roomId]) ? layouts[roomId] : (layouts.bg_study_hub || []);
+  }
+
+  function currentEvaRoomDecorBackgroundId(scene = {}) {
+    const bg = currentEvaRoomBackground() || scene.bg || getEvaRoomBackground(scene.node?.background);
+    return bg?.id || state.customization?.selected?.background || "bg_study_hub";
+  }
+
+  function renderEvaRoomDecorations(scene = {}) {
+    const active = new Set(selectedDecorations());
+    if (!active.size) return "";
+    const layout = evaRoomDecorLayout(currentEvaRoomDecorBackgroundId(scene));
+    const props = layout
+      .filter((entry) => active.has(entry.id))
+      .map((entry, index) => renderEvaRoomDecorProp(entry, index))
+      .filter(Boolean)
+      .join("");
+    if (!props) return "";
+    return `<div class="eva-room-props" aria-hidden="true">${props}</div>`;
+  }
+
+  function renderEvaRoomDecorProp(entry, index = 0) {
+    if (!isDecorationSelected(entry.id) || !isDecorationUnlocked(customizationShopItem(entry.id))) return "";
+    const item = customizationShopItem(entry.id);
+    if (!item || item.type !== "decoration") return "";
+    const layer = Number(entry.layer ?? 0);
+    const layerClass = layer >= 2 ? "is-front" : layer === 1 ? "is-mid" : "is-back";
+    const classes = [
+      "eva-room-prop",
+      `deco-${escapeAttr(item.id)}`,
+      layerClass,
+      entry.flip ? "is-flipped" : ""
+    ].filter(Boolean).join(" ");
+    const opacity = entry.opacity == null ? "" : `--prop-opacity:${Math.max(0.2, Math.min(1, Number(entry.opacity)))};`;
+    const narrow = entry.narrow || {};
+    const narrowVars = entry.narrow
+      ? `--prop-x-narrow:${Number(narrow.x)}%;--prop-y-narrow:${Number(narrow.y)}%;--prop-w-narrow:${Number(narrow.w)}%;`
+      : "";
     return `
-      <div class="eva-room-decoration deco-${escapeAttr(item.id)}" aria-label="${escapeAttr(customizationItemTitle(item))}">
-        <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" />
-      </div>
-    `;
+      <div class="${classes}" data-prop-id="${escapeAttr(item.id)}" data-prop-slot="${Number(entry.slot ?? index)}" style="--prop-x:${Number(entry.x)}%;--prop-y:${Number(entry.y)}%;--prop-w:${Number(entry.w)}%;${narrowVars}${opacity}">
+        <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" draggable="false" />
+      </div>`;
   }
 
   function renderHeroDecoration() {
@@ -2117,16 +5121,38 @@ async function loadCourse() {
     if (!item) return "";
     return `
       <div class="hero-decoration deco-${escapeAttr(item.id)}" aria-label="${escapeAttr(customizationItemTitle(item))}">
-        <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" />
+        <img src="${escapeAttr(item.asset || item.preview)}" alt="" loading="lazy" draggable="false" />
       </div>
     `;
   }
 
   function selectedDecorationItem(scene = {}) {
-    const decorationId = scene.decoration || evaAutonomy().currentDecoration || state.customization?.selected?.decoration || state.customization?.selected?.frame;
+    const active = selectedDecorations();
+    const decorationId = scene.decoration || active[0] || null;
     const item = customizationShopItem(decorationId);
-    if (!item || item.type !== "decoration" || !isCustomizationOwned(item.id)) return null;
+    if (!item || item.type !== "decoration" || !isDecorationSelected(item.id)) return null;
     return item;
+  }
+
+  function toggleDecorationSelection(id) {
+    const item = customizationShopItem(id);
+    if (!item || item.type !== "decoration" || !isDecorationUnlocked(item)) return false;
+    if (!state.customization) hydrateCustomization();
+    const list = selectedDecorations();
+    const wasSelected = list.includes(item.id);
+    state.customization.selected.decorations = wasSelected
+      ? list.filter((entry) => entry !== item.id)
+      : [...list, item.id];
+    syncLegacyDecorationSelection();
+    syncCustomizationToProgress();
+    saveCustomizationStorage();
+    saveProgress();
+    playUxSound(wasSelected ? "menu_close" : "notification_soft");
+    toast(wasSelected
+      ? shopLabels().decorRemoved.replace("{item}", customizationItemTitle(item))
+      : shopLabels().decorAdded.replace("{item}", customizationItemTitle(item)));
+    render();
+    return true;
   }
 
   function renderCustomizationShop(options = {}) {
@@ -2228,15 +5254,21 @@ async function loadCourse() {
     const labels = shopLabels();
     const statusText = labels.status[status] || status;
     const unlockHint = customizationUnlockHint(item);
-    const action = status === "available"
-      ? `<button class="btn primary" type="button" data-action="shop-buy" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.buy)}</button>`
-      : status === "owned"
-        ? `<button class="btn" type="button" data-action="shop-select" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.select)}</button>`
+    const action = item.type === "decoration"
+      ? status === "locked"
+        ? `<button class="btn" type="button" disabled>${escapeHtml(labels.unavailable)}</button>`
         : status === "selected"
-          ? `<button class="btn success" type="button" disabled>${escapeHtml(labels.selected)}</button>`
-          : `<button class="btn" type="button" disabled>${escapeHtml(labels.unavailable)}</button>`;
+          ? `<button class="btn warning" type="button" data-action="shop-clear-item" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.decorRemove)}</button>`
+          : `<button class="btn primary" type="button" data-action="shop-select" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.decorAdd)}</button>`
+      : status === "available"
+        ? `<button class="btn primary" type="button" data-action="shop-buy" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.buy)}</button>`
+        : status === "owned"
+          ? `<button class="btn" type="button" data-action="shop-select" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.select)}</button>`
+          : status === "selected"
+            ? `<button class="btn warning" type="button" data-action="shop-clear-item" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.remove)}</button>`
+            : `<button class="btn" type="button" disabled>${escapeHtml(labels.unavailable)}</button>`;
     return `
-      <article class="custom-shop-card type-${escapeAttr(item.type)} is-${escapeAttr(status)} rarity-${escapeAttr(item.rarity)}">
+      <article class="custom-shop-card type-${escapeAttr(item.type)} is-${escapeAttr(status)} rarity-${escapeAttr(item.rarity)}" data-item-id="${escapeAttr(item.id)}">
         <div class="custom-shop-preview">
           <img src="${escapeAttr(item.preview || item.asset)}" alt="${escapeAttr(customizationItemTitle(item))}" loading="lazy" onerror="this.closest('.custom-shop-card').classList.add('is-missing')" />
           <span class="rarity-badge">${escapeHtml(rarityLabel(item.rarity))}</span>
@@ -2266,11 +5298,16 @@ async function loadCourse() {
       ? {
           title: "Магазин кастомизации",
           subtitle: "Flash Kanji Custom",
-          hint: "Фоны, образы Евы, декор, темы и эффекты за Moon Fragments.",
+          hint: "Фоны, образы Евы, декор, темы и эффекты. Декор открывается ачивками и ставится в комнату вручную.",
           categories: "Категории магазина",
           ownedShort: "куплено",
           buy: "Купить",
           select: "Выбрать",
+          remove: "Убрать",
+          decorAdd: "В комнату",
+          decorRemove: "Убрать из комнаты",
+          decorAdded: "В комнате: {item}",
+          decorRemoved: "Убрано из комнаты: {item}",
           selected: "Выбран",
           unavailable: "Недоступно",
           free: "Бесплатно",
@@ -2279,16 +5316,21 @@ async function loadCourse() {
           bought: "Куплено: {item}",
           selectedToast: "Выбрано: {item}",
           empty: "Нет предметов по этому фильтру.",
-          status: { selected: "Выбран", owned: "Куплено", available: "Доступно", locked: "Закрыто" }
+          status: { selected: "В комнате", owned: "Открыт", available: "Доступно", locked: "Закрыто" }
         }
       : {
           title: "Customization Shop",
           subtitle: "Flash Kanji Custom",
-          hint: "Backgrounds, Eva outfits, room decor, themes, and effects for Moon Fragments.",
+          hint: "Backgrounds, Eva outfits, decor, themes, and effects. Decor unlocks via achievements and appears only when selected.",
           categories: "Shop categories",
           ownedShort: "owned",
           buy: "Buy",
           select: "Select",
+          remove: "Remove",
+          decorAdd: "Add to room",
+          decorRemove: "Remove from room",
+          decorAdded: "In room: {item}",
+          decorRemoved: "Removed from room: {item}",
           selected: "Selected",
           unavailable: "Unavailable",
           free: "Free",
@@ -2297,7 +5339,7 @@ async function loadCourse() {
           bought: "Bought: {item}",
           selectedToast: "Selected: {item}",
           empty: "No items match this filter.",
-          status: { selected: "Selected", owned: "Owned", available: "Available", locked: "Locked" }
+          status: { selected: "In room", owned: "Unlocked", available: "Available", locked: "Locked" }
         };
   }
 
@@ -2341,9 +5383,12 @@ async function loadCourse() {
     const autonomy = evaAutonomy();
     const bg = scene.bg || currentEvaRoomBackground();
     const spriteItem = getEvaSpriteShopItem(scene.sprite || state.progress.selectedEvaSprite);
-    const effectItem = customizationShopItem(scene.effect || autonomy.currentEffect);
-    const decorationItem = customizationShopItem(scene.decoration || autonomy.currentDecoration);
+    const effectItem = customizationShopItem(state.customization?.selected?.effect);
+    const decorLabels = selectedDecorations()
+      .map((id) => customizationItemTitle(customizationShopItem(id)))
+      .filter(Boolean);
     const moodLabel = evaMoodLabel(scene.mood || autonomy.mood);
+    const quiz = evaRoomQuizProgress();
     return `
       <aside class="eva-autonomy-panel eva-live-status" data-eva-lines="${state.evaAutonomyLines.length}" data-eva-current="${escapeAttr(autonomy.currentLine?.id || "")}">
         <div>
@@ -2353,10 +5398,12 @@ async function loadCourse() {
         </div>
         <div class="eva-autonomy-meta">
           <span>${escapeHtml(live.mood)}: ${escapeHtml(moodLabel)}</span>
+          <span>${escapeHtml(live.quiz)}: ${escapeHtml(quiz.correct || 0)}/${escapeHtml(quiz.answered || 0)}</span>
+          ${quiz.streak ? `<span>${escapeHtml(live.quizStreak)}: ${escapeHtml(quiz.streak)}</span>` : ""}
           <span>${escapeHtml(localized(bg.title || {}))}</span>
           <span>${escapeHtml(localized(spriteItem?.title || { ru: "Ева", en: "Eva" }))}</span>
-          ${decorationItem ? `<span>${escapeHtml(customizationItemTitle(decorationItem))}</span>` : ""}
-          ${effectItem ? `<span>${escapeHtml(customizationItemTitle(effectItem))}</span>` : ""}
+          ${decorLabels.length ? `<span>${escapeHtml(decorLabels.join(", "))}</span>` : ""}
+          ${effectItem ? `<span class="eva-active-effect-chip">${escapeHtml(customizationItemTitle(effectItem))}<button type="button" class="eva-active-effect-clear" data-action="shop-clear-effect" data-id="${escapeAttr(effectItem.id)}" aria-label="${escapeAttr(lang() === "ru" ? "Убрать эффект" : "Remove effect")}">×</button></span>` : ""}
         </div>
       </aside>
     `;
@@ -2364,7 +5411,7 @@ async function loadCourse() {
 
   function renderEvaAutonomyChoices(labels) {
     const live = evaLiveLabels();
-    const question = evaAutonomy().currentQuestion;
+    const question = activeEvaQuestion();
     if (question?.id) {
       return `
         <div class="eva-question-box">
@@ -2396,6 +5443,8 @@ async function loadCourse() {
           status: "Ева держит присутствие в комнате",
           hint: "Она помнит паузы, выбирает тон по контексту и реагирует открытыми образами без лишнего шума.",
           mood: "Настроение",
+          quiz: "Вопросы",
+          quizStreak: "Серия",
           question: "Вопрос Евы"
         }
       : {
@@ -2403,6 +5452,8 @@ async function loadCourse() {
           status: "Eva keeps presence in the room",
           hint: "She remembers gaps, chooses tone from context, and reacts with unlocked looks without extra noise.",
           mood: "Mood",
+          quiz: "Questions",
+          quizStreak: "Streak",
           question: "Eva's question"
         };
   }
@@ -2526,6 +5577,14 @@ async function loadCourse() {
         curiosity: "Интерес",
         moreTalk: "Ещё реплика",
         anotherTalk: "Другая тема",
+        decorPanel: "Декор комнаты",
+        decorPanelHint: "Убирай отдельные предметы или скрывай весь декор в этой комнате.",
+        decorVisible: "В комнате",
+        decorHidden: "Скрыт",
+        decorAllOn: "Декор включён",
+        decorAllOff: "Декор выключен",
+        decorReset: "Показать всё",
+        decorResetToast: "Декор комнаты снова включён.",
         moods: {
           neutral: "Ровное настроение",
           close: "Близость",
@@ -2575,6 +5634,14 @@ async function loadCourse() {
         manual: "manual",
         nextAutonomyLine: "Another thought.",
         storyDialogue: "Back to dialogue.",
+        decorPanel: "Room decor",
+        decorPanelHint: "Hide individual props or turn off all room decor.",
+        decorVisible: "Visible",
+        decorHidden: "Hidden",
+        decorAllOn: "Decor on",
+        decorAllOff: "Decor off",
+        decorReset: "Show all",
+        decorResetToast: "Room decor is visible again.",
         relationship: "Relationship with Eva",
         warmth: "Warmth",
         trust: "Trust",
@@ -2594,6 +5661,8 @@ async function loadCourse() {
   }
 
   function ensureEvaRoomProgress() {
+    state.progress.seenCards ||= {};
+    state.progress.seenKanji ||= {};
     state.progress.unlockedBackgrounds ||= ["bg_study_hub"];
     if (!state.progress.unlockedBackgrounds.includes("bg_study_hub")) state.progress.unlockedBackgrounds.unshift("bg_study_hub");
     state.progress.selectedEvaRoomBackground ||= "bg_study_hub";
@@ -2602,7 +5671,10 @@ async function loadCourse() {
       if (!state.progress.unlockedEvaSprites.includes(sprite)) state.progress.unlockedEvaSprites.push(sprite);
     });
     state.progress.selectedEvaSprite ||= "idle";
-    state.progress.evaAutonomy = mergeEvaAutonomy(defaultEvaAutonomy(), state.progress.evaAutonomy || {});
+    const normalizedAutonomy = mergeEvaAutonomy(defaultEvaAutonomy(), state.progress.evaAutonomy || {});
+    state.progress.evaAutonomy ||= {};
+    Object.keys(state.progress.evaAutonomy).forEach((key) => delete state.progress.evaAutonomy[key]);
+    Object.assign(state.progress.evaAutonomy, normalizedAutonomy);
     state.evaRuntime ||= defaultEvaStateV2();
     state.progress.evaRoomDialogueProgress ||= { currentNode: "intro", rewardsClaimed: {}, visited: {}, lineHistory: [] };
     state.progress.evaRoomDialogueProgress.currentNode ||= "intro";
@@ -2610,6 +5682,11 @@ async function loadCourse() {
     state.progress.evaRoomDialogueProgress.visited ||= {};
     state.progress.evaRoomDialogueProgress.lineHistory = Array.isArray(state.progress.evaRoomDialogueProgress.lineHistory)
       ? state.progress.evaRoomDialogueProgress.lineHistory.slice(-24)
+      : [];
+    state.progress.evaRoomQuiz ||= { answered: 0, correct: 0, wrong: 0, streak: 0, rewarded: {}, history: [] };
+    state.progress.evaRoomQuiz.rewarded ||= {};
+    state.progress.evaRoomQuiz.history = Array.isArray(state.progress.evaRoomQuiz.history)
+      ? state.progress.evaRoomQuiz.history.slice(0, 40)
       : [];
     if (!state.progress.evaRelationship) {
       state.progress.evaRelationship = defaultEvaRelationship();
@@ -2737,6 +5814,63 @@ async function loadCourse() {
     const outfit = customizationShopItem(selectedOutfitId);
     const spriteId = outfit?.spriteId || state.progress?.selectedEvaSprite || "idle";
     return state.evaSprites?.[spriteId] && isEvaSpriteUnlocked(spriteId) ? spriteId : "idle";
+  }
+
+  function selectedEvaOutfitPackFolder() {
+    const selectedOutfitId = state.customization?.selected?.outfit || state.progress?.shop?.equipped?.outfit || null;
+    const outfit = customizationShopItem(selectedOutfitId);
+    return outfit?.folder || EVA_DEFAULT_PACK;
+  }
+
+  function evaSpritePathsInPack(folder = EVA_DEFAULT_PACK) {
+    const pack = String(folder || EVA_DEFAULT_PACK);
+    const needle = `/eva/${pack}/`;
+    const paths = [...new Set(
+      Object.values(state.evaSprites || {})
+        .filter((path) => typeof path === "string" && path.includes(needle) && /\.png$/i.test(path))
+    )];
+    if (paths.length) return paths;
+    if (pack !== EVA_DEFAULT_PACK) return evaSpritePathsInPack(EVA_DEFAULT_PACK);
+    return [evaSpritePath("default")];
+  }
+
+  function rollRandomEvaPackSpritePath(excludePath = null) {
+    const paths = evaSpritePathsInPack(selectedEvaOutfitPackFolder());
+    const pool = excludePath ? paths.filter((path) => path !== excludePath) : paths;
+    const pickFrom = pool.length ? pool : paths;
+    return sample(pickFrom);
+  }
+
+  function rollJlptModuleEvaSprite(level) {
+    const moduleState = ensureJlptModuleEvaState(level);
+    moduleState.displaySprite = rollRandomEvaPackSpritePath(moduleState.displaySprite);
+    return moduleState.displaySprite;
+  }
+
+  function jlptModuleEvaSprite(level) {
+    const moduleState = ensureJlptModuleEvaState(level);
+    if (!moduleState.displaySprite) moduleState.displaySprite = rollRandomEvaPackSpritePath();
+    return moduleState.displaySprite;
+  }
+
+  function rollHomeEvaSprite() {
+    state.homeEvaDisplaySprite = rollRandomEvaPackSpritePath(state.homeEvaDisplaySprite);
+    return state.homeEvaDisplaySprite;
+  }
+
+  function rollEvaRoomSprite() {
+    state.evaRoomDisplaySprite = rollRandomEvaPackSpritePath(state.evaRoomDisplaySprite);
+    return state.evaRoomDisplaySprite;
+  }
+
+  function rollRewardEvaSprite() {
+    state.rewardEvaDisplaySprite = rollRandomEvaPackSpritePath(state.rewardEvaDisplaySprite);
+    return state.rewardEvaDisplaySprite;
+  }
+
+  function onEvaPanelRouteEnter(route) {
+    if (route === "home") rollHomeEvaSprite();
+    if (route === "eva-room") rollEvaRoomSprite();
   }
 
   function isBaseEvaEmotionSprite(id) {
@@ -3577,7 +6711,7 @@ async function loadCourse() {
     const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
     const moodPrefs = {
       close: ["deco_tea_table", "deco_lantern", "deco_moon_frame"],
-      proud: ["deco_kanji_board", "deco_bookshelf", "deco_gold_accent"],
+      proud: ["deco_kanji_board", "deco_bookshelf", "deco_golden_accent"],
       curious: ["deco_bookshelf", "deco_kanji_board", "deco_tea_table"],
       worried: ["deco_lantern", "deco_moon_frame"],
       reserved: ["deco_lantern", "deco_bookshelf"],
@@ -3594,7 +6728,14 @@ async function loadCourse() {
       neutral: ["deco_bookshelf", "deco_tea_table", "deco_lantern"]
     };
     const preferred = [...(line?.preferredDecorations || []), ...(moodPrefs[mood] || moodPrefs.neutral)];
-    return pickOwnedCustomizationId("decoration", preferred);
+    return pickSelectedDecoration(preferred);
+  }
+
+  function pickSelectedDecoration(preferred = []) {
+    const selected = selectedDecorations();
+    if (!selected.length) return null;
+    const hit = preferred.find((id) => selected.includes(id));
+    return hit || sample(selected) || null;
   }
 
   function chooseEvaAutonomyEffect(line) {
@@ -3646,8 +6787,12 @@ async function loadCourse() {
   function maybeAskEvaQuestion(context = getEvaContext(), line = null) {
     const autonomy = evaAutonomy();
     if (autonomy.currentQuestion?.id) return autonomy.currentQuestion;
+    if (state.evaRuntime?.pendingQuestion?.id) {
+      autonomy.currentQuestion = state.evaRuntime.pendingQuestion;
+      return autonomy.currentQuestion;
+    }
     const reason = context.lastEvent?.type || "auto";
-    const force = ["user_clicked_eva", "room_opened"].includes(reason);
+    const force = ["user_clicked_eva", "room_opened", "manual"].includes(reason);
     const now = Date.now();
     const last = Number(state.evaRuntime?.lastQuestionAt || state.evaRuntime?.lastQuestion?.at || 0);
     const cooldown = Number(state.evaRuntime?.cooldowns?.question || randomBetween(3 * 60000, 7 * 60000));
@@ -3668,58 +6813,106 @@ async function loadCourse() {
   }
 
   function evaQuestionPool(reason = "auto") {
-    const ru = lang() === "ru";
-    const base = [
-      {
-        id: "pace",
-        text: { ru: "Сегодня держим темп или идем тише?", en: "Do we keep pace today, or move quieter?" },
-        options: [
-          { id: "steady", text: { ru: "Держим темп.", en: "Keep pace." }, reply: { ru: "Хорошо. Тогда без лишнего шума.", en: "Good. Then no extra noise." }, delta: { discipline: 0.8, trust: 0.3 } },
-          { id: "calm", text: { ru: "Тише.", en: "Quieter." }, reply: { ru: "Тоже разумно. Дорога не любит спешки.", en: "Reasonable. Roads dislike haste." }, delta: { warmth: 0.5, trust: 0.2 } }
-        ]
+    const eligible = evaEligibleKanjiCards();
+    if (eligible.length < 2) return [];
+    const recentCardIds = new Set((state.evaRuntime?.questionHistory || [])
+      .slice(0, 10)
+      .map((item) => item.cardId)
+      .filter(Boolean));
+    const seed = `${todayKey()}:${reason}:${state.progress?.totalCorrect || 0}:${state.progress?.totalWrong || 0}`;
+    const preferred = [...eligible]
+      .sort((a, b) => {
+        const aFresh = recentCardIds.has(String(a.id)) ? 1 : 0;
+        const bFresh = recentCardIds.has(String(b.id)) ? 1 : 0;
+        return aFresh - bFresh || stableHash(`${seed}:${a.id}`) - stableHash(`${seed}:${b.id}`);
+      })
+      .slice(0, 18);
+    const questions = preferred
+      .map((card) => buildEvaKanjiMeaningQuestion(card, eligible, reason))
+      .filter(Boolean);
+    return questions;
+  }
+
+  function buildEvaKanjiMeaningQuestion(card, eligibleCards, reason = "auto") {
+    const correctRu = cardMeaningForLang(card, "ru");
+    const correctEn = cardMeaningForLang(card, "en");
+    if (!correctRu || !correctEn) return null;
+    const distractors = evaKanjiMeaningDistractors(card, eligibleCards);
+    if (!distractors.length) return null;
+    const level = String(card.jlpt || "").toUpperCase();
+    const scope = level || (lang() === "ru" ? "твоих карточек" : "your cards");
+    const correctOption = evaKanjiMeaningOption(card, card, true);
+    const options = [correctOption, ...distractors.map((item) => evaKanjiMeaningOption(item, card, false))]
+      .sort((a, b) => stableHash(`${reason}:${card.id}:${a.id}`) - stableHash(`${reason}:${card.id}:${b.id}`));
+    return {
+      id: `kanji_meaning_${card.id}_${stableHash(`${correctRu}:${correctEn}`)}`,
+      kind: "kanji_meaning",
+      cardId: String(card.id),
+      kanji: card.kanji,
+      jlpt: level,
+      answerId: correctOption.id,
+      answerText: { ru: correctRu, en: correctEn },
+      text: {
+        ru: `Что значит кандзи ${card.kanji} из ${scope}?`,
+        en: `What does the ${scope} kanji ${card.kanji} mean?`
       },
-      {
-        id: "review_first",
-        text: { ru: "Повторы сначала. Согласен?", en: "Reviews first. Agreed?" },
-        options: [
-          { id: "yes", text: { ru: "Согласен.", en: "Agreed." }, reply: { ru: "Тогда начнем с того, что уже почти ускользнуло.", en: "Then we start with what nearly slipped." }, delta: { discipline: 0.9, trust: 0.2 } },
-          { id: "lesson", text: { ru: "Хочу новый урок.", en: "I want a new lesson." }, reply: { ru: "Можно. Но старые следы потом догонят.", en: "We can. Old tracks will catch up later." }, delta: { curiosity: 0.6 } }
-        ]
-      },
-      {
-        id: "detail",
-        text: { ru: "Ты заметил, какой элемент повторяется в сегодняшних карточках?", en: "Did you notice which part repeats in today's cards?" },
-        options: [
-          { id: "noticed", text: { ru: "Да.", en: "Yes." }, reply: { ru: "Хорошо. Наблюдательность экономит силы.", en: "Good. Observation saves strength." }, delta: { trust: 0.6, curiosity: 0.4 } },
-          { id: "not_yet", text: { ru: "Пока нет.", en: "Not yet." }, reply: { ru: "Посмотри еще раз. Ответ часто лежит на краю знака.", en: "Look again. The answer often sits at the edge of the character." }, delta: { curiosity: 0.4, warmth: 0.2 } }
-        ]
-      }
-    ];
-    if (reason === "answer_wrong") {
-      base.unshift({
-        id: "wrong_recover",
-        text: { ru: "Ошибка была в чтении или в поспешности?", en: "Was the mistake in the reading, or in haste?" },
-        options: [
-          { id: "reading", text: { ru: "В чтении.", en: "Reading." }, reply: { ru: "Тогда слушай и повтори вслух. Коротко.", en: "Then listen and say it aloud. Briefly." }, delta: { curiosity: 0.5 } },
-          { id: "haste", text: { ru: "Поспешил.", en: "I rushed." }, reply: { ru: "Такое случается на плохих дорогах. Сбавь шаг.", en: "Happens on bad roads. Slow your step." }, delta: { discipline: 0.5, trust: 0.2 } }
-        ]
-      });
-    }
-    return base.map((item) => ({
-      ...item,
-      text: item.text || { ru: String(item.ru || ""), en: String(item.en || item.ru || "") },
-      options: item.options.map((option) => ({
-        ...option,
-        text: option.text || { ru: option.label || option.id, en: option.label || option.id },
-        reply: option.reply || { ru: ru ? "Принято." : "Noted.", en: "Noted." }
-      }))
-    }));
+      options,
+      at: new Date().toISOString()
+    };
+  }
+
+  function evaKanjiMeaningDistractors(card, eligibleCards) {
+    const correctRu = normalizeMeaningText(cardMeaningForLang(card, "ru"));
+    const correctEn = normalizeMeaningText(cardMeaningForLang(card, "en"));
+    const sameLevel = String(card.jlpt || "").toUpperCase();
+    const pool = eligibleCards.filter((candidate) => {
+      if (!candidate?.id || String(candidate.id) === String(card.id) || candidate.kanji === card.kanji) return false;
+      const ru = normalizeMeaningText(cardMeaningForLang(candidate, "ru"));
+      const en = normalizeMeaningText(cardMeaningForLang(candidate, "en"));
+      if (!ru || !en || ru === correctRu || en === correctEn) return false;
+      return true;
+    });
+    const sorted = [...pool].sort((a, b) => {
+      const aSame = String(a.jlpt || "").toUpperCase() === sameLevel ? 0 : 1;
+      const bSame = String(b.jlpt || "").toUpperCase() === sameLevel ? 0 : 1;
+      return aSame - bSame || stableHash(`${card.id}:${a.id}`) - stableHash(`${card.id}:${b.id}`);
+    });
+    return sorted.slice(0, Math.min(3, sorted.length));
+  }
+
+  function evaKanjiMeaningOption(optionCard, questionCard, correct) {
+    const ru = cardMeaningForLang(optionCard, "ru");
+    const en = cardMeaningForLang(optionCard, "en");
+    const answerRu = cardMeaningForLang(questionCard, "ru");
+    const answerEn = cardMeaningForLang(questionCard, "en");
+    return {
+      id: `meaning_${stableHash(`${questionCard.id}:${optionCard.id}:${ru}:${en}`)}`,
+      cardId: String(optionCard.id),
+      text: { ru, en },
+      correct,
+      delta: correct ? { trust: 0.7, discipline: 0.35, curiosity: 0.2 } : { discipline: -0.35, curiosity: 0.15 },
+      reply: correct
+        ? {
+            ru: `Верно. ${questionCard.kanji}: ${answerRu}.`,
+            en: `Correct. ${questionCard.kanji}: ${answerEn}.`
+          }
+        : {
+            ru: `Не совсем. ${questionCard.kanji}: ${answerRu}.`,
+            en: `Not quite. ${questionCard.kanji}: ${answerEn}.`
+          }
+    };
+  }
+
+  function normalizeMeaningText(value) {
+    return String(value || "")
+      .toLocaleLowerCase(lang() === "ru" ? "ru-RU" : "en-US")
+      .replace(/[.,;:!?\s]+/g, " ")
+      .trim();
   }
 
   function handleEvaQuestionAnswer(target) {
     ensureEvaRoomProgress();
-    const autonomy = evaAutonomy();
-    const question = autonomy.currentQuestion;
+    const question = activeEvaQuestion();
     if (!question?.id) return;
     answerEvaQuestion(question.id, target.dataset.option);
   }
@@ -3727,31 +6920,40 @@ async function loadCourse() {
   function answerEvaQuestion(questionId, answerId) {
     ensureEvaRoomProgress();
     const autonomy = evaAutonomy();
-    const question = autonomy.currentQuestion;
+    const question = activeEvaQuestion();
     if (!question?.id || question.id !== questionId) return;
     const option = question.options?.find((item) => item.id === answerId);
     if (!option) return;
-    adjustEvaRelationship(option.delta || { warmth: 0.2 }, `eva_question:${question.id}`);
+    const hasCorrectAnswer = question.options?.some((item) => item.correct || item.id === question.answerId);
+    const correct = hasCorrectAnswer ? Boolean(option.correct || option.id === question.answerId) : null;
+    state.evaRuntime ||= defaultEvaStateV2();
+    state.evaRuntime.pendingQuestion = null;
+    autonomy.currentQuestion = null;
+    adjustEvaRelationship(option.delta || (correct === false ? { discipline: -0.2 } : { warmth: 0.2 }), `eva_question:${question.id}`);
+    if (question.kind === "kanji_meaning") recordEvaKanjiQuizAnswer(question, option, correct);
     const answerRecord = {
       id: question.id,
+      kind: question.kind || "dialogue",
+      cardId: question.cardId || null,
+      kanji: question.kanji || "",
       option: option.id,
+      correct,
       at: new Date().toISOString()
     };
-    state.evaRuntime ||= defaultEvaStateV2();
     state.evaRuntime.lastQuestion = { ...answerRecord, at: Date.now() };
     state.evaRuntime.lastQuestionAt = Date.now();
     state.evaRuntime.pendingQuestion = null;
     state.evaRuntime.questionHistory = [answerRecord, ...(state.evaRuntime.questionHistory || [])].slice(0, 40);
     const bg = chooseEvaAutonomyBackground({ category: "question" });
-    const sprite = resolveEvaSprite(chooseEvaAutonomySprite({ category: "question", sprite: "approve" }), "approve");
-    autonomy.currentQuestion = null;
+    const answerEmotion = correct === false ? "thinking" : "approve";
+    const sprite = resolveEvaSprite(chooseEvaAutonomySprite({ category: "question", sprite: answerEmotion }), answerEmotion);
     autonomy.currentLine = {
       id: `question_reply_${question.id}_${option.id}`,
       category: "question_reply",
-      text: option.reply,
+      text: option.reply || evaQuestionAnswerFallback(question, correct),
       sprite,
       background: bg.id,
-      emotion: "approve",
+      emotion: answerEmotion,
       state: "react",
       at: new Date().toISOString(),
       reason: "question_answer"
@@ -3763,11 +6965,130 @@ async function loadCourse() {
     autonomy.lastRoomId = bg.id;
     autonomy.lastSprite = sprite;
     scheduleNextEvaAutonomyLine();
-    dispatchEvaEvent("user_answered_eva_question", { questionId: question.id, answerId: option.id });
+    recordEvaQuestionAnsweredEvent(question, option, correct);
     saveEvaState();
     saveProgress();
-    playUxSound("notification_soft");
+    playUxSound(correct === false ? "answer_wrong" : correct === true ? "answer_correct" : "notification_soft");
     render();
+  }
+
+  function activeEvaQuestion() {
+    const autonomy = evaAutonomy();
+    const question = autonomy.currentQuestion?.id
+      ? autonomy.currentQuestion
+      : state.evaRuntime?.pendingQuestion;
+    if (question?.id) {
+      autonomy.currentQuestion = question;
+      state.evaRuntime ||= defaultEvaStateV2();
+      state.evaRuntime.pendingQuestion = question;
+      return question;
+    }
+    return null;
+  }
+
+  function evaQuestionAnswerFallback(question, correct) {
+    if (question.kind === "kanji_meaning" && question.kanji && question.answerText) {
+      return correct
+        ? {
+            ru: `Верно. ${question.kanji}: ${question.answerText.ru || localized(question.answerText)}.`,
+            en: `Correct. ${question.kanji}: ${question.answerText.en || localized(question.answerText)}.`
+          }
+        : {
+            ru: `Не совсем. ${question.kanji}: ${question.answerText.ru || localized(question.answerText)}.`,
+            en: `Not quite. ${question.kanji}: ${question.answerText.en || localized(question.answerText)}.`
+          };
+    }
+    return { ru: "Принято.", en: "Noted." };
+  }
+
+  function recordEvaKanjiQuizAnswer(question, option, correct) {
+    const quiz = evaRoomQuizProgress();
+    const card = findEvaQuizCard(question);
+    if (card) markKanjiSeen(card, "eva_room_quiz");
+    quiz.answered = Number(quiz.answered || 0) + 1;
+    quiz.correct = Number(quiz.correct || 0) + (correct ? 1 : 0);
+    quiz.wrong = Number(quiz.wrong || 0) + (correct ? 0 : 1);
+    quiz.streak = correct ? Number(quiz.streak || 0) + 1 : 0;
+    quiz.history = [{
+      id: question.id,
+      cardId: question.cardId || null,
+      kanji: question.kanji || "",
+      jlpt: question.jlpt || "",
+      selected: option.id,
+      correct,
+      answer: localized(question.answerText || {}),
+      at: new Date().toISOString()
+    }, ...(quiz.history || [])].slice(0, 40);
+
+    const today = todayStats();
+    today.reviews = Number(today.reviews || 0) + 1;
+    if (correct) {
+      state.progress.totalCorrect = Number(state.progress.totalCorrect || 0) + 1;
+      if (card) markEvaQuizCardStudied(card);
+      if (card && !quiz.rewarded[String(card.id)]) {
+        quiz.rewarded[String(card.id)] = new Date().toISOString();
+        addReward(2, quiz.streak > 0 && quiz.streak % 3 === 0 ? 1 : 0, `eva_room_quiz:${card.id}`);
+      }
+    } else {
+      state.progress.totalWrong = Number(state.progress.totalWrong || 0) + 1;
+      today.mistakes = Number(today.mistakes || 0) + 1;
+      if (card) markEvaQuizCardDifficult(card);
+    }
+    today.minutes = round(Number(today.reviews || 0) * 0.75 + Number(today.learned || 0) * 1.25, 1);
+    state.progress.daily[todayKey()] = today;
+
+    checkDailyGoal();
+    evaluateAchievements();
+  }
+
+  function findEvaQuizCard(question) {
+    const cardId = String(question?.cardId || "");
+    const kanji = String(question?.kanji || "");
+    const level = String(question?.jlpt || "").toUpperCase();
+    return (cardId ? findCard(cardId) : null)
+      || evaAllKanjiQuestionCards().find((card) => {
+        if (!card) return false;
+        const sameId = cardId && String(card.id) === cardId;
+        const sameKanji = kanji && card.kanji === kanji;
+        const sameLevel = !level || String(card.jlpt || "").toUpperCase() === level;
+        return sameId || (sameKanji && sameLevel);
+      })
+      || (kanji ? state.cards.find((item) => item.kanji === kanji) : null)
+      || null;
+  }
+
+  function markEvaQuizCardStudied(card) {
+    const level = String(card?.jlpt || "").toUpperCase();
+    const spec = evaJlptCourseSpecs().find((item) => item.level === level);
+    if (spec) spec.markStudied(card.kanji, card.id);
+  }
+
+  function markEvaQuizCardDifficult(card) {
+    const level = String(card?.jlpt || "").toUpperCase();
+    const spec = evaJlptCourseSpecs().find((item) => item.level === level);
+    if (spec) spec.markDifficult(card.kanji, card.id);
+  }
+
+  function recordEvaQuestionAnsweredEvent(question, option, correct) {
+    if (!state.evaRuntime) return;
+    const eventRecord = {
+      type: "user_answered_eva_question",
+      payload: {
+        questionId: question.id,
+        answerId: option.id,
+        cardId: question.cardId || null,
+        kanji: question.kanji || "",
+        correct
+      },
+      at: Date.now()
+    };
+    state.evaRuntime.lastEvent = eventRecord;
+    state.evaRuntime.eventHistory = [eventRecord, ...(state.evaRuntime.eventHistory || [])].slice(0, 80);
+    state.evaRuntime.recentEvents = [eventRecord, ...(state.evaRuntime.recentEvents || [])].slice(0, 80);
+    recordEvaPresenceEvent(eventRecord);
+    window.dispatchEvent(new CustomEvent("eva:event", {
+      detail: { ...eventRecord, handledByFlashKanji: true }
+    }));
   }
 
   function currentEvaRoomScene() {
@@ -4002,6 +7323,7 @@ async function loadCourse() {
   function isCustomizationOwned(id) {
     if (!state.customization) hydrateCustomization();
     const item = customizationShopItem(id) || legacyCustomizationItem(id);
+    if (item?.type === "decoration") return isDecorationUnlocked(item);
     return Boolean(item?.defaultOwned || item?.price === 0 || state.customization?.owned?.includes(item?.id || id));
   }
 
@@ -4016,22 +7338,111 @@ async function loadCourse() {
   }
 
   function isCustomizationSelected(item) {
+    if (item?.type === "decoration") return isDecorationSelected(item.id);
     const slot = customizationSelectionSlot(item);
     return Boolean(slot && state.customization?.selected?.[slot] === item.id);
   }
 
   function customizationItemStatus(item) {
     if (!item) return "locked";
+    if (item.type === "decoration") {
+      if (!isDecorationUnlocked(item)) return "locked";
+      if (isDecorationSelected(item.id)) return "selected";
+      return "owned";
+    }
     if (!isCustomizationAvailable(item)) return "locked";
     if (isCustomizationSelected(item)) return "selected";
     if (isCustomizationOwned(item.id)) return "owned";
     return "available";
   }
 
+  function activeCustomizationEffectId(scene = {}) {
+    const candidates = [
+      state.customization?.selected?.effect,
+      scene.effect,
+      state.evaRuntime?.currentEffect,
+      state.evaRuntime?.currentLine?.effect,
+      state.progress?.evaAutonomy?.currentEffect,
+      evaAutonomy().currentEffect
+    ];
+    for (const candidate of candidates) {
+      const normalized = normalizeCustomizationItemId(candidate);
+      if (!normalized || normalized === "none") continue;
+      const item = customizationShopItem(normalized);
+      if (item?.type === "effect" && isCustomizationOwned(item.id)) return item.id;
+    }
+    return null;
+  }
+
+  function activeCustomizationEffectItem(scene = {}) {
+    const effectId = activeCustomizationEffectId(scene);
+    return effectId ? customizationShopItem(effectId) : null;
+  }
+
+  function clearCustomizationEffect(itemId = null) {
+    const effectId = normalizeCustomizationItemId(itemId || state.customization?.selected?.effect);
+    const item = customizationShopItem(effectId);
+    if (!item || item.type !== "effect") return false;
+    if (state.customization?.selected?.effect !== item.id) return false;
+    state.customization.selected.effect = null;
+    if (state.progress?.evaAutonomy) state.progress.evaAutonomy.currentEffect = null;
+    if (state.evaRuntime?.currentEffect === item.id) state.evaRuntime.currentEffect = "none";
+    syncCustomizationToProgress();
+    saveCustomizationStorage();
+    saveProgress();
+    applyTheme();
+    playUxSound("menu_close");
+    toast(lang() === "ru" ? "Эффект убран." : "Effect removed.");
+    render();
+    return true;
+  }
+
+  function clearCustomizationItem(itemId = null) {
+    const normalizedId = normalizeCustomizationItemId(itemId || state.customization?.selected?.effect || state.customization?.selected?.decoration || state.customization?.selected?.frame || state.customization?.selected?.outfit || state.customization?.selected?.background || state.customization?.selected?.theme);
+    const item = customizationShopItem(normalizedId);
+    if (!item) return false;
+    if (item.type === "decoration") return toggleDecorationSelection(item.id);
+    if (item.type === "effect") return clearCustomizationEffect(item.id);
+    if (!state.customization) hydrateCustomization();
+    const slot = customizationSelectionSlot(item);
+    if (!slot) return false;
+    const defaults = defaultCustomization().selected;
+    if (slot === "background") {
+      state.customization.selected.background = defaults.background;
+    } else if (slot === "outfit") {
+      state.customization.selected.outfit = defaults.outfit;
+    } else if (slot === "theme") {
+      state.customization.selected.theme = defaults.theme;
+    } else if (slot === "decoration") {
+      state.customization.selected.decorations = defaults.decorations || [];
+      state.customization.selected.decoration = defaults.decoration;
+      state.customization.selected.frame = defaults.frame;
+    }
+    syncCustomizationToProgress();
+    saveCustomizationStorage();
+    saveProgress();
+    applyTheme();
+    playUxSound("menu_close");
+    toast(lang() === "ru" ? "Выбор сброшен." : "Selection cleared.");
+    render();
+    return true;
+  }
+
   function customizationUnlockHint(item) {
     if (!item?.unlockCondition || isCustomizationAvailable(item)) return "";
     const condition = item.unlockCondition;
     const ru = lang() === "ru";
+    if (condition.type === "achievements") {
+      const titles = (condition.ids || []).map((id) => {
+        const achievement = achievementList().find((entry) => entry.id === id);
+        return achievement ? achievementTitle(achievement) : id;
+      });
+      if (!titles.length) return "";
+      const joiner = condition.mode === "all"
+        ? (ru ? " и " : " and ")
+        : (ru ? " или " : " or ");
+      return ru ? `Открывается за: ${titles.join(joiner)}` : `Unlocks after: ${titles.join(joiner)}`;
+    }
     if (condition.type === "achievement") {
       const achievement = achievementList().find((entry) => entry.id === condition.id);
       const title = achievement ? achievementTitle(achievement) : condition.id;
@@ -4052,12 +7463,22 @@ async function loadCourse() {
     if (condition.type === "level") return state.progress.level >= Number(condition.value || 0);
     if (condition.type === "streak") return state.progress.streak.current >= Number(condition.value || 0);
     if (condition.type === "achievement") return Boolean(state.progress.achievements?.[condition.id]?.unlockedAt);
+    if (condition.type === "achievements") {
+      const ids = Array.isArray(condition.ids) ? condition.ids.map(String) : [];
+      if (!ids.length) return true;
+      const unlocked = ids.map((id) => Boolean(state.progress.achievements?.[id]?.unlockedAt));
+      return condition.mode === "all" ? unlocked.every(Boolean) : unlocked.some(Boolean);
+    }
     return true;
   }
 
   function buyCustomizationItem(id) {
     const item = customizationShopItem(id);
     if (!item) return;
+    if (item.type === "decoration") {
+      toggleDecorationSelection(item.id);
+      return;
+    }
     if (!isCustomizationAvailable(item)) {
       playUxSound("purchase_failed");
       toast(shopLabels().locked);
@@ -4098,10 +7519,13 @@ async function loadCourse() {
   function selectCustomizationItem(id) {
     const item = customizationShopItem(id);
     if (!item || !isCustomizationOwned(item.id)) return;
+    if (item.type === "decoration") {
+      toggleDecorationSelection(item.id);
+      return;
+    }
     const slot = customizationSelectionSlot(item);
     if (!slot) return;
     state.customization.selected[slot] = item.id;
-    if (slot === "decoration") state.customization.selected.frame = item.id;
     if (item.type === "outfit" && item.spriteId) {
       state.progress.selectedEvaSprite = item.spriteId;
       state.progress.evaAutonomy.currentLine = null;
@@ -4192,6 +7616,7 @@ async function loadCourse() {
     const effect = chooseEvaAutonomyEffect(line);
     const autonomy = evaAutonomy();
     const now = Date.now();
+    const question = maybeAskEvaQuestion(context, line);
     autonomy.currentLine = {
       id: line.id,
       category: line.category || reason,
@@ -4212,6 +7637,7 @@ async function loadCourse() {
     autonomy.lastSpokeAt = autonomy.currentLine.at;
     autonomy.lastRoomId = bg.id;
     autonomy.lastSprite = sprite;
+    autonomy.currentQuestion = question;
     autonomy.recentLineIds = [line.id, ...(autonomy.recentLineIds || []).filter((id) => id !== line.id)].slice(0, 32);
     state.evaRuntime ||= defaultEvaStateV2();
     Object.assign(state.evaRuntime, {
@@ -4219,7 +7645,7 @@ async function loadCourse() {
       emotion,
       presenceState: line.state || "speak",
       currentPhrase: autonomy.currentLine,
-      pendingQuestion: null,
+      pendingQuestion: question,
       currentSkin: sprite,
       currentBackground: bg.id,
       currentDecoration: decoration,
@@ -4228,6 +7654,7 @@ async function loadCourse() {
       activeBackground: bg.id,
       lastPhraseAt: now,
       lastEmotionChangeAt: now,
+      lastQuestionAt: question ? now : Number(state.evaRuntime.lastQuestionAt || 0),
       lastVisualChangeAt: now,
       textRevealSkippedLineId: null
     });
@@ -4316,14 +7743,106 @@ async function loadCourse() {
     `;
   }
 
+  function learnLessonsForFilter() {
+    const level = String(state.activeLearnJlpt || "all").toUpperCase();
+    return state.lessons.filter((lesson) => level === "ALL" || String(lesson.jlpt || "").toUpperCase() === level);
+  }
+
+  function ensureActiveLearnLesson(lessons) {
+    if (!lessons.length) {
+      state.activeLessonId = null;
+      return null;
+    }
+    const current = lessons.find((lesson) => lesson.id === state.activeLessonId);
+    if (current && isLessonUnlocked(current)) return current;
+    const unlocked = lessons.find((lesson) => isLessonUnlocked(lesson));
+    const next = unlocked || lessons[0];
+    state.activeLessonId = next?.id || null;
+    return next || null;
+  }
+
+  function renderLearnJlptFilter(lessons) {
+    const total = lessons.length;
+    const unlocked = lessons.filter((lesson) => isLessonUnlocked(lesson)).length;
+    const levels = ["all", ...LEVEL_ORDER];
+    return `
+      <div class="jlpt-filter-bar" role="tablist" aria-label="${escapeAttr(lang() === "ru" ? "Фильтр уровней JLPT" : "JLPT level filter")}">
+        ${levels.map((level) => {
+          const active = String(state.activeLearnJlpt || "all").toLowerCase() === String(level).toLowerCase();
+          const label = level === "all" ? (lang() === "ru" ? "Все" : "All") : level;
+          const count = level === "all" ? total : state.lessons.filter((lesson) => lesson.jlpt === level).length;
+          return `
+            <button class="btn jlpt-filter-chip ${active ? "primary" : "ghost"}" type="button" role="tab" aria-selected="${active ? "true" : "false"}" data-action="set-learn-jlpt" data-jlpt="${escapeAttr(level)}">
+              <span>${escapeHtml(label)}</span>
+              <small>${count}</small>
+            </button>
+          `;
+        }).join("")}
+      </div>
+      <div class="learn-level-strip">
+        <span class="pill">${escapeHtml(lang() === "ru" ? "Уроки" : "Lessons")}: ${total}</span>
+        <span class="pill">${escapeHtml(lang() === "ru" ? "Открыто" : "Unlocked")}: ${unlocked}</span>
+        <button class="btn ghost learn-textbook-link" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Учебники Flash Kanji" : "Flash Kanji textbooks")}</button>
+      </div>
+    `;
+  }
+
+  function renderLearnLevelPanel(catalog) {
+    if (!catalog) return "";
+    const textbook = catalog.textbook || catalog;
+    return `
+      <article class="learn-level-panel">
+        <div class="learn-level-cover">
+          <img src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <span class="pill">${escapeHtml(textbook.jlpt || "")}</span>
+        </div>
+        <div class="learn-level-copy">
+          <h3>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h3>
+          <p>${escapeHtml(localized(textbook.description || {}))}</p>
+          <div class="tag-row">
+            <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+            <span class="pill">${escapeHtml(textbook.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
+            <span class="pill">${escapeHtml(localized(textbook.recommendedCycle || {}))}</span>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "Скачать PDF" : "Download PDF")}</a>
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Все учебники" : "All textbooks")}</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderLessonLocked(lesson) {
+    const textbook = jlptCatalogByLevel(lesson?.jlpt);
+    return `
+      <article class="lesson-locked-panel">
+        <span class="pill danger-pill">${escapeHtml(lang() === "ru" ? "Закрытый уровень" : "Level locked")}</span>
+        <h2>${escapeHtml(lesson ? lessonTitle(lesson) : "")}</h2>
+        <p>${escapeHtml(lang() === "ru" ? `Откроется на уровне ${unlockLevel(lesson)}.` : `Unlocks at level ${unlockLevel(lesson)}.`)}</p>
+        <div class="learn-level-lock-meta">
+          <span class="pill">${escapeHtml(lesson?.jlpt || "")}</span>
+          <span class="pill">${escapeHtml(lang() === "ru" ? "Закрыт" : "Locked")}</span>
+          <span class="pill">${escapeHtml(textbook?.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков в учебнике" : "lessons in textbook")}</span>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Просмотреть учебник" : "View textbook")}</button>
+          <button class="btn ghost" type="button" data-action="route" data-route="home">${escapeHtml(lang() === "ru" ? "Домой" : "Home")}</button>
+        </div>
+      </article>
+    `;
+  }
+
   function renderLearn() {
-    ensureActiveLesson();
-    const lesson = state.lessons.find((item) => item.id === state.activeLessonId);
-    const candidates = getStudyCandidates(state.activeLessonId, false);
+    const lessons = learnLessonsForFilter();
+    const lesson = ensureActiveLearnLesson(lessons);
+    const lessonUnlocked = Boolean(lesson && isLessonUnlocked(lesson));
+    const candidates = lessonUnlocked ? getStudyCandidates(lesson.id, false) : [];
     if (!state.activeCardId || !candidates.some((card) => card.id === state.activeCardId)) {
       state.activeCardId = candidates[0]?.id || null;
     }
-    const card = state.activeCardId ? findCard(state.activeCardId) : null;
+    const card = lessonUnlocked && state.activeCardId ? findCard(state.activeCardId) : null;
+    const selectedCatalog = state.activeLearnJlpt !== "all" ? jlptCatalogByLevel(state.activeLearnJlpt) : null;
 
     return `
       <section class="page">
@@ -4332,13 +7851,16 @@ async function loadCourse() {
             <h1>${escapeHtml(t("learn"))}</h1>
             <p>${escapeHtml(lesson ? lessonTitle(lesson) : "")}</p>
           </div>
+          ${selectedCatalog ? `<button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>` : ""}
         </div>
+        ${renderLearnJlptFilter(lessons)}
+        ${selectedCatalog ? renderLearnLevelPanel(selectedCatalog) : ""}
         <div class="actions lesson-tabs">
-          ${state.lessons.map(renderLessonTab).join("")}
+          ${lessons.map(renderLessonTab).join("")}
         </div>
-        <div class="study-layout">
-          ${card ? renderStudyCard(card) : renderLessonDone(lesson)}
-          ${renderStudySidePanel(card, candidates.length)}
+        <div class="study-layout" data-study-surface>
+          <div data-study-card-host>${lessonUnlocked ? (card ? renderStudyCard(card) : renderLessonDone(lesson)) : renderLessonLocked(lesson)}</div>
+          ${lessonUnlocked ? renderStudySidePanel(card, candidates.length) : renderStudySidePanel(null, 0)}
         </div>
       </section>
     `;
@@ -4353,13 +7875,17 @@ async function loadCourse() {
         <section class="page">
           <article class="empty-state">
             <span class="kanji-char">JLPT</span>
-            <h2>${escapeHtml(lang() === "ru" ? "JLPT-уроки пока не загружены" : "JLPT lessons are not loaded yet")}</h2>
+            <h2>${escapeHtml(lang() === "ru" ? "JLPT-уроки ещё не загружены" : "JLPT lessons are not loaded yet")}</h2>
             <button class="btn primary" type="button" data-action="route" data-route="learn">${escapeHtml(t("learn"))}</button>
           </article>
         </section>
       `;
     }
     state.activeJlptLesson = lesson.jlpt;
+    const textbook = jlptCatalogByLevel(lesson.jlpt);
+    if (!isTextbookUnlocked(lesson.jlpt)) {
+      return renderTextbookLockedPage(textbook || lesson);
+    }
     const cards = cardsForJlpt(lesson.jlpt);
     const mastered = cards.filter((card) => getCardProgress(card.id).state === "Mastered").length;
     const learned = cards.filter((card) => getCardProgress(card.id).state !== "New").length;
@@ -4371,13 +7897,42 @@ async function loadCourse() {
             <h1>${escapeHtml(localized(lesson.title))}</h1>
             <p>${escapeHtml(localized(lesson.summary))}</p>
           </div>
-          <button class="btn ghost" type="button" data-action="route" data-route="learn">${escapeHtml(labels.back)}</button>
+          <div class="actions">
+            <a class="btn ghost" href="#textbooks/${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "Страница учебника" : "Textbook page")}</a>
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Все учебники" : "All textbooks")}</button>
+            <button class="btn ghost" type="button" data-action="route" data-route="learn">${escapeHtml(labels.back)}</button>
+          </div>
         </div>
         <div class="actions jlpt-switcher">
-          ${state.jlptLessons.map((item) => `
-            <button class="btn ${item.jlpt === lesson.jlpt ? "primary" : "ghost"}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(item.jlpt)}">${escapeHtml(item.jlpt)}</button>
-          `).join("")}
+          ${state.jlptLessons.map((item) => {
+            const unlocked = isTextbookUnlocked(item.jlpt);
+            const active = item.jlpt === lesson.jlpt;
+            const lockTitle = escapeAttr(textbookUnlockText(item.jlpt));
+            return unlocked
+              ? `<button class="btn ${active ? "primary" : "ghost"}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(item.jlpt)}">${escapeHtml(item.jlpt)}</button>`
+              : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${lockTitle}">🔒 ${escapeHtml(item.jlpt)}</button>`;
+          }).join("")}
         </div>
+        ${textbook ? `
+          <article class="jlpt-textbook-hero">
+            <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+            <div class="jlpt-textbook-body">
+              <span class="pill">${escapeHtml(textbook.jlpt)}</span>
+              <h2>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h2>
+              <p>${escapeHtml(localized(textbook.description || {}))}</p>
+              <div class="tag-row">
+                <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+                <span class="pill">${escapeHtml(textbook.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
+                <span class="pill">${escapeHtml(localized(textbook.goal || {}))}</span>
+                <span class="pill">${escapeHtml(localized(textbook.recommendedCycle || {}))}</span>
+              </div>
+              <div class="actions">
+                <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "Скачать PDF" : "Download PDF")}</a>
+                <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "К уроку" : "Go to lesson")}</button>
+              </div>
+            </div>
+          </article>
+        ` : ""}
         <article class="jlpt-lesson-hero">
           <div>
             <span class="pill">${escapeHtml(lesson.jlpt)}</span>
@@ -4421,7 +7976,8316 @@ async function loadCourse() {
     `;
   }
 
+  function renderTextbooksPage() {
+    const items = state.jlptCatalog?.items || [];
+    const activeLevel = String(state.activeTextbookLevel || "").toUpperCase();
+    const activeTextbook = activeLevel ? jlptCatalogByLevel(activeLevel) : null;
+    if (activeTextbook) {
+      state.activeTextbookLevel = activeTextbook.jlpt;
+      state.activeJlptLesson = activeTextbook.jlpt;
+      return renderTextbookDetailPage(activeTextbook);
+    }
+    const labels = lang() === "ru"
+      ? {
+        title: "Учебники Flash Kanji",
+        description: "Функциональные страницы учебников JLPT N5–N1 с переходом к урокам, повторению и материалам внутри уровня.",
+        open: "Открыть страницу",
+        pdf: "Скачать PDF",
+        study: "К урокам"
+      }
+      : {
+        title: "Flash Kanji Textbooks",
+        description: "Functional JLPT N5-N1 textbook pages with lesson links, review entry points, and level materials.",
+        open: "Open page",
+        pdf: "Download PDF",
+        study: "Go to lessons"
+      };
+    return `
+      <section class="page textbooks-page">
+        <div class="section-head">
+          <div>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(labels.description)}</p>
+          </div>
+          <button class="btn primary" type="button" data-action="route" data-route="learn">${escapeHtml(lang() === "ru" ? "К урокам" : "To lessons")}</button>
+        </div>
+        <div class="textbook-grid" id="textbook-grid">
+          ${items.map((item) => `
+            <article class="textbook-card ${isTextbookUnlocked(item.jlpt) ? "is-unlocked" : "is-locked"}" id="textbook-${escapeAttr(item.jlpt)}">
+              <div class="textbook-cover-wrap">
+                <img class="textbook-cover" src="${escapeAttr(item.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+                <span class="pill textbook-level">${escapeHtml(item.jlpt)}</span>
+              </div>
+              <div class="textbook-body">
+                <h2>${escapeHtml(localized(item.displayTitle || item.title || {}))}</h2>
+                <p>${escapeHtml(localized(item.description || {}))}</p>
+                ${isTextbookUnlocked(item.jlpt) ? "" : `<p class="textbook-lock-note">${escapeHtml(textbookUnlockText(item.jlpt))}</p>`}
+                <div class="textbook-meta">
+                  <span class="pill">${escapeHtml(item.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+                  <span class="pill">${escapeHtml(item.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
+                  <span class="pill">${escapeHtml(localized(item.goal || {}))}</span>
+                </div>
+                <div class="textbook-actions">
+                  <a class="btn primary" href="#textbooks/${escapeAttr(item.jlpt)}">${escapeHtml(labels.open)}</a>
+                  ${isTextbookUnlocked(item.jlpt)
+                    ? `<a class="btn ghost" href="${escapeAttr(item.pdfUrl || item.pdfFile || "")}" download="${escapeAttr((item.pdfFile || item.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>`
+                    : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(item.jlpt))}">${escapeHtml(lang() === "ru" ? "PDF закрыт" : "PDF locked")}</button>`
+                  }
+                  ${isTextbookUnlocked(item.jlpt)
+                    ? `<button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(item.jlpt)}">${escapeHtml(labels.study)}</button>`
+                    : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(item.jlpt))}">${escapeHtml(lang() === "ru" ? "Закрыто" : "Locked")}</button>`
+                  }
+                  ${isTextbookUnlocked(item.jlpt) && ["N5", "N4", "N3", "N2", "N1"].includes(String(item.jlpt || "").toUpperCase()) ? renderJlptEvaTab(item.jlpt) : ""}
+                </div>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderTextbookLockedPage(textbook) {
+    const level = String(textbook?.jlpt || "").toUpperCase();
+    const requirements = textbookRequirementLevels(level);
+    const previousLinks = requirements.map((item) => `<a class="pill" href="#textbooks/${escapeAttr(item)}">${escapeHtml(item)}</a>`).join("");
+    const labels = lang() === "ru"
+      ? {
+        title: "Учебник закрыт",
+        back: "Все учебники",
+        home: "Домой",
+        hint: "Сначала заверши предыдущие уровни, чтобы открыть этот учебник."
+      }
+      : {
+        title: "Textbook locked",
+        back: "All textbooks",
+        home: "Home",
+        hint: "Finish the previous levels first to unlock this textbook."
+      };
+    return `
+      <section class="page textbooks-page textbook-detail-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">${escapeHtml(level || "JLPT")}</p>
+            <h1>${escapeHtml(localized(textbook?.displayTitle || textbook?.title || { ru: labels.title, en: labels.title }))}</h1>
+            <p>${escapeHtml(textbookUnlockText(level))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.back)}</button>
+            <button class="btn ghost" type="button" data-action="route" data-route="home">${escapeHtml(labels.home)}</button>
+          </div>
+        </div>
+        <article class="lesson-locked-panel textbook-locked-panel">
+          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook?.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <div class="jlpt-textbook-body">
+            <span class="pill danger-pill">${escapeHtml(level || "JLPT")}</span>
+            <h2>${escapeHtml(localized(textbook?.displayTitle || textbook?.title || { ru: labels.title, en: labels.title }))}</h2>
+            <p>${escapeHtml(labels.hint)}</p>
+            ${previousLinks ? `<div class="tag-row">${previousLinks}</div>` : ""}
+            <div class="actions">
+              <button class="btn primary" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.back)}</button>
+              ${requirements.length ? `<a class="btn ghost" href="#textbooks/${escapeAttr(requirements[requirements.length - 1])}">${escapeHtml(requirements[requirements.length - 1])}</a>` : ""}
+            </div>
+          </div>
+        </article>
+      </section>
+    `;
+  }
+
+  function renderTextbookDetailPage(textbook) {
+    const level = String(textbook?.jlpt || "").toUpperCase();
+    if (!isTextbookUnlocked(level)) {
+      return renderTextbookLockedPage(textbook);
+    }
+    if (String(textbook?.jlpt || "").toUpperCase() === "N5" && state.n5Textbook?.items?.length) {
+      return renderN5CoursePage(textbook);
+    }
+    if (String(textbook?.jlpt || "").toUpperCase() === "N4" && state.n4Textbook?.items?.length) {
+      return renderN4CoursePage(textbook);
+    }
+    if (String(textbook?.jlpt || "").toUpperCase() === "N3" && state.n3Textbook?.items?.length) {
+      return renderN3CoursePage(textbook);
+    }
+    if (String(textbook?.jlpt || "").toUpperCase() === "N2" && state.n2Textbook?.items?.length) {
+      return renderN2CoursePage(textbook);
+    }
+    if (String(textbook?.jlpt || "").toUpperCase() === "N1" && state.n1Textbook?.items?.length) {
+      return renderN1CoursePage(textbook);
+    }
+    state.activeTextbookLevel = textbook.jlpt;
+    state.activeJlptLesson = textbook.jlpt;
+    const lesson = jlptLessonByLevel(textbook.jlpt) || state.jlptLessons[0];
+    const textbookLessons = (textbook.lessonIds || [])
+      .map((lessonId) => state.lessons.find((item) => item.id === lessonId))
+      .filter(Boolean);
+    const extraLessons = state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === String(textbook.jlpt || "").toUpperCase() && !textbookLessons.includes(item));
+    const orderedLessons = [...textbookLessons, ...extraLessons].slice(0, Math.max(textbook.lessonCount || textbookLessons.length, textbookLessons.length));
+    const labels = lang() === "ru"
+      ? {
+        title: "Страница учебника",
+        back: "Все учебники",
+        pdf: "Скачать PDF",
+        lessonPage: "Страница урока",
+        openLesson: "Открыть урок",
+        outline: "Что внутри",
+        practice: "Практика",
+        lessons: "Уроки учебника",
+        previous: "Предыдущие уровни",
+        next: "Следующие уровни"
+      }
+      : {
+        title: "Textbook page",
+        back: "All textbooks",
+        pdf: "Download PDF",
+        lessonPage: "Lesson page",
+        openLesson: "Open lesson",
+        outline: "Inside the textbook",
+        practice: "Practice",
+        lessons: "Textbook lessons",
+        previous: "Previous levels",
+        next: "Next levels"
+      };
+    const openLessonId = textbook.lessonIds?.[0] || orderedLessons[0]?.id || "";
+    const cycle = localized(textbook.recommendedCycle || {});
+    const goal = localized(textbook.goal || {});
+    const prevLinks = (textbook.previousLevels || []).map((level) => `<a class="pill" href="#textbooks/${escapeAttr(level)}">${escapeHtml(level)}</a>`).join("");
+    const nextLinks = (textbook.nextLevels || []).map((level) => `<a class="pill" href="#textbooks/${escapeAttr(level)}">${escapeHtml(level)}</a>`).join("");
+    return `
+      <section class="page textbooks-page textbook-detail-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">${escapeHtml(textbook.jlpt)} · ${escapeHtml(labels.title)}</p>
+            <h1>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h1>
+            <p>${escapeHtml(localized(textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.back)}</button>
+            <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+            <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.lessonPage)}</button>
+          </div>
+        </div>
+
+        <article class="jlpt-textbook-hero">
+          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <div class="jlpt-textbook-body">
+            <span class="pill">${escapeHtml(textbook.jlpt)}</span>
+            <h2>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h2>
+            <p>${escapeHtml(localized(textbook.description || {}))}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+              <span class="pill">${escapeHtml(textbook.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
+              <span class="pill">${escapeHtml(goal)}</span>
+              <span class="pill">${escapeHtml(cycle)}</span>
+            </div>
+            <div class="textbook-route-links">
+              ${prevLinks ? `<div><strong>${escapeHtml(labels.previous)}</strong><div class="tag-row">${prevLinks}</div></div>` : ""}
+              ${nextLinks ? `<div><strong>${escapeHtml(labels.next)}</strong><div class="tag-row">${nextLinks}</div></div>` : ""}
+            </div>
+          </div>
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(textbook.jlpt, textbook.lessonCount || 0, goal, progressWidth(textbook.lessonCount || 0, Math.max(1, state.jlptLessons.length)))}
+          ${renderMetric(lang() === "ru" ? "Кандзи" : "Kanji", textbook.kanjiCount || 0, lang() === "ru" ? "в учебнике" : "in textbook", progressWidth(textbook.kanjiCount || 0, Math.max(1, state.cards.length)))}
+          ${renderMetric(lang() === "ru" ? "Уроки" : "Lessons", orderedLessons.length, labels.practice, progressWidth(orderedLessons.length, Math.max(1, state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === String(textbook.jlpt || "").toUpperCase()).length)))}
+          ${renderMetric(lang() === "ru" ? "Переход" : "Jump", state.activeTextbookLevel === textbook.jlpt ? 1 : 0, labels.lessonPage, state.activeTextbookLevel === textbook.jlpt ? 100 : 0)}
+        </div>
+
+        ${lesson ? `
+          <article class="jlpt-lesson-hero">
+            <div>
+              <span class="pill">${escapeHtml(textbook.jlpt)}</span>
+              <h2>${escapeHtml(labels.outline)}</h2>
+              <p>${escapeHtml(localized(lesson.summary || {}))}</p>
+            </div>
+            <div class="mini-stat-row">
+              ${renderMetric(lang() === "ru" ? "Грамматика" : "Grammar", lesson.sections?.length || 0, labels.outline, progressWidth(lesson.sections?.length || 0, 4))}
+              ${renderMetric(lang() === "ru" ? "Практика" : "Practice", lesson.practice?.length || 0, labels.practice, progressWidth(lesson.practice?.length || 0, 4))}
+            </div>
+          </article>
+          ${renderJlptPracticeModule(lesson)}
+          <div class="jlpt-section-grid">
+            ${lesson.goals?.length ? `
+              <article class="jlpt-section-card">
+                <h3>${escapeHtml(lang() === "ru" ? "Цели уровня" : "Level goals")}</h3>
+                <ul>${lesson.goals.map((goalItem) => `<li>${escapeHtml(localized(goalItem))}</li>`).join("")}</ul>
+              </article>
+            ` : ""}
+            ${lesson.sections?.map((section) => `
+              <article class="jlpt-section-card">
+                <h3>${escapeHtml(localized(section.title))}</h3>
+                <p>${escapeHtml(localized(section.body))}</p>
+                ${Array.isArray(section.points) && section.points.length ? `<ul>${section.points.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>` : ""}
+              </article>
+            `).join("")}
+            ${lesson.practice?.length ? `
+              <article class="jlpt-section-card">
+                <h3>${escapeHtml(labels.practice)}</h3>
+                <ul>${lesson.practice.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>
+              </article>
+            ` : ""}
+            ${lesson.checkpoint?.length ? `
+              <article class="jlpt-section-card">
+                <h3>${escapeHtml(lang() === "ru" ? "Чекпоинт" : "Checkpoint")}</h3>
+                <ul>${lesson.checkpoint.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>
+              </article>
+            ` : ""}
+          </div>
+        ` : ""}
+
+        <div class="section-head">
+          <div>
+            <h2>${escapeHtml(labels.lessons)}</h2>
+            <p>${escapeHtml(lang() === "ru" ? "Карточки, входящие в этот учебник, и быстрые переходы в урок." : "Cards included in this textbook, with quick jumps into lessons.")}</p>
+          </div>
+          ${openLessonId ? `<button class="btn primary" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.openLesson)}</button>` : ""}
+        </div>
+        <div class="lesson-grid">
+          ${orderedLessons.map((item) => renderLessonTile(item)).join("") || `<article class="empty-state"><h3>${escapeHtml(lang() === "ru" ? "Уроки скоро появятся" : "Lessons will appear soon")}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN5CoursePage(textbook) {
+    state.activeTextbookLevel = "N5";
+    state.activeJlptLesson = "N5";
+    ensureN5CourseProgress();
+    const subroute = String(state.activeTextbookSubroute || "");
+    if (subroute === "final-test") return renderN5FinalTestPage(textbook);
+    if (subroute === "review") return renderN5ReviewPage(textbook);
+    const lesson = n5LessonById(subroute);
+    if (lesson) {
+      n5Course().currentLessonId = lesson.id;
+      markJlptLessonKanjiSeen("N5", lesson, "n5_lesson_page");
+      return renderN5LessonPage(textbook, lesson);
+    }
+    return renderN5OverviewPage(textbook);
+  }
+
+  function renderN5OverviewPage(textbook) {
+    const progress = n5ProgressSummary();
+    const labels = n5Labels();
+    const lessons = n5Lessons();
+    const current = n5CurrentLesson();
+    const meta = state.n5Meta || {};
+    const principle = localized(meta.principle || {});
+    return `
+      <section class="page textbooks-page n5-course-page">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">JLPT N5 · Flash Kanji</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(localized(meta.description || textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn ghost" href="${escapeAttr(meta.pdfUrl || textbook.pdfUrl || textbook.pdfFile || "")}" download="flashkanji_N5_expanded_textbook.pdf" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+          </div>
+        </div>
+
+        <article class="n5-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">80 ${escapeHtml(labels.kanji)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(principle)}</p>
+            <div class="textbook-actions">
+              <a class="btn primary" href="#textbooks/N5/${escapeAttr(current?.id || "n5-lesson-1")}" data-action="n5-open-lesson" data-id="${escapeAttr(current?.id || "n5-lesson-1")}">${escapeHtml(labels.continue)}</a>
+              <button class="btn" type="button" data-action="n5-review" data-mode="due">${escapeHtml(labels.review)}</button>
+              <a class="btn ghost" href="#textbooks/N5/final-test">${escapeHtml(labels.finalTest)}</a>
+              ${renderJlptEvaTab("N5")}
+            </div>
+          </div>
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.studiedKanji, `${progress.studied}/${progress.total}`, labels.kanji, progressWidth(progress.studied, progress.total))}
+          ${renderMetric(labels.completedLessons, `${progress.completedLessons}/${lessons.length}`, labels.lessons, progressWidth(progress.completedLessons, lessons.length))}
+          ${renderMetric(labels.reviews, progress.reviews, labels.srs, progressWidth(progress.reviews, Math.max(progress.total, 1)))}
+          ${renderMetric(labels.difficult, progress.difficult, labels.filterDifficult, progressWidth(progress.difficult, Math.max(progress.total, 1)))}
+        </div>
+
+        <section class="n5-panel">
+          <div class="n5-panel-head">
+            <div>
+              <h2>${escapeHtml(labels.lessonsTitle)}</h2>
+              <p>${escapeHtml(labels.lessonsDescription)}</p>
+            </div>
+            ${renderJlptEvaTab("N5")}
+          </div>
+          <div class="n5-lesson-grid">
+            ${lessons.map((lesson) => renderN5LessonTile(lesson)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel n5-review-plan">
+          <div>
+            <h2>${escapeHtml(labels.reviewPlan)}</h2>
+            <p>${escapeHtml(localized((state.n5Textbook?.textbook || {}).recommendedCycle || meta.recommendedCycle || {}))}</p>
+          </div>
+          <div class="n5-plan-row">
+            ${(meta.reviewPlan || []).map((item) => `<span class="pill">${escapeHtml(labels.day)} ${escapeHtml(item.day)} · ${escapeHtml(localized(item.label || {}))}</span>`).join("")}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN5LessonTile(lesson) {
+    const status = n5LessonStatus(lesson.id);
+    const labels = n5Labels();
+    const learned = lesson.kanji.filter((kanji) => n5Course().studiedKanji[kanji]).length;
+    return `
+      <a class="n5-lesson-tile ${status}" href="#textbooks/N5/${escapeAttr(lesson.id)}" data-action="n5-open-lesson" data-id="${escapeAttr(lesson.id)}">
+        <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
+        <h3>${escapeHtml(localized(lesson.title))}</h3>
+        <p>${escapeHtml(localized(lesson.goal))}</p>
+        <div class="n5-kanji-strip">${lesson.kanji.map((kanji) => `<b>${escapeHtml(kanji)}</b>`).join("")}</div>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${learned}/${lesson.kanji.length}`)}"><i style="width:${progressWidth(learned, lesson.kanji.length)}%"></i></div>
+        <small>${escapeHtml(learned)}/${escapeHtml(lesson.kanji.length)} · ${escapeHtml(n5LessonStatusLabel(status))}</small>
+        ${renderJlptEvaTab("N5", { inline: true })}
+      </a>
+    `;
+  }
+
+  function renderN5LessonPage(textbook, lesson) {
+    const labels = n5Labels();
+    const cards = n5CardsForLesson(lesson);
+    const exercises = buildN5LessonExercises(lesson);
+    const status = n5LessonStatus(lesson.id);
+    const complete = status === "completed";
+    const correct = exercises.filter((exercise) => n5ExerciseResult(exercise.id)?.correct).length;
+    const difficult = lesson.kanji.filter((kanji) => n5Course().difficultKanji[kanji]).join(" · ");
+    const nextLesson = n5Lessons().find((item) => item.order === lesson.order + 1);
+    return `
+      <section class="page textbooks-page n5-course-page n5-lesson-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N5 · ${escapeHtml(labels.lesson)} ${lesson.order}/10</p>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(lesson.goal))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n5-overview">${escapeHtml(labels.backToN5)}</button>
+            <button class="btn" type="button" data-action="n5-review" data-mode="difficult">${escapeHtml(labels.difficult)}</button>
+            <a class="btn ghost" href="#textbooks/N5/final-test">${escapeHtml(labels.finalTest)}</a>
+          </div>
+        </div>
+
+        <article class="n5-lesson-summary">
+          <div>
+            <span class="pill">${escapeHtml(localized(lesson.theme))}</span>
+            <h2>${escapeHtml(labels.lessonChain)}</h2>
+            <p>${escapeHtml(labels.lessonChainText)}</p>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n5Course().studiedKanji[card.kanji]).length}/8`, labels.kanji, progressWidth(cards.filter((card) => n5Course().studiedKanji[card.kanji]).length, 8))}
+            ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
+          </div>
+        </article>
+
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN5KanjiStudyCard(card, lesson, index)).join("")}
+        </div>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.sentences)}</h2>
+            <p>${escapeHtml(labels.sentencesText)}</p>
+          </div>
+          <div class="n5-sentence-list">
+            ${lesson.sentences.map((sentence) => `
+              <article>
+                <strong>${escapeHtml(sentence.jp)}</strong>
+                <span>${escapeHtml(sentence.reading)}</span>
+                <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.exercises)}</h2>
+            <p>${escapeHtml(labels.exercisesText)}</p>
+          </div>
+          <div class="n5-exercise-list">
+            ${exercises.map((exercise) => renderN5Exercise(exercise)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-result-panel ${complete ? "is-complete" : ""}">
+          <div>
+            <h2>${escapeHtml(complete ? labels.lessonComplete : labels.lessonResult)}</h2>
+            <p>${escapeHtml(complete ? labels.lessonCompleteText : labels.lessonResultText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.studiedKanji)}: ${cards.filter((card) => n5Course().studiedKanji[card.kanji]).length}/8</span>
+              <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
+              <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="n5-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn" type="button" data-action="n5-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${nextLesson ? `<a class="btn ghost" href="#textbooks/N5/${escapeAttr(nextLesson.id)}" data-action="n5-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<a class="btn ghost" href="#textbooks/N5/final-test">${escapeHtml(labels.finalTest)}</a>`}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN5KanjiStudyCard(card, lesson, index) {
+    const labels = n5Labels();
+    const progress = getCardProgress(card.id);
+    const examples = n5CardExamples(card);
+    const hint = n5CardHint(card, examples[0]);
+    const written = Boolean(n5Course().writingPractice[card.kanji]);
+    const difficult = Boolean(n5Course().difficultKanji[card.kanji]);
+    return `
+      <article class="n5-kanji-card ${difficult ? "is-difficult" : ""}">
+        <div class="n5-kanji-topline">
+          <span class="pill">${escapeHtml(labels.step)} ${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <dl class="n5-readings">
+          <div><dt>${escapeHtml(labels.onyomi)}</dt><dd>${escapeHtml(card.onyomi || "—")}</dd></div>
+          <div><dt>${escapeHtml(labels.kunyomi)}</dt><dd>${escapeHtml(card.kunyomi || card.hiragana || "—")}</dd></div>
+        </dl>
+        <div class="n5-word-list">
+          ${examples.map((example) => `
+            <p><b>${escapeHtml(example.word)}</b><span>${escapeHtml(example.reading)} · ${escapeHtml(exampleTranslation(example))}</span></p>
+          `).join("")}
+        </div>
+        <p class="n5-hint">${escapeHtml(hint)}</p>
+        ${renderN5CardSentence(card, lesson)}
+        <div class="textbook-actions">
+          <button class="btn primary" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn ghost" type="button" data-action="n5-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN5CardSentence(card, lesson) {
+    const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
+    if (!sentence) return "";
+    return `
+      <div class="n5-card-sentence">
+        <strong>${escapeHtml(sentence.jp)}</strong>
+        <span>${escapeHtml(sentence.reading)}</span>
+        <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+      </div>
+    `;
+  }
+
+  function renderN5Exercise(exercise) {
+    const labels = n5Labels();
+    const result = n5ExerciseResult(exercise.id);
+    const className = result ? (result.correct ? "is-correct" : "is-wrong") : "";
+    if (exercise.type === "active-recall") {
+      return `
+        <article class="n5-exercise-card ${className}">
+          <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+          <h3>${escapeHtml(exercise.prompt)}</h3>
+          <div class="n5-input-row">
+            <input id="${escapeAttr(n5DomId(exercise.id))}" type="text" maxlength="2" autocomplete="off" value="${escapeAttr(result?.selected || "")}" aria-label="${escapeAttr(localized(exercise.title))}" />
+            <button class="btn primary" type="button" data-action="n5-check-input" data-id="${escapeAttr(exercise.id)}">${escapeHtml(labels.check)}</button>
+            <button class="btn ghost" type="button" data-action="n5-answer" data-id="${escapeAttr(exercise.id)}" data-value="">${escapeHtml(labels.showAnswer)}</button>
+          </div>
+          ${renderN5ExerciseFeedback(exercise, result)}
+        </article>
+      `;
+    }
+    return `
+      <article class="n5-exercise-card ${className}">
+        <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+        <h3>${escapeHtml(exercise.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${exercise.options.map((option) => {
+            const selectedOption = result?.selected === option.value;
+            const answerOption = result && option.value === exercise.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n5-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${renderN5ExerciseFeedback(exercise, result)}
+      </article>
+    `;
+  }
+
+  function renderN5ExerciseFeedback(exercise, result) {
+    if (!result) return "";
+    const labels = n5Labels();
+    const text = result.correct
+      ? labels.correctAnswer
+      : `${labels.wrongAnswer}: ${exercise.answerLabel || exercise.answer}`;
+    return `<p class="n5-feedback">${escapeHtml(text)}</p>`;
+  }
+
+  function renderN5ReviewPage(textbook) {
+    const labels = n5Labels();
+    const mode = n5Course().activeReviewMode || "due";
+    const cards = n5ReviewCards(mode);
+    return `
+      <section class="page textbooks-page n5-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N5 · SRS</p>
+            <h1>${escapeHtml(labels.reviewTitle)}</h1>
+            <p>${escapeHtml(labels.reviewDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n5-overview">${escapeHtml(labels.backToN5)}</button>
+            <a class="btn ghost" href="#textbooks/N5/final-test">${escapeHtml(labels.finalTest)}</a>
+          </div>
+        </div>
+        <div class="jlpt-filter-bar" role="tablist" aria-label="N5 review modes">
+          ${(state.n5Exercises?.reviewModes || []).map((item) => `
+            <button class="btn ${mode === item.id ? "primary" : "ghost"}" type="button" data-action="n5-review" data-mode="${escapeAttr(item.id)}">${escapeHtml(localized(item.title))}</button>
+          `).join("")}
+        </div>
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN5ReviewCard(card, index)).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReviewCards)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN5ReviewCard(card, index) {
+    const labels = n5Labels();
+    const progress = getCardProgress(card.id);
+    return `
+      <article class="n5-kanji-card n5-review-card">
+        <div class="n5-kanji-topline">
+          <span class="pill">${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)} · ${escapeHtml(formatDue(progress.dueAt))}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <p>${escapeHtml(n5CardExamples(card)[0]?.word || card.hiragana || "")} · ${escapeHtml(n5CardExamples(card)[0]?.reading || card.romaji || "")}</p>
+        <div class="textbook-actions">
+          <button class="btn success" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN5FinalTestPage(textbook) {
+    const labels = n5Labels();
+    const config = state.n5FinalTest || {};
+    const questions = buildN5FinalQuestions();
+    const test = n5Course().finalTest;
+    const stats = finalTestQuestionStats(test, questions);
+    const answered = stats.answered;
+    const ready = stats.ready;
+    const submitting = state.finalTestBusy;
+    const completed = Boolean(test.completedAt);
+    return `
+      <section class="page textbooks-page n5-course-page n5-final-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N5 · Final</p>
+            <h1>${escapeHtml(localized(config.title || {}))}</h1>
+            <p>${escapeHtml(localized(config.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n5-overview">${escapeHtml(labels.backToN5)}</button>
+            <button class="btn" type="button" data-action="n5-final-reset">${escapeHtml(labels.resetTest)}</button>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
+          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
+          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+        </div>
+
+        ${completed ? `
+          <section class="n5-result-panel ${test.passed ? "is-complete" : ""}">
+            <div>
+              <h2>${escapeHtml(test.passed ? labels.finalPassed : labels.finalNeedsReview)}</h2>
+              <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
+            </div>
+            <button class="btn primary" type="button" data-action="n5-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+          </section>
+        ` : ""}
+
+        <div class="n5-exercise-list">
+          ${questions.map((question, index) => renderN5FinalQuestion(question, index)).join("")}
+        </div>
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        <div class="n5-final-actions">
+          <button class="btn primary" type="button" data-action="n5-final-submit" ${submitting ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn ghost" type="button" data-action="n5-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN5FinalQuestion(question, index) {
+    const answer = n5Course().finalTest.answers?.[question.id];
+    const complete = Boolean(n5Course().finalTest.completedAt);
+    const notice = state.finalTestModal && state.finalTestModal.level === "N5" && state.finalTestModal.kind === "warning"
+      ? state.finalTestModal
+      : null;
+    const missing = Boolean(notice && Array.isArray(notice.missingIds) && notice.missingIds.includes(question.id));
+    return `
+      <article id="${escapeAttr(finalTestQuestionDomId("n5", question.id))}" class="n5-exercise-card ${complete ? (answer === question.answer ? "is-correct" : "is-wrong") : missing ? "is-missing" : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.type)}</span>
+        <h3>${escapeHtml(question.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${question.options.map((option) => {
+            const selectedOption = answer === option.value;
+            const answerOption = complete && option.value === question.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "primary" : "ghost"}" type="button" data-action="n5-final-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${complete && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(n5Labels().wrongAnswer)}: ${escapeHtml(question.answerLabel)}</p>` : ""}
+      </article>
+    `;
+  }
+
+  function n5Labels() {
+    return lang() === "ru"
+      ? {
+        title: "JLPT N5",
+        allTextbooks: "Все учебники",
+        pdf: "PDF-учебник",
+        kanji: "кандзи",
+        courseMap: "Полноценный интерактивный учебник N5",
+        continue: "Продолжить",
+        review: "Повторять N5",
+        finalTest: "Финальный тест",
+        studiedKanji: "Изучено",
+        completedLessons: "Уроки",
+        reviews: "Повторения",
+        difficult: "Сложные",
+        filterDifficult: "фильтр",
+        srs: "SRS",
+        lessons: "уроков",
+        lessonsTitle: "10 уроков по 8 кандзи",
+        lessonsDescription: "Каждый урок ведёт от знака к слову, предложению, упражнению, письму и SRS.",
+        reviewPlan: "План повторения на 30 дней",
+        day: "день",
+        lesson: "Урок",
+        backToN5: "К N5",
+        lessonChain: "Кандзи -> слово -> предложение -> практика",
+        lessonChainText: "Сначала узнаёшь знак, затем видишь чтение в слове, читаешь предложение, отвечаешь и отправляешь карточку в SRS.",
+        exercises: "Упражнения",
+        correct: "верно",
+        sentences: "Примеры предложений",
+        sentencesText: "Читай вслух: так чтение перестаёт быть отдельной таблицей.",
+        exercisesText: "Смешанная практика работает внутри урока и повторения.",
+        lessonComplete: "Урок завершён",
+        lessonCompleteText: "Кандзи урока доступны в N5-повторении и общем SRS.",
+        lessonResult: "Итог урока",
+        lessonResultText: "Заверши урок, когда все 8 кандзи добавлены в повторение.",
+        completeLesson: "Завершить урок",
+        refreshLesson: "Обновить итог",
+        repeatMistakes: "Повторить ошибки",
+        nextLesson: "Следующий урок",
+        none: "нет",
+        step: "шаг",
+        onyomi: "онъёми",
+        kunyomi: "кунъёми",
+        addToSrs: "Добавить в SRS",
+        know: "Я знаю",
+        hard: "Сложно",
+        writingPractice: "Практика письма",
+        markWritten: "Написано",
+        written: "Письмо засчитано",
+        check: "Проверить",
+        showAnswer: "Сложно: показать ответ",
+        correctAnswer: "Верно. XP и Moon Fragment начислены.",
+        wrongAnswer: "Пока нет",
+        reviewTitle: "N5-повторение",
+        reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N5.",
+        noReviewCards: "Сейчас нет карточек в этом фильтре.",
+        questions: "Вопросы",
+        score: "Результат",
+        mistakes: "Ошибки",
+        resetTest: "Сбросить тест",
+        submitFinal: "Завершить тест",
+        reviewAll: "Повторить весь N5",
+        finalPassed: "N5 пройден",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalNeedsReview: "Нужно повторить",
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+      }
+      : {
+        title: "JLPT N5",
+        allTextbooks: "All textbooks",
+        pdf: "PDF textbook",
+        kanji: "kanji",
+        courseMap: "Full interactive N5 textbook",
+        continue: "Continue",
+        review: "Review N5",
+        finalTest: "Final test",
+        studiedKanji: "Studied",
+        completedLessons: "Lessons",
+        reviews: "Reviews",
+        difficult: "Difficult",
+        filterDifficult: "filter",
+        srs: "SRS",
+        lessons: "lessons",
+        lessonsTitle: "10 lessons, 8 kanji each",
+        lessonsDescription: "Each lesson moves from sign to word, sentence, exercise, writing, and SRS.",
+        reviewPlan: "30-day review plan",
+        day: "day",
+        lesson: "Lesson",
+        backToN5: "To N5",
+        lessonChain: "Kanji -> word -> sentence -> practice",
+        lessonChainText: "First recognize the sign, then see the reading in a word, read a sentence, answer, and send the card to SRS.",
+        exercises: "Exercises",
+        correct: "correct",
+        sentences: "Example sentences",
+        sentencesText: "Read aloud so readings stop feeling like a separate table.",
+        exercisesText: "Mixed practice works inside lessons and review.",
+        lessonComplete: "Lesson complete",
+        lessonCompleteText: "Lesson kanji are available in N5 review and the shared SRS.",
+        lessonResult: "Lesson result",
+        lessonResultText: "Complete the lesson when all 8 kanji are in review.",
+        completeLesson: "Complete lesson",
+        refreshLesson: "Refresh result",
+        repeatMistakes: "Repeat mistakes",
+        nextLesson: "Next lesson",
+        none: "none",
+        step: "step",
+        onyomi: "onyomi",
+        kunyomi: "kunyomi",
+        addToSrs: "Add to SRS",
+        know: "I know",
+        hard: "Hard",
+        writingPractice: "Writing practice",
+        markWritten: "Written",
+        written: "Writing counted",
+        check: "Check",
+        showAnswer: "Hard: show answer",
+        correctAnswer: "Correct. XP and Moon Fragment awarded.",
+        wrongAnswer: "Not yet",
+        reviewTitle: "N5 review",
+        reviewDescription: "Review due cards, difficult kanji, or the full N5 set.",
+        noReviewCards: "No cards in this filter right now.",
+        questions: "Questions",
+        score: "Score",
+        mistakes: "Mistakes",
+        resetTest: "Reset test",
+        submitFinal: "Finish test",
+        reviewAll: "Review all N5",
+        finalPassed: "N5 passed",
+        finalPassedText: "Great. You can send mistakes back to SRS separately.",
+        finalNeedsReview: "Review needed",
+        finalNeedsReviewText: "Mistakes were marked difficult and raised in SRS."
+      };
+  }
+
+  function ensureN5CourseProgress() {
+    state.progress.n5Course = mergeN5CourseProgress(defaultN5CourseProgress(), state.progress.n5Course || {});
+    const lessons = n5Lessons();
+    const active = n5LessonById(state.progress.n5Course.currentLessonId);
+    if (!active && lessons[0]) state.progress.n5Course.currentLessonId = lessons[0].id;
+    const firstOpen = lessons.find((lesson) => !state.progress.n5Course.completedLessons[lesson.id]);
+    if (!state.progress.n5Course.currentLessonId && firstOpen) state.progress.n5Course.currentLessonId = firstOpen.id;
+    return state.progress.n5Course;
+  }
+
+  function n5Course() {
+    return ensureN5CourseProgress();
+  }
+
+  function n5Lessons() {
+    return state.n5Textbook?.items || [];
+  }
+
+  function n5LessonById(id) {
+    const raw = String(id || "");
+    if (!raw) return null;
+    return n5Lessons().find((lesson) =>
+      lesson.id === raw
+      || lesson.id === `n5-${raw}`
+      || lesson.id.endsWith(`-${raw}`)
+    ) || null;
+  }
+
+  function n5CurrentLesson() {
+    return n5LessonById(n5Course().currentLessonId) || n5Lessons().find((lesson) => !n5Course().completedLessons[lesson.id]) || n5Lessons()[0] || null;
+  }
+
+  function n5CardsForLesson(lesson) {
+    return (lesson?.kanji || []).map((kanji) => n5CardByKanji(kanji)).filter(Boolean);
+  }
+
+  function n5AllCards() {
+    const seen = new Set();
+    return n5Lessons().flatMap((lesson) => n5CardsForLesson(lesson)).filter((card) => {
+      if (seen.has(card.kanji)) return false;
+      seen.add(card.kanji);
+      return true;
+    });
+  }
+
+  function n5CardByKanji(kanji) {
+    const literal = String(kanji || "");
+    const detail = state.n5KanjiCatalog?.find((item) => item.kanji === literal) || null;
+    const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N5")
+      || state.cards.find((item) => item.kanji === literal)
+      || null;
+    if (card && detail) return mergeN5CardDetail(card, detail);
+    if (card) return card;
+    if (!detail) return null;
+    return mergeN5CardDetail({
+      id: detail.courseCardId || detail.id,
+      kanji: detail.kanji,
+      jlpt: "N5",
+      examples: []
+    }, detail);
+  }
+
+  function n5CardExamples(card) {
+    const examples = Array.isArray(card.examples) ? card.examples : [];
+    if (examples.length) return examples.slice(0, 3);
+    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+  }
+
+  function n5CardHint(card, example) {
+    const word = example?.word || card.kanji;
+    const reading = example?.reading || card.hiragana || "";
+    return lang() === "ru"
+      ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}» и сразу проговори слово: ${word}${reading ? ` (${reading})` : ""}.`
+      : `Connect ${card.kanji} with "${cardMeaning(card)}" and say the word right away: ${word}${reading ? ` (${reading})` : ""}.`;
+  }
+
+  function n5ProgressSummary() {
+    const cards = n5AllCards();
+    const course = n5Course();
+    const studied = new Set(Object.keys(course.studiedKanji || {}));
+    cards.forEach((card) => {
+      if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
+    });
+    return {
+      total: state.n5Meta?.kanjiCount || cards.length || 80,
+      studied: studied.size,
+      completedLessons: Object.keys(course.completedLessons || {}).length,
+      reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
+      difficult: Object.keys(course.difficultKanji || {}).length
+    };
+  }
+
+  function n5LessonStatus(lessonId) {
+    const course = n5Course();
+    if (course.completedLessons[lessonId]) return "completed";
+    const lesson = n5LessonById(lessonId);
+    if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
+    return "new";
+  }
+
+  function n5LessonStatusLabel(status) {
+    if (status === "completed") return lang() === "ru" ? "завершён" : "completed";
+    if (status === "started") return lang() === "ru" ? "начат" : "started";
+    return lang() === "ru" ? "не начат" : "new";
+  }
+
+  function buildN5LessonExercises(lesson) {
+    const cards = n5CardsForLesson(lesson);
+    if (!cards.length) return [];
+    const sentences = lesson.sentences || [];
+    const exerciseTitles = Object.fromEntries((state.n5Exercises?.types || []).map((item) => [item.type, item.title]));
+    const rewardByType = Object.fromEntries((state.n5Exercises?.types || []).map((item) => [item.type, item]));
+    const getReward = (type) => rewardByType[type] || { rewardXp: state.n5Meta?.rewards?.exerciseXp || 7, rewardMoon: state.n5Meta?.rewards?.exerciseMoon || 1 };
+    const exercises = [];
+    const meaningCard = cards[0];
+    exercises.push({
+      id: `${lesson.id}-meaning-0`,
+      type: "meaning",
+      title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+      prompt: meaningCard.kanji,
+      answer: meaningCard.id,
+      answerLabel: cardMeaning(meaningCard),
+      kanji: meaningCard.kanji,
+      cardId: meaningCard.id,
+      options: n5OptionSet({ value: meaningCard.id, label: cardMeaning(meaningCard) }, cards.slice(1).map((card) => ({ value: card.id, label: cardMeaning(card) })), 1),
+      ...getReward("meaning")
+    });
+    const kanjiCard = cards[1] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-kanji-1`,
+      type: "kanji",
+      title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+      prompt: cardMeaning(kanjiCard),
+      answer: kanjiCard.kanji,
+      answerLabel: kanjiCard.kanji,
+      kanji: kanjiCard.kanji,
+      cardId: kanjiCard.id,
+      options: n5OptionSet({ value: kanjiCard.kanji, label: kanjiCard.kanji }, cards.filter((card) => card.id !== kanjiCard.id).map((card) => ({ value: card.kanji, label: card.kanji })), 2),
+      ...getReward("kanji")
+    });
+    const readingCard = cards[2] || cards[0];
+    const readingExample = n5CardExamples(readingCard)[0];
+    exercises.push({
+      id: `${lesson.id}-reading-2`,
+      type: "reading",
+      title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+      prompt: readingExample.word,
+      answer: readingExample.reading,
+      answerLabel: readingExample.reading,
+      kanji: readingCard.kanji,
+      cardId: readingCard.id,
+      options: n5OptionSet({ value: readingExample.reading, label: readingExample.reading }, cards.flatMap((card) => n5CardExamples(card).map((example) => ({ value: example.reading, label: example.reading }))).filter((item) => item.value !== readingExample.reading), 3),
+      ...getReward("reading")
+    });
+    const sentence = sentences[0];
+    if (sentence) {
+      exercises.push({
+        id: `${lesson.id}-sentence-3`,
+        type: "sentence",
+        title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+        prompt: sentence.jp,
+        answer: localized({ ru: sentence.ru, en: sentence.en }),
+        answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        options: n5OptionSet(
+          { value: localized({ ru: sentence.ru, en: sentence.en }), label: localized({ ru: sentence.ru, en: sentence.en }) },
+          sentences.slice(1).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })),
+          1
+        ),
+        ...getReward("sentence")
+      });
+    }
+    const wordCard = cards[3] || cards[0];
+    const wordExample = n5CardExamples(wordCard)[0];
+    exercises.push({
+      id: `${lesson.id}-word-4`,
+      type: "missing-word",
+      title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Insert the word" },
+      prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+      answer: wordExample.word,
+      answerLabel: wordExample.word,
+      kanji: wordCard.kanji,
+      cardId: wordCard.id,
+      options: n5OptionSet({ value: wordExample.word, label: wordExample.word }, cards.flatMap((card) => n5CardExamples(card).map((example) => ({ value: example.word, label: example.word }))).filter((item) => item.value !== wordExample.word), 2),
+      ...getReward("missing-word")
+    });
+    const recallCard = cards[4] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-active-5`,
+      type: "active-recall",
+      title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
+      prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+      answer: recallCard.kanji,
+      answerLabel: recallCard.kanji,
+      kanji: recallCard.kanji,
+      cardId: recallCard.id,
+      options: [],
+      ...getReward("active-recall")
+    });
+    return exercises.slice(0, state.n5Exercises?.lessonQuestionCount || 6);
+  }
+
+  function n5OptionSet(correct, distractors, rotateBy = 0) {
+    const seen = new Set([String(correct.value)]);
+    const options = [correct];
+    distractors.forEach((option) => {
+      const value = String(option.value || "");
+      if (!value || seen.has(value) || options.length >= 4) return;
+      seen.add(value);
+      options.push(option);
+    });
+    const allCards = n5AllCards();
+    allCards.forEach((card) => {
+      if (options.length >= 4) return;
+      const fallback = { value: card.id, label: card.kanji };
+      if (!seen.has(String(fallback.value))) {
+        seen.add(String(fallback.value));
+        options.push(fallback);
+      }
+    });
+    if (options.length <= 1) return options;
+    const shift = rotateBy % options.length;
+    return [...options.slice(shift), ...options.slice(0, shift)];
+  }
+
+  function findN5Exercise(id) {
+    for (const lesson of n5Lessons()) {
+      const exercise = buildN5LessonExercises(lesson).find((item) => item.id === id);
+      if (exercise) return exercise;
+    }
+    return null;
+  }
+
+  function n5ExerciseResult(id) {
+    return n5Course().exerciseResults?.[id] || null;
+  }
+
+  function answerN5Exercise(target) {
+    const exercise = findN5Exercise(target.dataset.id);
+    if (!exercise) return;
+    const value = target.dataset.value || "";
+    const correct = value === exercise.answer;
+    recordN5ExerciseResult(exercise, value, correct);
+  }
+
+  function checkN5InputExercise(id) {
+    const exercise = findN5Exercise(id);
+    if (!exercise) return;
+    const input = document.getElementById(n5DomId(exercise.id));
+    const value = input ? String(input.value || "").trim() : "";
+    recordN5ExerciseResult(exercise, value, value === exercise.answer);
+  }
+
+  function recordN5ExerciseResult(exercise, selectedValue, correct) {
+    const course = n5Course();
+    course.exerciseResults[exercise.id] = {
+      selected: selectedValue,
+      correct,
+      checkedAt: new Date().toISOString()
+    };
+    if (correct) {
+      if (!course.completedExercises[exercise.id]) {
+        course.completedExercises[exercise.id] = new Date().toISOString();
+        markN5KanjiStudied(exercise.kanji, exercise.cardId);
+        addReward(Number(exercise.rewardXp || state.n5Meta?.rewards?.exerciseXp || 7), Number(exercise.rewardMoon || state.n5Meta?.rewards?.exerciseMoon || 1), `n5_exercise:${exercise.id}`);
+      }
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      markN5KanjiDifficult(exercise.kanji, exercise.cardId);
+      course.kanjiMistakes[exercise.kanji] = Number(course.kanjiMistakes[exercise.kanji] || 0) + 1;
+      if (exercise.type === "reading" || exercise.type === "missing-word") course.wordMistakes[exercise.answerLabel || exercise.answer] = Number(course.wordMistakes[exercise.answerLabel || exercise.answer] || 0) + 1;
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function handleN5SrsAction(cardId, rating) {
+    const card = findCard(cardId);
+    if (!card) return;
+    const before = cloneProgress(getCardProgress(card.id));
+    const after = calculateNextProgress(before, rating);
+    state.progress.cards[card.id] = after;
+    updateDailyStats(before, after, rating);
+    checkDailyGoal();
+    markN5KanjiStudied(card.kanji, card.id);
+    n5Course().srsKanji[card.kanji] = new Date().toISOString();
+    if (isForgottenRating(rating)) {
+      markN5KanjiDifficult(card.kanji, card.id);
+      state.progress.totalWrong += 1;
+      addReward(state.n5Meta?.rewards?.hardXp || 2, 0, `n5_srs_hard:${card.id}`);
+      playUxSound("answer_wrong");
+    } else {
+      state.progress.totalCorrect += 1;
+      addReward(rating === "easy" ? (state.n5Meta?.rewards?.knowXp || 6) : (state.n5Meta?.rewards?.addToSrsXp || 4), 1, `n5_srs:${card.id}`);
+      playUxSound("answer_correct");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN5Writing(cardId) {
+    const card = findCard(cardId);
+    if (!card) return;
+    const course = n5Course();
+    if (!course.writingPractice[card.kanji]) {
+      course.writingPractice[card.kanji] = new Date().toISOString();
+      state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+      state.progress.writingPractice.cards[card.id] = {
+        completed: Number(state.progress.writingPractice.cards[card.id]?.completed || 0) + 1,
+        lastAt: new Date().toISOString()
+      };
+      markN5KanjiStudied(card.kanji, card.id);
+      addReward(8, 1, `n5_writing:${card.id}`);
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN5Lesson(lessonId) {
+    const lesson = n5LessonById(lessonId);
+    if (!lesson) return;
+    const course = n5Course();
+    n5CardsForLesson(lesson).forEach((card) => {
+      markN5KanjiStudied(card.kanji, card.id);
+      course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
+      const progress = getCardProgress(card.id);
+      if (progress.state === "New") state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
+    });
+    const firstCompletion = !course.completedLessons[lesson.id];
+    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.currentLessonId = n5Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+    if (firstCompletion) {
+      const xp = state.n5Meta?.rewards?.lessonCompleteXp || 45;
+      const coins = state.n5Meta?.rewards?.lessonCompleteMoon || 6;
+      addReward(xp, coins, `n5_lesson:${lesson.id}`);
+      queueReward({
+        title: `${n5Labels().lessonComplete}: ${localized(lesson.title)}`,
+        message: n5Labels().lessonCompleteText,
+        xp,
+        coins,
+        mascot: "eva",
+        mood: "happy",
+        dialog: "lessonComplete"
+      });
+      playUxSound("lesson_complete");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN5KanjiStudied(kanji, cardId = null) {
+    if (!kanji) return;
+    const course = n5Course();
+    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+  }
+
+  function markN5KanjiDifficult(kanji, cardId = null) {
+    if (!kanji) return;
+    n5Course().difficultKanji[kanji] = new Date().toISOString();
+    if (cardId) {
+      const progress = getCardProgress(cardId);
+      if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
+    }
+  }
+
+  function openN5Lesson(id) {
+    const lesson = n5LessonById(id);
+    if (!lesson) return;
+    n5Course().currentLessonId = lesson.id;
+    markJlptLessonKanjiSeen("N5", lesson, "n5_lesson_open");
+    setN5Hash(lesson.id);
+  }
+
+  function openN5Overview() {
+    setN5Hash("");
+  }
+
+  function openN5Review(mode = null) {
+    if (mode) n5Course().activeReviewMode = mode;
+    setN5Hash("review");
+  }
+
+  function setN5Hash(subroute) {
+    state.route = "textbooks";
+    state.activeTextbookLevel = "N5";
+    state.activeTextbookSubroute = subroute || null;
+    const nextHash = subroute ? `#textbooks/N5/${encodeURIComponent(subroute)}` : "#textbooks/N5";
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    rememberJlptModuleVisit("N5", jlptModuleResolvedLessonId("N5", subroute), subroute || "overview");
+    saveProgress();
+    render();
+    scrollPageToTop();
+  }
+
+  function n5ReviewCards(mode = "due") {
+    const now = Date.now();
+    const course = n5Course();
+    const cards = n5AllCards();
+    if (mode === "difficult") return cards.filter((card) => course.difficultKanji[card.kanji]);
+    if (mode === "all") return cards;
+    return cards.filter((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" && (!progress.dueAt || new Date(progress.dueAt).getTime() <= now);
+    });
+  }
+
+  function buildN5FinalQuestions() {
+    const cards = n5AllCards();
+    const lessons = n5Lessons();
+    const types = state.n5FinalTest?.types || ["meaning", "reading", "sentence", "kanji", "word", "srs"];
+    const count = Math.min(state.n5FinalTest?.questionCount || 24, Math.max(cards.length, 1));
+    const questions = [];
+    for (let index = 0; index < count; index += 1) {
+      const card = cards[(index * 7) % cards.length] || cards[index % cards.length];
+      const type = types[index % types.length];
+      const lesson = lessons.find((item) => item.kanji.includes(card.kanji)) || lessons[0];
+      questions.push(buildN5FinalQuestion(type, card, lesson, index));
+    }
+    return questions.filter(Boolean);
+  }
+
+  function buildN5FinalQuestion(type, card, lesson, index) {
+    const examples = n5CardExamples(card);
+    const example = examples[0];
+    const sentence = (lesson?.sentences || []).find((item) => item.jp.includes(card.kanji)) || lesson?.sentences?.[0];
+    if (type === "meaning") {
+      return {
+        id: `n5-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: card.kanji,
+        answer: card.id,
+        answerLabel: cardMeaning(card),
+        options: n5OptionSet({ value: card.id, label: cardMeaning(card) }, n5AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.id, label: cardMeaning(item) })), index)
+      };
+    }
+    if (type === "reading") {
+      return {
+        id: `n5-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: example.word,
+        answer: example.reading,
+        answerLabel: example.reading,
+        options: n5OptionSet({ value: example.reading, label: example.reading }, n5AllCards().flatMap((item) => n5CardExamples(item).map((word) => ({ value: word.reading, label: word.reading }))).filter((item) => item.value !== example.reading), index)
+      };
+    }
+    if (type === "sentence" && sentence) {
+      const answer = localized({ ru: sentence.ru, en: sentence.en });
+      return {
+        id: `n5-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: sentence.jp,
+        answer,
+        answerLabel: answer,
+        options: n5OptionSet({ value: answer, label: answer }, n5Lessons().flatMap((item) => item.sentences || []).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })).filter((item) => item.value !== answer), index)
+      };
+    }
+    if (type === "word") {
+      const answer = example.word;
+      return {
+        id: `n5-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: exampleTranslation(example),
+        answer,
+        answerLabel: answer,
+        options: n5OptionSet({ value: answer, label: answer }, n5AllCards().flatMap((item) => n5CardExamples(item).map((word) => ({ value: word.word, label: word.word }))).filter((item) => item.value !== answer), index)
+      };
+    }
+    if (type === "srs") {
+      return {
+        id: `n5-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        answer: "remember",
+        answerLabel: lang() === "ru" ? "Помню" : "Remember",
+        options: [
+          { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
+          { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
+          { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+        ]
+      };
+    }
+    return {
+      id: `n5-final-${index}`,
+      type: "kanji",
+      cardId: card.id,
+      kanji: card.kanji,
+      prompt: cardMeaning(card),
+      answer: card.kanji,
+      answerLabel: card.kanji,
+      options: n5OptionSet({ value: card.kanji, label: card.kanji }, n5AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.kanji, label: item.kanji })), index)
+    };
+  }
+
+  function answerN5FinalQuestion(target) {
+    const id = target.dataset.id;
+    const value = target.dataset.value || "";
+    if (!id) return;
+    n5Course().finalTest.answers[id] = value;
+    saveProgress();
+    render();
+  }
+
+  function submitN5FinalTest(force = false) {
+    if (state.finalTestBusy) return;
+    state.finalTestBusy = true;
+    try {
+      const questions = buildN5FinalQuestions();
+      const test = n5Course().finalTest;
+      const config = state.n5FinalTest || {};
+      const labels = n5Labels();
+      const stats = finalTestQuestionStats(test, questions);
+      const threshold = finalTestPassingPercent(config);
+      const allowIncomplete = Boolean(config.allowIncompleteFinish || config.allowUnansweredFinish);
+      const now = new Date().toISOString();
+      test.attempts = Number(test.attempts || 0) + 1;
+
+      if (stats.missingCount && !force && !allowIncomplete) {
+        const focusSelector = stats.firstMissingId ? `#${finalTestQuestionDomId("n5", stats.firstMissingId)}` : null;
+        state.finalTestModal = {
+          kind: "warning",
+          level: "N5",
+          title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+          message: lang() === "ru"
+            ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+            : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
+          answered: stats.answered,
+          missingCount: stats.missingCount,
+          totalQuestions: stats.totalQuestions,
+          threshold,
+          focusSelector,
+          focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
+          closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
+          forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+          allowIncomplete
+        };
+        state.pendingFocus = focusSelector;
+        saveProgress();
+        return;
+      }
+
+      let score = 0;
+      const mistakes = [];
+      const unanswered = [];
+      questions.forEach((question) => {
+        const selected = String(test.answers?.[question.id] || "").trim();
+        if (selected === question.answer) {
+          score += 1;
+          markN5KanjiStudied(question.kanji, question.cardId);
+        } else {
+          if (!selected) unanswered.push(question);
+          mistakes.push({
+            id: question.id,
+            kanji: question.kanji,
+            answer: question.answerLabel,
+            selected
+          });
+          markN5KanjiDifficult(question.kanji, question.cardId);
+        }
+      });
+      const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+      const wasCompleted = Boolean(test.completedAt);
+      const wasPassed = Boolean(test.passed);
+      const answeredWrong = Math.max(0, mistakes.length - unanswered.length);
+      let rewardXp = 0;
+      let rewardMoon = 0;
+
+      test.answers = test.answers || {};
+      test.score = score;
+      test.percent = percent;
+      test.passed = percent >= threshold;
+      test.correctAnswers = score;
+      test.incorrectAnswers = answeredWrong;
+      test.unansweredAnswers = unanswered.length;
+      test.totalQuestions = questions.length;
+      test.mistakes = mistakes;
+      test.mistakeQuestionIds = mistakes.map((item) => item.id);
+      test.completedAt = now;
+      test.lastScore = percent;
+      test.bestScore = Math.max(Number(test.bestScore || 0), percent);
+      test.passedAt = test.passed ? (wasPassed ? (test.passedAt || now) : now) : test.passedAt || null;
+
+      if (!wasCompleted) {
+        const completeXp = Number(config?.rewards?.completeXp || 120);
+        const completeMoon = Number(config?.rewards?.completeMoon || 20);
+        rewardXp += completeXp;
+        rewardMoon += completeMoon;
+        addReward(completeXp, completeMoon, "n5_final_complete");
+      }
+      if (test.passed && !wasPassed) {
+        const passXp = Number(config?.rewards?.passXp || 80);
+        const passMoon = Number(config?.rewards?.passMoon || 12);
+        rewardXp += passXp;
+        rewardMoon += passMoon;
+        addReward(passXp, passMoon, "n5_final_pass");
+      }
+      test.lastRewardXp = rewardXp;
+      test.lastRewardMoon = rewardMoon;
+      state.finalTestModal = {
+        kind: "result",
+        level: "N5",
+        title: test.passed ? labels.finalPassed : labels.finalNeedsReview,
+        message: test.passed ? labels.finalPassedText : labels.finalNeedsReviewText,
+        passed: test.passed,
+        percent,
+        correct: score,
+        incorrect: answeredWrong,
+        unanswered: unanswered.length,
+        totalQuestions: questions.length,
+        rewardXp,
+        rewardMoon,
+        attempts: test.attempts,
+        threshold,
+        reviewAction: "n5-review",
+        reviewAllAction: "n5-review",
+        closeLabel: lang() === "ru" ? "OK" : "OK",
+        repeatLabel: labels.repeatMistakes,
+        reviewAllLabel: labels.reviewAll
+      };
+      state.pendingFocus = null;
+      evaluateAchievements();
+      saveProgress();
+    } catch (error) {
+      console.error(error);
+      toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+    } finally {
+      state.finalTestBusy = false;
+      render();
+    }
+  }
+
+  function resetN5FinalTest() {
+    n5Course().finalTest = defaultN5CourseProgress().finalTest;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
+    saveProgress();
+    renderPreservingScroll();
+  }
+
+  function n5DomId(id) {
+    return `n5-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+  }
+
+  function renderN4CoursePage(textbook) {
+    state.activeTextbookLevel = "N4";
+    state.activeJlptLesson = "N4";
+    const course = ensureN4CourseProgress();
+    if (!course.opened) {
+      course.opened = true;
+      evaluateAchievements();
+      saveProgress();
+    }
+    const subroute = String(state.activeTextbookSubroute || "");
+    if (subroute === "final-test") return renderN4FinalTestPage(textbook);
+    if (subroute === "review") return renderN4ReviewPage(textbook);
+    if (subroute === "kanji") return renderN4KanjiListPage(textbook);
+    if (subroute === "grammar") return renderN4GrammarPage(textbook);
+    if (subroute === "reading") return renderN4ReadingPage(textbook);
+    if (subroute === "listening") return renderN4ListeningPage(textbook);
+    const lesson = n4LessonById(subroute);
+    if (lesson) {
+      n4Course().currentLessonId = lesson.id;
+      markJlptLessonKanjiSeen("N4", lesson, "n4_lesson_page");
+      return renderN4LessonPage(textbook, lesson);
+    }
+    return renderN4OverviewPage(textbook);
+  }
+
+  function renderN4OverviewPage(textbook) {
+    const progress = n4ProgressSummary();
+    const labels = n4Labels();
+    const lessons = n4Lessons();
+    const current = n4CurrentLesson();
+    const meta = state.n4Meta || {};
+    const principle = localized(meta.principle || {});
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · Flash Kanji</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(localized(meta.description || textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn ghost" href="${escapeAttr(meta.pdfUrl || textbook.pdfUrl || textbook.pdfFile || "")}" download="flashkanji_N4_textbook_flashkanji_space.pdf" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+          </div>
+        </div>
+
+        <article class="n5-hero n4-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">170 ${escapeHtml(labels.kanji)} · 48 ${escapeHtml(labels.grammar)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(principle)}</p>
+            <div class="textbook-actions">
+              <a class="btn primary" href="#jlpt/n4/${escapeAttr(current?.id || "n4-lesson-1")}" data-action="n4-open-lesson" data-id="${escapeAttr(current?.id || "n4-lesson-1")}">${escapeHtml(labels.continue)}</a>
+              <button class="btn" type="button" data-action="n4-review" data-mode="due">${escapeHtml(labels.review)}</button>
+              <button class="btn ghost" type="button" data-action="n4-kanji">${escapeHtml(labels.openKanji)}</button>
+              <button class="btn ghost" type="button" data-action="n4-grammar">${escapeHtml(labels.grammarN4)}</button>
+              <button class="btn ghost" type="button" data-action="n4-reading">${escapeHtml(labels.readingN4)}</button>
+              <button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>
+              ${renderJlptEvaTab("N4")}
+            </div>
+          </div>
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.studiedKanji, `${progress.studied}/${progress.total}`, labels.kanji, progressWidth(progress.studied, progress.total))}
+          ${renderMetric(labels.completedLessons, `${progress.completedLessons}/${lessons.length}`, labels.lessons, progressWidth(progress.completedLessons, lessons.length))}
+          ${renderMetric(labels.completedGrammar, `${progress.completedGrammar}/${state.n4Meta?.grammarCount || state.n4Grammar.length}`, labels.grammar, progressWidth(progress.completedGrammar, state.n4Meta?.grammarCount || state.n4Grammar.length))}
+          ${renderMetric(labels.reviews, progress.reviews, labels.srs, progressWidth(progress.reviews, Math.max(progress.total, 1)))}
+        </div>
+
+        <section class="n5-panel n4-bridge">
+          <div>
+            <h2>${escapeHtml(labels.n5Bridge)}</h2>
+            <p>${escapeHtml(labels.n5BridgeText)}</p>
+          </div>
+          <div class="n4-bridge-grid">
+            ${(meta.n5Bridge || []).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+          </div>
+          <div class="textbook-actions">
+            <a class="btn ghost" href="#textbooks/N5">${escapeHtml(labels.reviewN5Base)}</a>
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div class="n5-panel-head">
+            <div>
+              <h2>${escapeHtml(labels.lessonsTitle)}</h2>
+              <p>${escapeHtml(labels.lessonsDescription)}</p>
+            </div>
+            ${renderJlptEvaTab("N4")}
+          </div>
+          <div class="n5-lesson-grid">
+            ${lessons.map((lesson) => renderN4LessonTile(lesson)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel n5-review-plan">
+          <div>
+            <h2>${escapeHtml(labels.reviewPlan)}</h2>
+            <p>${escapeHtml(localized((state.n4Textbook?.textbook || {}).recommendedCycle || meta.recommendedCycle || {}))}</p>
+          </div>
+          <div class="n5-plan-row">
+            ${(meta.reviewPlan || []).map((item) => `<span class="pill">${escapeHtml(labels.day)} ${escapeHtml(item.day)} · ${escapeHtml(localized(item.label || {}))}</span>`).join("")}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN4LessonTile(lesson) {
+    const status = n4LessonStatus(lesson.id);
+    const labels = n4Labels();
+    const learned = lesson.kanji.filter((kanji) => n4Course().studiedKanji[kanji]).length;
+    return `
+      <a class="n5-lesson-tile ${status}" href="#jlpt/n4/${escapeAttr(lesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(lesson.id)}">
+        <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
+        <h3>${escapeHtml(localized(lesson.title))}</h3>
+        <p>${escapeHtml(localized(lesson.goal))}</p>
+        <div class="n5-kanji-strip n4-kanji-strip">${lesson.kanji.map((kanji) => `<b>${escapeHtml(kanji)}</b>`).join("")}</div>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${learned}/${lesson.kanji.length}`)}"><i style="width:${progressWidth(learned, lesson.kanji.length)}%"></i></div>
+        <small>${escapeHtml(learned)}/${escapeHtml(lesson.kanji.length)} · ${escapeHtml(n4LessonStatusLabel(status))}</small>
+        ${renderJlptEvaTab("N4", { inline: true })}
+      </a>
+    `;
+  }
+
+  function renderN4LessonPage(textbook, lesson) {
+    const labels = n4Labels();
+    const cards = n4CardsForLesson(lesson);
+    const exercises = buildN4LessonExercises(lesson);
+    const status = n4LessonStatus(lesson.id);
+    const complete = status === "completed";
+    const correct = exercises.filter((exercise) => n4ExerciseResult(exercise.id)?.correct).length;
+    const difficult = lesson.kanji.filter((kanji) => n4Course().difficultKanji[kanji]).join(" · ");
+    const nextLesson = n4Lessons().find((item) => item.order === lesson.order + 1);
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page n5-lesson-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · ${escapeHtml(labels.lesson)} ${lesson.order}/17</p>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(lesson.goal))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.difficult)}</button>
+            <button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+
+        <article class="n5-lesson-summary">
+          <div>
+            <span class="pill">${escapeHtml(localized(lesson.theme))}</span>
+            <h2>${escapeHtml(labels.lessonChain)}</h2>
+            <p>${escapeHtml(labels.lessonChainText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.duration)}: ${escapeHtml(lesson.durationMinutes || 30)} ${escapeHtml(labels.minutes)}</span>
+              ${lesson.grammarFocus.map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n4Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}`, labels.kanji, progressWidth(cards.filter((card) => n4Course().studiedKanji[card.kanji]).length, lesson.kanji.length))}
+            ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
+          </div>
+        </article>
+
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN4KanjiStudyCard(card, lesson, index)).join("")}
+        </div>
+
+        ${renderN4LessonGrammar(lesson)}
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.sentences)}</h2>
+            <p>${escapeHtml(labels.sentencesText)}</p>
+          </div>
+          <div class="n5-sentence-list">
+            ${lesson.sentences.map((sentence) => `
+              <article>
+                <strong>${escapeHtml(sentence.jp)}</strong>
+                <span>${escapeHtml(sentence.reading || "")}</span>
+                <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.exercises)}</h2>
+            <p>${escapeHtml(labels.exercisesText)}</p>
+          </div>
+          <div class="n5-exercise-list">
+            ${exercises.map((exercise) => renderN4Exercise(exercise)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-result-panel ${complete ? "is-complete" : ""}">
+          <div>
+            <h2>${escapeHtml(complete ? labels.lessonComplete : labels.lessonResult)}</h2>
+            <p>${escapeHtml(complete ? labels.lessonCompleteText : labels.lessonResultText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.studiedKanji)}: ${cards.filter((card) => n4Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}</span>
+              <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
+              <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="n4-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${nextLesson ? `<a class="btn ghost" href="#jlpt/n4/${escapeAttr(nextLesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>`}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN4KanjiStudyCard(card, lesson, index) {
+    const labels = n4Labels();
+    const progress = getCardProgress(card.id);
+    const examples = n4CardExamples(card);
+    const hint = n4CardHint(card, examples[0]);
+    const written = Boolean(n4Course().writingPractice[card.kanji]);
+    const difficult = Boolean(n4Course().difficultKanji[card.kanji]);
+    return `
+      <article class="n5-kanji-card ${difficult ? "is-difficult" : ""}">
+        <div class="n5-kanji-topline">
+          <span class="pill">${escapeHtml(labels.step)} ${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <dl class="n5-readings">
+          <div><dt>${escapeHtml(labels.onyomi)}</dt><dd>${escapeHtml(card.onyomi || "—")}</dd></div>
+          <div><dt>${escapeHtml(labels.kunyomi)}</dt><dd>${escapeHtml(card.kunyomi || card.hiragana || "—")}</dd></div>
+        </dl>
+        <div class="n5-word-list">
+          ${examples.map((example) => `
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+          `).join("")}
+        </div>
+        <p class="n5-hint">${escapeHtml(hint)}</p>
+        ${renderN4CardSentence(card, lesson)}
+        <div class="textbook-actions">
+          <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn ghost" type="button" data-action="n4-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN4CardSentence(card, lesson) {
+    const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
+    if (!sentence) return "";
+    const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[〜~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+    return `
+      <div class="n5-card-sentence">
+        <strong>${escapeHtml(sentence.jp)}</strong>
+        <span>${escapeHtml(sentence.reading || "")}</span>
+        <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+        ${grammar ? `<small>${escapeHtml(n4Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
+      </div>
+    `;
+  }
+
+  function renderN4LessonGrammar(lesson) {
+    const labels = n4Labels();
+    const grammarItems = (lesson.grammarFocus || []).map((pattern) => n4GrammarByPattern(pattern)).filter(Boolean).slice(0, 3);
+    if (!grammarItems.length) return "";
+    return `
+      <section class="n5-panel n4-grammar-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniGrammar)}</h2>
+          <p>${escapeHtml(labels.miniGrammarText)}</p>
+        </div>
+        <div class="n4-section-grid">
+          ${grammarItems.map((item) => `
+            <article class="n4-grammar-card">
+              <span class="pill">${escapeHtml(item.pattern)}</span>
+              <h3>${escapeHtml(localized(item.title))}</h3>
+              <p>${escapeHtml(localized(item.explanation))}</p>
+              ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+              ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
+              <button class="btn ghost" type="button" data-action="n4-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n4Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4Exercise(exercise) {
+    const labels = n4Labels();
+    const result = n4ExerciseResult(exercise.id);
+    const className = result ? (result.correct ? "is-correct" : "is-wrong") : "";
+    if (exercise.type === "active-recall") {
+      return `
+        <article class="n5-exercise-card ${className}">
+          <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+          <h3>${escapeHtml(exercise.prompt)}</h3>
+          <div class="n5-input-row">
+            <input id="${escapeAttr(n4DomId(exercise.id))}" type="text" maxlength="3" autocomplete="off" value="${escapeAttr(result?.selected || "")}" aria-label="${escapeAttr(localized(exercise.title))}" />
+            <button class="btn primary" type="button" data-action="n4-check-input" data-id="${escapeAttr(exercise.id)}">${escapeHtml(labels.check)}</button>
+            <button class="btn ghost" type="button" data-action="n4-answer" data-id="${escapeAttr(exercise.id)}" data-value="">${escapeHtml(labels.showAnswer)}</button>
+          </div>
+          ${renderN4ExerciseFeedback(exercise, result)}
+        </article>
+      `;
+    }
+    return `
+      <article class="n5-exercise-card ${className}">
+        <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+        <h3>${escapeHtml(exercise.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${exercise.options.map((option) => {
+            const selectedOption = result?.selected === option.value;
+            const answerOption = result && option.value === exercise.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n4-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${renderN4ExerciseFeedback(exercise, result)}
+      </article>
+    `;
+  }
+
+  function renderN4ExerciseFeedback(exercise, result) {
+    if (!result) return "";
+    const labels = n4Labels();
+    const text = result.correct
+      ? labels.correctAnswer
+      : `${labels.wrongAnswer}: ${exercise.answerLabel || exercise.answer}`;
+    return `<p class="n5-feedback">${escapeHtml(text)}</p>`;
+  }
+
+  function renderN4ReviewPage(textbook) {
+    const labels = n4Labels();
+    const mode = n4Course().activeReviewMode || "due";
+    const cards = n4ReviewCards(mode);
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · SRS</p>
+            <h1>${escapeHtml(labels.reviewTitle)}</h1>
+            <p>${escapeHtml(labels.reviewDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="jlpt-filter-bar" role="tablist" aria-label="N4 review modes">
+          ${(state.n4Exercises?.reviewModes || []).map((item) => `
+            <button class="btn ${mode === item.id ? "primary" : "ghost"}" type="button" data-action="n4-review" data-mode="${escapeAttr(item.id)}">${escapeHtml(localized(item.title))}</button>
+          `).join("")}
+        </div>
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN4ReviewCard(card, index)).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReviewCards)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4ReviewCard(card, index) {
+    const labels = n4Labels();
+    const progress = getCardProgress(card.id);
+    return `
+      <article class="n5-kanji-card n5-review-card">
+        <div class="n5-kanji-topline">
+          <span class="pill">${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)} · ${escapeHtml(formatDue(progress.dueAt))}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <p>${escapeHtml(n4CardExamples(card)[0]?.word || card.hiragana || "")} · ${escapeHtml(n4CardExamples(card)[0]?.reading || card.romaji || "")}</p>
+        <div class="textbook-actions">
+          <button class="btn success" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN4KanjiListPage(textbook) {
+    const labels = n4Labels();
+    const cards = n4AllCards();
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · 170</p>
+            <h1>${escapeHtml(labels.kanjiListTitle)}</h1>
+            <p>${escapeHtml(labels.kanjiListText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn" type="button" data-action="n4-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+          </div>
+        </div>
+        <div class="n5-kanji-grid n4-kanji-catalog">
+          ${cards.map((card, index) => `
+            <article class="n5-kanji-card">
+              <div class="n5-kanji-topline"><span class="pill">${index + 1}/170</span><span class="pill">${escapeHtml(getCardProgress(card.id).state)}</span></div>
+              <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+              <h3>${escapeHtml(cardMeaning(card))}</h3>
+              <p>${escapeHtml(n4CardExamples(card)[0]?.word || "")} · ${escapeHtml(n4CardExamples(card)[0]?.reading || "")}</p>
+              <div class="textbook-actions">
+                <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4GrammarPage(textbook) {
+    const labels = n4Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · Grammar</p>
+            <h1>${escapeHtml(labels.grammarTitle)}</h1>
+            <p>${escapeHtml(labels.grammarText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn ghost" type="button" data-action="n4-reading">${escapeHtml(labels.readingN4)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.completedGrammar, `${Object.keys(n4Course().completedGrammar || {}).length}/${state.n4Grammar.length}`, labels.grammar, progressWidth(Object.keys(n4Course().completedGrammar || {}).length, state.n4Grammar.length))}
+          ${renderMetric(labels.questions, state.n4Grammar.length, labels.grammar, 100)}
+        </div>
+        <div class="n4-section-grid">
+          ${state.n4Grammar.map((item) => {
+            const result = n4Course().grammarResults?.[item.id];
+            return `
+              <article class="n4-grammar-card ${result ? (result.correct ? "is-correct" : "is-wrong") : ""}">
+                <span class="pill">${escapeHtml(item.order)} · ${escapeHtml(item.pattern)}</span>
+                <h3>${escapeHtml(localized(item.title))}</h3>
+                <p>${escapeHtml(localized(item.explanation))}</p>
+                ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
+                <div class="n5-option-grid">
+                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                    <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n4-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
+                  `).join("")}
+                </div>
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4ReadingPage(textbook) {
+    const labels = n4Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · Reading</p>
+            <h1>${escapeHtml(labels.readingTitle)}</h1>
+            <p>${escapeHtml(labels.readingText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn ghost" type="button" data-action="n4-listening">${escapeHtml(labels.listeningN4)}</button>
+          </div>
+        </div>
+        <div class="n4-section-grid">
+          ${state.n4Reading.map((item) => renderN4ReadingCard(item, "reading")).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4ListeningPage(textbook) {
+    const labels = n4Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · Listening</p>
+            <h1>${escapeHtml(labels.listeningTitle)}</h1>
+            <p>${escapeHtml(labels.listeningText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="n4-section-grid">
+          ${state.n4Listening.map((item) => renderN4ReadingCard(item, "listening")).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4ReadingCard(item, mode) {
+    const labels = n4Labels();
+    const completed = mode === "reading" ? n4Course().completedReading[item.id] : n4Course().completedListening[item.id];
+    const answerStore = mode === "reading" ? n4Course().readingAnswers : n4Course().listeningAnswers;
+    const action = mode === "reading" ? "n4-reading-complete" : "n4-listening-complete";
+    return `
+      <article class="n4-reading-card ${completed ? "is-correct" : ""}">
+        <span class="pill">${escapeHtml(localized(item.title))}</span>
+        ${Array.isArray(item.dialogue) ? `<div class="n5-sentence-list">${item.dialogue.map((line) => `<article><strong>${escapeHtml(line)}</strong></article>`).join("")}</div>` : `<p class="n4-jp-text">${escapeHtml(item.jp || "")}</p>`}
+        ${item.ru ? `<p>${escapeHtml(item.ru)}</p>` : ""}
+        ${(item.questions || []).map((question, index) => {
+          const key = `${item.id}:${index}`;
+          const result = answerStore?.[key];
+          const options = Array.isArray(question.options) ? question.options : [];
+          return `
+            <div class="n4-question-block">
+              <h3>${escapeHtml(localized(question.prompt || item.question || {}))}</h3>
+              <div class="n5-option-grid">
+                ${options.map((option) => `<button class="btn ${result?.selected === option.value ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="${escapeAttr(action)}" data-id="${escapeAttr(item.id)}" data-question="${escapeAttr(index)}" data-value="${escapeAttr(option.value)}">${escapeHtml(localized(option.label || option))}</button>`).join("")}
+              </div>
+              ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : labels.wrongAnswer)}</p>` : ""}
+            </div>
+          `;
+        }).join("")}
+      </article>
+    `;
+  }
+
+  function renderN4FinalTestPage(textbook) {
+    const labels = n4Labels();
+    const config = state.n4FinalTest || {};
+    const questions = buildN4FinalQuestions();
+    const test = n4Course().finalTest;
+    const stats = finalTestQuestionStats(test, questions);
+    const answered = stats.answered;
+    const ready = stats.ready;
+    const completed = Boolean(test.completedAt);
+    return `
+      <section class="page textbooks-page n5-course-page n4-course-page n5-final-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N4 · Final</p>
+            <h1>${escapeHtml(localized(config.title || {}))}</h1>
+            <p>${escapeHtml(localized(config.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n4-overview">${escapeHtml(labels.backToN4)}</button>
+            <button class="btn" type="button" data-action="n4-final-reset">${escapeHtml(labels.resetTest)}</button>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
+          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
+          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+        </div>
+
+        ${completed ? `
+          <section class="n5-result-panel ${test.passed ? "is-complete" : ""}">
+            <div>
+              <h2>${escapeHtml(test.passed ? labels.finalPassed : labels.finalNeedsReview)}</h2>
+              <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
+            </div>
+            <button class="btn primary" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+          </section>
+        ` : ""}
+
+        <div class="n5-exercise-list">
+          ${questions.map((question, index) => renderN4FinalQuestion(question, index)).join("")}
+        </div>
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        <div class="n5-final-actions">
+          <button class="btn primary" type="button" data-action="n4-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn ghost" type="button" data-action="n4-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN4FinalQuestion(question, index) {
+    const answer = n4Course().finalTest.answers?.[question.id];
+    const complete = Boolean(n4Course().finalTest.completedAt);
+    return `
+      <article class="n5-exercise-card ${complete ? (answer === question.answer ? "is-correct" : "is-wrong") : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.type)}</span>
+        <h3>${escapeHtml(question.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${question.options.map((option) => {
+            const selectedOption = answer === option.value;
+            const answerOption = complete && option.value === question.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "primary" : "ghost"}" type="button" data-action="n4-final-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${complete && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(n4Labels().wrongAnswer)}: ${escapeHtml(question.answerLabel)}</p>` : ""}
+      </article>
+    `;
+  }
+
+  function n4Labels() {
+    return lang() === "ru"
+      ? {
+        title: "JLPT N4",
+        allTextbooks: "Все учебники",
+        pdf: "PDF-учебник",
+        kanji: "кандзи",
+        grammar: "грамматика",
+        courseMap: "Интерактивный учебник N4 после N5",
+        continue: "Продолжить",
+        review: "Повторять N4",
+        openKanji: "Открыть список кандзи",
+        grammarN4: "Грамматика N4",
+        readingN4: "Чтение N4",
+        listeningN4: "Аудирование N4",
+        finalTest: "Финальный тест",
+        studiedKanji: "Изучено",
+        completedLessons: "Уроки",
+        completedGrammar: "Грамматика",
+        reviews: "Повторения",
+        difficult: "Сложные",
+        srs: "SRS",
+        lessons: "уроков",
+        lessonsTitle: "17 уроков примерно по 10 кандзи",
+        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, упражнение, письмо и SRS.",
+        reviewPlan: "План повторения на 45 дней",
+        day: "день",
+        lesson: "Урок",
+        backToN4: "К N4",
+        n5Bridge: "N5 bridge",
+        n5BridgeText: "Перед N4 полезно держать активной базу N5: она станет опорой для более длинных предложений.",
+        reviewN5Base: "Повторить базу N5 перед N4",
+        lessonChain: "Кандзи -> слово -> грамматика -> предложение -> текст -> упражнение -> письмо -> SRS",
+        lessonChainText: "N4 больше не живёт списком знаков: каждый знак сразу получает слово, грамматическую связку и контекст.",
+        duration: "Длительность",
+        minutes: "мин",
+        exercises: "Упражнения",
+        correct: "верно",
+        sentences: "Примеры предложений",
+        sentencesText: "Прочитай вслух и отметь, где грамматика держит смысл предложения.",
+        exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику и активное вспоминание.",
+        lessonComplete: "Урок завершён",
+        lessonCompleteText: "Кандзи урока добавлены в N4-review и общий SRS.",
+        lessonResult: "Итог урока",
+        lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
+        completeLesson: "Завершить урок",
+        refreshLesson: "Обновить итог",
+        repeatMistakes: "Повторить ошибки",
+        nextLesson: "Следующий урок",
+        none: "нет",
+        step: "шаг",
+        onyomi: "онъёми",
+        kunyomi: "кунъёми",
+        addToSrs: "Добавить в SRS",
+        know: "Я знаю",
+        hard: "Сложно",
+        writingPractice: "Практика письма",
+        markWritten: "Написано",
+        written: "Письмо засчитано",
+        miniGrammar: "Мини-грамматика урока",
+        miniGrammarText: "1-3 конструкции из примеров урока, чтобы кандзи сразу работали в предложении.",
+        markGrammar: "Засчитать конструкцию",
+        completed: "Пройдено",
+        check: "Проверить",
+        showAnswer: "Сложно: показать ответ",
+        correctAnswer: "Верно. XP и Moon Fragment начислены.",
+        wrongAnswer: "Пока нет",
+        reviewTitle: "N4-повторение",
+        reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N4.",
+        noReviewCards: "Сейчас нет карточек в этом фильтре.",
+        kanjiListTitle: "170 кандзи N4",
+        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в SRS или открыть письмо.",
+        grammarTitle: "48 грамматических конструкций N4",
+        grammarText: "Короткие рабочие карточки: функция, формула, пример и проверка понимания.",
+        readingTitle: "Тексты для чтения N4",
+        readingText: "Короткие тексты связывают кандзи, слова и грамматику в нормальный контекст.",
+        listeningTitle: "Скрипты для аудирования N4",
+        listeningText: "Диалоги можно читать вслух или использовать как основу для прослушивания.",
+        questions: "Вопросы",
+        score: "Результат",
+        mistakes: "Ошибки",
+        resetTest: "Сбросить тест",
+        submitFinal: "Завершить тест",
+        reviewAll: "Повторить весь N4",
+        finalPassed: "N4 пройден",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalNeedsReview: "Нужно повторить",
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+      }
+      : {
+        title: "JLPT N4",
+        allTextbooks: "All textbooks",
+        pdf: "PDF textbook",
+        kanji: "kanji",
+        grammar: "grammar",
+        courseMap: "Interactive N4 textbook after N5",
+        continue: "Continue",
+        review: "Review N4",
+        openKanji: "Open kanji list",
+        grammarN4: "N4 grammar",
+        readingN4: "N4 reading",
+        listeningN4: "N4 listening",
+        finalTest: "Final test",
+        studiedKanji: "Studied",
+        completedLessons: "Lessons",
+        completedGrammar: "Grammar",
+        reviews: "Reviews",
+        difficult: "Difficult",
+        srs: "SRS",
+        lessons: "lessons",
+        lessonsTitle: "17 lessons, about 10 kanji each",
+        lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, exercise, writing, and SRS.",
+        reviewPlan: "45-day review plan",
+        day: "day",
+        lesson: "Lesson",
+        backToN4: "To N4",
+        n5Bridge: "N5 bridge",
+        n5BridgeText: "Keep the N5 base active before N4; it supports longer sentences.",
+        reviewN5Base: "Review N5 base before N4",
+        lessonChain: "Kanji -> word -> grammar -> sentence -> text -> exercise -> writing -> SRS",
+        lessonChainText: "N4 is not a bare list: each sign gets a word, grammar link, and context.",
+        duration: "Duration",
+        minutes: "min",
+        exercises: "Exercises",
+        correct: "correct",
+        sentences: "Example sentences",
+        sentencesText: "Read aloud and notice where grammar carries the sentence.",
+        exercisesText: "Mixed tasks check kanji, words, reading, translation, grammar, and active recall.",
+        lessonComplete: "Lesson complete",
+        lessonCompleteText: "Lesson kanji are available in N4 review and the shared SRS.",
+        lessonResult: "Lesson result",
+        lessonResultText: "Complete the lesson when cards and exercises are ready for review.",
+        completeLesson: "Complete lesson",
+        refreshLesson: "Refresh result",
+        repeatMistakes: "Repeat mistakes",
+        nextLesson: "Next lesson",
+        none: "none",
+        step: "step",
+        onyomi: "onyomi",
+        kunyomi: "kunyomi",
+        addToSrs: "Add to SRS",
+        know: "I know",
+        hard: "Hard",
+        writingPractice: "Writing practice",
+        markWritten: "Written",
+        written: "Writing counted",
+        miniGrammar: "Lesson mini grammar",
+        miniGrammarText: "1-3 constructions from the lesson examples.",
+        markGrammar: "Mark construction",
+        completed: "Completed",
+        check: "Check",
+        showAnswer: "Hard: show answer",
+        correctAnswer: "Correct. XP and Moon Fragment awarded.",
+        wrongAnswer: "Not yet",
+        reviewTitle: "N4 review",
+        reviewDescription: "Review due cards, difficult kanji, or the full N4 set.",
+        noReviewCards: "No cards in this filter right now.",
+        kanjiListTitle: "170 N4 kanji",
+        kanjiListText: "Full textbook list with quick SRS and writing actions.",
+        grammarTitle: "48 N4 grammar constructions",
+        grammarText: "Compact cards with function, formula, example, and check.",
+        readingTitle: "N4 reading texts",
+        readingText: "Short texts connect kanji, words, and grammar.",
+        listeningTitle: "N4 listening scripts",
+        listeningText: "Read dialogues aloud or use them as listening scripts.",
+        questions: "Questions",
+        score: "Score",
+        mistakes: "Mistakes",
+        resetTest: "Reset test",
+        submitFinal: "Finish test",
+        reviewAll: "Review all N4",
+        finalPassed: "N4 passed",
+        finalPassedText: "Great. You can send mistakes back to SRS separately.",
+        finalNeedsReview: "Review needed",
+        finalNeedsReviewText: "Mistakes were marked difficult and raised in SRS."
+      };
+  }
+
+  function ensureN4CourseProgress() {
+    state.progress.n4Course = mergeN4CourseProgress(defaultN4CourseProgress(), state.progress.n4Course || {});
+    const lessons = n4Lessons();
+    const active = n4LessonById(state.progress.n4Course.currentLessonId);
+    if (!active && lessons[0]) state.progress.n4Course.currentLessonId = lessons[0].id;
+    const firstOpen = lessons.find((lesson) => !state.progress.n4Course.completedLessons[lesson.id]);
+    if (!state.progress.n4Course.currentLessonId && firstOpen) state.progress.n4Course.currentLessonId = firstOpen.id;
+    return state.progress.n4Course;
+  }
+
+  function n4Course() {
+    return ensureN4CourseProgress();
+  }
+
+  function n4Lessons() {
+    return state.n4Textbook?.items || [];
+  }
+
+  function n4LessonById(id) {
+    const raw = String(id || "");
+    if (!raw) return null;
+    return n4Lessons().find((lesson) =>
+      lesson.id === raw
+      || lesson.id === `n4-${raw}`
+      || lesson.id.endsWith(`-${raw}`)
+    ) || null;
+  }
+
+  function n4CurrentLesson() {
+    return n4LessonById(n4Course().currentLessonId) || n4Lessons().find((lesson) => !n4Course().completedLessons[lesson.id]) || n4Lessons()[0] || null;
+  }
+
+  function n4CardsForLesson(lesson) {
+    return (lesson?.kanji || []).map((kanji) => n4CardByKanji(kanji)).filter(Boolean);
+  }
+
+  function n4AllCards() {
+    const seen = new Set();
+    return (state.n4KanjiCatalog || []).map((detail) => n4CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
+      if (seen.has(card.kanji)) return false;
+      seen.add(card.kanji);
+      return true;
+    });
+  }
+
+  function n4CardByKanji(kanji) {
+    const literal = String(kanji || "");
+    const detail = state.n4KanjiCatalog?.find((item) => item.kanji === literal) || null;
+    const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N4")
+      || (detail ? state.cards.find((item) => String(item.id) === String(detail.courseCardId || detail.id)) : null)
+      || null;
+    if (card && detail) return mergeN4CardDetail(card, detail);
+    if (card) return card;
+    if (!detail) return null;
+    return mergeN4CardDetail({
+      id: detail.courseCardId || detail.id,
+      kanji: detail.kanji,
+      lessonId: detail.lessonId,
+      jlpt: "N4",
+      examples: []
+    }, detail);
+  }
+
+  function n4GrammarByPattern(pattern) {
+    const raw = String(pattern || "");
+    return state.n4Grammar.find((item) => item.pattern === raw || item.id === raw || item.pattern.includes(raw) || raw.includes(item.pattern)) || null;
+  }
+
+  function n4CardExamples(card) {
+    const examples = Array.isArray(card.examples) ? card.examples : [];
+    if (examples.length) return examples.slice(0, 3);
+    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+  }
+
+  function n4CardHint(card, example) {
+    if (lang() === "ru" && card.n4Detail?.hintRu) return card.n4Detail.hintRu;
+    const word = example?.word || card.kanji;
+    const reading = example?.reading || card.hiragana || "";
+    return lang() === "ru"
+      ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+      : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
+  }
+
+  function n4ProgressSummary() {
+    const cards = n4AllCards();
+    const course = n4Course();
+    const studied = new Set(Object.keys(course.studiedKanji || {}));
+    cards.forEach((card) => {
+      if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
+    });
+    return {
+      total: state.n4Meta?.kanjiCount || cards.length || 170,
+      studied: studied.size,
+      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedGrammar: Object.keys(course.completedGrammar || {}).length,
+      reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
+      difficult: Object.keys(course.difficultKanji || {}).length
+    };
+  }
+
+  function n4LessonStatus(lessonId) {
+    const course = n4Course();
+    if (course.completedLessons[lessonId]) return "completed";
+    const lesson = n4LessonById(lessonId);
+    if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
+    return "new";
+  }
+
+  function n4LessonStatusLabel(status) {
+    if (status === "completed") return lang() === "ru" ? "завершён" : "completed";
+    if (status === "started") return lang() === "ru" ? "начат" : "started";
+    return lang() === "ru" ? "не начат" : "new";
+  }
+
+  function buildN4LessonExercises(lesson) {
+    const cards = n4CardsForLesson(lesson);
+    if (!cards.length) return [];
+    const sentences = lesson.sentences || [];
+    const exerciseTitles = Object.fromEntries((state.n4Exercises?.types || []).map((item) => [item.type, item.title]));
+    const rewardByType = Object.fromEntries((state.n4Exercises?.types || []).map((item) => [item.type, item]));
+    const getReward = (type) => rewardByType[type] || { rewardXp: state.n4Meta?.rewards?.exerciseXp || 9, rewardMoon: state.n4Meta?.rewards?.exerciseMoon || 1 };
+    const exercises = [];
+    const meaningCard = cards[0];
+    exercises.push({
+      id: `${lesson.id}-meaning-0`,
+      type: "meaning",
+      title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+      prompt: meaningCard.kanji,
+      answer: meaningCard.id,
+      answerLabel: cardMeaning(meaningCard),
+      kanji: meaningCard.kanji,
+      cardId: meaningCard.id,
+      options: n4OptionSet({ value: meaningCard.id, label: cardMeaning(meaningCard) }, cards.slice(1).map((card) => ({ value: card.id, label: cardMeaning(card) })), 1),
+      ...getReward("meaning")
+    });
+    const kanjiCard = cards[1] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-kanji-1`,
+      type: "kanji",
+      title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+      prompt: cardMeaning(kanjiCard),
+      answer: kanjiCard.kanji,
+      answerLabel: kanjiCard.kanji,
+      kanji: kanjiCard.kanji,
+      cardId: kanjiCard.id,
+      options: n4OptionSet({ value: kanjiCard.kanji, label: kanjiCard.kanji }, cards.filter((card) => card.id !== kanjiCard.id).map((card) => ({ value: card.kanji, label: card.kanji })), 2),
+      ...getReward("kanji")
+    });
+    const readingCard = cards[2] || cards[0];
+    const readingExample = n4CardExamples(readingCard)[0];
+    exercises.push({
+      id: `${lesson.id}-reading-2`,
+      type: "reading",
+      title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+      prompt: readingExample.word || readingCard.kanji,
+      answer: readingExample.reading || readingCard.hiragana || "",
+      answerLabel: readingExample.reading || readingCard.hiragana || "",
+      kanji: readingCard.kanji,
+      cardId: readingCard.id,
+      options: n4OptionSet({ value: readingExample.reading || readingCard.hiragana || "", label: readingExample.reading || readingCard.hiragana || "" }, cards.flatMap((card) => n4CardExamples(card).map((example) => ({ value: example.reading, label: example.reading }))).filter((item) => item.value && item.value !== readingExample.reading), 3),
+      ...getReward("reading")
+    });
+    const sentence = sentences[0];
+    if (sentence) {
+      exercises.push({
+        id: `${lesson.id}-sentence-3`,
+        type: "sentence",
+        title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+        prompt: sentence.jp,
+        answer: localized({ ru: sentence.ru, en: sentence.en }),
+        answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        options: n4OptionSet(
+          { value: localized({ ru: sentence.ru, en: sentence.en }), label: localized({ ru: sentence.ru, en: sentence.en }) },
+          sentences.slice(1).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })),
+          1
+        ),
+        ...getReward("sentence")
+      });
+    }
+    const wordCard = cards[3] || cards[0];
+    const wordExample = n4CardExamples(wordCard)[0];
+    exercises.push({
+      id: `${lesson.id}-word-4`,
+      type: "missing-word",
+      title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
+      prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+      answer: wordExample.word || wordCard.kanji,
+      answerLabel: wordExample.word || wordCard.kanji,
+      kanji: wordCard.kanji,
+      cardId: wordCard.id,
+      options: n4OptionSet({ value: wordExample.word || wordCard.kanji, label: wordExample.word || wordCard.kanji }, cards.flatMap((card) => n4CardExamples(card).map((example) => ({ value: example.word, label: example.word }))).filter((item) => item.value && item.value !== wordExample.word), 2),
+      ...getReward("missing-word")
+    });
+    const recallCard = cards[4] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-active-5`,
+      type: "active-recall",
+      title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
+      prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+      answer: recallCard.kanji,
+      answerLabel: recallCard.kanji,
+      kanji: recallCard.kanji,
+      cardId: recallCard.id,
+      options: [],
+      ...getReward("active-recall")
+    });
+    const grammar = n4GrammarByPattern(lesson.grammarFocus?.[0]);
+    if (grammar) {
+      exercises.push({
+        id: `${lesson.id}-grammar-6`,
+        type: "grammar-link",
+        title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+        prompt: localized(grammar.question || grammar.explanation),
+        answer: grammar.answer,
+        answerLabel: grammar.answer,
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        grammarId: grammar.id,
+        options: n4OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+        ...getReward("grammar-link")
+      });
+    }
+    const miniSentence = sentences[1] || sentences[0];
+    if (miniSentence) {
+      exercises.push({
+        id: `${lesson.id}-mini-reading-7`,
+        type: "mini-reading",
+        title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+        prompt: miniSentence.jp,
+        answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+        answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+        kanji: cards[1]?.kanji || cards[0].kanji,
+        cardId: cards[1]?.id || cards[0].id,
+        options: n4OptionSet({ value: localized({ ru: miniSentence.ru, en: miniSentence.en }), label: localized({ ru: miniSentence.ru, en: miniSentence.en }) }, sentences.filter((item) => item.jp !== miniSentence.jp).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })), 2),
+        ...getReward("mini-reading")
+      });
+    }
+    return exercises.slice(0, state.n4Exercises?.lessonQuestionCount || 8);
+  }
+
+  function n4OptionSet(correct, distractors, rotateBy = 0) {
+    const seen = new Set([String(correct.value)]);
+    const options = [correct].filter((item) => String(item.value || ""));
+    distractors.forEach((option) => {
+      const value = String(option.value || "");
+      if (!value || seen.has(value) || options.length >= 4) return;
+      seen.add(value);
+      options.push(option);
+    });
+    n4AllCards().forEach((card) => {
+      if (options.length >= 4) return;
+      const fallback = { value: card.kanji, label: card.kanji };
+      if (!seen.has(String(fallback.value))) {
+        seen.add(String(fallback.value));
+        options.push(fallback);
+      }
+    });
+    if (options.length <= 1) return options;
+    const shift = rotateBy % options.length;
+    return [...options.slice(shift), ...options.slice(0, shift)];
+  }
+
+  function findN4Exercise(id) {
+    for (const lesson of n4Lessons()) {
+      const exercise = buildN4LessonExercises(lesson).find((item) => item.id === id);
+      if (exercise) return exercise;
+    }
+    return null;
+  }
+
+  function n4ExerciseResult(id) {
+    return n4Course().exerciseResults?.[id] || null;
+  }
+
+  function answerN4Exercise(target) {
+    const exercise = findN4Exercise(target.dataset.id);
+    if (!exercise) return;
+    const value = target.dataset.value || "";
+    const selected = value || exercise.answer;
+    const correct = selected === exercise.answer;
+    recordN4ExerciseResult(exercise, selected, correct);
+  }
+
+  function checkN4InputExercise(id) {
+    const exercise = findN4Exercise(id);
+    if (!exercise) return;
+    const input = document.getElementById(n4DomId(exercise.id));
+    const value = input ? String(input.value || "").trim() : "";
+    recordN4ExerciseResult(exercise, value, value === exercise.answer);
+  }
+
+  function recordN4ExerciseResult(exercise, selectedValue, correct) {
+    const course = n4Course();
+    course.exerciseResults[exercise.id] = {
+      selected: selectedValue,
+      correct,
+      checkedAt: new Date().toISOString()
+    };
+    if (correct) {
+      if (!course.completedExercises[exercise.id]) {
+        course.completedExercises[exercise.id] = new Date().toISOString();
+        markN4KanjiStudied(exercise.kanji, exercise.cardId);
+        if (exercise.grammarId) course.completedGrammar[exercise.grammarId] = course.completedGrammar[exercise.grammarId] || new Date().toISOString();
+        addReward(Number(exercise.rewardXp || state.n4Meta?.rewards?.exerciseXp || 9), Number(exercise.rewardMoon || state.n4Meta?.rewards?.exerciseMoon || 1), `n4_exercise:${exercise.id}`);
+      }
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      markN4KanjiDifficult(exercise.kanji, exercise.cardId);
+      course.kanjiMistakes[exercise.kanji] = Number(course.kanjiMistakes[exercise.kanji] || 0) + 1;
+      if (exercise.type === "reading" || exercise.type === "missing-word") course.wordMistakes[exercise.answerLabel || exercise.answer] = Number(course.wordMistakes[exercise.answerLabel || exercise.answer] || 0) + 1;
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function handleN4SrsAction(cardId, rating) {
+    const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const before = cloneProgress(getCardProgress(card.id));
+    const after = calculateNextProgress(before, rating);
+    state.progress.cards[card.id] = after;
+    updateDailyStats(before, after, rating);
+    checkDailyGoal();
+    markN4KanjiStudied(card.kanji, card.id);
+    n4Course().srsKanji[card.kanji] = new Date().toISOString();
+    if (isForgottenRating(rating)) {
+      markN4KanjiDifficult(card.kanji, card.id);
+      state.progress.totalWrong += 1;
+      addReward(state.n4Meta?.rewards?.hardXp || 2, 0, `n4_srs_hard:${card.id}`);
+      playUxSound("answer_wrong");
+    } else {
+      state.progress.totalCorrect += 1;
+      addReward(rating === "easy" ? (state.n4Meta?.rewards?.knowXp || 7) : (state.n4Meta?.rewards?.addToSrsXp || 5), 1, `n4_srs:${card.id}`);
+      playUxSound("answer_correct");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN4Writing(cardId) {
+    const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const course = n4Course();
+    if (!course.writingPractice[card.kanji]) {
+      course.writingPractice[card.kanji] = new Date().toISOString();
+      state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+      state.progress.writingPractice.cards[card.id] = {
+        completed: Number(state.progress.writingPractice.cards[card.id]?.completed || 0) + 1,
+        lastAt: new Date().toISOString()
+      };
+      markN4KanjiStudied(card.kanji, card.id);
+      addReward(9, 1, `n4_writing:${card.id}`);
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN4Lesson(lessonId) {
+    const lesson = n4LessonById(lessonId);
+    if (!lesson) return;
+    const course = n4Course();
+    n4CardsForLesson(lesson).forEach((card) => {
+      markN4KanjiStudied(card.kanji, card.id);
+      course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
+      const progress = getCardProgress(card.id);
+      if (progress.state === "New") state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
+    });
+    (lesson.grammarFocus || []).map((pattern) => n4GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
+      course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
+    });
+    const firstCompletion = !course.completedLessons[lesson.id];
+    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.currentLessonId = n4Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+    if (firstCompletion) {
+      const xp = state.n4Meta?.rewards?.lessonCompleteXp || 65;
+      const coins = state.n4Meta?.rewards?.lessonCompleteMoon || 8;
+      addReward(xp, coins, `n4_lesson:${lesson.id}`);
+      queueReward({
+        title: `${n4Labels().lessonComplete}: ${localized(lesson.title)}`,
+        message: n4Labels().lessonCompleteText,
+        xp,
+        coins,
+        mascot: "eva",
+        mood: "happy",
+        dialog: "lessonComplete"
+      });
+      playUxSound("lesson_complete");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN4KanjiStudied(kanji, cardId = null) {
+    if (!kanji) return;
+    const course = n4Course();
+    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+  }
+
+  function markN4KanjiDifficult(kanji, cardId = null) {
+    if (!kanji) return;
+    n4Course().difficultKanji[kanji] = new Date().toISOString();
+    if (cardId) {
+      const progress = getCardProgress(cardId);
+      if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
+    }
+  }
+
+  function completeN4Grammar(id, value = "") {
+    const item = state.n4Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
+    if (!item) return;
+    const selected = value || item.answer;
+    const correct = selected === item.answer;
+    const course = n4Course();
+    course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
+    if (correct && !course.completedGrammar[item.id]) {
+      course.completedGrammar[item.id] = new Date().toISOString();
+      addReward(state.n4Meta?.rewards?.grammarXp || 10, state.n4Meta?.rewards?.grammarMoon || 1, `n4_grammar:${item.id}`);
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else if (!correct) {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN4Reading(id, questionIndex = "0", value = "") {
+    completeN4Comprehension("reading", id, questionIndex, value);
+  }
+
+  function completeN4Listening(id, questionIndex = "0", value = "") {
+    completeN4Comprehension("listening", id, questionIndex, value);
+  }
+
+  function completeN4Comprehension(mode, id, questionIndex = "0", value = "") {
+    const collection = mode === "reading" ? state.n4Reading : state.n4Listening;
+    const item = collection.find((entry) => entry.id === id);
+    if (!item) return;
+    const index = Number(questionIndex || 0);
+    const question = (item.questions || [])[index];
+    if (!question) return;
+    const correct = value === question.answer;
+    const key = `${item.id}:${index}`;
+    const course = n4Course();
+    const answers = mode === "reading" ? course.readingAnswers : course.listeningAnswers;
+    const completed = mode === "reading" ? course.completedReading : course.completedListening;
+    answers[key] = { selected: value, correct, checkedAt: new Date().toISOString() };
+    if (correct && !completed[item.id]) {
+      completed[item.id] = new Date().toISOString();
+      const xp = mode === "reading" ? state.n4Meta?.rewards?.readingXp || 35 : state.n4Meta?.rewards?.listeningXp || 30;
+      const coins = mode === "reading" ? state.n4Meta?.rewards?.readingMoon || 4 : state.n4Meta?.rewards?.listeningMoon || 3;
+      addReward(xp, coins, `n4_${mode}:${item.id}`);
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else if (!correct) {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function openN4Lesson(id) {
+    const lesson = n4LessonById(id);
+    if (!lesson) return;
+    n4Course().currentLessonId = lesson.id;
+    markJlptLessonKanjiSeen("N4", lesson, "n4_lesson_open");
+    setN4Hash(lesson.id);
+  }
+
+  function openN4Overview() {
+    setN4Hash("");
+  }
+
+  function openN4Review(mode = null) {
+    if (mode) n4Course().activeReviewMode = mode;
+    setN4Hash("review");
+  }
+
+  function openN4KanjiList() {
+    setN4Hash("kanji");
+  }
+
+  function openN4Grammar() {
+    setN4Hash("grammar");
+  }
+
+  function openN4Reading() {
+    setN4Hash("reading");
+  }
+
+  function openN4Listening() {
+    setN4Hash("listening");
+  }
+
+  function openN4FinalTest() {
+    setN4Hash("final-test");
+  }
+
+  function setN4Hash(subroute) {
+    state.route = "textbooks";
+    state.activeTextbookLevel = "N4";
+    state.activeTextbookSubroute = subroute || null;
+    n4Course().opened = true;
+    const nextHash = subroute ? `#jlpt/n4/${encodeURIComponent(subroute)}` : "#jlpt/n4";
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    rememberJlptModuleVisit("N4", jlptModuleResolvedLessonId("N4", subroute), subroute || "overview");
+    evaluateAchievements();
+    saveProgress();
+    render();
+    scrollPageToTop();
+  }
+
+  function n4ReviewCards(mode = "due") {
+    const now = Date.now();
+    const course = n4Course();
+    const cards = n4AllCards();
+    if (mode === "difficult") return cards.filter((card) => course.difficultKanji[card.kanji]);
+    if (mode === "all") return cards;
+    return cards.filter((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" && (!progress.dueAt || new Date(progress.dueAt).getTime() <= now);
+    });
+  }
+
+  function buildN4FinalQuestions() {
+    const cards = n4AllCards();
+    if (!cards.length) return [];
+    const types = state.n4FinalTest?.types || ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"];
+    const count = Math.min(state.n4FinalTest?.questionCount || 32, Math.max(cards.length, 1));
+    const questions = [];
+    for (let index = 0; index < count; index += 1) {
+      const card = cards[(index * 11) % cards.length] || cards[index % cards.length];
+      const type = types[index % types.length];
+      const lesson = n4Lessons().find((item) => item.kanji.includes(card.kanji)) || n4Lessons()[0];
+      questions.push(buildN4FinalQuestion(type, card, lesson, index));
+    }
+    return questions.filter(Boolean);
+  }
+
+  function buildN4FinalQuestion(type, card, lesson, index) {
+    const examples = n4CardExamples(card);
+    const example = examples[0] || {};
+    const sentence = (lesson?.sentences || []).find((item) => item.jp.includes(card.kanji)) || lesson?.sentences?.[0];
+    if (type === "meaning") {
+      return {
+        id: `n4-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: card.kanji,
+        answer: card.id,
+        answerLabel: cardMeaning(card),
+        options: n4OptionSet({ value: card.id, label: cardMeaning(card) }, n4AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.id, label: cardMeaning(item) })), index)
+      };
+    }
+    if (type === "reading") {
+      return {
+        id: `n4-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: example.word || card.kanji,
+        answer: example.reading || card.hiragana || "",
+        answerLabel: example.reading || card.hiragana || "",
+        options: n4OptionSet({ value: example.reading || card.hiragana || "", label: example.reading || card.hiragana || "" }, n4AllCards().flatMap((item) => n4CardExamples(item).map((word) => ({ value: word.reading, label: word.reading }))).filter((item) => item.value && item.value !== example.reading), index)
+      };
+    }
+    if (type === "sentence" && sentence) {
+      const answer = localized({ ru: sentence.ru, en: sentence.en });
+      return {
+        id: `n4-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: sentence.jp,
+        answer,
+        answerLabel: answer,
+        options: n4OptionSet({ value: answer, label: answer }, n4Lessons().flatMap((item) => item.sentences || []).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })).filter((item) => item.value !== answer), index)
+      };
+    }
+    if (type === "word") {
+      const answer = example.word || card.kanji;
+      return {
+        id: `n4-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: exampleTranslation(example),
+        answer,
+        answerLabel: answer,
+        options: n4OptionSet({ value: answer, label: answer }, n4AllCards().flatMap((item) => n4CardExamples(item).map((word) => ({ value: word.word, label: word.word }))).filter((item) => item.value && item.value !== answer), index)
+      };
+    }
+    if (type === "grammar") {
+      const grammar = state.n4Grammar[index % Math.max(state.n4Grammar.length, 1)];
+      if (grammar) {
+        return {
+          id: `n4-final-${index}`,
+          type,
+          grammarId: grammar.id,
+          prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
+          answer: grammar.answer,
+          answerLabel: grammar.answer,
+          options: n4OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+        };
+      }
+    }
+    if (type === "mini-reading") {
+      const reading = state.n4Reading[index % Math.max(state.n4Reading.length, 1)];
+      const question = reading?.questions?.[0];
+      if (reading && question) {
+        return {
+          id: `n4-final-${index}`,
+          type,
+          readingId: reading.id,
+          prompt: `${reading.jp || localized(reading.title)} ${localized(question.prompt)}`,
+          answer: question.answer,
+          answerLabel: localized((question.options || []).find((item) => item.value === question.answer)?.label || question.answer),
+          options: (question.options || []).map((option) => ({ value: option.value, label: localized(option.label || option) }))
+        };
+      }
+    }
+    if (type === "srs") {
+      return {
+        id: `n4-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        answer: "remember",
+        answerLabel: lang() === "ru" ? "Помню" : "Remember",
+        options: [
+          { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
+          { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
+          { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+        ]
+      };
+    }
+    return {
+      id: `n4-final-${index}`,
+      type: "kanji",
+      cardId: card.id,
+      kanji: card.kanji,
+      prompt: cardMeaning(card),
+      answer: card.kanji,
+      answerLabel: card.kanji,
+      options: n4OptionSet({ value: card.kanji, label: card.kanji }, n4AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.kanji, label: item.kanji })), index)
+    };
+  }
+
+  function answerN4FinalQuestion(target) {
+    const id = target.dataset.id;
+    const value = target.dataset.value || "";
+    if (!id) return;
+    n4Course().finalTest.answers[id] = value;
+    saveProgress();
+    render();
+  }
+
+  function submitN4FinalTest(force = false) {
+    if (state.finalTestBusy) return;
+    state.finalTestBusy = true;
+    try {
+      const questions = buildN4FinalQuestions();
+      const test = n4Course().finalTest;
+      const config = state.n4FinalTest || {};
+      const labels = n4Labels();
+      const stats = finalTestQuestionStats(test, questions);
+      const threshold = Number(config?.passingPercent ?? config?.passThreshold ?? 80);
+      const allowIncomplete = Boolean(config.allowIncompleteFinish || config.allowUnansweredFinish);
+      const now = new Date().toISOString();
+      test.attempts = Number(test.attempts || 0) + 1;
+
+      if (stats.missingCount && !force && !allowIncomplete) {
+        const focusSelector = stats.firstMissingId ? `#${finalTestQuestionDomId("n4", stats.firstMissingId)}` : null;
+        state.finalTestModal = {
+          kind: "warning",
+          level: "N4",
+          title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+          message: lang() === "ru"
+            ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+            : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
+          answered: stats.answered,
+          missingCount: stats.missingCount,
+          totalQuestions: stats.totalQuestions,
+          threshold,
+          focusSelector,
+          focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
+          closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
+          forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+          allowIncomplete
+        };
+        state.pendingFocus = focusSelector;
+        saveProgress();
+        return;
+      }
+
+      let score = 0;
+      const mistakes = [];
+      const unanswered = [];
+      questions.forEach((question) => {
+        const selected = String(test.answers?.[question.id] || "").trim();
+        if (selected === question.answer) {
+          score += 1;
+          if (question.kanji) markN4KanjiStudied(question.kanji, question.cardId);
+          if (question.grammarId) {
+            const course = n4Course();
+            course.completedGrammar[question.grammarId] = course.completedGrammar[question.grammarId] || now;
+          }
+        } else {
+          if (!selected) unanswered.push(question);
+          mistakes.push({
+            id: question.id,
+            kanji: question.kanji || "",
+            answer: question.answerLabel,
+            selected
+          });
+          if (question.kanji) markN4KanjiDifficult(question.kanji, question.cardId);
+        }
+      });
+      const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+      const wasCompleted = Boolean(test.completedAt);
+      const wasPassed = Boolean(test.passed);
+      const answeredWrong = Math.max(0, mistakes.length - unanswered.length);
+      let rewardXp = 0;
+      let rewardMoon = 0;
+
+      test.answers = test.answers || {};
+      test.score = score;
+      test.percent = percent;
+      test.passed = percent >= threshold;
+      test.correctAnswers = score;
+      test.incorrectAnswers = answeredWrong;
+      test.unansweredAnswers = unanswered.length;
+      test.totalQuestions = questions.length;
+      test.mistakes = mistakes;
+      test.mistakeQuestionIds = mistakes.map((item) => item.id);
+      test.completedAt = now;
+      test.lastScore = percent;
+      test.bestScore = Math.max(Number(test.bestScore || 0), percent);
+      test.passedAt = test.passed ? (wasPassed ? (test.passedAt || now) : now) : test.passedAt || null;
+
+      if (!wasCompleted) {
+        const completeXp = Number(config?.rewards?.completeXp || 180);
+        const completeMoon = Number(config?.rewards?.completeMoon || 35);
+        rewardXp += completeXp;
+        rewardMoon += completeMoon;
+        addReward(completeXp, completeMoon, "n4_final_complete");
+      }
+      if (test.passed && !wasPassed) {
+        const passXp = Number(config?.rewards?.passXp || 90);
+        const passMoon = Number(config?.rewards?.passMoon || 15);
+        rewardXp += passXp;
+        rewardMoon += passMoon;
+        addReward(passXp, passMoon, "n4_final_pass");
+      }
+      test.lastRewardXp = rewardXp;
+      test.lastRewardMoon = rewardMoon;
+      state.pendingFocus = null;
+      state.finalTestModal = {
+        kind: "result",
+        level: "N4",
+        title: test.passed ? labels.finalPassed : labels.finalNeedsReview,
+        message: test.passed ? labels.finalPassedText : labels.finalNeedsReviewText,
+        passed: test.passed,
+        percent,
+        correct: score,
+        incorrect: answeredWrong,
+        unanswered: unanswered.length,
+        totalQuestions: questions.length,
+        rewardXp,
+        rewardMoon,
+        attempts: test.attempts,
+        threshold,
+        reviewAction: "n4-review",
+        reviewAllAction: "n4-review",
+        closeLabel: lang() === "ru" ? "OK" : "OK",
+        repeatLabel: labels.repeatMistakes,
+        reviewAllLabel: labels.reviewAll
+      };
+      evaluateAchievements();
+      saveProgress();
+    } catch (error) {
+      console.error(error);
+      toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+    } finally {
+      state.finalTestBusy = false;
+      render();
+    }
+  }
+
+  function resetN4FinalTest() {
+    n4Course().finalTest = defaultN4CourseProgress().finalTest;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
+    saveProgress();
+    renderPreservingScroll();
+  }
+
+  function n4DomId(id) {
+    return `n4-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+  }
+
+  function renderN3CoursePage(textbook) {
+    state.activeTextbookLevel = "N3";
+    state.activeJlptLesson = "N3";
+    const course = ensureN3CourseProgress();
+    if (!course.opened) {
+      course.opened = true;
+      evaluateAchievements();
+      saveProgress();
+    }
+    const subroute = String(state.activeTextbookSubroute || "");
+    if (subroute === "final-test") return renderN3FinalTestPage(textbook);
+    if (subroute === "review") return renderN3ReviewPage(textbook);
+    if (subroute === "kanji") return renderN3KanjiListPage(textbook);
+    if (subroute === "grammar") return renderN3GrammarPage(textbook);
+    if (subroute === "reading") return renderN3ReadingPage(textbook);
+    if (subroute === "listening") return renderN3ListeningPage(textbook);
+    const lesson = n3LessonById(subroute);
+    if (lesson) {
+      n3Course().currentLessonId = lesson.id;
+      markJlptLessonKanjiSeen("N3", lesson, "n3_lesson_page");
+      return renderN3LessonPage(textbook, lesson);
+    }
+    return renderN3OverviewPage(textbook);
+  }
+
+  function renderN3OverviewPage(textbook) {
+    const progress = n3ProgressSummary();
+    const labels = n3Labels();
+    const lessons = n3Lessons();
+    const current = n3CurrentLesson();
+    const meta = state.n3Meta || {};
+    const principle = localized(meta.principle || {});
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · Flash Kanji</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(localized(meta.description || textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn ghost" href="${escapeAttr(meta.pdfUrl || textbook.pdfUrl || textbook.pdfFile || "")}" download="flashkanji_N3_textbook_flashkanji_space.pdf" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+          </div>
+        </div>
+
+        <article class="n5-hero n3-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">370 ${escapeHtml(labels.kanji)} · 80 ${escapeHtml(labels.grammar)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(principle)}</p>
+            <div class="textbook-actions">
+              <a class="btn primary" href="#jlpt/n3/${escapeAttr(current?.id || "n3-lesson-1")}" data-action="n3-open-lesson" data-id="${escapeAttr(current?.id || "n3-lesson-1")}">${escapeHtml(labels.continue)}</a>
+              <button class="btn" type="button" data-action="n3-review" data-mode="due">${escapeHtml(labels.review)}</button>
+              <button class="btn ghost" type="button" data-action="n3-kanji">${escapeHtml(labels.openKanji)}</button>
+              <button class="btn ghost" type="button" data-action="n3-grammar">${escapeHtml(labels.grammarN3)}</button>
+              <button class="btn ghost" type="button" data-action="n3-reading">${escapeHtml(labels.readingN3)}</button>
+              <button class="btn ghost" type="button" data-action="n3-listening">${escapeHtml(labels.listeningN3)}</button>
+              <button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>
+              ${renderJlptEvaTab("N3")}
+            </div>
+          </div>
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.studiedKanji, `${progress.studied}/${progress.total}`, labels.kanji, progressWidth(progress.studied, progress.total))}
+          ${renderMetric(labels.completedLessons, `${progress.completedLessons}/${lessons.length}`, labels.lessons, progressWidth(progress.completedLessons, lessons.length))}
+          ${renderMetric(labels.completedGrammar, `${progress.completedGrammar}/${state.n3Meta?.grammarCount || state.n3Grammar.length}`, labels.grammar, progressWidth(progress.completedGrammar, state.n3Meta?.grammarCount || state.n3Grammar.length))}
+          ${renderMetric(labels.completedReading, `${progress.completedReading}/${state.n3Meta?.readingCount || state.n3Reading.length}`, labels.readingN3, progressWidth(progress.completedReading, state.n3Meta?.readingCount || state.n3Reading.length))}
+          ${renderMetric(labels.completedListening, `${progress.completedListening}/${state.n3Meta?.listeningCount || state.n3Listening.length}`, labels.listeningN3, progressWidth(progress.completedListening, state.n3Meta?.listeningCount || state.n3Listening.length))}
+          ${renderMetric(labels.reviews, progress.reviews, labels.srs, progressWidth(progress.reviews, Math.max(progress.total, 1)))}
+        </div>
+
+        <section class="n5-panel n3-bridge">
+          <div>
+            <h2>${escapeHtml(labels.n5Bridge)}</h2>
+            <p>${escapeHtml(labels.n5BridgeText)}</p>
+          </div>
+          <div class="n3-bridge-grid">
+            ${(meta.n5Bridge || []).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+          </div>
+          <div class="textbook-actions">
+            <a class="btn ghost" href="#jlpt/n4">${escapeHtml(labels.reviewN5Base)}</a>
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div class="n5-panel-head">
+            <div>
+              <h2>${escapeHtml(labels.lessonsTitle)}</h2>
+              <p>${escapeHtml(labels.lessonsDescription)}</p>
+            </div>
+            ${renderJlptEvaTab("N3")}
+          </div>
+          <div class="n5-lesson-grid">
+            ${lessons.map((lesson) => renderN3LessonTile(lesson)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel n5-review-plan">
+          <div>
+            <h2>${escapeHtml(labels.reviewPlan)}</h2>
+            <p>${escapeHtml(localized((state.n3Textbook?.textbook || {}).recommendedCycle || meta.recommendedCycle || {}))}</p>
+          </div>
+          <div class="n5-plan-row">
+            ${(meta.reviewPlan || []).map((item) => `<span class="pill">${escapeHtml(labels.day)} ${escapeHtml(item.day)} · ${escapeHtml(localized(item.label || {}))}</span>`).join("")}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN3LessonTile(lesson) {
+    const status = n3LessonStatus(lesson.id);
+    const labels = n3Labels();
+    const learned = lesson.kanji.filter((kanji) => n3Course().studiedKanji[kanji]).length;
+    return `
+      <a class="n5-lesson-tile ${status}" href="#jlpt/n3/${escapeAttr(lesson.id)}" data-action="n3-open-lesson" data-id="${escapeAttr(lesson.id)}">
+        <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
+        <h3>${escapeHtml(localized(lesson.title))}</h3>
+        <p>${escapeHtml(localized(lesson.goal))}</p>
+        <div class="n5-kanji-strip n3-kanji-strip">${lesson.kanji.map((kanji) => `<b>${escapeHtml(kanji)}</b>`).join("")}</div>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${learned}/${lesson.kanji.length}`)}"><i style="width:${progressWidth(learned, lesson.kanji.length)}%"></i></div>
+        <small>${escapeHtml(learned)}/${escapeHtml(lesson.kanji.length)} · ${escapeHtml(n3LessonStatusLabel(status))}</small>
+        ${renderJlptEvaTab("N3", { inline: true })}
+      </a>
+    `;
+  }
+
+  function renderN3LessonPage(textbook, lesson) {
+    const labels = n3Labels();
+    const cards = n3CardsForLesson(lesson);
+    const exercises = buildN3LessonExercises(lesson);
+    const status = n3LessonStatus(lesson.id);
+    const complete = status === "completed";
+    const correct = exercises.filter((exercise) => n3ExerciseResult(exercise.id)?.correct).length;
+    const difficult = lesson.kanji.filter((kanji) => n3Course().difficultKanji[kanji]).join(" · ");
+    const nextLesson = n3Lessons().find((item) => item.order === lesson.order + 1);
+    const miniReadingItem = n3LessonReadingItem(lesson);
+    const miniReadingComplete = miniReadingItem ? Boolean(n3Course().completedReading[miniReadingItem.id]) : false;
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page n5-lesson-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · ${escapeHtml(labels.lesson)} ${lesson.order}/37</p>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(lesson.goal))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn" type="button" data-action="n3-review" data-mode="difficult">${escapeHtml(labels.difficult)}</button>
+            <button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+
+        <article class="n5-lesson-summary">
+          <div>
+            <span class="pill">${escapeHtml(localized(lesson.theme))}</span>
+            <h2>${escapeHtml(labels.lessonChain)}</h2>
+            <p>${escapeHtml(labels.lessonChainText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.duration)}: ${escapeHtml(lesson.durationMinutes || 30)} ${escapeHtml(labels.minutes)}</span>
+              ${lesson.grammarFocus.map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n3Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}`, labels.kanji, progressWidth(cards.filter((card) => n3Course().studiedKanji[card.kanji]).length, lesson.kanji.length))}
+            ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
+          </div>
+        </article>
+
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN3KanjiStudyCard(card, lesson, index)).join("")}
+        </div>
+
+        ${renderN3LessonGrammar(lesson)}
+
+        ${renderN3LessonMiniReading(lesson)}
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.sentences)}</h2>
+            <p>${escapeHtml(labels.sentencesText)}</p>
+          </div>
+          <div class="n5-sentence-list">
+            ${lesson.sentences.map((sentence) => `
+              <article>
+                <strong>${escapeHtml(sentence.jp)}</strong>
+                <span>${escapeHtml(sentence.reading || "")}</span>
+                <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.exercises)}</h2>
+            <p>${escapeHtml(labels.exercisesText)}</p>
+          </div>
+          <div class="n5-exercise-list">
+            ${exercises.map((exercise) => renderN3Exercise(exercise)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-result-panel ${complete ? "is-complete" : ""}">
+          <div>
+            <h2>${escapeHtml(complete ? labels.lessonComplete : labels.lessonResult)}</h2>
+            <p>${escapeHtml(complete ? labels.lessonCompleteText : labels.lessonResultText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.studiedKanji)}: ${cards.filter((card) => n3Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}</span>
+              <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
+              ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
+              <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="n3-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn" type="button" data-action="n3-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${nextLesson ? `<a class="btn ghost" href="#jlpt/n3/${escapeAttr(nextLesson.id)}" data-action="n3-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>`}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function n3LessonReadingItem(lesson) {
+    if (!lesson?.miniReadingId) return null;
+    return state.n3Reading.find((item) => item.id === lesson.miniReadingId) || null;
+  }
+
+  function renderN3LessonMiniReading(lesson) {
+    const labels = n3Labels();
+    const item = n3LessonReadingItem(lesson);
+    if (!item) return "";
+    return `
+      <section class="n5-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniReadingTitle)}</h2>
+          <p>${escapeHtml(labels.miniReadingText)}</p>
+        </div>
+        ${renderN3ReadingCard(item, "reading")}
+      </section>
+    `;
+  }
+
+  function renderN3KanjiStudyCard(card, lesson, index) {
+    const labels = n3Labels();
+    const progress = getCardProgress(card.id);
+    const examples = n3CardExamples(card);
+    const hint = n3CardHint(card, examples[0]);
+    const written = Boolean(n3Course().writingPractice[card.kanji]);
+    const difficult = Boolean(n3Course().difficultKanji[card.kanji]);
+    return `
+      <article class="n5-kanji-card ${difficult ? "is-difficult" : ""}">
+        <div class="n5-kanji-topline">
+          <span class="pill">${escapeHtml(labels.step)} ${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <dl class="n5-readings">
+          <div><dt>${escapeHtml(labels.onyomi)}</dt><dd>${escapeHtml(card.onyomi || "—")}</dd></div>
+          <div><dt>${escapeHtml(labels.kunyomi)}</dt><dd>${escapeHtml(card.kunyomi || card.hiragana || "—")}</dd></div>
+        </dl>
+        <div class="n5-word-list">
+          ${examples.map((example) => `
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+          `).join("")}
+        </div>
+        <p class="n5-hint">${escapeHtml(hint)}</p>
+        ${renderN3CardSentence(card, lesson)}
+        <div class="textbook-actions">
+          <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn ghost" type="button" data-action="n3-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN3CardSentence(card, lesson) {
+    const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
+    if (!sentence) return "";
+    const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[〜~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+    return `
+      <div class="n5-card-sentence">
+        <strong>${escapeHtml(sentence.jp)}</strong>
+        <span>${escapeHtml(sentence.reading || "")}</span>
+        <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+        ${grammar ? `<small>${escapeHtml(n3Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
+      </div>
+    `;
+  }
+
+  function renderN3LessonGrammar(lesson) {
+    const labels = n3Labels();
+    const grammarItems = (lesson.grammarFocus || []).map((pattern) => n3GrammarByPattern(pattern)).filter(Boolean).slice(0, 3);
+    if (!grammarItems.length) return "";
+    return `
+      <section class="n5-panel n3-grammar-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniGrammar)}</h2>
+          <p>${escapeHtml(labels.miniGrammarText)}</p>
+        </div>
+        <div class="n3-section-grid">
+          ${grammarItems.map((item) => `
+            <article class="n3-grammar-card">
+              <span class="pill">${escapeHtml(item.pattern)}</span>
+              <h3>${escapeHtml(localized(item.title))}</h3>
+              <p>${escapeHtml(localized(item.explanation))}</p>
+              ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+              ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
+              <button class="btn ghost" type="button" data-action="n3-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n3Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3Exercise(exercise) {
+    const labels = n3Labels();
+    const result = n3ExerciseResult(exercise.id);
+    const className = result ? (result.correct ? "is-correct" : "is-wrong") : "";
+    if (exercise.type === "active-recall") {
+      return `
+        <article class="n5-exercise-card ${className}">
+          <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+          <h3>${escapeHtml(exercise.prompt)}</h3>
+          <div class="n5-input-row">
+            <input id="${escapeAttr(n3DomId(exercise.id))}" type="text" maxlength="3" autocomplete="off" value="${escapeAttr(result?.selected || "")}" aria-label="${escapeAttr(localized(exercise.title))}" />
+            <button class="btn primary" type="button" data-action="n3-check-input" data-id="${escapeAttr(exercise.id)}">${escapeHtml(labels.check)}</button>
+            <button class="btn ghost" type="button" data-action="n3-answer" data-id="${escapeAttr(exercise.id)}" data-value="">${escapeHtml(labels.showAnswer)}</button>
+          </div>
+          ${renderN3ExerciseFeedback(exercise, result)}
+        </article>
+      `;
+    }
+    return `
+      <article class="n5-exercise-card ${className}">
+        <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+        <h3>${escapeHtml(exercise.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${exercise.options.map((option) => {
+            const selectedOption = result?.selected === option.value;
+            const answerOption = result && option.value === exercise.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n3-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${renderN3ExerciseFeedback(exercise, result)}
+      </article>
+    `;
+  }
+
+  function renderN3ExerciseFeedback(exercise, result) {
+    if (!result) return "";
+    const labels = n3Labels();
+    const text = result.correct
+      ? labels.correctAnswer
+      : `${labels.wrongAnswer}: ${exercise.answerLabel || exercise.answer}`;
+    return `<p class="n5-feedback">${escapeHtml(text)}</p>`;
+  }
+
+  function renderN3ReviewPage(textbook) {
+    const labels = n3Labels();
+    const mode = n3Course().activeReviewMode || "due";
+    const cards = n3ReviewCards(mode);
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · SRS</p>
+            <h1>${escapeHtml(labels.reviewTitle)}</h1>
+            <p>${escapeHtml(labels.reviewDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="jlpt-filter-bar" role="tablist" aria-label="N3 review modes">
+          ${(state.n3Exercises?.reviewModes || []).map((item) => `
+            <button class="btn ${mode === item.id ? "primary" : "ghost"}" type="button" data-action="n3-review" data-mode="${escapeAttr(item.id)}">${escapeHtml(localized(item.title))}</button>
+          `).join("")}
+        </div>
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN3ReviewCard(card, index)).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReviewCards)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3ReviewCard(card, index) {
+    const labels = n3Labels();
+    const progress = getCardProgress(card.id);
+    return `
+      <article class="n5-kanji-card n5-review-card">
+        <div class="n5-kanji-topline">
+          <span class="pill">${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)} · ${escapeHtml(formatDue(progress.dueAt))}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <p>${escapeHtml(n3CardExamples(card)[0]?.word || card.hiragana || "")} · ${escapeHtml(n3CardExamples(card)[0]?.reading || card.romaji || "")}</p>
+        <div class="textbook-actions">
+          <button class="btn success" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN3KanjiListPage(textbook) {
+    const labels = n3Labels();
+    const cards = n3AllCards();
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · 370</p>
+            <h1>${escapeHtml(labels.kanjiListTitle)}</h1>
+            <p>${escapeHtml(labels.kanjiListText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn" type="button" data-action="n3-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+          </div>
+        </div>
+        <div class="n5-kanji-grid n3-kanji-catalog">
+          ${cards.map((card, index) => `
+            <article class="n5-kanji-card">
+              <div class="n5-kanji-topline"><span class="pill">${index + 1}/370</span><span class="pill">${escapeHtml(getCardProgress(card.id).state)}</span></div>
+              <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+              <h3>${escapeHtml(cardMeaning(card))}</h3>
+              <p>${escapeHtml(n3CardExamples(card)[0]?.word || "")} · ${escapeHtml(n3CardExamples(card)[0]?.reading || "")}</p>
+              <div class="textbook-actions">
+                <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3GrammarPage(textbook) {
+    const labels = n3Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · Grammar</p>
+            <h1>${escapeHtml(labels.grammarTitle)}</h1>
+            <p>${escapeHtml(labels.grammarText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn ghost" type="button" data-action="n3-reading">${escapeHtml(labels.readingN3)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.completedGrammar, `${Object.keys(n3Course().completedGrammar || {}).length}/${state.n3Grammar.length}`, labels.grammar, progressWidth(Object.keys(n3Course().completedGrammar || {}).length, state.n3Grammar.length))}
+          ${renderMetric(labels.questions, state.n3Grammar.length, labels.grammar, 100)}
+        </div>
+        <div class="n3-section-grid">
+          ${state.n3Grammar.map((item) => {
+            const result = n3Course().grammarResults?.[item.id];
+            return `
+              <article class="n3-grammar-card ${result ? (result.correct ? "is-correct" : "is-wrong") : ""}">
+                <span class="pill">${escapeHtml(item.order)} · ${escapeHtml(item.pattern)}</span>
+                <h3>${escapeHtml(localized(item.title))}</h3>
+                <p>${escapeHtml(localized(item.explanation))}</p>
+                ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
+                <div class="n5-option-grid">
+                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                    <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n3-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
+                  `).join("")}
+                </div>
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3ReadingPage(textbook) {
+    const labels = n3Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · Reading</p>
+            <h1>${escapeHtml(labels.readingTitle)}</h1>
+            <p>${escapeHtml(labels.readingText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn ghost" type="button" data-action="n3-listening">${escapeHtml(labels.listeningN3)}</button>
+          </div>
+        </div>
+        <div class="n3-section-grid">
+          ${state.n3Reading.map((item) => renderN3ReadingCard(item, "reading")).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3ListeningPage(textbook) {
+    const labels = n3Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · Listening</p>
+            <h1>${escapeHtml(labels.listeningTitle)}</h1>
+            <p>${escapeHtml(labels.listeningText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="n3-section-grid">
+          ${state.n3Listening.map((item) => renderN3ReadingCard(item, "listening")).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3ReadingCard(item, mode) {
+    const labels = n3Labels();
+    const completed = mode === "reading" ? n3Course().completedReading[item.id] : n3Course().completedListening[item.id];
+    const answerStore = mode === "reading" ? n3Course().readingAnswers : n3Course().listeningAnswers;
+    const action = mode === "reading" ? "n3-reading-complete" : "n3-listening-complete";
+    return `
+      <article class="n3-reading-card ${completed ? "is-correct" : ""}">
+        <span class="pill">${escapeHtml(localized(item.title))}</span>
+        ${Array.isArray(item.dialogue) ? `<div class="n5-sentence-list">${item.dialogue.map((line) => `<article><strong>${escapeHtml(line)}</strong></article>`).join("")}</div>` : `<p class="n3-jp-text">${escapeHtml(item.jp || "")}</p>`}
+        ${item.ru ? `<p>${escapeHtml(item.ru)}</p>` : ""}
+        ${(item.questions || []).map((question, index) => {
+          const key = `${item.id}:${index}`;
+          const result = answerStore?.[key];
+          const options = Array.isArray(question.options) ? question.options : [];
+          return `
+            <div class="n3-question-block">
+              <h3>${escapeHtml(localized(question.prompt || item.question || {}))}</h3>
+              <div class="n5-option-grid">
+                ${options.map((option) => `<button class="btn ${result?.selected === option.value ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="${escapeAttr(action)}" data-id="${escapeAttr(item.id)}" data-question="${escapeAttr(index)}" data-value="${escapeAttr(option.value)}">${escapeHtml(localized(option.label || option))}</button>`).join("")}
+              </div>
+              ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : labels.wrongAnswer)}</p>` : ""}
+            </div>
+          `;
+        }).join("")}
+      </article>
+    `;
+  }
+
+  function renderN3FinalTestPage(textbook) {
+    const labels = n3Labels();
+    const config = state.n3FinalTest || {};
+    const questions = buildN3FinalQuestions();
+    const test = n3Course().finalTest;
+    const stats = finalTestQuestionStats(test, questions);
+    const answered = stats.answered;
+    const ready = stats.ready;
+    const completed = Boolean(test.completedAt);
+    return `
+      <section class="page textbooks-page n5-course-page n3-course-page n5-final-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N3 · Final</p>
+            <h1>${escapeHtml(localized(config.title || {}))}</h1>
+            <p>${escapeHtml(localized(config.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.backToN3)}</button>
+            <button class="btn" type="button" data-action="n3-final-reset">${escapeHtml(labels.resetTest)}</button>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
+          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
+          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+        </div>
+
+        ${completed ? `
+          <section class="n5-result-panel ${test.passed ? "is-complete" : ""}">
+            <div>
+              <h2>${escapeHtml(test.passed ? labels.finalPassed : labels.finalNeedsReview)}</h2>
+              <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
+            </div>
+            <button class="btn primary" type="button" data-action="n3-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+          </section>
+        ` : ""}
+
+        <div class="n5-exercise-list">
+          ${questions.map((question, index) => renderN3FinalQuestion(question, index)).join("")}
+        </div>
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        <div class="n5-final-actions">
+          <button class="btn primary" type="button" data-action="n3-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn ghost" type="button" data-action="n3-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN3FinalQuestion(question, index) {
+    const answer = n3Course().finalTest.answers?.[question.id];
+    const complete = Boolean(n3Course().finalTest.completedAt);
+    return `
+      <article class="n5-exercise-card ${complete ? (answer === question.answer ? "is-correct" : "is-wrong") : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.type)}</span>
+        <h3>${escapeHtml(question.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${question.options.map((option) => {
+            const selectedOption = answer === option.value;
+            const answerOption = complete && option.value === question.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "primary" : "ghost"}" type="button" data-action="n3-final-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${complete && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(n3Labels().wrongAnswer)}: ${escapeHtml(question.answerLabel)}</p>` : ""}
+      </article>
+    `;
+  }
+
+  function n3Labels() {
+    return lang() === "ru"
+      ? {
+        title: "JLPT N3",
+        allTextbooks: "Все учебники",
+        pdf: "PDF-учебник",
+        kanji: "кандзи",
+        grammar: "грамматика",
+        courseMap: "Интерактивный учебник N3 как мост к среднему уровню",
+        continue: "Продолжить",
+        review: "Повторять N3",
+        openKanji: "Открыть список кандзи",
+        grammarN3: "Грамматика N3",
+        readingN3: "Чтение N3",
+        listeningN3: "Аудирование N3",
+        finalTest: "Финальный тест",
+        studiedKanji: "Изучено",
+        completedLessons: "Уроки",
+        completedGrammar: "Грамматика",
+        completedReading: "Reading",
+        completedListening: "Listening",
+        reviews: "Повторения",
+        difficult: "Сложные",
+        srs: "SRS",
+        lessons: "уроков",
+        lessonsTitle: "37 уроков примерно по 10 кандзи",
+        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, мини-текст, упражнения, письмо и SRS.",
+        reviewPlan: "План повторения на 60 дней",
+        day: "день",
+        lesson: "Урок",
+        backToN3: "К N3",
+        n5Bridge: "N5/N4 bridge",
+        n5BridgeText: "Если база N5 и N4 дырявая, N3 будет ощущаться как стена. Сначала проверь частицы, базовые связки, условные формы и привычные повседневные конструкции.",
+        reviewN5Base: "Повторить N5/N4 перед N3",
+        lessonChain: "Кандзи -> слово -> грамматика -> предложение -> абзац -> чтение -> вывод -> SRS",
+        lessonChainText: "N3 больше не живёт списком знаков: каждый знак сразу входит в слово, грамматическую связку, мини-текст и повторение по смыслу.",
+        duration: "Длительность",
+        minutes: "мин",
+        exercises: "Упражнения",
+        correct: "верно",
+        sentences: "Примеры предложений",
+        sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
+        exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, мини-чтение и активное вспоминание.",
+        lessonComplete: "Урок завершён",
+        lessonCompleteText: "Кандзи урока добавлены в N3-review и общий SRS.",
+        lessonResult: "Итог урока",
+        lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
+        completeLesson: "Завершить урок",
+        refreshLesson: "Обновить итог",
+        repeatMistakes: "Повторить ошибки",
+        nextLesson: "Следующий урок",
+        none: "нет",
+        step: "шаг",
+        onyomi: "онъёми",
+        kunyomi: "кунъёми",
+        addToSrs: "Добавить в SRS",
+        know: "Я знаю",
+        hard: "Сложно",
+        writingPractice: "Практика письма",
+        markWritten: "Написано",
+        written: "Письмо засчитано",
+        miniGrammar: "Мини-грамматика урока",
+        miniGrammarText: "1-3 конструкции, которые сразу связывают кандзи с точкой зрения, причиной или выводом.",
+        miniReadingTitle: "Мини-reading урока",
+        miniReadingText: "Пойми, кто, что, почему и к какому выводу ведёт короткий N3-текст.",
+        markGrammar: "Засчитать конструкцию",
+        completed: "Пройдено",
+        check: "Проверить",
+        showAnswer: "Сложно: показать ответ",
+        correctAnswer: "Верно. XP и Moon Fragment начислены.",
+        wrongAnswer: "Пока нет",
+        reviewTitle: "N3-повторение",
+        reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N3.",
+        noReviewCards: "Сейчас нет карточек в этом фильтре.",
+        kanjiListTitle: "370 кандзи N3",
+        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в SRS или открыть письмо.",
+        grammarTitle: "80 грамматических конструкций N3",
+        grammarText: "Рабочие карточки с функцией, формулой, примером и проверкой понимания в письменном и разговорном контексте.",
+        readingTitle: "Тексты для чтения N3",
+        readingText: "Короткие тексты и lesson mini-readings связывают кандзи, слова, грамматику и выводы в живой контекст.",
+        listeningTitle: "Скрипты для аудирования N3",
+        listeningText: "Скрипты можно читать вслух, озвучивать через TTS и использовать для shadowing и проверки понимания.",
+        questions: "Вопросы",
+        score: "Результат",
+        mistakes: "Ошибки",
+        resetTest: "Сбросить тест",
+        submitFinal: "Завершить тест",
+        reviewAll: "Повторить весь N3",
+        finalPassed: "N3 пройден",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalNeedsReview: "Нужно повторить",
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+      }
+      : {
+        title: "JLPT N3",
+        allTextbooks: "All textbooks",
+        pdf: "PDF textbook",
+        kanji: "kanji",
+        grammar: "grammar",
+        courseMap: "Interactive N3 textbook after N5",
+        continue: "Continue",
+        review: "Review N3",
+        openKanji: "Open kanji list",
+        grammarN3: "N3 grammar",
+        readingN3: "N3 reading",
+        listeningN3: "N3 listening",
+        finalTest: "Final test",
+        studiedKanji: "Studied",
+        completedLessons: "Lessons",
+        completedGrammar: "Grammar",
+        completedReading: "Reading",
+        completedListening: "Listening",
+        reviews: "Reviews",
+        difficult: "Difficult",
+        srs: "SRS",
+        lessons: "lessons",
+        lessonsTitle: "37 lessons, about 10 kanji each",
+        lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, mini reading, exercises, writing, and SRS.",
+        reviewPlan: "60-day review plan",
+        day: "day",
+        lesson: "Lesson",
+        backToN3: "To N3",
+        n5Bridge: "N5/N4 bridge",
+        n5BridgeText: "If the N5 and N4 base is shaky, N3 feels like a wall. Review particles, conditionals, and the everyday support grammar first.",
+        reviewN5Base: "Review N5/N4 before N3",
+        lessonChain: "Kanji -> word -> grammar -> sentence -> paragraph -> reading -> conclusion -> SRS",
+        lessonChainText: "N3 is not a bare list: each sign gets a word, grammar link, mini text, and review context.",
+        duration: "Duration",
+        minutes: "min",
+        exercises: "Exercises",
+        correct: "correct",
+        sentences: "Example sentences",
+        sentencesText: "Read aloud and notice where grammar carries meaning and argument flow.",
+        exercisesText: "Mixed tasks check kanji, words, reading, translation, grammar, mini reading, and active recall.",
+        lessonComplete: "Lesson complete",
+        lessonCompleteText: "Lesson kanji are available in N3 review and the shared SRS.",
+        lessonResult: "Lesson result",
+        lessonResultText: "Complete the lesson when cards and exercises are ready for review.",
+        completeLesson: "Complete lesson",
+        refreshLesson: "Refresh result",
+        repeatMistakes: "Repeat mistakes",
+        nextLesson: "Next lesson",
+        none: "none",
+        step: "step",
+        onyomi: "onyomi",
+        kunyomi: "kunyomi",
+        addToSrs: "Add to SRS",
+        know: "I know",
+        hard: "Hard",
+        writingPractice: "Writing practice",
+        markWritten: "Written",
+        written: "Writing counted",
+        miniGrammar: "Lesson mini grammar",
+        miniGrammarText: "1-3 constructions that push kanji into viewpoint, cause, and conclusion.",
+        miniReadingTitle: "Lesson mini reading",
+        miniReadingText: "Understand who, what, why, and what conclusion the short N3 text points to.",
+        markGrammar: "Mark construction",
+        completed: "Completed",
+        check: "Check",
+        showAnswer: "Hard: show answer",
+        correctAnswer: "Correct. XP and Moon Fragment awarded.",
+        wrongAnswer: "Not yet",
+        reviewTitle: "N3 review",
+        reviewDescription: "Review due cards, difficult kanji, or the full N3 set.",
+        noReviewCards: "No cards in this filter right now.",
+        kanjiListTitle: "370 N3 kanji",
+        kanjiListText: "Full textbook list with quick SRS and writing actions.",
+        grammarTitle: "80 N3 grammar constructions",
+        grammarText: "Compact cards with function, formula, example, and comprehension check.",
+        readingTitle: "N3 reading texts",
+        readingText: "Short texts and lesson mini readings connect kanji, words, grammar, and conclusions.",
+        listeningTitle: "N3 listening scripts",
+        listeningText: "Read dialogues aloud, use TTS, or shadow them as listening scripts.",
+        questions: "Questions",
+        score: "Score",
+        mistakes: "Mistakes",
+        resetTest: "Reset test",
+        submitFinal: "Finish test",
+        reviewAll: "Review all N3",
+        finalPassed: "N3 passed",
+        finalPassedText: "Great. You can send mistakes back to SRS separately.",
+        finalNeedsReview: "Review needed",
+        finalNeedsReviewText: "Mistakes were marked difficult and raised in SRS."
+      };
+  }
+
+  function ensureN3CourseProgress() {
+    state.progress.n3Course = mergeN3CourseProgress(defaultN3CourseProgress(), state.progress.n3Course || {});
+    const lessons = n3Lessons();
+    const active = n3LessonById(state.progress.n3Course.currentLessonId);
+    if (!active && lessons[0]) state.progress.n3Course.currentLessonId = lessons[0].id;
+    const firstOpen = lessons.find((lesson) => !state.progress.n3Course.completedLessons[lesson.id]);
+    if (!state.progress.n3Course.currentLessonId && firstOpen) state.progress.n3Course.currentLessonId = firstOpen.id;
+    return state.progress.n3Course;
+  }
+
+  function n3Course() {
+    return ensureN3CourseProgress();
+  }
+
+  function n3Lessons() {
+    return state.n3Textbook?.items || [];
+  }
+
+  function n3LessonById(id) {
+    const raw = String(id || "");
+    if (!raw) return null;
+    return n3Lessons().find((lesson) =>
+      lesson.id === raw
+      || lesson.id === `n3-${raw}`
+      || lesson.id.endsWith(`-${raw}`)
+    ) || null;
+  }
+
+  function n3CurrentLesson() {
+    return n3LessonById(n3Course().currentLessonId) || n3Lessons().find((lesson) => !n3Course().completedLessons[lesson.id]) || n3Lessons()[0] || null;
+  }
+
+  function n3CardsForLesson(lesson) {
+    return (lesson?.kanji || []).map((kanji) => n3CardByKanji(kanji)).filter(Boolean);
+  }
+
+  function n3AllCards() {
+    const seen = new Set();
+    return (state.n3KanjiCatalog || []).map((detail) => n3CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
+      if (seen.has(card.kanji)) return false;
+      seen.add(card.kanji);
+      return true;
+    });
+  }
+
+  function n3CardByKanji(kanji) {
+    const literal = String(kanji || "");
+    const detail = state.n3KanjiCatalog?.find((item) => item.kanji === literal) || null;
+    const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N3")
+      || (detail ? state.cards.find((item) => String(item.id) === String(detail.courseCardId || detail.id)) : null)
+      || null;
+    if (card && detail) return mergeN3CardDetail(card, detail);
+    if (card) return card;
+    if (!detail) return null;
+    return mergeN3CardDetail({
+      id: detail.courseCardId || detail.id,
+      kanji: detail.kanji,
+      lessonId: detail.lessonId,
+      jlpt: "N3",
+      examples: []
+    }, detail);
+  }
+
+  function n3GrammarByPattern(pattern) {
+    const raw = String(pattern || "");
+    return state.n3Grammar.find((item) => item.pattern === raw || item.id === raw || item.pattern.includes(raw) || raw.includes(item.pattern)) || null;
+  }
+
+  function n3CardExamples(card) {
+    const examples = Array.isArray(card.examples) ? card.examples : [];
+    if (examples.length) return examples.slice(0, 3);
+    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+  }
+
+  function n3CardHint(card, example) {
+    if (lang() === "ru" && card.n3Detail?.hintRu) return card.n3Detail.hintRu;
+    const word = example?.word || card.kanji;
+    const reading = example?.reading || card.hiragana || "";
+    return lang() === "ru"
+      ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+      : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
+  }
+
+  function n3ProgressSummary() {
+    const cards = n3AllCards();
+    const course = n3Course();
+    const studied = new Set(Object.keys(course.studiedKanji || {}));
+    cards.forEach((card) => {
+      if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
+    });
+    return {
+      total: state.n3Meta?.kanjiCount || cards.length || 370,
+      studied: studied.size,
+      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedGrammar: Object.keys(course.completedGrammar || {}).length,
+      completedReading: Object.keys(course.completedReading || {}).length,
+      completedListening: Object.keys(course.completedListening || {}).length,
+      reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
+      difficult: Object.keys(course.difficultKanji || {}).length
+    };
+  }
+
+  function n3LessonStatus(lessonId) {
+    const course = n3Course();
+    if (course.completedLessons[lessonId]) return "completed";
+    const lesson = n3LessonById(lessonId);
+    if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
+    return "new";
+  }
+
+  function n3LessonStatusLabel(status) {
+    if (status === "completed") return lang() === "ru" ? "завершён" : "completed";
+    if (status === "started") return lang() === "ru" ? "начат" : "started";
+    return lang() === "ru" ? "не начат" : "new";
+  }
+
+  function buildN3LessonExercises(lesson) {
+    const cards = n3CardsForLesson(lesson);
+    if (!cards.length) return [];
+    const sentences = lesson.sentences || [];
+    const exerciseTitles = Object.fromEntries((state.n3Exercises?.types || []).map((item) => [item.type, item.title]));
+    const rewardByType = Object.fromEntries((state.n3Exercises?.types || []).map((item) => [item.type, item]));
+    const getReward = (type) => rewardByType[type] || { rewardXp: state.n3Meta?.rewards?.exerciseXp || 10, rewardMoon: state.n3Meta?.rewards?.exerciseMoon || 1 };
+    const exercises = [];
+    const meaningCard = cards[0];
+    exercises.push({
+      id: `${lesson.id}-meaning-0`,
+      type: "meaning",
+      title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+      prompt: meaningCard.kanji,
+      answer: meaningCard.id,
+      answerLabel: cardMeaning(meaningCard),
+      kanji: meaningCard.kanji,
+      cardId: meaningCard.id,
+      options: n3OptionSet({ value: meaningCard.id, label: cardMeaning(meaningCard) }, cards.slice(1).map((card) => ({ value: card.id, label: cardMeaning(card) })), 1),
+      ...getReward("meaning")
+    });
+    const kanjiCard = cards[1] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-kanji-1`,
+      type: "kanji",
+      title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+      prompt: cardMeaning(kanjiCard),
+      answer: kanjiCard.kanji,
+      answerLabel: kanjiCard.kanji,
+      kanji: kanjiCard.kanji,
+      cardId: kanjiCard.id,
+      options: n3OptionSet({ value: kanjiCard.kanji, label: kanjiCard.kanji }, cards.filter((card) => card.id !== kanjiCard.id).map((card) => ({ value: card.kanji, label: card.kanji })), 2),
+      ...getReward("kanji")
+    });
+    const readingCard = cards[2] || cards[0];
+    const readingExample = n3CardExamples(readingCard)[0];
+    exercises.push({
+      id: `${lesson.id}-reading-2`,
+      type: "reading",
+      title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+      prompt: readingExample.word || readingCard.kanji,
+      answer: readingExample.reading || readingCard.hiragana || "",
+      answerLabel: readingExample.reading || readingCard.hiragana || "",
+      kanji: readingCard.kanji,
+      cardId: readingCard.id,
+      options: n3OptionSet({ value: readingExample.reading || readingCard.hiragana || "", label: readingExample.reading || readingCard.hiragana || "" }, cards.flatMap((card) => n3CardExamples(card).map((example) => ({ value: example.reading, label: example.reading }))).filter((item) => item.value && item.value !== readingExample.reading), 3),
+      ...getReward("reading")
+    });
+    const sentence = sentences[0];
+    if (sentence) {
+      exercises.push({
+        id: `${lesson.id}-sentence-3`,
+        type: "sentence",
+        title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+        prompt: sentence.jp,
+        answer: localized({ ru: sentence.ru, en: sentence.en }),
+        answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        options: n3OptionSet(
+          { value: localized({ ru: sentence.ru, en: sentence.en }), label: localized({ ru: sentence.ru, en: sentence.en }) },
+          sentences.slice(1).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })),
+          1
+        ),
+        ...getReward("sentence")
+      });
+    }
+    const wordCard = cards[3] || cards[0];
+    const wordExample = n3CardExamples(wordCard)[0];
+    exercises.push({
+      id: `${lesson.id}-word-4`,
+      type: "missing-word",
+      title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
+      prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+      answer: wordExample.word || wordCard.kanji,
+      answerLabel: wordExample.word || wordCard.kanji,
+      kanji: wordCard.kanji,
+      cardId: wordCard.id,
+      options: n3OptionSet({ value: wordExample.word || wordCard.kanji, label: wordExample.word || wordCard.kanji }, cards.flatMap((card) => n3CardExamples(card).map((example) => ({ value: example.word, label: example.word }))).filter((item) => item.value && item.value !== wordExample.word), 2),
+      ...getReward("missing-word")
+    });
+    const recallCard = cards[4] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-active-5`,
+      type: "active-recall",
+      title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
+      prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+      answer: recallCard.kanji,
+      answerLabel: recallCard.kanji,
+      kanji: recallCard.kanji,
+      cardId: recallCard.id,
+      options: [],
+      ...getReward("active-recall")
+    });
+    const grammar = n3GrammarByPattern(lesson.grammarFocus?.[0]);
+    if (grammar) {
+      exercises.push({
+        id: `${lesson.id}-grammar-6`,
+        type: "grammar-link",
+        title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+        prompt: localized(grammar.question || grammar.explanation),
+        answer: grammar.answer,
+        answerLabel: grammar.answer,
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        grammarId: grammar.id,
+        options: n3OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+        ...getReward("grammar-link")
+      });
+    }
+    const miniSentence = sentences[1] || sentences[0];
+    if (miniSentence) {
+      exercises.push({
+        id: `${lesson.id}-mini-reading-7`,
+        type: "mini-reading",
+        title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+        prompt: miniSentence.jp,
+        answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+        answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+        kanji: cards[1]?.kanji || cards[0].kanji,
+        cardId: cards[1]?.id || cards[0].id,
+        options: n3OptionSet({ value: localized({ ru: miniSentence.ru, en: miniSentence.en }), label: localized({ ru: miniSentence.ru, en: miniSentence.en }) }, sentences.filter((item) => item.jp !== miniSentence.jp).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })), 2),
+        ...getReward("mini-reading")
+      });
+    }
+    return exercises.slice(0, state.n3Exercises?.lessonQuestionCount || 8);
+  }
+
+  function n3OptionSet(correct, distractors, rotateBy = 0) {
+    const seen = new Set([String(correct.value)]);
+    const options = [correct].filter((item) => String(item.value || ""));
+    distractors.forEach((option) => {
+      const value = String(option.value || "");
+      if (!value || seen.has(value) || options.length >= 4) return;
+      seen.add(value);
+      options.push(option);
+    });
+    n3AllCards().forEach((card) => {
+      if (options.length >= 4) return;
+      const fallback = { value: card.kanji, label: card.kanji };
+      if (!seen.has(String(fallback.value))) {
+        seen.add(String(fallback.value));
+        options.push(fallback);
+      }
+    });
+    if (options.length <= 1) return options;
+    const shift = rotateBy % options.length;
+    return [...options.slice(shift), ...options.slice(0, shift)];
+  }
+
+  function findN3Exercise(id) {
+    for (const lesson of n3Lessons()) {
+      const exercise = buildN3LessonExercises(lesson).find((item) => item.id === id);
+      if (exercise) return exercise;
+    }
+    return null;
+  }
+
+  function n3ExerciseResult(id) {
+    return n3Course().exerciseResults?.[id] || null;
+  }
+
+  function answerN3Exercise(target) {
+    const exercise = findN3Exercise(target.dataset.id);
+    if (!exercise) return;
+    const value = target.dataset.value || "";
+    const selected = value || exercise.answer;
+    const correct = selected === exercise.answer;
+    recordN3ExerciseResult(exercise, selected, correct);
+  }
+
+  function checkN3InputExercise(id) {
+    const exercise = findN3Exercise(id);
+    if (!exercise) return;
+    const input = document.getElementById(n3DomId(exercise.id));
+    const value = input ? String(input.value || "").trim() : "";
+    recordN3ExerciseResult(exercise, value, value === exercise.answer);
+  }
+
+  function recordN3ExerciseResult(exercise, selectedValue, correct) {
+    const course = n3Course();
+    course.exerciseResults[exercise.id] = {
+      selected: selectedValue,
+      correct,
+      checkedAt: new Date().toISOString()
+    };
+    if (correct) {
+      if (!course.completedExercises[exercise.id]) {
+        course.completedExercises[exercise.id] = new Date().toISOString();
+        markN3KanjiStudied(exercise.kanji, exercise.cardId);
+        if (exercise.grammarId) course.completedGrammar[exercise.grammarId] = course.completedGrammar[exercise.grammarId] || new Date().toISOString();
+        addReward(Number(exercise.rewardXp || state.n3Meta?.rewards?.exerciseXp || 10), Number(exercise.rewardMoon || state.n3Meta?.rewards?.exerciseMoon || 1), `n3_exercise:${exercise.id}`);
+      }
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      markN3KanjiDifficult(exercise.kanji, exercise.cardId);
+      course.kanjiMistakes[exercise.kanji] = Number(course.kanjiMistakes[exercise.kanji] || 0) + 1;
+      if (exercise.type === "reading" || exercise.type === "missing-word") course.wordMistakes[exercise.answerLabel || exercise.answer] = Number(course.wordMistakes[exercise.answerLabel || exercise.answer] || 0) + 1;
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function handleN3SrsAction(cardId, rating) {
+    const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const before = cloneProgress(getCardProgress(card.id));
+    const after = calculateNextProgress(before, rating);
+    state.progress.cards[card.id] = after;
+    updateDailyStats(before, after, rating);
+    checkDailyGoal();
+    markN3KanjiStudied(card.kanji, card.id);
+    n3Course().srsKanji[card.kanji] = new Date().toISOString();
+    if (isForgottenRating(rating)) {
+      markN3KanjiDifficult(card.kanji, card.id);
+      state.progress.totalWrong += 1;
+      addReward(state.n3Meta?.rewards?.hardXp || 2, 0, `n3_srs_hard:${card.id}`);
+      playUxSound("answer_wrong");
+    } else {
+      state.progress.totalCorrect += 1;
+      addReward(rating === "easy" ? (state.n3Meta?.rewards?.knowXp || 8) : (state.n3Meta?.rewards?.addToSrsXp || 6), 1, `n3_srs:${card.id}`);
+      playUxSound("answer_correct");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN3Writing(cardId) {
+    const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const course = n3Course();
+    if (!course.writingPractice[card.kanji]) {
+      course.writingPractice[card.kanji] = new Date().toISOString();
+      state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+      state.progress.writingPractice.cards[card.id] = {
+        completed: Number(state.progress.writingPractice.cards[card.id]?.completed || 0) + 1,
+        lastAt: new Date().toISOString()
+      };
+      markN3KanjiStudied(card.kanji, card.id);
+      addReward(9, 1, `n3_writing:${card.id}`);
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN3Lesson(lessonId) {
+    const lesson = n3LessonById(lessonId);
+    if (!lesson) return;
+    const course = n3Course();
+    n3CardsForLesson(lesson).forEach((card) => {
+      markN3KanjiStudied(card.kanji, card.id);
+      course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
+      const progress = getCardProgress(card.id);
+      if (progress.state === "New") state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
+    });
+    (lesson.grammarFocus || []).map((pattern) => n3GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
+      course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
+    });
+    const firstCompletion = !course.completedLessons[lesson.id];
+    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.currentLessonId = n3Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+    if (firstCompletion) {
+      const xp = state.n3Meta?.rewards?.lessonCompleteXp || 75;
+      const coins = state.n3Meta?.rewards?.lessonCompleteMoon || 9;
+      addReward(xp, coins, `n3_lesson:${lesson.id}`);
+      queueReward({
+        title: `${n3Labels().lessonComplete}: ${localized(lesson.title)}`,
+        message: n3Labels().lessonCompleteText,
+        xp,
+        coins,
+        mascot: "eva",
+        mood: "happy",
+        dialog: "lessonComplete"
+      });
+      playUxSound("lesson_complete");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN3KanjiStudied(kanji, cardId = null) {
+    if (!kanji) return;
+    const course = n3Course();
+    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+  }
+
+  function markN3KanjiDifficult(kanji, cardId = null) {
+    if (!kanji) return;
+    n3Course().difficultKanji[kanji] = new Date().toISOString();
+    if (cardId) {
+      const progress = getCardProgress(cardId);
+      if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
+    }
+  }
+
+  function completeN3Grammar(id, value = "") {
+    const item = state.n3Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
+    if (!item) return;
+    const selected = value || item.answer;
+    const correct = selected === item.answer;
+    const course = n3Course();
+    course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
+    if (correct && !course.completedGrammar[item.id]) {
+      course.completedGrammar[item.id] = new Date().toISOString();
+      addReward(state.n3Meta?.rewards?.grammarXp || 11, state.n3Meta?.rewards?.grammarMoon || 1, `n3_grammar:${item.id}`);
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else if (!correct) {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN3Reading(id, questionIndex = "0", value = "") {
+    completeN3Comprehension("reading", id, questionIndex, value);
+  }
+
+  function completeN3Listening(id, questionIndex = "0", value = "") {
+    completeN3Comprehension("listening", id, questionIndex, value);
+  }
+
+  function completeN3Comprehension(mode, id, questionIndex = "0", value = "") {
+    const collection = mode === "reading" ? state.n3Reading : state.n3Listening;
+    const item = collection.find((entry) => entry.id === id);
+    if (!item) return;
+    const index = Number(questionIndex || 0);
+    const question = (item.questions || [])[index];
+    if (!question) return;
+    const correct = value === question.answer;
+    const key = `${item.id}:${index}`;
+    const course = n3Course();
+    const answers = mode === "reading" ? course.readingAnswers : course.listeningAnswers;
+    const completed = mode === "reading" ? course.completedReading : course.completedListening;
+    const wasCompleted = Boolean(completed[item.id]);
+    answers[key] = { selected: value, correct, checkedAt: new Date().toISOString() };
+    const allCorrect = (item.questions || []).every((_, itemIndex) => answers[`${item.id}:${itemIndex}`]?.correct);
+    if (correct) {
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+    if (allCorrect && !wasCompleted) {
+      completed[item.id] = new Date().toISOString();
+      const xp = mode === "reading" ? state.n3Meta?.rewards?.readingXp || 38 : state.n3Meta?.rewards?.listeningXp || 34;
+      const coins = mode === "reading" ? state.n3Meta?.rewards?.readingMoon || 4 : state.n3Meta?.rewards?.listeningMoon || 4;
+      addReward(xp, coins, `n3_${mode}:${item.id}`);
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function openN3Lesson(id) {
+    const lesson = n3LessonById(id);
+    if (!lesson) return;
+    n3Course().currentLessonId = lesson.id;
+    markJlptLessonKanjiSeen("N3", lesson, "n3_lesson_open");
+    setN3Hash(lesson.id);
+  }
+
+  function openN3Overview() {
+    setN3Hash("");
+  }
+
+  function openN3Review(mode = null) {
+    if (mode) n3Course().activeReviewMode = mode;
+    setN3Hash("review");
+  }
+
+  function openN3KanjiList() {
+    setN3Hash("kanji");
+  }
+
+  function openN3Grammar() {
+    setN3Hash("grammar");
+  }
+
+  function openN3Reading() {
+    setN3Hash("reading");
+  }
+
+  function openN3Listening() {
+    setN3Hash("listening");
+  }
+
+  function openN3FinalTest() {
+    setN3Hash("final-test");
+  }
+
+  function setN3Hash(subroute) {
+    state.route = "textbooks";
+    state.activeTextbookLevel = "N3";
+    state.activeTextbookSubroute = subroute || null;
+    n3Course().opened = true;
+    const nextHash = subroute ? `#jlpt/n3/${encodeURIComponent(subroute)}` : "#jlpt/n3";
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    rememberJlptModuleVisit("N3", jlptModuleResolvedLessonId("N3", subroute), subroute || "overview");
+    evaluateAchievements();
+    saveProgress();
+    render();
+    scrollPageToTop();
+  }
+
+  function n3ReviewCards(mode = "due") {
+    const now = Date.now();
+    const course = n3Course();
+    const cards = n3AllCards();
+    if (mode === "difficult") return cards.filter((card) => course.difficultKanji[card.kanji]);
+    if (mode === "all") return cards;
+    return cards.filter((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" && (!progress.dueAt || new Date(progress.dueAt).getTime() <= now);
+    });
+  }
+
+  function buildN3FinalQuestions() {
+    const cards = n3AllCards();
+    if (!cards.length) return [];
+    const types = state.n3FinalTest?.types || ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"];
+    const count = Math.min(state.n3FinalTest?.questionCount || 32, Math.max(cards.length, 1));
+    const questions = [];
+    for (let index = 0; index < count; index += 1) {
+      const card = cards[(index * 11) % cards.length] || cards[index % cards.length];
+      const type = types[index % types.length];
+      const lesson = n3Lessons().find((item) => item.kanji.includes(card.kanji)) || n3Lessons()[0];
+      questions.push(buildN3FinalQuestion(type, card, lesson, index));
+    }
+    return questions.filter(Boolean);
+  }
+
+  function buildN3FinalQuestion(type, card, lesson, index) {
+    const examples = n3CardExamples(card);
+    const example = examples[0] || {};
+    const sentence = (lesson?.sentences || []).find((item) => item.jp.includes(card.kanji)) || lesson?.sentences?.[0];
+    if (type === "meaning") {
+      return {
+        id: `n3-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: card.kanji,
+        answer: card.id,
+        answerLabel: cardMeaning(card),
+        options: n3OptionSet({ value: card.id, label: cardMeaning(card) }, n3AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.id, label: cardMeaning(item) })), index)
+      };
+    }
+    if (type === "reading") {
+      return {
+        id: `n3-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: example.word || card.kanji,
+        answer: example.reading || card.hiragana || "",
+        answerLabel: example.reading || card.hiragana || "",
+        options: n3OptionSet({ value: example.reading || card.hiragana || "", label: example.reading || card.hiragana || "" }, n3AllCards().flatMap((item) => n3CardExamples(item).map((word) => ({ value: word.reading, label: word.reading }))).filter((item) => item.value && item.value !== example.reading), index)
+      };
+    }
+    if (type === "sentence" && sentence) {
+      const answer = localized({ ru: sentence.ru, en: sentence.en });
+      return {
+        id: `n3-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: sentence.jp,
+        answer,
+        answerLabel: answer,
+        options: n3OptionSet({ value: answer, label: answer }, n3Lessons().flatMap((item) => item.sentences || []).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })).filter((item) => item.value !== answer), index)
+      };
+    }
+    if (type === "word") {
+      const answer = example.word || card.kanji;
+      return {
+        id: `n3-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: exampleTranslation(example),
+        answer,
+        answerLabel: answer,
+        options: n3OptionSet({ value: answer, label: answer }, n3AllCards().flatMap((item) => n3CardExamples(item).map((word) => ({ value: word.word, label: word.word }))).filter((item) => item.value && item.value !== answer), index)
+      };
+    }
+    if (type === "grammar") {
+      const grammar = state.n3Grammar[index % Math.max(state.n3Grammar.length, 1)];
+      if (grammar) {
+        return {
+          id: `n3-final-${index}`,
+          type,
+          grammarId: grammar.id,
+          prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
+          answer: grammar.answer,
+          answerLabel: grammar.answer,
+          options: n3OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+        };
+      }
+    }
+    if (type === "mini-reading") {
+      const reading = state.n3Reading[index % Math.max(state.n3Reading.length, 1)];
+      const question = reading?.questions?.[0];
+      if (reading && question) {
+        return {
+          id: `n3-final-${index}`,
+          type,
+          readingId: reading.id,
+          prompt: `${reading.jp || localized(reading.title)} ${localized(question.prompt)}`,
+          answer: question.answer,
+          answerLabel: localized((question.options || []).find((item) => item.value === question.answer)?.label || question.answer),
+          options: (question.options || []).map((option) => ({ value: option.value, label: localized(option.label || option) }))
+        };
+      }
+    }
+    if (type === "srs") {
+      return {
+        id: `n3-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        answer: "remember",
+        answerLabel: lang() === "ru" ? "Помню" : "Remember",
+        options: [
+          { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
+          { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
+          { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+        ]
+      };
+    }
+    return {
+      id: `n3-final-${index}`,
+      type: "kanji",
+      cardId: card.id,
+      kanji: card.kanji,
+      prompt: cardMeaning(card),
+      answer: card.kanji,
+      answerLabel: card.kanji,
+      options: n3OptionSet({ value: card.kanji, label: card.kanji }, n3AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.kanji, label: item.kanji })), index)
+    };
+  }
+
+  function answerN3FinalQuestion(target) {
+    const id = target.dataset.id;
+    const value = target.dataset.value || "";
+    if (!id) return;
+    n3Course().finalTest.answers[id] = value;
+    saveProgress();
+    render();
+  }
+
+  function submitN3FinalTest(force = false) {
+    if (state.finalTestBusy) return;
+    state.finalTestBusy = true;
+    try {
+      const questions = buildN3FinalQuestions();
+      const test = n3Course().finalTest;
+      const config = state.n3FinalTest || {};
+      const labels = n3Labels();
+      const stats = finalTestQuestionStats(test, questions);
+      const threshold = Number(config?.passingPercent ?? config?.passThreshold ?? 80);
+      const allowIncomplete = Boolean(config.allowIncompleteFinish || config.allowUnansweredFinish);
+      const now = new Date().toISOString();
+      test.attempts = Number(test.attempts || 0) + 1;
+
+      if (stats.missingCount && !force && !allowIncomplete) {
+        const focusSelector = stats.firstMissingId ? `#${finalTestQuestionDomId("n3", stats.firstMissingId)}` : null;
+        state.finalTestModal = {
+          kind: "warning",
+          level: "N3",
+          title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+          message: lang() === "ru"
+            ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+            : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
+          answered: stats.answered,
+          missingCount: stats.missingCount,
+          totalQuestions: stats.totalQuestions,
+          threshold,
+          focusSelector,
+          focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
+          closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
+          forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+          allowIncomplete
+        };
+        state.pendingFocus = focusSelector;
+        saveProgress();
+        return;
+      }
+
+      let score = 0;
+      const mistakes = [];
+      const unanswered = [];
+      questions.forEach((question) => {
+        const selected = String(test.answers?.[question.id] || "").trim();
+        if (selected === question.answer) {
+          score += 1;
+          if (question.kanji) markN3KanjiStudied(question.kanji, question.cardId);
+          if (question.grammarId) {
+            const course = n3Course();
+            course.completedGrammar[question.grammarId] = course.completedGrammar[question.grammarId] || now;
+          }
+        } else {
+          if (!selected) unanswered.push(question);
+          mistakes.push({
+            id: question.id,
+            kanji: question.kanji || "",
+            answer: question.answerLabel,
+            selected
+          });
+          if (question.kanji) markN3KanjiDifficult(question.kanji, question.cardId);
+        }
+      });
+      const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+      const wasCompleted = Boolean(test.completedAt);
+      const wasPassed = Boolean(test.passed);
+      const answeredWrong = Math.max(0, mistakes.length - unanswered.length);
+      let rewardXp = 0;
+      let rewardMoon = 0;
+
+      test.answers = test.answers || {};
+      test.score = score;
+      test.percent = percent;
+      test.passed = percent >= threshold;
+      test.correctAnswers = score;
+      test.incorrectAnswers = answeredWrong;
+      test.unansweredAnswers = unanswered.length;
+      test.totalQuestions = questions.length;
+      test.mistakes = mistakes;
+      test.mistakeQuestionIds = mistakes.map((item) => item.id);
+      test.completedAt = now;
+      test.lastScore = percent;
+      test.bestScore = Math.max(Number(test.bestScore || 0), percent);
+      test.passedAt = test.passed ? (wasPassed ? (test.passedAt || now) : now) : test.passedAt || null;
+
+      if (!wasCompleted) {
+        const completeXp = Number(config?.rewards?.completeXp || 220);
+        const completeMoon = Number(config?.rewards?.completeMoon || 40);
+        rewardXp += completeXp;
+        rewardMoon += completeMoon;
+        addReward(completeXp, completeMoon, "n3_final_complete");
+      }
+      if (test.passed && !wasPassed) {
+        const passXp = Number(config?.rewards?.passXp || 110);
+        const passMoon = Number(config?.rewards?.passMoon || 18);
+        rewardXp += passXp;
+        rewardMoon += passMoon;
+        addReward(passXp, passMoon, "n3_final_pass");
+      }
+      test.lastRewardXp = rewardXp;
+      test.lastRewardMoon = rewardMoon;
+      state.pendingFocus = null;
+      state.finalTestModal = {
+        kind: "result",
+        level: "N3",
+        title: test.passed ? labels.finalPassed : labels.finalNeedsReview,
+        message: test.passed ? labels.finalPassedText : labels.finalNeedsReviewText,
+        passed: test.passed,
+        percent,
+        correct: score,
+        incorrect: answeredWrong,
+        unanswered: unanswered.length,
+        totalQuestions: questions.length,
+        rewardXp,
+        rewardMoon,
+        attempts: test.attempts,
+        threshold,
+        reviewAction: "n3-review",
+        reviewAllAction: "n3-review",
+        closeLabel: lang() === "ru" ? "OK" : "OK",
+        repeatLabel: labels.repeatMistakes,
+        reviewAllLabel: labels.reviewAll
+      };
+      evaluateAchievements();
+      saveProgress();
+    } catch (error) {
+      console.error(error);
+      toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+    } finally {
+      state.finalTestBusy = false;
+      render();
+    }
+  }
+
+  function resetN3FinalTest() {
+    n3Course().finalTest = defaultN3CourseProgress().finalTest;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
+    saveProgress();
+    renderPreservingScroll();
+  }
+
+  function n3DomId(id) {
+    return `n3-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+  }
+
+  function renderN2CoursePage(textbook) {
+    state.activeTextbookLevel = "N2";
+    state.activeJlptLesson = "N2";
+    const course = ensureN2CourseProgress();
+    if (!course.opened) {
+      course.opened = true;
+      evaluateAchievements();
+      saveProgress();
+    }
+    const subroute = String(state.activeTextbookSubroute || "");
+    if (subroute === "final-test") return renderN2FinalTestPage(textbook);
+    if (subroute === "review") return renderN2ReviewPage(textbook);
+    if (subroute === "kanji") return renderN2KanjiListPage(textbook);
+    if (subroute === "grammar") return renderN2GrammarPage(textbook);
+    if (subroute === "reading") return renderN2ReadingPage(textbook);
+    if (subroute === "listening") return renderN2ListeningPage(textbook);
+    const lesson = n2LessonById(subroute);
+    if (lesson) {
+      n2Course().currentLessonId = lesson.id;
+      markJlptLessonKanjiSeen("N2", lesson, "n2_lesson_page");
+      return renderN2LessonPage(textbook, lesson);
+    }
+    return renderN2OverviewPage(textbook);
+  }
+
+  function renderN2OverviewPage(textbook) {
+    const progress = n2ProgressSummary();
+    const labels = n2Labels();
+    const lessons = n2Lessons();
+    const current = n2CurrentLesson();
+    const meta = state.n2Meta || {};
+    const principle = localized(meta.principle || {});
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · Flash Kanji</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(localized(meta.description || textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn ghost" href="${escapeAttr(meta.pdfUrl || textbook.pdfUrl || textbook.pdfFile || "")}" download="flashkanji_N2_textbook_flashkanji_space.pdf" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+          </div>
+        </div>
+
+        <article class="n5-hero n2-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">${escapeHtml(meta.kanjiCount || 380)} ${escapeHtml(labels.kanji)} · ${escapeHtml(meta.grammarCount || state.n2Grammar.length || 120)} ${escapeHtml(labels.grammar)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(principle)}</p>
+            <div class="textbook-actions">
+              <a class="btn primary" href="#jlpt/n2/${escapeAttr(current?.id || "n2-lesson-1")}" data-action="n2-open-lesson" data-id="${escapeAttr(current?.id || "n2-lesson-1")}">${escapeHtml(labels.continue)}</a>
+              <button class="btn" type="button" data-action="n2-review" data-mode="due">${escapeHtml(labels.review)}</button>
+              <button class="btn ghost" type="button" data-action="n2-kanji">${escapeHtml(labels.openKanji)}</button>
+              <button class="btn ghost" type="button" data-action="n2-grammar">${escapeHtml(labels.grammarN2)}</button>
+              <button class="btn ghost" type="button" data-action="n2-reading">${escapeHtml(labels.readingN2)}</button>
+              <button class="btn ghost" type="button" data-action="n2-listening">${escapeHtml(labels.listeningN2)}</button>
+              <button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>
+              ${renderJlptEvaTab("N2")}
+            </div>
+          </div>
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.studiedKanji, `${progress.studied}/${progress.total}`, labels.kanji, progressWidth(progress.studied, progress.total))}
+          ${renderMetric(labels.completedLessons, `${progress.completedLessons}/${lessons.length}`, labels.lessons, progressWidth(progress.completedLessons, lessons.length))}
+          ${renderMetric(labels.completedGrammar, `${progress.completedGrammar}/${state.n2Meta?.grammarCount || state.n2Grammar.length}`, labels.grammar, progressWidth(progress.completedGrammar, state.n2Meta?.grammarCount || state.n2Grammar.length))}
+          ${renderMetric(labels.completedReading, `${progress.completedReading}/${state.n2Meta?.readingCount || state.n2Reading.length}`, labels.readingN2, progressWidth(progress.completedReading, state.n2Meta?.readingCount || state.n2Reading.length))}
+          ${renderMetric(labels.completedListening, `${progress.completedListening}/${state.n2Meta?.listeningCount || state.n2Listening.length}`, labels.listeningN2, progressWidth(progress.completedListening, state.n2Meta?.listeningCount || state.n2Listening.length))}
+          ${renderMetric(labels.reviews, progress.reviews, labels.srs, progressWidth(progress.reviews, Math.max(progress.total, 1)))}
+        </div>
+
+        <section class="n5-panel n2-bridge">
+          <div>
+            <h2>${escapeHtml(labels.n5Bridge)}</h2>
+            <p>${escapeHtml(labels.n5BridgeText)}</p>
+          </div>
+          <div class="n2-bridge-grid">
+            ${(meta.n5Bridge || []).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+          </div>
+          <div class="textbook-actions">
+            <button class="btn ghost" type="button" data-action="n3-overview">${escapeHtml(labels.reviewN5Base)}</button>
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div class="n5-panel-head">
+            <div>
+              <h2>${escapeHtml(labels.lessonsTitle)}</h2>
+              <p>${escapeHtml(labels.lessonsDescription)}</p>
+            </div>
+            ${renderJlptEvaTab("N2")}
+          </div>
+          <div class="n5-lesson-grid">
+            ${lessons.map((lesson) => renderN2LessonTile(lesson)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel n5-review-plan">
+          <div>
+            <h2>${escapeHtml(labels.reviewPlan)}</h2>
+            <p>${escapeHtml(localized((state.n2Textbook?.textbook || {}).recommendedCycle || meta.recommendedCycle || {}))}</p>
+          </div>
+          <div class="n5-plan-row">
+            ${(meta.reviewPlan || []).map((item) => `<span class="pill">${escapeHtml(labels.day)} ${escapeHtml(item.day)} · ${escapeHtml(localized(item.label || {}))}</span>`).join("")}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN2LessonTile(lesson) {
+    const status = n2LessonStatus(lesson.id);
+    const labels = n2Labels();
+    const learned = lesson.kanji.filter((kanji) => n2Course().studiedKanji[kanji]).length;
+    return `
+      <a class="n5-lesson-tile ${status}" href="#jlpt/n2/${escapeAttr(lesson.id)}" data-action="n2-open-lesson" data-id="${escapeAttr(lesson.id)}">
+        <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
+        <h3>${escapeHtml(localized(lesson.title))}</h3>
+        <p>${escapeHtml(localized(lesson.goal))}</p>
+        <div class="n5-kanji-strip n2-kanji-strip">${lesson.kanji.map((kanji) => `<b>${escapeHtml(kanji)}</b>`).join("")}</div>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${learned}/${lesson.kanji.length}`)}"><i style="width:${progressWidth(learned, lesson.kanji.length)}%"></i></div>
+        <small>${escapeHtml(learned)}/${escapeHtml(lesson.kanji.length)} · ${escapeHtml(n2LessonStatusLabel(status))}</small>
+        ${renderJlptEvaTab("N2", { inline: true })}
+      </a>
+    `;
+  }
+
+  function renderN2LessonPage(textbook, lesson) {
+    const labels = n2Labels();
+    const cards = n2CardsForLesson(lesson);
+    const exercises = buildN2LessonExercises(lesson);
+    const status = n2LessonStatus(lesson.id);
+    const complete = status === "completed";
+    const correct = exercises.filter((exercise) => n2ExerciseResult(exercise.id)?.correct).length;
+    const difficult = lesson.kanji.filter((kanji) => n2Course().difficultKanji[kanji]).join(" · ");
+    const nextLesson = n2Lessons().find((item) => item.order === lesson.order + 1);
+    const miniReadingItem = n2LessonReadingItem(lesson);
+    const miniReadingComplete = miniReadingItem ? Boolean(n2Course().completedReading[miniReadingItem.id]) : false;
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page n5-lesson-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · ${escapeHtml(labels.lesson)} ${lesson.order}/38</p>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(lesson.goal))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn" type="button" data-action="n2-review" data-mode="difficult">${escapeHtml(labels.difficult)}</button>
+            <button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+
+        <article class="n5-lesson-summary">
+          <div>
+            <span class="pill">${escapeHtml(localized(lesson.theme))}</span>
+            <h2>${escapeHtml(labels.lessonChain)}</h2>
+            <p>${escapeHtml(labels.lessonChainText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.duration)}: ${escapeHtml(lesson.durationMinutes || 30)} ${escapeHtml(labels.minutes)}</span>
+              ${lesson.grammarFocus.map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n2Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}`, labels.kanji, progressWidth(cards.filter((card) => n2Course().studiedKanji[card.kanji]).length, lesson.kanji.length))}
+            ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
+          </div>
+        </article>
+
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN2KanjiStudyCard(card, lesson, index)).join("")}
+        </div>
+
+        ${renderN2LessonGrammar(lesson)}
+
+        ${renderN2LessonMiniReading(lesson)}
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.sentences)}</h2>
+            <p>${escapeHtml(labels.sentencesText)}</p>
+          </div>
+          <div class="n5-sentence-list">
+            ${lesson.sentences.map((sentence) => `
+              <article>
+                <strong>${escapeHtml(sentence.jp)}</strong>
+                <span>${escapeHtml(sentence.reading || "")}</span>
+                <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.exercises)}</h2>
+            <p>${escapeHtml(labels.exercisesText)}</p>
+          </div>
+          <div class="n5-exercise-list">
+            ${exercises.map((exercise) => renderN2Exercise(exercise)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-result-panel ${complete ? "is-complete" : ""}">
+          <div>
+            <h2>${escapeHtml(complete ? labels.lessonComplete : labels.lessonResult)}</h2>
+            <p>${escapeHtml(complete ? labels.lessonCompleteText : labels.lessonResultText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.studiedKanji)}: ${cards.filter((card) => n2Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}</span>
+              <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
+              ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
+              <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="n2-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn" type="button" data-action="n2-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${nextLesson ? `<a class="btn ghost" href="#jlpt/n2/${escapeAttr(nextLesson.id)}" data-action="n2-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>`}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function n2LessonReadingItem(lesson) {
+    if (!lesson?.miniReadingId) return null;
+    return state.n2Reading.find((item) => item.id === lesson.miniReadingId) || null;
+  }
+
+  function renderN2LessonMiniReading(lesson) {
+    const labels = n2Labels();
+    const item = n2LessonReadingItem(lesson);
+    if (!item) return "";
+    return `
+      <section class="n5-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniReadingTitle)}</h2>
+          <p>${escapeHtml(labels.miniReadingText)}</p>
+        </div>
+        ${renderN2ReadingCard(item, "reading")}
+      </section>
+    `;
+  }
+
+  function renderN2KanjiStudyCard(card, lesson, index) {
+    const labels = n2Labels();
+    const progress = getCardProgress(card.id);
+    const examples = n2CardExamples(card);
+    const hint = n2CardHint(card, examples[0]);
+    const written = Boolean(n2Course().writingPractice[card.kanji]);
+    const difficult = Boolean(n2Course().difficultKanji[card.kanji]);
+    return `
+      <article class="n5-kanji-card ${difficult ? "is-difficult" : ""}">
+        <div class="n5-kanji-topline">
+          <span class="pill">${escapeHtml(labels.step)} ${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <dl class="n5-readings">
+          <div><dt>${escapeHtml(labels.onyomi)}</dt><dd>${escapeHtml(card.onyomi || "—")}</dd></div>
+          <div><dt>${escapeHtml(labels.kunyomi)}</dt><dd>${escapeHtml(card.kunyomi || card.hiragana || "—")}</dd></div>
+        </dl>
+        <div class="n5-word-list">
+          ${examples.map((example) => `
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+          `).join("")}
+        </div>
+        <p class="n5-hint">${escapeHtml(hint)}</p>
+        ${renderN2CardSentence(card, lesson)}
+        <div class="textbook-actions">
+          <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn ghost" type="button" data-action="n2-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN2CardSentence(card, lesson) {
+    const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
+    if (!sentence) return "";
+    const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[〜~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+    return `
+      <div class="n5-card-sentence">
+        <strong>${escapeHtml(sentence.jp)}</strong>
+        <span>${escapeHtml(sentence.reading || "")}</span>
+        <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+        ${grammar ? `<small>${escapeHtml(n2Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
+      </div>
+    `;
+  }
+
+  function renderN2LessonGrammar(lesson) {
+    const labels = n2Labels();
+    const grammarItems = (lesson.grammarFocus || []).map((pattern) => n2GrammarByPattern(pattern)).filter(Boolean).slice(0, 3);
+    if (!grammarItems.length) return "";
+    return `
+      <section class="n5-panel n2-grammar-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniGrammar)}</h2>
+          <p>${escapeHtml(labels.miniGrammarText)}</p>
+        </div>
+        <div class="n2-section-grid">
+          ${grammarItems.map((item) => `
+            <article class="n2-grammar-card">
+              <span class="pill">${escapeHtml(item.pattern)}</span>
+              <h3>${escapeHtml(localized(item.title))}</h3>
+              <p>${escapeHtml(localized(item.explanation))}</p>
+              ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+              ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
+              <button class="btn ghost" type="button" data-action="n2-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n2Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2Exercise(exercise) {
+    const labels = n2Labels();
+    const result = n2ExerciseResult(exercise.id);
+    const className = result ? (result.correct ? "is-correct" : "is-wrong") : "";
+    if (exercise.type === "active-recall") {
+      return `
+        <article class="n5-exercise-card ${className}">
+          <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+          <h3>${escapeHtml(exercise.prompt)}</h3>
+          <div class="n5-input-row">
+            <input id="${escapeAttr(n2DomId(exercise.id))}" type="text" maxlength="3" autocomplete="off" value="${escapeAttr(result?.selected || "")}" aria-label="${escapeAttr(localized(exercise.title))}" />
+            <button class="btn primary" type="button" data-action="n2-check-input" data-id="${escapeAttr(exercise.id)}">${escapeHtml(labels.check)}</button>
+            <button class="btn ghost" type="button" data-action="n2-answer" data-id="${escapeAttr(exercise.id)}" data-value="">${escapeHtml(labels.showAnswer)}</button>
+          </div>
+          ${renderN2ExerciseFeedback(exercise, result)}
+        </article>
+      `;
+    }
+    return `
+      <article class="n5-exercise-card ${className}">
+        <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+        <h3>${escapeHtml(exercise.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${exercise.options.map((option) => {
+            const selectedOption = result?.selected === option.value;
+            const answerOption = result && option.value === exercise.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n2-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${renderN2ExerciseFeedback(exercise, result)}
+      </article>
+    `;
+  }
+
+  function renderN2ExerciseFeedback(exercise, result) {
+    if (!result) return "";
+    const labels = n2Labels();
+    const text = result.correct
+      ? labels.correctAnswer
+      : `${labels.wrongAnswer}: ${exercise.answerLabel || exercise.answer}`;
+    return `<p class="n5-feedback">${escapeHtml(text)}</p>`;
+  }
+
+  function renderN2ReviewPage(textbook) {
+    const labels = n2Labels();
+    const mode = n2Course().activeReviewMode || "due";
+    const cards = n2ReviewCards(mode);
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · SRS</p>
+            <h1>${escapeHtml(labels.reviewTitle)}</h1>
+            <p>${escapeHtml(labels.reviewDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="jlpt-filter-bar" role="tablist" aria-label="N2 review modes">
+          ${(state.n2Exercises?.reviewModes || []).map((item) => `
+            <button class="btn ${mode === item.id ? "primary" : "ghost"}" type="button" data-action="n2-review" data-mode="${escapeAttr(item.id)}">${escapeHtml(localized(item.title))}</button>
+          `).join("")}
+        </div>
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN2ReviewCard(card, index)).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReviewCards)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2ReviewCard(card, index) {
+    const labels = n2Labels();
+    const progress = getCardProgress(card.id);
+    return `
+      <article class="n5-kanji-card n5-review-card">
+        <div class="n5-kanji-topline">
+          <span class="pill">${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)} · ${escapeHtml(formatDue(progress.dueAt))}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <p>${escapeHtml(n2CardExamples(card)[0]?.word || card.hiragana || "")} · ${escapeHtml(n2CardExamples(card)[0]?.reading || card.romaji || "")}</p>
+        <div class="textbook-actions">
+          <button class="btn success" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN2KanjiListPage(textbook) {
+    const labels = n2Labels();
+    const cards = n2AllCards();
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · 380</p>
+            <h1>${escapeHtml(labels.kanjiListTitle)}</h1>
+            <p>${escapeHtml(labels.kanjiListText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn" type="button" data-action="n2-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+          </div>
+        </div>
+        <div class="n5-kanji-grid n2-kanji-catalog">
+          ${cards.map((card, index) => `
+            <article class="n5-kanji-card">
+              <div class="n5-kanji-topline"><span class="pill">${index + 1}/380</span><span class="pill">${escapeHtml(getCardProgress(card.id).state)}</span></div>
+              <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+              <h3>${escapeHtml(cardMeaning(card))}</h3>
+              <p>${escapeHtml(n2CardExamples(card)[0]?.word || "")} · ${escapeHtml(n2CardExamples(card)[0]?.reading || "")}</p>
+              <div class="textbook-actions">
+                <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2GrammarPage(textbook) {
+    const labels = n2Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · Grammar</p>
+            <h1>${escapeHtml(labels.grammarTitle)}</h1>
+            <p>${escapeHtml(labels.grammarText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn ghost" type="button" data-action="n2-reading">${escapeHtml(labels.readingN2)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.completedGrammar, `${Object.keys(n2Course().completedGrammar || {}).length}/${state.n2Grammar.length}`, labels.grammar, progressWidth(Object.keys(n2Course().completedGrammar || {}).length, state.n2Grammar.length))}
+          ${renderMetric(labels.questions, state.n2Grammar.length, labels.grammar, 100)}
+        </div>
+        <div class="n2-section-grid">
+          ${state.n2Grammar.map((item) => {
+            const result = n2Course().grammarResults?.[item.id];
+            return `
+              <article class="n2-grammar-card ${result ? (result.correct ? "is-correct" : "is-wrong") : ""}">
+                <span class="pill">${escapeHtml(item.order)} · ${escapeHtml(item.pattern)}</span>
+                <h3>${escapeHtml(localized(item.title))}</h3>
+                <p>${escapeHtml(localized(item.explanation))}</p>
+                ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
+                <div class="n5-option-grid">
+                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                    <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n2-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
+                  `).join("")}
+                </div>
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2ReadingPage(textbook) {
+    const labels = n2Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · Reading</p>
+            <h1>${escapeHtml(labels.readingTitle)}</h1>
+            <p>${escapeHtml(labels.readingText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn ghost" type="button" data-action="n2-listening">${escapeHtml(labels.listeningN2)}</button>
+          </div>
+        </div>
+        <div class="n2-section-grid">
+          ${state.n2Reading.map((item) => renderN2ReadingCard(item, "reading")).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2ListeningPage(textbook) {
+    const labels = n2Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · Listening</p>
+            <h1>${escapeHtml(labels.listeningTitle)}</h1>
+            <p>${escapeHtml(labels.listeningText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="n2-section-grid">
+          ${state.n2Listening.map((item) => renderN2ReadingCard(item, "listening")).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2ReadingCard(item, mode) {
+    const labels = n2Labels();
+    const completed = mode === "reading" ? n2Course().completedReading[item.id] : n2Course().completedListening[item.id];
+    const answerStore = mode === "reading" ? n2Course().readingAnswers : n2Course().listeningAnswers;
+    const action = mode === "reading" ? "n2-reading-complete" : "n2-listening-complete";
+    return `
+      <article class="n2-reading-card ${completed ? "is-correct" : ""}">
+        <span class="pill">${escapeHtml(localized(item.title))}</span>
+        ${Array.isArray(item.dialogue) ? `<div class="n5-sentence-list">${item.dialogue.map((line) => `<article><strong>${escapeHtml(line)}</strong></article>`).join("")}</div>` : `<p class="n2-jp-text">${escapeHtml(item.jp || "")}</p>`}
+        ${item.ru ? `<p>${escapeHtml(item.ru)}</p>` : ""}
+        ${(item.questions || []).map((question, index) => {
+          const key = `${item.id}:${index}`;
+          const result = answerStore?.[key];
+          const options = Array.isArray(question.options) ? question.options : [];
+          return `
+            <div class="n2-question-block">
+              <h3>${escapeHtml(localized(question.prompt || item.question || {}))}</h3>
+              <div class="n5-option-grid">
+                ${options.map((option) => `<button class="btn ${result?.selected === option.value ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="${escapeAttr(action)}" data-id="${escapeAttr(item.id)}" data-question="${escapeAttr(index)}" data-value="${escapeAttr(option.value)}">${escapeHtml(localized(option.label || option))}</button>`).join("")}
+              </div>
+              ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : labels.wrongAnswer)}</p>` : ""}
+            </div>
+          `;
+        }).join("")}
+      </article>
+    `;
+  }
+
+  function renderN2FinalTestPage(textbook) {
+    const labels = n2Labels();
+    const config = state.n2FinalTest || {};
+    const questions = buildN2FinalQuestions();
+    const test = n2Course().finalTest;
+    const stats = finalTestQuestionStats(test, questions);
+    const answered = stats.answered;
+    const ready = stats.ready;
+    const completed = Boolean(test.completedAt);
+    return `
+      <section class="page textbooks-page n5-course-page n2-course-page n5-final-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N2 · Final</p>
+            <h1>${escapeHtml(localized(config.title || {}))}</h1>
+            <p>${escapeHtml(localized(config.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.backToN2)}</button>
+            <button class="btn" type="button" data-action="n2-final-reset">${escapeHtml(labels.resetTest)}</button>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
+          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
+          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+        </div>
+
+        ${completed ? `
+          <section class="n5-result-panel ${test.passed ? "is-complete" : ""}">
+            <div>
+              <h2>${escapeHtml(test.passed ? labels.finalPassed : labels.finalNeedsReview)}</h2>
+              <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
+            </div>
+            <button class="btn primary" type="button" data-action="n2-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+          </section>
+        ` : ""}
+
+        <div class="n5-exercise-list">
+          ${questions.map((question, index) => renderN2FinalQuestion(question, index)).join("")}
+        </div>
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        <div class="n5-final-actions">
+          <button class="btn primary" type="button" data-action="n2-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn ghost" type="button" data-action="n2-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN2FinalQuestion(question, index) {
+    const answer = n2Course().finalTest.answers?.[question.id];
+    const complete = Boolean(n2Course().finalTest.completedAt);
+    return `
+      <article class="n5-exercise-card ${complete ? (answer === question.answer ? "is-correct" : "is-wrong") : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.type)}</span>
+        <h3>${escapeHtml(question.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${question.options.map((option) => {
+            const selectedOption = answer === option.value;
+            const answerOption = complete && option.value === question.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "primary" : "ghost"}" type="button" data-action="n2-final-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${complete && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(n2Labels().wrongAnswer)}: ${escapeHtml(question.answerLabel)}</p>` : ""}
+      </article>
+    `;
+  }
+
+  function n2Labels() {
+    return lang() === "ru"
+      ? {
+        title: "JLPT N2",
+        allTextbooks: "Все учебники",
+        pdf: "PDF-учебник",
+        kanji: "кандзи",
+        grammar: "грамматика",
+        courseMap: "Интерактивный учебник N2: абзацы, аргументы, выводы и позиция автора",
+        continue: "Продолжить",
+        review: "Повторять N2",
+        openKanji: "Открыть список кандзи",
+        grammarN2: "Грамматика N2",
+        readingN2: "Чтение N2",
+        listeningN2: "Аудирование N2",
+        finalTest: "Финальный тест",
+        studiedKanji: "Изучено",
+        completedLessons: "Уроки",
+        completedGrammar: "Грамматика",
+        completedReading: "Чтение",
+        completedListening: "Аудирование",
+        reviews: "Повторения",
+        difficult: "Сложные",
+        srs: "SRS",
+        lessons: "уроков",
+        lessonsTitle: "38 уроков примерно по 10 кандзи",
+        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, абзац, авторскую позицию, вывод, письмо и SRS.",
+        reviewPlan: "План повторения на 90 дней",
+        day: "день",
+        lesson: "Урок",
+        backToN2: "К N2",
+        n5Bridge: "N5/N4/N3 bridge",
+        n5BridgeText: "Если база N5, N4 или N3 дырявая, N2 будет ощущаться как стена. Перед стартом проверь частицы, связки, условные формы, N3-грамматику и навык видеть причину, уступку и вывод в абзаце.",
+        reviewN5Base: "Повторить N5/N4/N3 перед N2",
+        lessonChain: "Кандзи -> слово -> грамматика -> абзац -> позиция автора -> вывод -> SRS",
+        lessonChainText: "N2 больше не живёт списком знаков: каждый знак сразу входит в слово, формальную связку, мини-абзац и логику аргумента.",
+        duration: "Длительность",
+        minutes: "мин",
+        exercises: "Упражнения",
+        correct: "верно",
+        sentences: "Примеры предложений",
+        sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
+        exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, структуру абзаца, позицию автора и активное вспоминание.",
+        lessonComplete: "Урок завершён",
+        lessonCompleteText: "Кандзи урока добавлены в N2-review и общий SRS.",
+        lessonResult: "Итог урока",
+        lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
+        completeLesson: "Завершить урок",
+        refreshLesson: "Обновить итог",
+        repeatMistakes: "Повторить ошибки",
+        nextLesson: "Следующий урок",
+        none: "нет",
+        step: "шаг",
+        onyomi: "онъёми",
+        kunyomi: "кунъёми",
+        addToSrs: "Добавить в SRS",
+        know: "Я знаю",
+        hard: "Сложно",
+        writingPractice: "Практика письма",
+        markWritten: "Написано",
+        written: "Письмо засчитано",
+        miniGrammar: "Мини-грамматика урока",
+        miniGrammarText: "1-3 конструкции, которые сразу связывают кандзи с точкой зрения, причиной или выводом.",
+        miniReadingTitle: "Мини-reading урока",
+        miniReadingText: "Пойми, о чём текст, где причина, где уступка, что противопоставлено и к какому выводу ведёт короткий N2-абзац.",
+        markGrammar: "Засчитать конструкцию",
+        completed: "Пройдено",
+        check: "Проверить",
+        showAnswer: "Сложно: показать ответ",
+        correctAnswer: "Верно. XP и Moon Fragment начислены.",
+        wrongAnswer: "Пока нет",
+        reviewTitle: "N2-повторение",
+        reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N2.",
+        noReviewCards: "Сейчас нет карточек в этом фильтре.",
+        kanjiListTitle: "380 кандзи N2",
+        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в SRS или открыть письмо.",
+        grammarTitle: "120 грамматических конструкций N2",
+        grammarText: "Рабочие карточки с функцией, формулой, примером и проверкой понимания в письменном аргументе и живом контексте.",
+        readingTitle: "Тексты для чтения N2",
+        readingText: "Короткие тексты и mini-readings уроков связывают кандзи, слова, грамматику, авторскую позицию и выводы в живой контекст.",
+        listeningTitle: "Скрипты для аудирования N2",
+        listeningText: "Скрипты можно читать вслух, озвучивать через TTS и использовать для shadowing и проверки понимания.",
+        questions: "Вопросы",
+        score: "Результат",
+        mistakes: "Ошибки",
+        resetTest: "Сбросить тест",
+        submitFinal: "Завершить тест",
+        reviewAll: "Повторить весь N2",
+        finalPassed: "N2 пройден",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalNeedsReview: "Нужно повторить",
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+      }
+      : {
+        title: "JLPT N2",
+        allTextbooks: "All textbooks",
+        pdf: "PDF textbook",
+        kanji: "kanji",
+        grammar: "grammar",
+        courseMap: "Interactive N2 textbook: paragraphs, arguments, conclusions, and author stance",
+        continue: "Continue",
+        review: "Review N2",
+        openKanji: "Open kanji list",
+        grammarN2: "N2 grammar",
+        readingN2: "N2 reading",
+        listeningN2: "N2 listening",
+        finalTest: "Final test",
+        studiedKanji: "Studied",
+        completedLessons: "Lessons",
+        completedGrammar: "Grammar",
+        completedReading: "Reading",
+        completedListening: "Listening",
+        reviews: "Reviews",
+        difficult: "Difficult",
+        srs: "SRS",
+        lessons: "lessons",
+        lessonsTitle: "38 lessons, about 10 kanji each",
+        lessonsDescription: "Each lesson connects kanji, word, grammar, paragraph logic, author stance, writing, and SRS.",
+        reviewPlan: "90-day review plan",
+        day: "day",
+        lesson: "Lesson",
+        backToN2: "To N2",
+        n5Bridge: "N5/N4/N3 bridge",
+        n5BridgeText: "If the N5, N4, or N3 base is shaky, N2 feels like a wall. Review particles, support grammar, N3 connectors, and the habit of spotting cause, concession, and conclusion in a paragraph.",
+        reviewN5Base: "Review N5/N4/N3 before N2",
+        lessonChain: "Kanji -> word -> grammar -> paragraph -> author stance -> conclusion -> SRS",
+        lessonChainText: "N2 is not a bare list: each sign gets a word, a formal link, a mini paragraph, and argument flow.",
+        duration: "Duration",
+        minutes: "min",
+        exercises: "Exercises",
+        correct: "correct",
+        sentences: "Example sentences",
+        sentencesText: "Read aloud and notice where grammar carries meaning and argument flow.",
+        exercisesText: "Mixed tasks check kanji, words, reading, translation, grammar, paragraph structure, author stance, and active recall.",
+        lessonComplete: "Lesson complete",
+        lessonCompleteText: "Lesson kanji are available in N2 review and the shared SRS.",
+        lessonResult: "Lesson result",
+        lessonResultText: "Complete the lesson when cards and exercises are ready for review.",
+        completeLesson: "Complete lesson",
+        refreshLesson: "Refresh result",
+        repeatMistakes: "Repeat mistakes",
+        nextLesson: "Next lesson",
+        none: "none",
+        step: "step",
+        onyomi: "onyomi",
+        kunyomi: "kunyomi",
+        addToSrs: "Add to SRS",
+        know: "I know",
+        hard: "Hard",
+        writingPractice: "Writing practice",
+        markWritten: "Written",
+        written: "Writing counted",
+        miniGrammar: "Lesson mini grammar",
+        miniGrammarText: "1-3 constructions that push kanji into viewpoint, cause, and conclusion.",
+        miniReadingTitle: "Lesson mini reading",
+        miniReadingText: "Understand the topic, cause, concession, contrast, and conclusion inside the short N2 paragraph.",
+        markGrammar: "Mark construction",
+        completed: "Completed",
+        check: "Check",
+        showAnswer: "Hard: show answer",
+        correctAnswer: "Correct. XP and Moon Fragment awarded.",
+        wrongAnswer: "Not yet",
+        reviewTitle: "N2 review",
+        reviewDescription: "Review due cards, difficult kanji, or the full N2 set.",
+        noReviewCards: "No cards in this filter right now.",
+        kanjiListTitle: "380 N2 kanji",
+        kanjiListText: "Full textbook list with quick SRS and writing actions.",
+        grammarTitle: "120 N2 grammar constructions",
+        grammarText: "Compact cards with function, formula, example, and a comprehension check for practical written Japanese.",
+        readingTitle: "N2 reading texts",
+        readingText: "Short texts and lesson mini readings connect kanji, words, grammar, author stance, and conclusions.",
+        listeningTitle: "N2 listening scripts",
+        listeningText: "Read dialogues aloud, use TTS, or shadow them as listening scripts.",
+        questions: "Questions",
+        score: "Score",
+        mistakes: "Mistakes",
+        resetTest: "Reset test",
+        submitFinal: "Finish test",
+        reviewAll: "Review all N2",
+        finalPassed: "N2 passed",
+        finalPassedText: "Great. You can send mistakes back to SRS separately.",
+        finalNeedsReview: "Review needed",
+        finalNeedsReviewText: "Mistakes were marked difficult and raised in SRS."
+      };
+  }
+
+  function ensureN2CourseProgress() {
+    state.progress.n2Course = mergeN2CourseProgress(defaultN2CourseProgress(), state.progress.n2Course || {});
+    const lessons = n2Lessons();
+    const active = n2LessonById(state.progress.n2Course.currentLessonId);
+    if (!active && lessons[0]) state.progress.n2Course.currentLessonId = lessons[0].id;
+    const firstOpen = lessons.find((lesson) => !state.progress.n2Course.completedLessons[lesson.id]);
+    if (!state.progress.n2Course.currentLessonId && firstOpen) state.progress.n2Course.currentLessonId = firstOpen.id;
+    return state.progress.n2Course;
+  }
+
+  function n2Course() {
+    return ensureN2CourseProgress();
+  }
+
+  function n2Lessons() {
+    return state.n2Textbook?.items || [];
+  }
+
+  function n2LessonById(id) {
+    const raw = String(id || "");
+    if (!raw) return null;
+    return n2Lessons().find((lesson) =>
+      lesson.id === raw
+      || lesson.id === `n2-${raw}`
+      || lesson.id.endsWith(`-${raw}`)
+    ) || null;
+  }
+
+  function n2CurrentLesson() {
+    return n2LessonById(n2Course().currentLessonId) || n2Lessons().find((lesson) => !n2Course().completedLessons[lesson.id]) || n2Lessons()[0] || null;
+  }
+
+  function n2CardsForLesson(lesson) {
+    return (lesson?.kanji || []).map((kanji) => n2CardByKanji(kanji)).filter(Boolean);
+  }
+
+  function n2AllCards() {
+    const seen = new Set();
+    return (state.n2KanjiCatalog || []).map((detail) => n2CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
+      if (seen.has(card.kanji)) return false;
+      seen.add(card.kanji);
+      return true;
+    });
+  }
+
+  function n2CardByKanji(kanji) {
+    const literal = String(kanji || "");
+    const detail = state.n2KanjiCatalog?.find((item) => item.kanji === literal) || null;
+    const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N2")
+      || (detail ? state.cards.find((item) => String(item.id) === String(detail.courseCardId || detail.id)) : null)
+      || null;
+    if (card && detail) return mergeN2CardDetail(card, detail);
+    if (card) return card;
+    if (!detail) return null;
+    return mergeN2CardDetail({
+      id: detail.courseCardId || detail.id,
+      kanji: detail.kanji,
+      lessonId: detail.lessonId,
+      jlpt: "N2",
+      examples: []
+    }, detail);
+  }
+
+  function n2GrammarByPattern(pattern) {
+    const raw = String(pattern || "");
+    return state.n2Grammar.find((item) => item.pattern === raw || item.id === raw || item.pattern.includes(raw) || raw.includes(item.pattern)) || null;
+  }
+
+  function n2CardExamples(card) {
+    const examples = Array.isArray(card.examples) ? card.examples : [];
+    if (examples.length) return examples.slice(0, 3);
+    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+  }
+
+  function n2CardHint(card, example) {
+    if (lang() === "ru" && card.n2Detail?.hintRu) return card.n2Detail.hintRu;
+    const word = example?.word || card.kanji;
+    const reading = example?.reading || card.hiragana || "";
+    return lang() === "ru"
+      ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+      : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
+  }
+
+  function n2ProgressSummary() {
+    const cards = n2AllCards();
+    const course = n2Course();
+    const studied = new Set(Object.keys(course.studiedKanji || {}));
+    cards.forEach((card) => {
+      if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
+    });
+    return {
+      total: state.n2Meta?.kanjiCount || cards.length || 380,
+      studied: studied.size,
+      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedGrammar: Object.keys(course.completedGrammar || {}).length,
+      completedReading: Object.keys(course.completedReading || {}).length,
+      completedListening: Object.keys(course.completedListening || {}).length,
+      reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
+      difficult: Object.keys(course.difficultKanji || {}).length
+    };
+  }
+
+  function n2LessonStatus(lessonId) {
+    const course = n2Course();
+    if (course.completedLessons[lessonId]) return "completed";
+    const lesson = n2LessonById(lessonId);
+    if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
+    return "new";
+  }
+
+  function n2LessonStatusLabel(status) {
+    if (status === "completed") return lang() === "ru" ? "завершён" : "completed";
+    if (status === "started") return lang() === "ru" ? "начат" : "started";
+    return lang() === "ru" ? "не начат" : "new";
+  }
+
+  function buildN2LessonExercises(lesson) {
+    const cards = n2CardsForLesson(lesson);
+    if (!cards.length) return [];
+    const sentences = lesson.sentences || [];
+    const exerciseTitles = Object.fromEntries((state.n2Exercises?.types || []).map((item) => [item.type, item.title]));
+    const rewardByType = Object.fromEntries((state.n2Exercises?.types || []).map((item) => [item.type, item]));
+    const getReward = (type) => rewardByType[type] || { rewardXp: state.n2Meta?.rewards?.exerciseXp || 11, rewardMoon: state.n2Meta?.rewards?.exerciseMoon || 1 };
+    const exercises = [];
+    const meaningCard = cards[0];
+    exercises.push({
+      id: `${lesson.id}-meaning-0`,
+      type: "meaning",
+      title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+      prompt: meaningCard.kanji,
+      answer: meaningCard.id,
+      answerLabel: cardMeaning(meaningCard),
+      kanji: meaningCard.kanji,
+      cardId: meaningCard.id,
+      options: n2OptionSet({ value: meaningCard.id, label: cardMeaning(meaningCard) }, cards.slice(1).map((card) => ({ value: card.id, label: cardMeaning(card) })), 1),
+      ...getReward("meaning")
+    });
+    const kanjiCard = cards[1] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-kanji-1`,
+      type: "kanji",
+      title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+      prompt: cardMeaning(kanjiCard),
+      answer: kanjiCard.kanji,
+      answerLabel: kanjiCard.kanji,
+      kanji: kanjiCard.kanji,
+      cardId: kanjiCard.id,
+      options: n2OptionSet({ value: kanjiCard.kanji, label: kanjiCard.kanji }, cards.filter((card) => card.id !== kanjiCard.id).map((card) => ({ value: card.kanji, label: card.kanji })), 2),
+      ...getReward("kanji")
+    });
+    const readingCard = cards[2] || cards[0];
+    const readingExample = n2CardExamples(readingCard)[0];
+    exercises.push({
+      id: `${lesson.id}-reading-2`,
+      type: "reading",
+      title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+      prompt: readingExample.word || readingCard.kanji,
+      answer: readingExample.reading || readingCard.hiragana || "",
+      answerLabel: readingExample.reading || readingCard.hiragana || "",
+      kanji: readingCard.kanji,
+      cardId: readingCard.id,
+      options: n2OptionSet({ value: readingExample.reading || readingCard.hiragana || "", label: readingExample.reading || readingCard.hiragana || "" }, cards.flatMap((card) => n2CardExamples(card).map((example) => ({ value: example.reading, label: example.reading }))).filter((item) => item.value && item.value !== readingExample.reading), 3),
+      ...getReward("reading")
+    });
+    const sentence = sentences[0];
+    if (sentence) {
+      exercises.push({
+        id: `${lesson.id}-sentence-3`,
+        type: "sentence",
+        title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+        prompt: sentence.jp,
+        answer: localized({ ru: sentence.ru, en: sentence.en }),
+        answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        options: n2OptionSet(
+          { value: localized({ ru: sentence.ru, en: sentence.en }), label: localized({ ru: sentence.ru, en: sentence.en }) },
+          sentences.slice(1).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })),
+          1
+        ),
+        ...getReward("sentence")
+      });
+    }
+    const wordCard = cards[3] || cards[0];
+    const wordExample = n2CardExamples(wordCard)[0];
+    exercises.push({
+      id: `${lesson.id}-word-4`,
+      type: "missing-word",
+      title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
+      prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+      answer: wordExample.word || wordCard.kanji,
+      answerLabel: wordExample.word || wordCard.kanji,
+      kanji: wordCard.kanji,
+      cardId: wordCard.id,
+      options: n2OptionSet({ value: wordExample.word || wordCard.kanji, label: wordExample.word || wordCard.kanji }, cards.flatMap((card) => n2CardExamples(card).map((example) => ({ value: example.word, label: example.word }))).filter((item) => item.value && item.value !== wordExample.word), 2),
+      ...getReward("missing-word")
+    });
+    const recallCard = cards[4] || cards[0];
+    exercises.push({
+      id: `${lesson.id}-active-5`,
+      type: "active-recall",
+      title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
+      prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+      answer: recallCard.kanji,
+      answerLabel: recallCard.kanji,
+      kanji: recallCard.kanji,
+      cardId: recallCard.id,
+      options: [],
+      ...getReward("active-recall")
+    });
+    const grammar = n2GrammarByPattern(lesson.grammarFocus?.[0]);
+    if (grammar) {
+      exercises.push({
+        id: `${lesson.id}-grammar-6`,
+        type: "grammar-link",
+        title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+        prompt: localized(grammar.question || grammar.explanation),
+        answer: grammar.answer,
+        answerLabel: grammar.answer,
+        kanji: cards[0].kanji,
+        cardId: cards[0].id,
+        grammarId: grammar.id,
+        options: n2OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+        ...getReward("grammar-link")
+      });
+    }
+    const miniSentence = sentences[1] || sentences[0];
+    if (miniSentence) {
+      exercises.push({
+        id: `${lesson.id}-mini-reading-7`,
+        type: "mini-reading",
+        title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+        prompt: miniSentence.jp,
+        answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+        answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+        kanji: cards[1]?.kanji || cards[0].kanji,
+        cardId: cards[1]?.id || cards[0].id,
+        options: n2OptionSet({ value: localized({ ru: miniSentence.ru, en: miniSentence.en }), label: localized({ ru: miniSentence.ru, en: miniSentence.en }) }, sentences.filter((item) => item.jp !== miniSentence.jp).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })), 2),
+        ...getReward("mini-reading")
+      });
+    }
+    return exercises.slice(0, state.n2Exercises?.lessonQuestionCount || 8);
+  }
+
+  function n2OptionSet(correct, distractors, rotateBy = 0) {
+    const seen = new Set([String(correct.value)]);
+    const options = [correct].filter((item) => String(item.value || ""));
+    distractors.forEach((option) => {
+      const value = String(option.value || "");
+      if (!value || seen.has(value) || options.length >= 4) return;
+      seen.add(value);
+      options.push(option);
+    });
+    n2AllCards().forEach((card) => {
+      if (options.length >= 4) return;
+      const fallback = { value: card.kanji, label: card.kanji };
+      if (!seen.has(String(fallback.value))) {
+        seen.add(String(fallback.value));
+        options.push(fallback);
+      }
+    });
+    if (options.length <= 1) return options;
+    const shift = rotateBy % options.length;
+    return [...options.slice(shift), ...options.slice(0, shift)];
+  }
+
+  function findN2Exercise(id) {
+    for (const lesson of n2Lessons()) {
+      const exercise = buildN2LessonExercises(lesson).find((item) => item.id === id);
+      if (exercise) return exercise;
+    }
+    return null;
+  }
+
+  function n2ExerciseResult(id) {
+    return n2Course().exerciseResults?.[id] || null;
+  }
+
+  function answerN2Exercise(target) {
+    const exercise = findN2Exercise(target.dataset.id);
+    if (!exercise) return;
+    const value = target.dataset.value || "";
+    const selected = value || exercise.answer;
+    const correct = selected === exercise.answer;
+    recordN2ExerciseResult(exercise, selected, correct);
+  }
+
+  function checkN2InputExercise(id) {
+    const exercise = findN2Exercise(id);
+    if (!exercise) return;
+    const input = document.getElementById(n2DomId(exercise.id));
+    const value = input ? String(input.value || "").trim() : "";
+    recordN2ExerciseResult(exercise, value, value === exercise.answer);
+  }
+
+  function recordN2ExerciseResult(exercise, selectedValue, correct) {
+    const course = n2Course();
+    course.exerciseResults[exercise.id] = {
+      selected: selectedValue,
+      correct,
+      checkedAt: new Date().toISOString()
+    };
+    if (correct) {
+      if (!course.completedExercises[exercise.id]) {
+        course.completedExercises[exercise.id] = new Date().toISOString();
+        markN2KanjiStudied(exercise.kanji, exercise.cardId);
+        if (exercise.grammarId) course.completedGrammar[exercise.grammarId] = course.completedGrammar[exercise.grammarId] || new Date().toISOString();
+        addReward(Number(exercise.rewardXp || state.n2Meta?.rewards?.exerciseXp || 11), Number(exercise.rewardMoon || state.n2Meta?.rewards?.exerciseMoon || 1), `n2_exercise:${exercise.id}`);
+      }
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      markN2KanjiDifficult(exercise.kanji, exercise.cardId);
+      course.kanjiMistakes[exercise.kanji] = Number(course.kanjiMistakes[exercise.kanji] || 0) + 1;
+      if (exercise.type === "reading" || exercise.type === "missing-word") course.wordMistakes[exercise.answerLabel || exercise.answer] = Number(course.wordMistakes[exercise.answerLabel || exercise.answer] || 0) + 1;
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function handleN2SrsAction(cardId, rating) {
+    const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const before = cloneProgress(getCardProgress(card.id));
+    const after = calculateNextProgress(before, rating);
+    state.progress.cards[card.id] = after;
+    updateDailyStats(before, after, rating);
+    checkDailyGoal();
+    markN2KanjiStudied(card.kanji, card.id);
+    n2Course().srsKanji[card.kanji] = new Date().toISOString();
+    if (isForgottenRating(rating)) {
+      markN2KanjiDifficult(card.kanji, card.id);
+      state.progress.totalWrong += 1;
+      addReward(state.n2Meta?.rewards?.hardXp || 2, 0, `n2_srs_hard:${card.id}`);
+      playUxSound("answer_wrong");
+    } else {
+      state.progress.totalCorrect += 1;
+      addReward(rating === "easy" ? (state.n2Meta?.rewards?.knowXp || 9) : (state.n2Meta?.rewards?.addToSrsXp || 7), 1, `n2_srs:${card.id}`);
+      playUxSound("answer_correct");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN2Writing(cardId) {
+    const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const course = n2Course();
+    if (!course.writingPractice[card.kanji]) {
+      course.writingPractice[card.kanji] = new Date().toISOString();
+      state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+      state.progress.writingPractice.cards[card.id] = {
+        completed: Number(state.progress.writingPractice.cards[card.id]?.completed || 0) + 1,
+        lastAt: new Date().toISOString()
+      };
+      markN2KanjiStudied(card.kanji, card.id);
+      addReward(9, 1, `n2_writing:${card.id}`);
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN2Lesson(lessonId) {
+    const lesson = n2LessonById(lessonId);
+    if (!lesson) return;
+    const course = n2Course();
+    n2CardsForLesson(lesson).forEach((card) => {
+      markN2KanjiStudied(card.kanji, card.id);
+      course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
+      const progress = getCardProgress(card.id);
+      if (progress.state === "New") state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
+    });
+    (lesson.grammarFocus || []).map((pattern) => n2GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
+      course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
+    });
+    const firstCompletion = !course.completedLessons[lesson.id];
+    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.currentLessonId = n2Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+    if (firstCompletion) {
+      const xp = state.n2Meta?.rewards?.lessonCompleteXp || 85;
+      const coins = state.n2Meta?.rewards?.lessonCompleteMoon || 10;
+      addReward(xp, coins, `n2_lesson:${lesson.id}`);
+      queueReward({
+        title: `${n2Labels().lessonComplete}: ${localized(lesson.title)}`,
+        message: n2Labels().lessonCompleteText,
+        xp,
+        coins,
+        mascot: "eva",
+        mood: "happy",
+        dialog: "lessonComplete"
+      });
+      playUxSound("lesson_complete");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN2KanjiStudied(kanji, cardId = null) {
+    if (!kanji) return;
+    const course = n2Course();
+    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+  }
+
+  function markN2KanjiDifficult(kanji, cardId = null) {
+    if (!kanji) return;
+    n2Course().difficultKanji[kanji] = new Date().toISOString();
+    if (cardId) {
+      const progress = getCardProgress(cardId);
+      if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
+    }
+  }
+
+  function completeN2Grammar(id, value = "") {
+    const item = state.n2Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
+    if (!item) return;
+    const selected = value || item.answer;
+    const correct = selected === item.answer;
+    const course = n2Course();
+    course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
+    if (correct && !course.completedGrammar[item.id]) {
+      course.completedGrammar[item.id] = new Date().toISOString();
+      addReward(state.n2Meta?.rewards?.grammarXp || 12, state.n2Meta?.rewards?.grammarMoon || 1, `n2_grammar:${item.id}`);
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else if (!correct) {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN2Reading(id, questionIndex = "0", value = "") {
+    completeN2Comprehension("reading", id, questionIndex, value);
+  }
+
+  function completeN2Listening(id, questionIndex = "0", value = "") {
+    completeN2Comprehension("listening", id, questionIndex, value);
+  }
+
+  function completeN2Comprehension(mode, id, questionIndex = "0", value = "") {
+    const collection = mode === "reading" ? state.n2Reading : state.n2Listening;
+    const item = collection.find((entry) => entry.id === id);
+    if (!item) return;
+    const index = Number(questionIndex || 0);
+    const question = (item.questions || [])[index];
+    if (!question) return;
+    const correct = value === question.answer;
+    const key = `${item.id}:${index}`;
+    const course = n2Course();
+    const answers = mode === "reading" ? course.readingAnswers : course.listeningAnswers;
+    const completed = mode === "reading" ? course.completedReading : course.completedListening;
+    const wasCompleted = Boolean(completed[item.id]);
+    answers[key] = { selected: value, correct, checkedAt: new Date().toISOString() };
+    const allCorrect = (item.questions || []).every((_, itemIndex) => answers[`${item.id}:${itemIndex}`]?.correct);
+    if (correct) {
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+    if (allCorrect && !wasCompleted) {
+      completed[item.id] = new Date().toISOString();
+      const xp = mode === "reading" ? state.n2Meta?.rewards?.readingXp || 42 : state.n2Meta?.rewards?.listeningXp || 38;
+      const coins = mode === "reading" ? state.n2Meta?.rewards?.readingMoon || 4 : state.n2Meta?.rewards?.listeningMoon || 4;
+      addReward(xp, coins, `n2_${mode}:${item.id}`);
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function openN2Lesson(id) {
+    const lesson = n2LessonById(id);
+    if (!lesson) return;
+    n2Course().currentLessonId = lesson.id;
+    markJlptLessonKanjiSeen("N2", lesson, "n2_lesson_open");
+    setN2Hash(lesson.id);
+  }
+
+  function openN2Overview() {
+    setN2Hash("");
+  }
+
+  function openN2Review(mode = null) {
+    if (mode) n2Course().activeReviewMode = mode;
+    setN2Hash("review");
+  }
+
+  function openN2KanjiList() {
+    setN2Hash("kanji");
+  }
+
+  function openN2Grammar() {
+    setN2Hash("grammar");
+  }
+
+  function openN2Reading() {
+    setN2Hash("reading");
+  }
+
+  function openN2Listening() {
+    setN2Hash("listening");
+  }
+
+  function openN2FinalTest() {
+    setN2Hash("final-test");
+  }
+
+  function setN2Hash(subroute) {
+    state.route = "textbooks";
+    state.activeTextbookLevel = "N2";
+    state.activeTextbookSubroute = subroute || null;
+    n2Course().opened = true;
+    const nextHash = subroute ? `#jlpt/n2/${encodeURIComponent(subroute)}` : "#jlpt/n2";
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    rememberJlptModuleVisit("N2", jlptModuleResolvedLessonId("N2", subroute), subroute || "overview");
+    evaluateAchievements();
+    saveProgress();
+    render();
+    scrollPageToTop();
+  }
+
+  function n2ReviewCards(mode = "due") {
+    const now = Date.now();
+    const course = n2Course();
+    const cards = n2AllCards();
+    if (mode === "difficult") return cards.filter((card) => course.difficultKanji[card.kanji]);
+    if (mode === "all") return cards;
+    return cards.filter((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" && (!progress.dueAt || new Date(progress.dueAt).getTime() <= now);
+    });
+  }
+
+  function buildN2FinalQuestions() {
+    const cards = n2AllCards();
+    if (!cards.length) return [];
+    const types = state.n2FinalTest?.types || ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"];
+    const count = Math.min(state.n2FinalTest?.questionCount || 32, Math.max(cards.length, 1));
+    const questions = [];
+    for (let index = 0; index < count; index += 1) {
+      const card = cards[(index * 11) % cards.length] || cards[index % cards.length];
+      const type = types[index % types.length];
+      const lesson = n2Lessons().find((item) => item.kanji.includes(card.kanji)) || n2Lessons()[0];
+      questions.push(buildN2FinalQuestion(type, card, lesson, index));
+    }
+    return questions.filter(Boolean);
+  }
+
+  function buildN2FinalQuestion(type, card, lesson, index) {
+    const examples = n2CardExamples(card);
+    const example = examples[0] || {};
+    const sentence = (lesson?.sentences || []).find((item) => item.jp.includes(card.kanji)) || lesson?.sentences?.[0];
+    if (type === "meaning") {
+      return {
+        id: `n2-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: card.kanji,
+        answer: card.id,
+        answerLabel: cardMeaning(card),
+        options: n2OptionSet({ value: card.id, label: cardMeaning(card) }, n2AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.id, label: cardMeaning(item) })), index)
+      };
+    }
+    if (type === "reading") {
+      return {
+        id: `n2-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: example.word || card.kanji,
+        answer: example.reading || card.hiragana || "",
+        answerLabel: example.reading || card.hiragana || "",
+        options: n2OptionSet({ value: example.reading || card.hiragana || "", label: example.reading || card.hiragana || "" }, n2AllCards().flatMap((item) => n2CardExamples(item).map((word) => ({ value: word.reading, label: word.reading }))).filter((item) => item.value && item.value !== example.reading), index)
+      };
+    }
+    if (type === "sentence" && sentence) {
+      const answer = localized({ ru: sentence.ru, en: sentence.en });
+      return {
+        id: `n2-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: sentence.jp,
+        answer,
+        answerLabel: answer,
+        options: n2OptionSet({ value: answer, label: answer }, n2Lessons().flatMap((item) => item.sentences || []).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })).filter((item) => item.value !== answer), index)
+      };
+    }
+    if (type === "word") {
+      const answer = example.word || card.kanji;
+      return {
+        id: `n2-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: exampleTranslation(example),
+        answer,
+        answerLabel: answer,
+        options: n2OptionSet({ value: answer, label: answer }, n2AllCards().flatMap((item) => n2CardExamples(item).map((word) => ({ value: word.word, label: word.word }))).filter((item) => item.value && item.value !== answer), index)
+      };
+    }
+    if (type === "grammar") {
+      const grammar = state.n2Grammar[index % Math.max(state.n2Grammar.length, 1)];
+      if (grammar) {
+        return {
+          id: `n2-final-${index}`,
+          type,
+          grammarId: grammar.id,
+          prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
+          answer: grammar.answer,
+          answerLabel: grammar.answer,
+          options: n2OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+        };
+      }
+    }
+    if (type === "mini-reading") {
+      const reading = state.n2Reading[index % Math.max(state.n2Reading.length, 1)];
+      const question = reading?.questions?.[0];
+      if (reading && question) {
+        return {
+          id: `n2-final-${index}`,
+          type,
+          readingId: reading.id,
+          prompt: `${reading.jp || localized(reading.title)} ${localized(question.prompt)}`,
+          answer: question.answer,
+          answerLabel: localized((question.options || []).find((item) => item.value === question.answer)?.label || question.answer),
+          options: (question.options || []).map((option) => ({ value: option.value, label: localized(option.label || option) }))
+        };
+      }
+    }
+    if (type === "srs") {
+      return {
+        id: `n2-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        answer: "remember",
+        answerLabel: lang() === "ru" ? "Помню" : "Remember",
+        options: [
+          { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
+          { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
+          { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+        ]
+      };
+    }
+    return {
+      id: `n2-final-${index}`,
+      type: "kanji",
+      cardId: card.id,
+      kanji: card.kanji,
+      prompt: cardMeaning(card),
+      answer: card.kanji,
+      answerLabel: card.kanji,
+      options: n2OptionSet({ value: card.kanji, label: card.kanji }, n2AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.kanji, label: item.kanji })), index)
+    };
+  }
+
+  function answerN2FinalQuestion(target) {
+    const id = target.dataset.id;
+    const value = target.dataset.value || "";
+    if (!id) return;
+    n2Course().finalTest.answers[id] = value;
+    saveProgress();
+    render();
+  }
+
+  function submitN2FinalTest(force = false) {
+    if (state.finalTestBusy) return;
+    state.finalTestBusy = true;
+    try {
+      const questions = buildN2FinalQuestions();
+      const test = n2Course().finalTest;
+      const config = state.n2FinalTest || {};
+      const labels = n2Labels();
+      const stats = finalTestQuestionStats(test, questions);
+      const threshold = Number(config?.passingPercent ?? config?.passThreshold ?? 80);
+      const allowIncomplete = Boolean(config.allowIncompleteFinish || config.allowUnansweredFinish);
+      const now = new Date().toISOString();
+      test.attempts = Number(test.attempts || 0) + 1;
+
+      if (stats.missingCount && !force && !allowIncomplete) {
+        const focusSelector = stats.firstMissingId ? `#${finalTestQuestionDomId("n2", stats.firstMissingId)}` : null;
+        state.finalTestModal = {
+          kind: "warning",
+          level: "N2",
+          title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+          message: lang() === "ru"
+            ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+            : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
+          answered: stats.answered,
+          missingCount: stats.missingCount,
+          totalQuestions: stats.totalQuestions,
+          threshold,
+          focusSelector,
+          focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
+          closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
+          forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+          allowIncomplete
+        };
+        state.pendingFocus = focusSelector;
+        saveProgress();
+        return;
+      }
+
+      let score = 0;
+      const mistakes = [];
+      const unanswered = [];
+      questions.forEach((question) => {
+        const selected = String(test.answers?.[question.id] || "").trim();
+        if (selected === question.answer) {
+          score += 1;
+          if (question.kanji) markN2KanjiStudied(question.kanji, question.cardId);
+          if (question.grammarId) {
+            const course = n2Course();
+            course.completedGrammar[question.grammarId] = course.completedGrammar[question.grammarId] || now;
+          }
+        } else {
+          if (!selected) unanswered.push(question);
+          mistakes.push({
+            id: question.id,
+            kanji: question.kanji || "",
+            answer: question.answerLabel,
+            selected
+          });
+          if (question.kanji) markN2KanjiDifficult(question.kanji, question.cardId);
+        }
+      });
+      const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+      const wasCompleted = Boolean(test.completedAt);
+      const wasPassed = Boolean(test.passed);
+      const answeredWrong = Math.max(0, mistakes.length - unanswered.length);
+      let rewardXp = 0;
+      let rewardMoon = 0;
+
+      test.answers = test.answers || {};
+      test.score = score;
+      test.percent = percent;
+      test.passed = percent >= threshold;
+      test.correctAnswers = score;
+      test.incorrectAnswers = answeredWrong;
+      test.unansweredAnswers = unanswered.length;
+      test.totalQuestions = questions.length;
+      test.mistakes = mistakes;
+      test.mistakeQuestionIds = mistakes.map((item) => item.id);
+      test.completedAt = now;
+      test.lastScore = percent;
+      test.bestScore = Math.max(Number(test.bestScore || 0), percent);
+      test.passedAt = test.passed ? (wasPassed ? (test.passedAt || now) : now) : test.passedAt || null;
+
+      if (!wasCompleted) {
+        const completeXp = Number(config?.rewards?.completeXp || 220);
+        const completeMoon = Number(config?.rewards?.completeMoon || 40);
+        rewardXp += completeXp;
+        rewardMoon += completeMoon;
+        addReward(completeXp, completeMoon, "n2_final_complete");
+      }
+      if (test.passed && !wasPassed) {
+        const passXp = Number(config?.rewards?.passXp || 110);
+        const passMoon = Number(config?.rewards?.passMoon || 18);
+        rewardXp += passXp;
+        rewardMoon += passMoon;
+        addReward(passXp, passMoon, "n2_final_pass");
+      }
+      test.lastRewardXp = rewardXp;
+      test.lastRewardMoon = rewardMoon;
+      state.pendingFocus = null;
+      state.finalTestModal = {
+        kind: "result",
+        level: "N2",
+        title: test.passed ? labels.finalPassed : labels.finalNeedsReview,
+        message: test.passed ? labels.finalPassedText : labels.finalNeedsReviewText,
+        passed: test.passed,
+        percent,
+        correct: score,
+        incorrect: answeredWrong,
+        unanswered: unanswered.length,
+        totalQuestions: questions.length,
+        rewardXp,
+        rewardMoon,
+        attempts: test.attempts,
+        threshold,
+        reviewAction: "n2-review",
+        reviewAllAction: "n2-review",
+        closeLabel: lang() === "ru" ? "OK" : "OK",
+        repeatLabel: labels.repeatMistakes,
+        reviewAllLabel: labels.reviewAll
+      };
+      evaluateAchievements();
+      saveProgress();
+    } catch (error) {
+      console.error(error);
+      toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+    } finally {
+      state.finalTestBusy = false;
+      render();
+    }
+  }
+
+  function resetN2FinalTest() {
+    n2Course().finalTest = defaultN2CourseProgress().finalTest;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
+    saveProgress();
+    renderPreservingScroll();
+  }
+
+  function n2DomId(id) {
+    return `n2-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+  }
+
+  function renderN1CoursePage(textbook) {
+    state.activeTextbookLevel = "N1";
+    state.activeJlptLesson = "N1";
+    const course = ensureN1CourseProgress();
+    if (!course.opened) {
+      course.opened = true;
+      evaluateAchievements();
+      saveProgress();
+    }
+    const subroute = String(state.activeTextbookSubroute || "");
+    if (subroute === "diagnostic") return renderN1DiagnosticPage(textbook);
+    if (subroute === "lessons") return renderN1LessonsPage(textbook);
+    if (subroute === "final-test") return renderN1FinalTestPage(textbook);
+    if (subroute === "review") return renderN1ReviewPage(textbook);
+    if (subroute === "kanji") return renderN1KanjiListPage(textbook);
+    if (subroute === "grammar") return renderN1GrammarPage(textbook);
+    if (subroute === "reading") return renderN1ReadingPage(textbook);
+    if (subroute === "listening") return renderN1ListeningPage(textbook);
+    const lesson = n1LessonById(subroute);
+    if (lesson) {
+      n1Course().currentLessonId = lesson.id;
+      markJlptLessonKanjiSeen("N1", lesson, "n1_lesson_page");
+      return renderN1LessonPage(textbook, lesson);
+    }
+    return renderN1OverviewPage(textbook);
+  }
+
+  function renderN1OverviewPage(textbook) {
+    const labels = n1Labels();
+    const meta = state.n1Meta || {};
+    const progress = n1ProgressSummary();
+    const lessons = n1Lessons();
+    const current = n1CurrentLesson();
+    const overallPercent = progressWidth(progress.studied, progress.total);
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="#textbooks">${escapeHtml(labels.allTextbooks)}</a>
+          <span>JLPT N1</span>
+        </nav>
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Flash Kanji</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(localized(meta.description || textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <a class="btn ghost" href="#textbooks">${escapeHtml(labels.allTextbooks)}</a>
+            <a class="btn ghost" href="${escapeAttr(meta.pdfUrl || textbook.pdfUrl || textbook.pdfFile || "")}" download="flashkanji_N1_textbook_flashkanji_space.pdf" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+          </div>
+        </div>
+
+        <article class="n5-hero n2-hero n1-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">${escapeHtml(progress.studied)}/${escapeHtml(progress.total)} ${escapeHtml(labels.kanji)} · ${escapeHtml(meta.currentKanjiCount || n1AllCards().length)} ${escapeHtml(labels.availableNow)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(localized(meta.principle || {}))}</p>
+            <div class="textbook-actions">
+              <a class="btn primary" href="#jlpt/n1/${escapeAttr(current?.id || "bulk-n1-01")}" data-action="n1-open-lesson" data-id="${escapeAttr(current?.id || "bulk-n1-01")}">${escapeHtml(labels.continue)}</a>
+              <a class="btn" href="#jlpt/n1/lessons" data-action="n1-lessons">${escapeHtml(labels.lessonsCta)}</a>
+              <button class="btn ghost" type="button" data-action="n1-diagnostic">${escapeHtml(labels.diagnostic)}</button>
+              <button class="btn ghost" type="button" data-action="n1-review" data-mode="due">${escapeHtml(labels.review)}</button>
+              <button class="btn ghost" type="button" data-action="n1-kanji">${escapeHtml(labels.kanjiN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-grammar">${escapeHtml(labels.grammarN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-reading">${escapeHtml(labels.readingN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-listening">${escapeHtml(labels.listeningN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+              ${renderJlptEvaTab("N1")}
+            </div>
+          </div>
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.overallProgress, `${progress.studied}/${progress.total}`, `${overallPercent}%`, overallPercent)}
+          ${renderMetric(labels.completedLessons, `${progress.completedLessons}/${meta.currentLessonCount || lessons.length}`, labels.lessons, progressWidth(progress.completedLessons, meta.currentLessonCount || lessons.length))}
+          ${renderMetric(labels.vocabularyBooster, progress.wordMistakes, labels.mistakesForReview, progressWidth(progress.wordMistakes, 30))}
+          ${renderMetric(labels.completedGrammar, `${progress.completedGrammar}/${meta.grammarCount || state.n1Grammar.length}`, labels.grammar, progressWidth(progress.completedGrammar, meta.grammarCount || state.n1Grammar.length))}
+          ${renderMetric(labels.completedReading, `${progress.completedReading}/${meta.readingCount || state.n1Reading.length}`, labels.readingN1, progressWidth(progress.completedReading, meta.readingCount || state.n1Reading.length))}
+          ${renderMetric(labels.completedListening, `${progress.completedListening}/${meta.listeningCount || state.n1Listening.length}`, labels.listeningN1, progressWidth(progress.completedListening, meta.listeningCount || state.n1Listening.length))}
+          ${renderMetric(labels.writingCount, progress.writing, `${meta.writingGoal || 53}`, progressWidth(progress.writing, meta.writingGoal || 53))}
+          ${renderMetric(labels.mistakesForReview, progress.difficult, labels.difficult, progressWidth(progress.difficult, Math.max(progress.currentAvailable, 1)))}
+          ${renderMetric(labels.nextSrsReview, progress.nextReview, labels.srs, progress.reviews ? 100 : 0)}
+          ${renderMetric(labels.streak, `${state.progress.streak.current}`, `${state.progress.streak.best} best`, progressWidth(state.progress.streak.current, Math.max(state.progress.streak.best, 7)))}
+        </div>
+
+        <section class="n5-panel n1-serious-panel">
+          <div>
+            <h2>${escapeHtml(labels.lessonCycle)}</h2>
+            <p>${escapeHtml(labels.lessonCycleText)}</p>
+          </div>
+          <div class="n1-cycle">
+            ${["kanji", "word", "reading", "collocation", "grammar", "sentence", "paragraph", "argument", "stance", "conclusion", "error", "srs"].map((item) => `<span>${escapeHtml(labels.cycle[item])}</span>`).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div class="n5-panel-head">
+            <div>
+              <h2>${escapeHtml(labels.nextLesson)}</h2>
+              <p>${escapeHtml(current ? localized(current.goal) : labels.noLessons)}</p>
+            </div>
+            ${renderJlptEvaTab("N1")}
+          </div>
+          ${current ? renderN1LessonTile(current, true) : `<article class="empty-state"><h3>${escapeHtml(labels.noLessons)}</h3></article>`}
+        </section>
+
+        <section class="n5-panel n5-review-plan">
+          <div>
+            <h2>${escapeHtml(labels.reviewPlan)}</h2>
+            <p>${escapeHtml(localized((state.n1Textbook?.textbook || {}).recommendedCycle || meta.recommendedCycle || {}))}</p>
+          </div>
+          <div class="n5-plan-row">
+            ${(meta.reviewPlan || []).map((item) => `<span class="pill">${escapeHtml(item.day)} · ${escapeHtml(localized(item.label || {}))}</span>`).join("")}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN1LessonsPage(textbook) {
+    const labels = n1Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Lessons</p>
+            <h1>${escapeHtml(labels.lessonsTitle)}</h1>
+            <p>${escapeHtml(labels.lessonsDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-diagnostic">${escapeHtml(labels.diagnostic)}</button>
+            ${renderJlptEvaTab("N1")}
+          </div>
+        </div>
+        <div class="n5-lesson-grid">
+          ${n1Lessons().map((lesson) => renderN1LessonTile(lesson)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1LessonTile(lesson, featured = false) {
+    const labels = n1Labels();
+    const status = n1LessonStatus(lesson.id);
+    const cards = n1CardsForLesson(lesson);
+    const learned = cards.filter((card) => n1Course().studiedKanji[card.kanji]).length;
+    return `
+      <a class="n5-lesson-tile n1-lesson-tile ${status} ${featured ? "is-featured" : ""}" href="#jlpt/n1/${escapeAttr(lesson.id)}" data-action="n1-open-lesson" data-id="${escapeAttr(lesson.id)}">
+        <span class="pill">${escapeHtml(labels.lesson)} ${escapeHtml(lesson.order)}</span>
+        <h3>${escapeHtml(localized(lesson.title))}</h3>
+        <p>${escapeHtml(localized(lesson.goal))}</p>
+        <div class="n5-kanji-strip n2-kanji-strip">${cards.slice(0, 20).map((card) => `<b>${escapeHtml(card.kanji)}</b>`).join("")}</div>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${learned}/${cards.length}`)}"><i style="width:${progressWidth(learned, cards.length)}%"></i></div>
+        <small>${escapeHtml(learned)}/${escapeHtml(cards.length)} · ${escapeHtml(n1LessonStatusLabel(status))}</small>
+        ${renderJlptEvaTab("N1", { inline: true })}
+      </a>
+    `;
+  }
+
+  function renderN1LessonPage(textbook, lesson) {
+    const labels = n1Labels();
+    const overlay = n1LessonOverlay(lesson);
+    const cards = n1CardsForLesson(lesson);
+    const exercises = buildN1LessonExercises(lesson);
+    const status = n1LessonStatus(lesson.id);
+    const complete = status === "completed";
+    const correct = exercises.filter((exercise) => n1ExerciseResult(exercise.id)?.correct).length;
+    const readingItem = n1LessonReadingItem(lesson);
+    const nextLesson = n1Lessons().find((item) => item.order === lesson.order + 1);
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page n5-lesson-page">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="#jlpt/n1">${escapeHtml(labels.backToN1)}</a>
+          <a href="#jlpt/n1/lessons">${escapeHtml(labels.lessonsCta)}</a>
+          <span>${escapeHtml(localized(lesson.title))}</span>
+        </nav>
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · ${escapeHtml(labels.lesson)} ${lesson.order}/${state.n1Meta?.currentLessonCount || n1Lessons().length}</p>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(overlay.intro || lesson.goal))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn" type="button" data-action="n1-review" data-mode="difficult">${escapeHtml(labels.difficult)}</button>
+          </div>
+        </div>
+
+        <article class="n5-lesson-summary n1-lesson-summary">
+          <div>
+            <span class="pill">${escapeHtml(labels.quickCheck)}</span>
+            <h2>${escapeHtml(labels.lessonChain)}</h2>
+            <p>${escapeHtml(labels.lessonChainText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.duration)}: ${escapeHtml(lesson.durationMinutes || 45)} ${escapeHtml(labels.minutes)}</span>
+              ${(overlay.grammarFocus || lesson.grammarFocus || []).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n1Course().studiedKanji[card.kanji]).length}/${cards.length}`, labels.kanji, progressWidth(cards.filter((card) => n1Course().studiedKanji[card.kanji]).length, cards.length))}
+            ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
+          </div>
+        </article>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.quickSelfCheck)}</h2>
+            <p>${escapeHtml(labels.quickSelfCheckText)}</p>
+          </div>
+          <div class="n1-self-check-grid">
+            ${cards.slice(0, 20).map((card) => renderN1SelfCheckCard(card)).join("")}
+          </div>
+        </section>
+
+        <div class="n5-kanji-grid">
+          ${cards.slice(0, 20).map((card, index) => renderN1KanjiStudyCard(card, lesson, index)).join("")}
+        </div>
+
+        ${renderN1VocabularyBooster(lesson, cards)}
+        ${renderN1LessonGrammar(lesson)}
+        ${renderN1LessonMiniReading(lesson)}
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.sentences)}</h2>
+            <p>${escapeHtml(labels.sentencesText)}</p>
+          </div>
+          <div class="n5-sentence-list">
+            ${(overlay.sentences || lesson.sentences || []).map((sentence) => `
+              <article>
+                <strong>${escapeHtml(sentence.jp)}</strong>
+                <span>${escapeHtml(sentence.reading || "")}</span>
+                <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.exercises)}</h2>
+            <p>${escapeHtml(labels.exercisesText)}</p>
+          </div>
+          <div class="n5-exercise-list">
+            ${exercises.map((exercise) => renderN1Exercise(exercise)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-result-panel ${complete ? "is-complete" : ""}">
+          <div>
+            <h2>${escapeHtml(complete ? labels.lessonComplete : labels.lessonResult)}</h2>
+            <p>${escapeHtml(complete ? labels.lessonCompleteText : labels.lessonResultText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.studiedKanji)}: ${cards.filter((card) => n1Course().studiedKanji[card.kanji]).length}/${cards.length}</span>
+              <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
+              ${readingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(n1Course().completedReading[readingItem.id] ? labels.completed : labels.none)}</span>` : ""}
+              <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(Object.keys(n1Course().difficultKanji || {}).length)}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="n1-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn" type="button" data-action="n1-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${nextLesson ? `<a class="btn ghost" href="#jlpt/n1/${escapeAttr(nextLesson.id)}" data-action="n1-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>`}
+          </div>
+        </section>
+      </section>
+    `;
+  }
+
+  function renderN1SelfCheckCard(card) {
+    const labels = n1Labels();
+    const status = n1Course().studiedKanji[card.kanji] ? "know" : n1Course().difficultKanji[card.kanji] ? "difficult" : "";
+    return `
+      <article class="n1-self-check-card ${status ? `is-${status}` : ""}">
+        <strong>${escapeHtml(card.kanji)}</strong>
+        <span>${escapeHtml(cardMeaning(card))}</span>
+        <div class="n1-self-check-actions">
+          <button type="button" data-action="n1-self-check" data-id="${escapeAttr(card.id)}" data-value="know">${escapeHtml(labels.knowShort)}</button>
+          <button type="button" data-action="n1-self-check" data-id="${escapeAttr(card.id)}" data-value="doubt">${escapeHtml(labels.doubtShort)}</button>
+          <button type="button" data-action="n1-self-check" data-id="${escapeAttr(card.id)}" data-value="unknown">${escapeHtml(labels.unknownShort)}</button>
+          <button type="button" data-action="n1-self-check" data-id="${escapeAttr(card.id)}" data-value="difficult">${escapeHtml(labels.difficultShort)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN1KanjiStudyCard(card, lesson, index) {
+    const labels = n1Labels();
+    const progress = getCardProgress(card.id);
+    const examples = n1CardExamples(card);
+    const written = Boolean(n1Course().writingPractice[card.kanji]);
+    const difficult = Boolean(n1Course().difficultKanji[card.kanji]);
+    return `
+      <article class="n5-kanji-card ${difficult ? "is-difficult" : ""}">
+        <div class="n5-kanji-topline">
+          <span class="pill">${escapeHtml(labels.step)} ${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <dl class="n5-readings">
+          <div><dt>${escapeHtml(labels.onyomi)}</dt><dd>${escapeHtml(card.onyomi || "—")}</dd></div>
+          <div><dt>${escapeHtml(labels.kunyomi)}</dt><dd>${escapeHtml(card.kunyomi || card.hiragana || "—")}</dd></div>
+        </dl>
+        <div class="n5-word-list">
+          ${examples.map((example) => `
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+          `).join("")}
+        </div>
+        ${renderN1CardCollocation(card, lesson)}
+        <div class="textbook-actions">
+          <button class="btn primary" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn ghost" type="button" data-action="n1-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN1CardCollocation(card, lesson) {
+    const overlay = n1LessonOverlay(lesson);
+    const collocation = (overlay.collocations || []).find((item) => String(item.jp || "").includes(card.kanji));
+    if (!collocation) return "";
+    return `
+      <div class="n5-card-sentence">
+        <strong>${escapeHtml(collocation.jp)}</strong>
+        <span>${escapeHtml(collocation.reading || "")}</span>
+        <small>${escapeHtml(localized({ ru: collocation.ru, en: collocation.en }))}</small>
+      </div>
+    `;
+  }
+
+  function renderN1VocabularyBooster(lesson, cards) {
+    const labels = n1Labels();
+    const overlay = n1LessonOverlay(lesson);
+    const collocations = overlay.collocations?.length ? overlay.collocations : cards.flatMap((card) => n1CardExamples(card).slice(0, 1).map((example) => ({
+      jp: example.word,
+      reading: example.reading,
+      ru: exampleTranslation(example),
+      en: example.translation_en || example.translation || exampleTranslation(example)
+    }))).slice(0, 12);
+    return `
+      <section class="n5-panel n1-vocab-panel">
+        <div>
+          <h2>${escapeHtml(labels.vocabularyBooster)}</h2>
+          <p>${escapeHtml(labels.vocabularyBoosterText)}</p>
+        </div>
+        <div class="n2-section-grid">
+          ${collocations.slice(0, 12).map((item) => `
+            <article class="n2-grammar-card">
+              <span class="pill">${escapeHtml(item.reading || "")}</span>
+              <h3>${escapeHtml(item.jp || "")}</h3>
+              <p>${escapeHtml(localized({ ru: item.ru, en: item.en }))}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1LessonGrammar(lesson) {
+    const labels = n1Labels();
+    const overlay = n1LessonOverlay(lesson);
+    const grammarItems = (overlay.grammarFocus || lesson.grammarFocus || []).map((pattern) => n1GrammarByPattern(pattern)).filter(Boolean).slice(0, 5);
+    if (!grammarItems.length) return "";
+    return `
+      <section class="n5-panel n2-grammar-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniGrammar)}</h2>
+          <p>${escapeHtml(labels.miniGrammarText)}</p>
+        </div>
+        <div class="n2-section-grid">
+          ${grammarItems.map((item) => `
+            <article class="n2-grammar-card">
+              <span class="pill">${escapeHtml(item.pattern)}</span>
+              <h3>${escapeHtml(localized(item.title))}</h3>
+              <p>${escapeHtml(localized(item.explanation))}</p>
+              ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+              ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
+              <button class="btn ghost" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n1Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1LessonMiniReading(lesson) {
+    const labels = n1Labels();
+    const item = n1LessonReadingItem(lesson);
+    if (!item) return "";
+    return `
+      <section class="n5-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniReadingTitle)}</h2>
+          <p>${escapeHtml(labels.miniReadingText)}</p>
+        </div>
+        ${renderN1ReadingCard(item, "reading")}
+      </section>
+    `;
+  }
+
+  function renderN1Exercise(exercise) {
+    const labels = n1Labels();
+    const result = n1ExerciseResult(exercise.id);
+    const className = result ? (result.correct ? "is-correct" : "is-wrong") : "";
+    if (exercise.type === "active-recall") {
+      return `
+        <article class="n5-exercise-card ${className}">
+          <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+          <h3>${escapeHtml(exercise.prompt)}</h3>
+          <div class="n5-input-row">
+            <input id="${escapeAttr(n1DomId(exercise.id))}" type="text" maxlength="8" autocomplete="off" value="${escapeAttr(result?.selected || "")}" aria-label="${escapeAttr(localized(exercise.title))}" />
+            <button class="btn primary" type="button" data-action="n1-check-input" data-id="${escapeAttr(exercise.id)}">${escapeHtml(labels.check)}</button>
+            <button class="btn ghost" type="button" data-action="n1-answer" data-id="${escapeAttr(exercise.id)}" data-value="">${escapeHtml(labels.showAnswer)}</button>
+          </div>
+          ${renderN1ExerciseFeedback(exercise, result)}
+        </article>
+      `;
+    }
+    return `
+      <article class="n5-exercise-card ${className}">
+        <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+        <h3>${escapeHtml(exercise.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${exercise.options.map((option) => {
+            const selectedOption = result?.selected === option.value;
+            const answerOption = result && option.value === exercise.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n1-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${renderN1ExerciseFeedback(exercise, result)}
+      </article>
+    `;
+  }
+
+  function renderN1ExerciseFeedback(exercise, result) {
+    if (!result) return "";
+    const labels = n1Labels();
+    const text = result.correct
+      ? labels.correctAnswer
+      : `${labels.wrongAnswer}: ${exercise.answerLabel || exercise.answer}`;
+    return `<p class="n5-feedback">${escapeHtml(text)}</p>`;
+  }
+
+  function renderN1ReviewPage(textbook) {
+    const labels = n1Labels();
+    const mode = n1Course().activeReviewMode || "due";
+    const cards = n1ReviewCards(mode).slice(0, 120);
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · SRS</p>
+            <h1>${escapeHtml(labels.reviewTitle)}</h1>
+            <p>${escapeHtml(labels.reviewDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="jlpt-filter-bar" role="tablist" aria-label="N1 review modes">
+          ${(state.n1Exercises?.reviewModes || []).map((item) => `
+            <button class="btn ${mode === item.id ? "primary" : "ghost"}" type="button" data-action="n1-review" data-mode="${escapeAttr(item.id)}">${escapeHtml(localized(item.title))}</button>
+          `).join("")}
+        </div>
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN1ReviewCard(card, index)).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReviewCards)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1ReviewCard(card, index) {
+    const labels = n1Labels();
+    const progress = getCardProgress(card.id);
+    return `
+      <article class="n5-kanji-card n5-review-card">
+        <div class="n5-kanji-topline">
+          <span class="pill">${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)} · ${escapeHtml(formatDue(progress.dueAt))}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <p>${escapeHtml(n1CardExamples(card)[0]?.word || card.hiragana || "")} · ${escapeHtml(n1CardExamples(card)[0]?.reading || card.romaji || "")}</p>
+        <div class="textbook-actions">
+          <button class="btn success" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderN1KanjiListPage(textbook) {
+    const labels = n1Labels();
+    const cards = n1AllCards().slice(0, 220);
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · ${escapeHtml(state.n1Meta?.currentKanjiCount || cards.length)}/${escapeHtml(state.n1Meta?.kanjiCount || 1047)}</p>
+            <h1>${escapeHtml(labels.kanjiListTitle)}</h1>
+            <p>${escapeHtml(labels.kanjiListText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn" type="button" data-action="n1-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+          </div>
+        </div>
+        <div class="n5-kanji-grid n2-kanji-catalog">
+          ${cards.map((card, index) => `
+            <article class="n5-kanji-card">
+              <div class="n5-kanji-topline"><span class="pill">${index + 1}/${escapeHtml(state.n1Meta?.currentKanjiCount || cards.length)}</span><span class="pill">${escapeHtml(getCardProgress(card.id).state)}</span></div>
+              <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+              <h3>${escapeHtml(cardMeaning(card))}</h3>
+              <p>${escapeHtml(n1CardExamples(card)[0]?.word || "")} · ${escapeHtml(n1CardExamples(card)[0]?.reading || "")}</p>
+              <div class="textbook-actions">
+                <button class="btn primary" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1GrammarPage(textbook) {
+    const labels = n1Labels();
+    const items = n1GrammarItems();
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Grammar</p>
+            <h1>${escapeHtml(labels.grammarTitle)}</h1>
+            <p>${escapeHtml(labels.grammarText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-reading">${escapeHtml(labels.readingN1)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.completedGrammar, `${Object.keys(n1Course().completedGrammar || {}).length}/${state.n1Meta?.grammarCount || items.length}`, labels.grammar, progressWidth(Object.keys(n1Course().completedGrammar || {}).length, state.n1Meta?.grammarCount || items.length))}
+          ${renderMetric(labels.questions, items.length, labels.grammar, 100)}
+        </div>
+        <div class="n2-section-grid">
+          ${items.map((item) => {
+            const result = n1Course().grammarResults?.[item.id];
+            return `
+              <article class="n2-grammar-card ${result ? (result.correct ? "is-correct" : "is-wrong") : ""}">
+                <span class="pill">${escapeHtml(item.order)} · ${escapeHtml(item.pattern)}</span>
+                <h3>${escapeHtml(localized(item.title))}</h3>
+                <p>${escapeHtml(localized(item.explanation))}</p>
+                ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
+                <div class="n5-option-grid">
+                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                    <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
+                  `).join("")}
+                </div>
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1ReadingPage(textbook) {
+    const labels = n1Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Reading</p>
+            <h1>${escapeHtml(labels.readingTitle)}</h1>
+            <p>${escapeHtml(labels.readingText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-listening">${escapeHtml(labels.listeningN1)}</button>
+          </div>
+        </div>
+        <div class="n2-section-grid">
+          ${state.n1Reading.map((item) => renderN1ReadingCard(item, "reading")).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReadingYet)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1ListeningPage(textbook) {
+    const labels = n1Labels();
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Listening</p>
+            <h1>${escapeHtml(labels.listeningTitle)}</h1>
+            <p>${escapeHtml(labels.listeningText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="n2-section-grid">
+          ${state.n1Listening.map((item) => renderN1ReadingCard(item, "listening")).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noListeningYet)}</h3></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1ReadingCard(item, mode) {
+    const labels = n1Labels();
+    const completed = mode === "reading" ? n1Course().completedReading[item.id] : n1Course().completedListening[item.id];
+    const answerStore = mode === "reading" ? n1Course().readingAnswers : n1Course().listeningAnswers;
+    const action = mode === "reading" ? "n1-reading-complete" : "n1-listening-complete";
+    return `
+      <article class="n2-reading-card ${completed ? "is-correct" : ""}">
+        <span class="pill">${escapeHtml(localized(item.title))}</span>
+        ${Array.isArray(item.dialogue) ? `<div class="n5-sentence-list">${item.dialogue.map((line) => `<article><strong>${escapeHtml(line)}</strong></article>`).join("")}</div>` : `<p class="n2-jp-text">${escapeHtml(item.jp || "")}</p>`}
+        ${item.reading ? `<p class="n1-furigana-line">${escapeHtml(item.reading)}</p>` : ""}
+        ${item.ru ? `<p>${escapeHtml(lang() === "ru" ? item.ru : item.en || item.ru)}</p>` : ""}
+        ${(item.questions || []).map((question, index) => {
+          const key = `${item.id}:${index}`;
+          const result = answerStore?.[key];
+          const options = Array.isArray(question.options) ? question.options : [];
+          return `
+            <div class="n2-question-block">
+              <h3>${escapeHtml(localized(question.prompt || item.question || {}))}</h3>
+              <div class="n5-option-grid">
+                ${options.map((option) => `<button class="btn ${result?.selected === option.value ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="${escapeAttr(action)}" data-id="${escapeAttr(item.id)}" data-question="${escapeAttr(index)}" data-value="${escapeAttr(option.value)}">${escapeHtml(localized(option.label || option))}</button>`).join("")}
+              </div>
+              ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : labels.wrongAnswer)}</p>` : ""}
+            </div>
+          `;
+        }).join("")}
+      </article>
+    `;
+  }
+
+  function renderN1DiagnosticPage(textbook) {
+    const labels = n1Labels();
+    const course = n1Course();
+    const diagnostic = n1DiagnosticQuestions();
+    const answered = Object.keys(course.diagnostic.answers || {}).length;
+    const completed = Boolean(course.diagnostic.completedAt);
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page n1-diagnostic-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Diagnostic</p>
+            <h1>${escapeHtml(labels.diagnosticTitle)}</h1>
+            <p>${escapeHtml(labels.diagnosticText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn primary" type="button" data-action="n1-diagnostic-submit">${escapeHtml(labels.finishDiagnostic)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${diagnostic.length}`, labels.diagnostic, progressWidth(answered, diagnostic.length))}
+          ${renderMetric(labels.weakTopics, course.diagnostic.weak.length, labels.review, progressWidth(course.diagnostic.weak.length, diagnostic.length))}
+          ${renderMetric(labels.strongTopics, course.diagnostic.strong.length, labels.ready, progressWidth(course.diagnostic.strong.length, diagnostic.length))}
+        </div>
+        ${completed ? `
+          <section class="n5-result-panel ${course.diagnostic.weak.length ? "" : "is-complete"}">
+            <div>
+              <h2>${escapeHtml(course.diagnostic.weak.length ? labels.diagnosticNeedsBridge : labels.diagnosticReady)}</h2>
+              <p>${escapeHtml(course.diagnostic.weak.length ? labels.diagnosticNeedsBridgeText : labels.diagnosticReadyText)}</p>
+              <div class="tag-row">
+                ${course.diagnostic.recommendedLevels.map((level) => `<a class="pill" href="#jlpt/${escapeAttr(String(level).toLowerCase())}">${escapeHtml(level)}</a>`).join("")}
+              </div>
+            </div>
+            <button class="btn primary" type="button" data-action="n1-diagnostic-srs">${escapeHtml(course.diagnostic.weakTopicsInSrs ? labels.addedToSrs : labels.addWeakToSrs)}</button>
+          </section>
+        ` : ""}
+        <div class="n5-exercise-list">
+          ${diagnostic.map((question, index) => renderN1DiagnosticQuestion(question, index)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1DiagnosticQuestion(question, index) {
+    const answer = n1Course().diagnostic.answers?.[question.id];
+    const completed = Boolean(n1Course().diagnostic.completedAt);
+    return `
+      <article class="n5-exercise-card ${completed ? (answer === question.answer ? "is-correct" : "is-wrong") : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.level || "N5-N2")}</span>
+        <h3>${escapeHtml(localized(question.prompt))}</h3>
+        <div class="n5-option-grid">
+          ${(question.options || []).map((option) => `<button class="btn ${answer === option.value ? "primary" : "ghost"}" type="button" data-action="n1-diagnostic-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(localized(option.label || option))}</button>`).join("")}
+        </div>
+        ${completed && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(labelsForDiagnosticFeedback(question))}</p>` : ""}
+      </article>
+    `;
+  }
+
+  function labelsForDiagnosticFeedback(question) {
+    return `${n1Labels().review}: ${localized(question.review || question.topic || {})}`;
+  }
+
+  function renderN1FinalTestPage(textbook) {
+    const labels = n1Labels();
+    const config = state.n1FinalTest || {};
+    const questions = buildN1FinalQuestions();
+    const test = n1Course().finalTest;
+    const stats = finalTestQuestionStats(test, questions);
+    const answered = stats.answered;
+    const ready = stats.ready;
+    const completed = Boolean(test.completedAt);
+    return `
+      <section class="page textbooks-page n5-course-page n1-course-page n5-final-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Final</p>
+            <h1>${escapeHtml(localized(config.title || {}))}</h1>
+            <p>${escapeHtml(localized(config.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn" type="button" data-action="n1-final-reset">${escapeHtml(labels.resetTest)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
+          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 82}%`, completed ? test.percent : 0)}
+          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+        </div>
+        ${completed ? `
+          <section class="n5-result-panel ${test.passed ? "is-complete" : ""}">
+            <div>
+              <h2>${escapeHtml(test.passed ? labels.finalPassed : labels.finalNeedsReview)}</h2>
+              <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
+            </div>
+            <button class="btn primary" type="button" data-action="n1-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+          </section>
+        ` : ""}
+        <div class="n5-exercise-list">
+          ${questions.map((question, index) => renderN1FinalQuestion(question, index)).join("")}
+        </div>
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        <div class="n5-final-actions">
+          <button class="btn primary" type="button" data-action="n1-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn ghost" type="button" data-action="n1-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderN1FinalQuestion(question, index) {
+    const answer = n1Course().finalTest.answers?.[question.id];
+    const complete = Boolean(n1Course().finalTest.completedAt);
+    return `
+      <article class="n5-exercise-card ${complete ? (answer === question.answer ? "is-correct" : "is-wrong") : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.type)}</span>
+        <h3>${escapeHtml(question.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${question.options.map((option) => {
+            const selectedOption = answer === option.value;
+            const answerOption = complete && option.value === question.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "primary" : "ghost"}" type="button" data-action="n1-final-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+          }).join("")}
+        </div>
+        ${complete && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(n1Labels().wrongAnswer)}: ${escapeHtml(question.answerLabel)}</p>` : ""}
+      </article>
+    `;
+  }
+
+  function n1Labels() {
+    return lang() === "ru"
+      ? {
+        title: "JLPT N1: тексты, нюансы и авторская позиция",
+        allTextbooks: "Все учебники",
+        pdf: "PDF-учебник",
+        kanji: "кандзи",
+        availableNow: "доступно сейчас",
+        grammar: "грамматика",
+        courseMap: "Интерактивный N1: знак, слово, абзац, аргумент, позиция автора, вывод",
+        continue: "Продолжить",
+        lessonsCta: "Уроки",
+        diagnostic: "Диагностика",
+        review: "Повторять N1",
+        kanjiN1: "Кандзи N1",
+        grammarN1: "Грамматика N1",
+        readingN1: "Чтение N1",
+        listeningN1: "Аудирование N1",
+        finalTest: "Финальный тест",
+        overallProgress: "Общий прогресс",
+        completedLessons: "Уроки",
+        completedGrammar: "Грамматика",
+        completedReading: "Тексты",
+        completedListening: "Аудирование",
+        vocabularyBooster: "Vocabulary Booster",
+        vocabularyBoosterText: "Слова-опоры и устойчивые сочетания переводят одиночный знак в реальный N1-контекст.",
+        writingCount: "Письмо",
+        mistakesForReview: "Ошибки к повтору",
+        nextSrsReview: "Следующий SRS",
+        streak: "Серия",
+        srs: "SRS",
+        lessonCycle: "Цикл урока N1",
+        lessonCycleText: "Каждый урок проходит цепочку от знака к позиции автора и возвращает ошибки в SRS.",
+        cycle: {
+          kanji: "кандзи",
+          word: "слово",
+          reading: "чтение",
+          collocation: "сочетание",
+          grammar: "грамматика",
+          sentence: "предложение",
+          paragraph: "абзац",
+          argument: "аргумент",
+          stance: "позиция",
+          conclusion: "вывод",
+          error: "ошибка",
+          srs: "SRS"
+        },
+        nextLesson: "Следующий урок",
+        noLessons: "Уроки N1 пока не загружены.",
+        reviewPlan: "План повторения",
+        lessonsTitle: "Уроки JLPT N1",
+        lessonsDescription: "Текущий рабочий слой: 11 уроков по 20 кандзи из базы приложения. Целевой курс рассчитан на 1047 кандзи.",
+        lesson: "Урок",
+        backToN1: "К N1",
+        lessonChain: "Кандзи -> слово -> грамматика -> абзац -> позиция автора -> вывод -> SRS",
+        lessonChainText: "N1 проверяет не узнавание знака, а способность увидеть его функцию в аргументе и тексте.",
+        quickCheck: "Быстрая проверка",
+        quickSelfCheck: "Что уже узнаёшь?",
+        quickSelfCheckText: "Отметь честно: знаю, сомневаюсь, не знаю или сложно. Сложные знаки поднимутся в повторении.",
+        knowShort: "Знаю",
+        doubtShort: "Сомневаюсь",
+        unknownShort: "Не знаю",
+        difficultShort: "Сложно",
+        duration: "Длительность",
+        minutes: "мин",
+        exercises: "Упражнения",
+        correct: "верно",
+        sentences: "Предложения и контекст",
+        sentencesText: "Читай с фуриганой и переводом, но сначала попробуй вытащить позицию автора из японской строки.",
+        exercisesText: "12 смешанных заданий: значение, чтение, слово, грамматика, мини-абзац, позиция автора и активное вспоминание.",
+        lessonComplete: "Урок завершён",
+        lessonCompleteText: "Кандзи урока добавлены в N1-review и общий SRS.",
+        lessonResult: "Итог урока",
+        lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
+        completeLesson: "Завершить урок",
+        refreshLesson: "Обновить итог",
+        repeatMistakes: "Повторить ошибки",
+        nextLessonButton: "Следующий урок",
+        nextLesson: "Следующий урок",
+        none: "нет",
+        step: "шаг",
+        onyomi: "онъёми",
+        kunyomi: "кунъёми",
+        addToSrs: "Добавить в SRS",
+        know: "Я помню",
+        hard: "Не помню",
+        writingPractice: "Практика письма",
+        markWritten: "Написано",
+        written: "Письмо засчитано",
+        miniGrammar: "Грамматика урока",
+        miniGrammarText: "Формы N1 в этом уроке связывают оценку, предпосылку, контраст и вывод.",
+        miniReadingTitle: "Мини-reading",
+        miniReadingText: "Найди тему, довод, уступку, позицию автора и вывод. Это ядро N1.",
+        markGrammar: "Засчитать конструкцию",
+        completed: "Пройдено",
+        check: "Проверить",
+        showAnswer: "Показать ответ",
+        correctAnswer: "Верно. XP и Moon Fragment начислены.",
+        wrongAnswer: "Пока нет",
+        reviewTitle: "N1-повторение",
+        reviewDescription: "Повтори due-карточки, сложные кандзи или весь доступный слой N1.",
+        noReviewCards: "Сейчас нет карточек в этом фильтре.",
+        kanjiListTitle: "Кандзи N1",
+        kanjiListText: "Доступный рабочий слой N1 из базы приложения. Список выводится ограниченно, чтобы словарь и телефон не подвисали.",
+        grammarTitle: "Грамматика N1",
+        grammarText: "На первом этапе подключены ключевые N1-конструкции и структура на 150 карточек.",
+        readingTitle: "Тексты для чтения N1",
+        readingText: "N1-reading должен учить видеть авторскую позицию и вывод, а не только переводить фразы.",
+        listeningTitle: "Скрипты для аудирования N1",
+        listeningText: "Скрипты используются как shadowing и проверка понимания без отдельного backend.",
+        noReadingYet: "Reading-блок будет расширяться после валидации текста PDF.",
+        noListeningYet: "Listening-блок будет расширяться после валидации материалов.",
+        questions: "Вопросы",
+        score: "Результат",
+        mistakes: "Ошибки",
+        resetTest: "Сбросить тест",
+        submitFinal: "Завершить тест",
+        reviewAll: "Повторить весь N1",
+        finalPassed: "N1 слой пройден",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalNeedsReview: "Нужно повторить",
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS.",
+        diagnosticTitle: "Диагностика перед N1",
+        diagnosticText: "Проверка N5-N2 базы перед стартом N1: частицы, связки, условные формы, N3/N2-логика текста.",
+        finishDiagnostic: "Завершить диагностику",
+        weakTopics: "Слабые темы",
+        strongTopics: "Сильные темы",
+        ready: "готово",
+        diagnosticReady: "Можно идти в N1",
+        diagnosticReadyText: "База выглядит достаточно крепкой. Начни с первого урока и честно отмечай сложные знаки.",
+        diagnosticNeedsBridge: "Нужен мост перед N1",
+        diagnosticNeedsBridgeText: "Есть слабые места из N5-N2. Добавь их в SRS и закрой перед плотными N1-текстами.",
+        addWeakToSrs: "Добавить слабые темы в SRS",
+        addedToSrs: "Уже добавлено"
+      }
+      : {
+        title: "JLPT N1: texts, nuance, and author stance",
+        allTextbooks: "All textbooks",
+        pdf: "PDF textbook",
+        kanji: "kanji",
+        availableNow: "available now",
+        grammar: "grammar",
+        courseMap: "Interactive N1: sign, word, paragraph, argument, author stance, conclusion",
+        continue: "Continue",
+        lessonsCta: "Lessons",
+        diagnostic: "Diagnostic",
+        review: "Review N1",
+        kanjiN1: "N1 kanji",
+        grammarN1: "N1 grammar",
+        readingN1: "N1 reading",
+        listeningN1: "N1 listening",
+        finalTest: "Final test",
+        overallProgress: "Overall progress",
+        completedLessons: "Lessons",
+        completedGrammar: "Grammar",
+        completedReading: "Texts",
+        completedListening: "Listening",
+        vocabularyBooster: "Vocabulary Booster",
+        vocabularyBoosterText: "Support words and collocations move a single sign into real N1 context.",
+        writingCount: "Writing",
+        mistakesForReview: "Mistakes to review",
+        nextSrsReview: "Next SRS",
+        streak: "Streak",
+        srs: "SRS",
+        lessonCycle: "N1 lesson cycle",
+        lessonCycleText: "Every lesson moves from sign to author stance and sends mistakes back to SRS.",
+        cycle: {
+          kanji: "kanji",
+          word: "word",
+          reading: "reading",
+          collocation: "collocation",
+          grammar: "grammar",
+          sentence: "sentence",
+          paragraph: "paragraph",
+          argument: "argument",
+          stance: "stance",
+          conclusion: "conclusion",
+          error: "error",
+          srs: "SRS"
+        },
+        nextLesson: "Next lesson",
+        noLessons: "N1 lessons are not loaded yet.",
+        reviewPlan: "Review plan",
+        lessonsTitle: "JLPT N1 lessons",
+        lessonsDescription: "Current working layer: 11 lessons with 20 kanji from the app database. The target course is modeled for 1047 kanji.",
+        lesson: "Lesson",
+        backToN1: "To N1",
+        lessonChain: "Kanji -> word -> grammar -> paragraph -> author stance -> conclusion -> SRS",
+        lessonChainText: "N1 tests function inside argument and text, not only recognition.",
+        quickCheck: "Quick check",
+        quickSelfCheck: "What do you recognize?",
+        quickSelfCheckText: "Mark honestly: know, doubt, unknown, or difficult. Difficult signs rise in review.",
+        knowShort: "Know",
+        doubtShort: "Doubt",
+        unknownShort: "Unknown",
+        difficultShort: "Hard",
+        duration: "Duration",
+        minutes: "min",
+        exercises: "Exercises",
+        correct: "correct",
+        sentences: "Sentences and context",
+        sentencesText: "Read with furigana and translation, but first try to infer author stance from the Japanese line.",
+        exercisesText: "12 mixed tasks: meaning, reading, word, grammar, mini paragraph, author stance, and active recall.",
+        lessonComplete: "Lesson complete",
+        lessonCompleteText: "Lesson kanji are available in N1 review and the shared SRS.",
+        lessonResult: "Lesson result",
+        lessonResultText: "Complete the lesson when cards and exercises are ready for review.",
+        completeLesson: "Complete lesson",
+        refreshLesson: "Refresh result",
+        repeatMistakes: "Repeat mistakes",
+        nextLessonButton: "Next lesson",
+        none: "none",
+        step: "step",
+        onyomi: "onyomi",
+        kunyomi: "kunyomi",
+        addToSrs: "Add to SRS",
+        know: "Remember",
+        hard: "Forgot",
+        writingPractice: "Writing practice",
+        markWritten: "Written",
+        written: "Writing counted",
+        miniGrammar: "Lesson grammar",
+        miniGrammarText: "N1 forms in this lesson connect evaluation, premise, contrast, and conclusion.",
+        miniReadingTitle: "Mini reading",
+        miniReadingText: "Find topic, reason, concession, author stance, and conclusion. That is the N1 core.",
+        markGrammar: "Mark construction",
+        completed: "Completed",
+        check: "Check",
+        showAnswer: "Show answer",
+        correctAnswer: "Correct. XP and Moon Fragment awarded.",
+        wrongAnswer: "Not yet",
+        reviewTitle: "N1 review",
+        reviewDescription: "Review due cards, difficult kanji, or the full available N1 layer.",
+        noReviewCards: "No cards in this filter right now.",
+        kanjiListTitle: "N1 kanji",
+        kanjiListText: "The current N1 working layer from the app database. The list is capped to keep phones responsive.",
+        grammarTitle: "N1 grammar",
+        grammarText: "Stage one connects key N1 constructions and a scalable structure for 150 cards.",
+        readingTitle: "N1 reading texts",
+        readingText: "N1 reading trains author stance and conclusion, not only phrase translation.",
+        listeningTitle: "N1 listening scripts",
+        listeningText: "Scripts are used for shadowing and comprehension without backend.",
+        noReadingYet: "Reading will expand after PDF text validation.",
+        noListeningYet: "Listening will expand after material validation.",
+        questions: "Questions",
+        score: "Score",
+        mistakes: "Mistakes",
+        resetTest: "Reset test",
+        submitFinal: "Finish test",
+        reviewAll: "Review all N1",
+        finalPassed: "N1 layer passed",
+        finalPassedText: "Great. You can send mistakes back to SRS separately.",
+        finalNeedsReview: "Review needed",
+        finalNeedsReviewText: "Mistakes were marked difficult and raised in SRS.",
+        diagnosticTitle: "Diagnostic before N1",
+        diagnosticText: "Checks the N5-N2 base before N1: particles, connectors, conditionals, and N3/N2 text logic.",
+        finishDiagnostic: "Finish diagnostic",
+        weakTopics: "Weak topics",
+        strongTopics: "Strong topics",
+        ready: "ready",
+        diagnosticReady: "Ready for N1",
+        diagnosticReadyText: "Your base looks strong enough. Start lesson one and mark difficult signs honestly.",
+        diagnosticNeedsBridge: "Bridge needed before N1",
+        diagnosticNeedsBridgeText: "Some N5-N2 basics are weak. Add them to SRS before dense N1 texts.",
+        addWeakToSrs: "Add weak topics to SRS",
+        addedToSrs: "Already added"
+      };
+  }
+
+  function ensureN1CourseProgress() {
+    state.progress.n1Course = mergeN1CourseProgress(defaultN1CourseProgress(), state.progress.n1Course || {});
+    const lessons = n1Lessons();
+    const active = n1LessonById(state.progress.n1Course.currentLessonId);
+    if (!active && lessons[0]) state.progress.n1Course.currentLessonId = lessons[0].id;
+    const firstOpen = lessons.find((lesson) => !state.progress.n1Course.completedLessons[lesson.id]);
+    if (!state.progress.n1Course.currentLessonId && firstOpen) state.progress.n1Course.currentLessonId = firstOpen.id;
+    return state.progress.n1Course;
+  }
+
+  function n1Course() {
+    return ensureN1CourseProgress();
+  }
+
+  function n1Lessons() {
+    return state.n1Textbook?.items || [];
+  }
+
+  function n1LessonById(id) {
+    const raw = String(id || "");
+    if (!raw) return null;
+    if (raw === "lessons") return null;
+    return n1Lessons().find((lesson) =>
+      lesson.id === raw
+      || lesson.id === `n1-${raw}`
+      || lesson.id.endsWith(`-${raw}`)
+    ) || null;
+  }
+
+  function n1CurrentLesson() {
+    return n1LessonById(n1Course().currentLessonId) || n1Lessons().find((lesson) => !n1Course().completedLessons[lesson.id]) || n1Lessons()[0] || null;
+  }
+
+  function n1LessonOverlay(lesson) {
+    const overlay = (state.n1Exercises?.lessonOverlays || []).find((item) => item.lessonId === lesson?.id) || {};
+    return {
+      intro: overlay.intro || lesson?.goal || { ru: "", en: "" },
+      grammarFocus: Array.isArray(overlay.grammarFocus) ? overlay.grammarFocus : lesson?.grammarFocus || [],
+      collocations: Array.isArray(overlay.collocations) ? overlay.collocations : lesson?.collocations || [],
+      sentences: Array.isArray(overlay.sentences) ? overlay.sentences : lesson?.sentences || [],
+      miniReadingId: overlay.miniReadingId || lesson?.miniReadingId || ""
+    };
+  }
+
+  function n1CardsForLesson(lesson) {
+    const fromLessonId = state.cards.filter((card) => String(card.jlpt || "").toUpperCase() === "N1" && card.lessonId === lesson?.id);
+    const literals = new Set([...(lesson?.kanji || []), ...fromLessonId.map((card) => card.kanji)]);
+    const cards = [...literals].map((kanji) => n1CardByKanji(kanji)).filter(Boolean);
+    return cards.length ? cards : fromLessonId.map((card) => n1CardByKanji(card.kanji) || card).filter(Boolean);
+  }
+
+  function n1AllCards() {
+    const seen = new Set();
+    const catalogCards = (state.n1KanjiCatalog || []).map((detail) => n1CardByKanji(detail.kanji)).filter(Boolean);
+    const courseCards = state.cards.filter((item) => String(item.jlpt || "").toUpperCase() === "N1");
+    return [...catalogCards, ...courseCards].filter((card) => {
+      if (!card?.kanji || seen.has(card.kanji)) return false;
+      seen.add(card.kanji);
+      return true;
+    });
+  }
+
+  function n1CardByKanji(kanji) {
+    const literal = String(kanji || "");
+    const detail = state.n1KanjiCatalog?.find((item) => item.kanji === literal) || null;
+    const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N1")
+      || (detail ? state.cards.find((item) => String(item.id) === String(detail.courseCardId || detail.id)) : null)
+      || null;
+    if (card && detail) return mergeN1CardDetail(card, detail);
+    if (card) return card;
+    if (!detail) return null;
+    return mergeN1CardDetail({
+      id: detail.courseCardId || detail.id,
+      kanji: detail.kanji,
+      lessonId: detail.lessonId,
+      jlpt: "N1",
+      examples: []
+    }, detail);
+  }
+
+  function n1GrammarItems() {
+    const overlayPatterns = new Set((state.n1Exercises?.lessonOverlays || []).flatMap((item) => item.grammarFocus || []));
+    const overlayItems = [...overlayPatterns].map((pattern, index) => n1GrammarByPattern(pattern) || {
+      id: `n1-overlay-grammar-${index + 1}`,
+      level: "N1",
+      order: index + 1,
+      pattern,
+      title: { ru: pattern, en: pattern },
+      explanation: { ru: "Конструкция будет расширена после валидации учебника.", en: "This construction will be expanded after textbook validation." },
+      formula: "",
+      examples: [],
+      question: { ru: `Какую функцию выполняет ${pattern}?`, en: `What function does ${pattern} serve?` },
+      answer: "stance",
+      options: ["stance", "time", "place", "count"]
+    });
+    const seen = new Set();
+    return [...state.n1Grammar, ...overlayItems].filter((item) => {
+      const key = item.pattern || item.id;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function n1GrammarByPattern(pattern) {
+    const raw = String(pattern || "");
+    return state.n1Grammar.find((item) => item.pattern === raw || item.id === raw || item.pattern.includes(raw) || raw.includes(item.pattern)) || null;
+  }
+
+  function n1CardExamples(card) {
+    const examples = Array.isArray(card.examples) ? card.examples : [];
+    if (examples.length) return examples.slice(0, 3);
+    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+  }
+
+  function n1ProgressSummary() {
+    const cards = n1AllCards();
+    const course = n1Course();
+    const studied = new Set(Object.keys(course.studiedKanji || {}));
+    cards.forEach((card) => {
+      if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
+    });
+    const nextReviewCard = cards
+      .map((card) => ({ card, progress: getCardProgress(card.id) }))
+      .filter((item) => item.progress.dueAt)
+      .sort((a, b) => new Date(a.progress.dueAt).getTime() - new Date(b.progress.dueAt).getTime())[0];
+    return {
+      total: state.n1Meta?.kanjiCount || 1047,
+      currentAvailable: cards.length,
+      studied: studied.size,
+      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedGrammar: Object.keys(course.completedGrammar || {}).length,
+      completedReading: Object.keys(course.completedReading || {}).length,
+      completedListening: Object.keys(course.completedListening || {}).length,
+      reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
+      difficult: Object.keys(course.difficultKanji || {}).length,
+      wordMistakes: Object.keys(course.wordMistakes || {}).length,
+      writing: Object.keys(course.writingPractice || {}).length,
+      nextReview: nextReviewCard ? formatDue(nextReviewCard.progress.dueAt) : (lang() === "ru" ? "нет" : "none")
+    };
+  }
+
+  function n1LessonStatus(lessonId) {
+    const course = n1Course();
+    if (course.completedLessons[lessonId]) return "completed";
+    const lesson = n1LessonById(lessonId);
+    if (n1CardsForLesson(lesson).some((card) => course.studiedKanji[card.kanji] || course.difficultKanji[card.kanji])) return "started";
+    return "new";
+  }
+
+  function n1LessonStatusLabel(status) {
+    if (status === "completed") return lang() === "ru" ? "завершён" : "completed";
+    if (status === "started") return lang() === "ru" ? "начат" : "started";
+    return lang() === "ru" ? "не начат" : "new";
+  }
+
+  function n1LessonReadingItem(lesson) {
+    const overlay = n1LessonOverlay(lesson);
+    const id = overlay.miniReadingId || "";
+    if (!id) return null;
+    return state.n1Reading.find((item) => item.id === id) || null;
+  }
+
+  function buildN1LessonExercises(lesson) {
+    const cards = n1CardsForLesson(lesson);
+    if (!cards.length) return [];
+    const overlay = n1LessonOverlay(lesson);
+    const overlayExercises = (state.n1Exercises?.lessonOverlays || []).find((item) => item.lessonId === lesson.id)?.exercises || [];
+    const exerciseTitles = Object.fromEntries((state.n1Exercises?.types || []).map((item) => [item.type, item.title]));
+    const rewardByType = Object.fromEntries((state.n1Exercises?.types || []).map((item) => [item.type, item]));
+    const getReward = (type) => rewardByType[type] || { rewardXp: state.n1Meta?.rewards?.exerciseXp || 13, rewardMoon: state.n1Meta?.rewards?.exerciseMoon || 1 };
+    const toExercise = (raw, index) => ({
+      id: raw.id || `${lesson.id}-json-${index}`,
+      type: raw.type || "meaning",
+      title: raw.title || exerciseTitles[raw.type] || { ru: "N1 task", en: "N1 task" },
+      prompt: localized(raw.prompt || raw.question || {}),
+      answer: String(raw.answer || ""),
+      answerLabel: localized(raw.answerLabel || raw.answerText || raw.answer || {}),
+      kanji: raw.kanji || cards[index % cards.length]?.kanji,
+      cardId: raw.cardId || cards[index % cards.length]?.id,
+      grammarId: raw.grammarId || "",
+      options: Array.isArray(raw.options) ? raw.options.map((option) => typeof option === "object" ? { value: String(option.value), label: localized(option.label || option.value) } : { value: String(option), label: String(option) }) : [],
+      ...getReward(raw.type)
+    });
+    const exercises = overlayExercises.map(toExercise);
+    const sentences = overlay.sentences || [];
+    const addGenerated = (exercise) => exercises.push({ ...getReward(exercise.type), ...exercise });
+    const cardAt = (i) => cards[i % cards.length] || cards[0];
+    const meaningCard = cardAt(0);
+    addGenerated({
+      id: `${lesson.id}-meaning-0`,
+      type: "meaning",
+      title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+      prompt: meaningCard.kanji,
+      answer: meaningCard.id,
+      answerLabel: cardMeaning(meaningCard),
+      kanji: meaningCard.kanji,
+      cardId: meaningCard.id,
+      options: n1OptionSet({ value: meaningCard.id, label: cardMeaning(meaningCard) }, cards.slice(1).map((card) => ({ value: card.id, label: cardMeaning(card) })), 1)
+    });
+    const kanjiCard = cardAt(1);
+    addGenerated({
+      id: `${lesson.id}-kanji-1`,
+      type: "kanji",
+      title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+      prompt: cardMeaning(kanjiCard),
+      answer: kanjiCard.kanji,
+      answerLabel: kanjiCard.kanji,
+      kanji: kanjiCard.kanji,
+      cardId: kanjiCard.id,
+      options: n1OptionSet({ value: kanjiCard.kanji, label: kanjiCard.kanji }, cards.filter((card) => card.id !== kanjiCard.id).map((card) => ({ value: card.kanji, label: card.kanji })), 2)
+    });
+    const readingCard = cardAt(2);
+    const readingExample = n1CardExamples(readingCard)[0];
+    addGenerated({
+      id: `${lesson.id}-reading-2`,
+      type: "reading",
+      title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+      prompt: readingExample.word || readingCard.kanji,
+      answer: readingExample.reading || readingCard.hiragana || "",
+      answerLabel: readingExample.reading || readingCard.hiragana || "",
+      kanji: readingCard.kanji,
+      cardId: readingCard.id,
+      options: n1OptionSet({ value: readingExample.reading || readingCard.hiragana || "", label: readingExample.reading || readingCard.hiragana || "" }, cards.flatMap((card) => n1CardExamples(card).map((example) => ({ value: example.reading, label: example.reading }))).filter((item) => item.value && item.value !== readingExample.reading), 3)
+    });
+    const sentence = sentences[0];
+    if (sentence) {
+      addGenerated({
+        id: `${lesson.id}-sentence-3`,
+        type: "sentence",
+        title: exerciseTitles.sentence || { ru: "Позиция в предложении", en: "Sentence stance" },
+        prompt: sentence.jp,
+        answer: localized({ ru: sentence.ru, en: sentence.en }),
+        answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
+        kanji: cardAt(0).kanji,
+        cardId: cardAt(0).id,
+        options: n1OptionSet({ value: localized({ ru: sentence.ru, en: sentence.en }), label: localized({ ru: sentence.ru, en: sentence.en }) }, sentences.slice(1).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })), 1)
+      });
+    }
+    const wordCard = cardAt(3);
+    const wordExample = n1CardExamples(wordCard)[0];
+    addGenerated({
+      id: `${lesson.id}-word-4`,
+      type: "missing-word",
+      title: exerciseTitles["missing-word"] || { ru: "Слово-опора", en: "Support word" },
+      prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+      answer: wordExample.word || wordCard.kanji,
+      answerLabel: wordExample.word || wordCard.kanji,
+      kanji: wordCard.kanji,
+      cardId: wordCard.id,
+      options: n1OptionSet({ value: wordExample.word || wordCard.kanji, label: wordExample.word || wordCard.kanji }, cards.flatMap((card) => n1CardExamples(card).map((example) => ({ value: example.word, label: example.word }))).filter((item) => item.value && item.value !== wordExample.word), 2)
+    });
+    const recallCard = cardAt(4);
+    addGenerated({
+      id: `${lesson.id}-active-5`,
+      type: "active-recall",
+      title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
+      prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+      answer: recallCard.kanji,
+      answerLabel: recallCard.kanji,
+      kanji: recallCard.kanji,
+      cardId: recallCard.id,
+      options: []
+    });
+    return uniqueN1Exercises(exercises).slice(0, state.n1Exercises?.lessonQuestionCount || 12);
+  }
+
+  function uniqueN1Exercises(exercises) {
+    const seen = new Set();
+    return exercises.filter((exercise) => {
+      if (!exercise?.id || seen.has(exercise.id) || !exercise.answer) return false;
+      seen.add(exercise.id);
+      if (!exercise.options?.length && exercise.type !== "active-recall") {
+        exercise.options = n1OptionSet({ value: exercise.answer, label: exercise.answerLabel || exercise.answer }, [], 0);
+      }
+      return true;
+    });
+  }
+
+  function n1OptionSet(correct, distractors, rotateBy = 0) {
+    const seen = new Set([String(correct.value)]);
+    const options = [correct].filter((item) => String(item.value || ""));
+    distractors.forEach((option) => {
+      const value = String(option.value || "");
+      if (!value || seen.has(value) || options.length >= 4) return;
+      seen.add(value);
+      options.push(option);
+    });
+    n1AllCards().forEach((card) => {
+      if (options.length >= 4) return;
+      const fallback = { value: card.kanji, label: card.kanji };
+      if (!seen.has(String(fallback.value))) {
+        seen.add(String(fallback.value));
+        options.push(fallback);
+      }
+    });
+    if (options.length <= 1) return options;
+    const shift = rotateBy % options.length;
+    return [...options.slice(shift), ...options.slice(0, shift)];
+  }
+
+  function findN1Exercise(id) {
+    for (const lesson of n1Lessons()) {
+      const exercise = buildN1LessonExercises(lesson).find((item) => item.id === id);
+      if (exercise) return exercise;
+    }
+    return null;
+  }
+
+  function n1ExerciseResult(id) {
+    return n1Course().exerciseResults?.[id] || null;
+  }
+
+  function answerN1Exercise(target) {
+    const exercise = findN1Exercise(target.dataset.id);
+    if (!exercise) return;
+    const value = target.dataset.value || "";
+    const selected = value || exercise.answer;
+    const correct = selected === exercise.answer;
+    recordN1ExerciseResult(exercise, selected, correct);
+  }
+
+  function checkN1InputExercise(id) {
+    const exercise = findN1Exercise(id);
+    if (!exercise) return;
+    const input = document.getElementById(n1DomId(exercise.id));
+    const value = input ? String(input.value || "").trim() : "";
+    recordN1ExerciseResult(exercise, value, value === exercise.answer);
+  }
+
+  function recordN1ExerciseResult(exercise, selectedValue, correct) {
+    const course = n1Course();
+    course.exerciseResults[exercise.id] = {
+      selected: selectedValue,
+      correct,
+      checkedAt: new Date().toISOString()
+    };
+    if (correct) {
+      if (!course.completedExercises[exercise.id]) {
+        course.completedExercises[exercise.id] = new Date().toISOString();
+        markN1KanjiStudied(exercise.kanji, exercise.cardId);
+        if (exercise.grammarId) course.completedGrammar[exercise.grammarId] = course.completedGrammar[exercise.grammarId] || new Date().toISOString();
+        addReward(Number(exercise.rewardXp || state.n1Meta?.rewards?.exerciseXp || 13), Number(exercise.rewardMoon || state.n1Meta?.rewards?.exerciseMoon || 1), `n1_exercise:${exercise.id}`);
+      }
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      markN1KanjiDifficult(exercise.kanji, exercise.cardId);
+      course.kanjiMistakes[exercise.kanji] = Number(course.kanjiMistakes[exercise.kanji] || 0) + 1;
+      if (exercise.type === "reading" || exercise.type === "missing-word") course.wordMistakes[exercise.answerLabel || exercise.answer] = Number(course.wordMistakes[exercise.answerLabel || exercise.answer] || 0) + 1;
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function handleN1SrsAction(cardId, rating) {
+    const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const before = cloneProgress(getCardProgress(card.id));
+    const after = calculateNextProgress(before, rating);
+    state.progress.cards[card.id] = after;
+    updateDailyStats(before, after, rating);
+    checkDailyGoal();
+    markN1KanjiStudied(card.kanji, card.id);
+    n1Course().srsKanji[card.kanji] = new Date().toISOString();
+    if (isForgottenRating(rating)) {
+      markN1KanjiDifficult(card.kanji, card.id);
+      state.progress.totalWrong += 1;
+      addReward(state.n1Meta?.rewards?.hardXp || 2, 0, `n1_srs_hard:${card.id}`);
+      playUxSound("answer_wrong");
+    } else {
+      state.progress.totalCorrect += 1;
+      addReward(rating === "easy" ? (state.n1Meta?.rewards?.knowXp || 11) : (state.n1Meta?.rewards?.addToSrsXp || 8), 1, `n1_srs:${card.id}`);
+      playUxSound("answer_correct");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN1SelfCheck(cardId, value) {
+    const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    if (value === "know") {
+      markN1KanjiStudied(card.kanji, card.id);
+      n1Course().srsKanji[card.kanji] = n1Course().srsKanji[card.kanji] || new Date().toISOString();
+    } else {
+      markN1KanjiDifficult(card.kanji, card.id);
+      n1Course().kanjiMistakes[card.kanji] = Number(n1Course().kanjiMistakes[card.kanji] || 0) + 1;
+    }
+    saveProgress();
+    render();
+  }
+
+  function markN1Writing(cardId) {
+    const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
+    if (!card) return;
+    const course = n1Course();
+    if (!course.writingPractice[card.kanji]) {
+      course.writingPractice[card.kanji] = new Date().toISOString();
+      state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+      state.progress.writingPractice.cards[card.id] = {
+        completed: Number(state.progress.writingPractice.cards[card.id]?.completed || 0) + 1,
+        lastAt: new Date().toISOString()
+      };
+      markN1KanjiStudied(card.kanji, card.id);
+      addReward(10, 1, `n1_writing:${card.id}`);
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN1Lesson(lessonId) {
+    const lesson = n1LessonById(lessonId);
+    if (!lesson) return;
+    const course = n1Course();
+    n1CardsForLesson(lesson).forEach((card) => {
+      markN1KanjiStudied(card.kanji, card.id);
+      course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
+      const progress = getCardProgress(card.id);
+      if (progress.state === "New") state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
+    });
+    (n1LessonOverlay(lesson).grammarFocus || []).map((pattern) => n1GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
+      course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
+    });
+    const firstCompletion = !course.completedLessons[lesson.id];
+    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.currentLessonId = n1Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+    if (firstCompletion) {
+      const xp = state.n1Meta?.rewards?.lessonCompleteXp || 110;
+      const coins = state.n1Meta?.rewards?.lessonCompleteMoon || 14;
+      addReward(xp, coins, `n1_lesson:${lesson.id}`);
+      queueReward({
+        title: `${n1Labels().lessonComplete}: ${localized(lesson.title)}`,
+        message: n1Labels().lessonCompleteText,
+        xp,
+        coins,
+        mascot: "eva",
+        mood: "thinking",
+        dialog: "lessonComplete"
+      });
+      playUxSound("lesson_complete");
+    }
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function markN1KanjiStudied(kanji, cardId = null) {
+    if (!kanji) return;
+    n1Course().studiedKanji[kanji] = n1Course().studiedKanji[kanji] || new Date().toISOString();
+  }
+
+  function markN1KanjiDifficult(kanji, cardId = null) {
+    if (!kanji) return;
+    n1Course().difficultKanji[kanji] = new Date().toISOString();
+    if (cardId) {
+      const progress = getCardProgress(cardId);
+      if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
+    }
+  }
+
+  function completeN1Grammar(id, value = "") {
+    const item = n1GrammarItems().find((grammar) => grammar.id === id || grammar.pattern === id);
+    if (!item) return;
+    const selected = value || item.answer;
+    const correct = !item.answer || selected === item.answer;
+    const course = n1Course();
+    course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
+    if (correct && !course.completedGrammar[item.id]) {
+      course.completedGrammar[item.id] = new Date().toISOString();
+      addReward(state.n1Meta?.rewards?.grammarXp || 14, state.n1Meta?.rewards?.grammarMoon || 1, `n1_grammar:${item.id}`);
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else if (!correct) {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function completeN1Reading(id, questionIndex = "0", value = "") {
+    completeN1Comprehension("reading", id, questionIndex, value);
+  }
+
+  function completeN1Listening(id, questionIndex = "0", value = "") {
+    completeN1Comprehension("listening", id, questionIndex, value);
+  }
+
+  function completeN1Comprehension(mode, id, questionIndex = "0", value = "") {
+    const collection = mode === "reading" ? state.n1Reading : state.n1Listening;
+    const item = collection.find((entry) => entry.id === id);
+    if (!item) return;
+    const index = Number(questionIndex || 0);
+    const question = (item.questions || [])[index];
+    if (!question) return;
+    const correct = value === question.answer;
+    const key = `${item.id}:${index}`;
+    const course = n1Course();
+    const answers = mode === "reading" ? course.readingAnswers : course.listeningAnswers;
+    const completed = mode === "reading" ? course.completedReading : course.completedListening;
+    const wasCompleted = Boolean(completed[item.id]);
+    answers[key] = { selected: value, correct, checkedAt: new Date().toISOString() };
+    if (correct) {
+      state.progress.totalCorrect += 1;
+      playUxSound("answer_correct");
+    } else {
+      state.progress.totalWrong += 1;
+      playUxSound("answer_wrong");
+    }
+    const allCorrect = (item.questions || []).every((_, itemIndex) => answers[`${item.id}:${itemIndex}`]?.correct);
+    if (allCorrect && !wasCompleted) {
+      completed[item.id] = new Date().toISOString();
+      const xp = mode === "reading" ? state.n1Meta?.rewards?.readingXp || 55 : state.n1Meta?.rewards?.listeningXp || 45;
+      const coins = mode === "reading" ? state.n1Meta?.rewards?.readingMoon || 5 : state.n1Meta?.rewards?.listeningMoon || 4;
+      addReward(xp, coins, `n1_${mode}:${item.id}`);
+    }
+
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function openN1Lesson(id) {
+    const lesson = n1LessonById(id);
+    if (!lesson) return;
+    n1Course().currentLessonId = lesson.id;
+    markJlptLessonKanjiSeen("N1", lesson, "n1_lesson_open");
+    setN1Hash(lesson.id);
+  }
+
+  function openN1Overview() {
+    setN1Hash("");
+  }
+
+  function openN1Lessons() {
+    setN1Hash("lessons");
+  }
+
+  function openN1Diagnostic() {
+    setN1Hash("diagnostic");
+  }
+
+  function openN1Review(mode = null) {
+    if (mode) n1Course().activeReviewMode = mode;
+    setN1Hash("review");
+  }
+
+  function openN1KanjiList() {
+    setN1Hash("kanji");
+  }
+
+  function openN1Grammar() {
+    setN1Hash("grammar");
+  }
+
+  function openN1Reading() {
+    setN1Hash("reading");
+  }
+
+  function openN1Listening() {
+    setN1Hash("listening");
+  }
+
+  function openN1FinalTest() {
+    setN1Hash("final-test");
+  }
+
+  function setN1Hash(subroute) {
+    state.route = "textbooks";
+    state.activeTextbookLevel = "N1";
+    state.activeTextbookSubroute = subroute || null;
+    n1Course().opened = true;
+    const nextHash = subroute ? `#jlpt/n1/${encodeURIComponent(subroute)}` : "#jlpt/n1";
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    rememberJlptModuleVisit("N1", jlptModuleResolvedLessonId("N1", subroute), subroute || "overview");
+    evaluateAchievements();
+    saveProgress();
+    render();
+    scrollPageToTop();
+  }
+
+  function n1ReviewCards(mode = "due") {
+    const now = Date.now();
+    const course = n1Course();
+    const cards = n1AllCards();
+    if (mode === "difficult") return cards.filter((card) => course.difficultKanji[card.kanji]);
+    if (mode === "all") return cards;
+    return cards.filter((card) => {
+      const progress = getCardProgress(card.id);
+      return progress.state !== "New" && (!progress.dueAt || new Date(progress.dueAt).getTime() <= now);
+    });
+  }
+
+  function n1DiagnosticQuestions() {
+    return state.n1Exercises?.diagnostic || [];
+  }
+
+  function answerN1Diagnostic(target) {
+    const id = target.dataset.id;
+    const value = target.dataset.value || "";
+    if (!id) return;
+    n1Course().diagnostic.answers[id] = value;
+    saveProgress();
+    render();
+  }
+
+  function submitN1Diagnostic() {
+    const diagnostic = n1DiagnosticQuestions();
+    const course = n1Course();
+    const weak = [];
+    const strong = [];
+    const recommendedLevels = new Set();
+    diagnostic.forEach((question) => {
+      const selected = course.diagnostic.answers?.[question.id];
+      if (selected === question.answer) {
+        strong.push(question.topicId || question.id);
+      } else {
+        weak.push(question.topicId || question.id);
+        if (question.level) recommendedLevels.add(question.level);
+      }
+    });
+    const firstCompletion = !course.diagnostic.completedAt;
+    course.diagnostic.completedAt = new Date().toISOString();
+    course.diagnostic.weak = weak;
+    course.diagnostic.strong = strong;
+    course.diagnostic.recommendedLevels = [...recommendedLevels];
+    if (firstCompletion) addReward(state.n1Meta?.rewards?.diagnosticXp || 25, state.n1Meta?.rewards?.diagnosticMoon || 3, "n1_diagnostic");
+    evaluateAchievements();
+    saveProgress();
+    render();
+  }
+
+  function addN1DiagnosticWeakTopicsToSrs() {
+    const course = n1Course();
+    const levels = course.diagnostic.recommendedLevels?.length ? course.diagnostic.recommendedLevels : ["N5", "N4", "N3", "N2"];
+    state.cards
+      .filter((card) => levels.includes(String(card.jlpt || "").toUpperCase()))
+      .slice(0, 12)
+      .forEach((card) => {
+        const before = cloneProgress(getCardProgress(card.id));
+        state.progress.cards[card.id] = calculateNextProgress(before, "again");
+      });
+    course.diagnostic.weakTopicsInSrs = true;
+    addReward(5, 0, "n1_diagnostic_bridge_srs");
+    saveProgress();
+    render();
+  }
+
+  function buildN1FinalQuestions() {
+    const cards = n1AllCards();
+    if (!cards.length) return [];
+    const types = state.n1FinalTest?.types || ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"];
+    const count = Math.min(state.n1FinalTest?.questionCount || 45, Math.max(cards.length, 1));
+    const questions = [];
+    for (let index = 0; index < count; index += 1) {
+      const card = cards[(index * 13) % cards.length] || cards[index % cards.length];
+      const type = types[index % types.length];
+      const lesson = n1Lessons().find((item) => n1CardsForLesson(item).some((lessonCard) => lessonCard.kanji === card.kanji)) || n1Lessons()[0];
+      questions.push(buildN1FinalQuestion(type, card, lesson, index));
+    }
+    return questions.filter(Boolean);
+  }
+
+  function buildN1FinalQuestion(type, card, lesson, index) {
+    const examples = n1CardExamples(card);
+    const example = examples[0] || {};
+    const sentence = (n1LessonOverlay(lesson).sentences || []).find((item) => item.jp.includes(card.kanji)) || n1LessonOverlay(lesson).sentences?.[0];
+    if (type === "meaning") {
+      return {
+        id: `n1-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: card.kanji,
+        answer: card.id,
+        answerLabel: cardMeaning(card),
+        options: n1OptionSet({ value: card.id, label: cardMeaning(card) }, n1AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.id, label: cardMeaning(item) })), index)
+      };
+    }
+    if (type === "reading") {
+      return {
+        id: `n1-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: example.word || card.kanji,
+        answer: example.reading || card.hiragana || "",
+        answerLabel: example.reading || card.hiragana || "",
+        options: n1OptionSet({ value: example.reading || card.hiragana || "", label: example.reading || card.hiragana || "" }, n1AllCards().flatMap((item) => n1CardExamples(item).map((word) => ({ value: word.reading, label: word.reading }))).filter((item) => item.value && item.value !== example.reading), index)
+      };
+    }
+    if (type === "sentence" && sentence) {
+      const answer = localized({ ru: sentence.ru, en: sentence.en });
+      return {
+        id: `n1-final-${index}`,
+        type,
+        cardId: card.id,
+        kanji: card.kanji,
+        prompt: sentence.jp,
+        answer,
+        answerLabel: answer,
+        options: n1OptionSet({ value: answer, label: answer }, n1Lessons().flatMap((item) => n1LessonOverlay(item).sentences || []).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })).filter((item) => item.value !== answer), index)
+      };
+    }
+    if (type === "grammar") {
+      const grammar = n1GrammarItems()[index % Math.max(n1GrammarItems().length, 1)];
+      if (grammar) {
+        return {
+          id: `n1-final-${index}`,
+          type,
+          grammarId: grammar.id,
+          prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
+          answer: grammar.answer,
+          answerLabel: grammar.answer,
+          options: n1OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+        };
+      }
+    }
+    return {
+      id: `n1-final-${index}`,
+      type: "kanji",
+      cardId: card.id,
+      kanji: card.kanji,
+      prompt: cardMeaning(card),
+      answer: card.kanji,
+      answerLabel: card.kanji,
+      options: n1OptionSet({ value: card.kanji, label: card.kanji }, n1AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.kanji, label: item.kanji })), index)
+    };
+  }
+
+  function answerN1FinalQuestion(target) {
+    const id = target.dataset.id;
+    const value = target.dataset.value || "";
+    if (!id) return;
+    n1Course().finalTest.answers[id] = value;
+    saveProgress();
+    render();
+  }
+
+  function submitN1FinalTest(force = false) {
+    if (state.finalTestBusy) return;
+    state.finalTestBusy = true;
+    try {
+      const questions = buildN1FinalQuestions();
+      const test = n1Course().finalTest;
+      const config = state.n1FinalTest || {};
+      const labels = n1Labels();
+      const stats = finalTestQuestionStats(test, questions);
+      const threshold = Number(config?.passingPercent ?? config?.passThreshold ?? 82);
+      const allowIncomplete = Boolean(config.allowIncompleteFinish || config.allowUnansweredFinish);
+      const now = new Date().toISOString();
+      test.attempts = Number(test.attempts || 0) + 1;
+
+      if (stats.missingCount && !force && !allowIncomplete) {
+        const focusSelector = stats.firstMissingId ? `#${finalTestQuestionDomId("n1", stats.firstMissingId)}` : null;
+        state.finalTestModal = {
+          kind: "warning",
+          level: "N1",
+          title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+          message: lang() === "ru"
+            ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+            : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
+          answered: stats.answered,
+          missingCount: stats.missingCount,
+          totalQuestions: stats.totalQuestions,
+          threshold,
+          focusSelector,
+          focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
+          closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
+          forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+          allowIncomplete
+        };
+        state.pendingFocus = focusSelector;
+        saveProgress();
+        return;
+      }
+
+      let score = 0;
+      const mistakes = [];
+      const unanswered = [];
+      questions.forEach((question) => {
+        const selected = String(test.answers?.[question.id] || "").trim();
+        if (selected === question.answer) {
+          score += 1;
+          if (question.kanji) markN1KanjiStudied(question.kanji, question.cardId);
+          if (question.grammarId) n1Course().completedGrammar[question.grammarId] = n1Course().completedGrammar[question.grammarId] || now;
+        } else {
+          if (!selected) unanswered.push(question);
+          mistakes.push({
+            id: question.id,
+            kanji: question.kanji || "",
+            answer: question.answerLabel,
+            selected
+          });
+          if (question.kanji) markN1KanjiDifficult(question.kanji, question.cardId);
+        }
+      });
+      const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+      const wasCompleted = Boolean(test.completedAt);
+      const wasPassed = Boolean(test.passed);
+      const answeredWrong = Math.max(0, mistakes.length - unanswered.length);
+      let rewardXp = 0;
+      let rewardMoon = 0;
+
+      test.answers = test.answers || {};
+      test.score = score;
+      test.percent = percent;
+      test.passed = percent >= threshold;
+      test.correctAnswers = score;
+      test.incorrectAnswers = answeredWrong;
+      test.unansweredAnswers = unanswered.length;
+      test.totalQuestions = questions.length;
+      test.mistakes = mistakes;
+      test.mistakeQuestionIds = mistakes.map((item) => item.id);
+      test.completedAt = now;
+      test.lastScore = percent;
+      test.bestScore = Math.max(Number(test.bestScore || 0), percent);
+      test.passedAt = test.passed ? (wasPassed ? (test.passedAt || now) : now) : test.passedAt || null;
+
+      if (!wasCompleted) {
+        const completeXp = Number(config?.rewards?.completeXp || 320);
+        const completeMoon = Number(config?.rewards?.completeMoon || 60);
+        rewardXp += completeXp;
+        rewardMoon += completeMoon;
+        addReward(completeXp, completeMoon, "n1_final");
+      }
+      if (test.passed && !wasPassed) {
+        const passXp = Number(config?.rewards?.passXp || 160);
+        const passMoon = Number(config?.rewards?.passMoon || 25);
+        rewardXp += passXp;
+        rewardMoon += passMoon;
+        addReward(passXp, passMoon, "n1_final_pass");
+      }
+      test.lastRewardXp = rewardXp;
+      test.lastRewardMoon = rewardMoon;
+      state.pendingFocus = null;
+      state.finalTestModal = {
+        kind: "result",
+        level: "N1",
+        title: test.passed ? labels.finalPassed : labels.finalNeedsReview,
+        message: test.passed ? labels.finalPassedText : labels.finalNeedsReviewText,
+        passed: test.passed,
+        percent,
+        correct: score,
+        incorrect: answeredWrong,
+        unanswered: unanswered.length,
+        totalQuestions: questions.length,
+        rewardXp,
+        rewardMoon,
+        attempts: test.attempts,
+        threshold,
+        reviewAction: "n1-review",
+        reviewAllAction: "n1-review",
+        closeLabel: lang() === "ru" ? "OK" : "OK",
+        repeatLabel: labels.repeatMistakes,
+        reviewAllLabel: labels.reviewAll
+      };
+      evaluateAchievements();
+      saveProgress();
+    } catch (error) {
+      console.error(error);
+      toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+    } finally {
+      state.finalTestBusy = false;
+      render();
+    }
+  }
+
+  function resetN1FinalTest() {
+    n1Course().finalTest = defaultN1CourseProgress().finalTest;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
+    saveProgress();
+    renderPreservingScroll();
+  }
+
+  function n1DomId(id) {
+    return `n1-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+  }
+
   function renderJlptPracticeModule(lesson) {
+
+
+
     const module = jlptPracticeModuleByLevel(lesson.jlpt);
     if (!module) return "";
     const labels = { ...jlptLessonLabels(), ...jlptLessonExtraLabels() };
@@ -4582,11 +16446,11 @@ async function loadCourse() {
         <div class="section-head">
           <div>
             <h1>${escapeHtml(t("review"))}</h1>
-            <p>${due.length} ${escapeHtml(t("cardsToday"))}</p>
+            <p data-review-queue-count>${due.length} ${escapeHtml(t("cardsToday"))}</p>
           </div>
         </div>
-        <div class="study-layout" data-section="review-card">
-          ${card ? renderStudyCard(card) : renderNoReview()}
+        <div class="study-layout" data-section="review-card" data-study-surface>
+          <div data-study-card-host>${card ? renderStudyCard(card) : renderNoReview()}</div>
           ${renderStudySidePanel(card, due.length)}
         </div>
         ${renderSentencePractice()}
@@ -5489,7 +17353,7 @@ async function loadCourse() {
     state.progress.daily[todayKey()] = today;
     addReward(xp, coins, `sentence:${exercise.id}`);
     adjustEvaRelationship({ trust: 0.8, curiosity: 0.7 }, "sentence_complete");
-    updateStreak();
+
     checkDailyGoal();
     evaluateAchievements();
   }
@@ -5551,6 +17415,69 @@ async function loadCourse() {
     return [...items].sort((a, b) => stableHash(`${seed}:${a.kanji}:${a.reading}`) - stableHash(`${seed}:${b.kanji}:${b.reading}`));
   }
 
+  function finalTestQuestionStats(test, questions = []) {
+    const answered = questions.filter((question) => String(test?.answers?.[question.id] || "").trim()).length;
+    const missing = questions.filter((question) => !String(test?.answers?.[question.id] || "").trim());
+    return {
+      answered,
+      missingCount: missing.length,
+      missingIds: missing.map((question) => question.id),
+      firstMissingId: missing[0]?.id || null,
+      totalQuestions: questions.length,
+      ready: questions.length > 0 && missing.length === 0
+    };
+  }
+
+  function finalTestQuestionDomId(level, id) {
+    const prefix = String(level || "n5").toLowerCase();
+    const normalized = String(id || "").replace(/[^a-z0-9_-]+/gi, "-");
+    return `${prefix}-final-question-${normalized}`;
+  }
+
+  function finalTestPassingPercent(config) {
+    return Number(config?.passingPercent ?? config?.passThreshold ?? 70);
+  }
+
+  function renderFinalTestModal() {
+    const modal = state.finalTestModal;
+    if (!modal) return "";
+    const isWarning = modal.kind === "warning";
+    const mood = isWarning ? "thinking" : modal.passed ? "proud" : "sad";
+    const prefix = String(modal.level || "n5").toLowerCase();
+    const values = isWarning
+      ? [
+        `<span>${escapeHtml(lang() === "ru" ? "Вопросов" : "Questions")} ${modal.totalQuestions}</span>`,
+        `<span>${escapeHtml(lang() === "ru" ? "Пропусков" : "Missing")} ${modal.missingCount}</span>`,
+        `<span>${escapeHtml(lang() === "ru" ? "Порог" : "Pass")} ${modal.threshold}%</span>`
+      ]
+      : [
+        `<span>${escapeHtml(lang() === "ru" ? "Результат" : "Score")} ${modal.percent}%</span>`,
+        `<span>${escapeHtml(lang() === "ru" ? "Верно" : "Correct")} ${modal.correct}/${modal.totalQuestions}</span>`,
+        `<span>${escapeHtml(lang() === "ru" ? "Ошибки" : "Errors")} ${modal.incorrect}</span>`,
+        `<span>${escapeHtml(lang() === "ru" ? "Пропуски" : "Missing")} ${modal.unanswered}</span>`,
+        `<span>+${modal.rewardXp} XP</span>`,
+        `<span>+${modal.rewardMoon} ${escapeHtml(t("coins"))}</span>`
+      ];
+    return `
+      <div class="reward-backdrop final-test-backdrop">
+        <article class="reward-modal is-final-test ${isWarning ? "is-warning" : "is-result"}" role="dialog" aria-modal="true">
+          <h2>${escapeHtml(modal.title)}</h2>
+          <p>${escapeHtml(modal.message)}</p>
+          <div class="reward-values">
+            ${values.join("")}
+          </div>
+          <div class="actions final-test-modal-actions">
+            ${isWarning ? `<button class="btn primary" type="button" data-action="final-test-focus-missing" data-focus="${escapeAttr(modal.focusSelector || "")}">${escapeHtml(modal.focusLabel || (lang() === "ru" ? "К пропуску" : "Go to missing"))}</button>` : ""}
+            ${isWarning && modal.allowIncomplete ? `<button class="btn ghost" type="button" data-action="final-test-force-submit" data-level="${escapeAttr(modal.level || "N5")}">${escapeHtml(modal.forceLabel || (lang() === "ru" ? "Завершить без ответов" : "Finish anyway"))}</button>` : ""}
+            ${!isWarning && modal.reviewAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAction)}" data-mode="difficult">${escapeHtml(modal.repeatLabel || (lang() === "ru" ? "Повторить ошибки" : "Repeat mistakes"))}</button>` : ""}
+            ${!isWarning && modal.reviewAllAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAllAction)}" data-mode="all">${escapeHtml(modal.reviewAllLabel || (lang() === "ru" ? "Повторить весь тест" : "Review all"))}</button>` : ""}
+            <button class="btn primary" type="button" data-action="close-final-test-modal">${escapeHtml(modal.closeLabel || "OK")}</button>
+          </div>
+        </article>
+      </div>
+    `;
+  }
+
   function renderKanjiAudioButton(card) {
     if (!canPlayKanjiAudio(card)) return "";
     return `
@@ -5581,11 +17508,16 @@ async function loadCourse() {
   function renderJlptLessonButton(card, className = "btn ghost") {
     const lesson = jlptLessonForCard(card);
     if (!lesson) return "";
+    const unlocked = isTextbookUnlocked(lesson.jlpt);
     const label = lang() === "ru" ? "JLPT урок" : "JLPT lesson";
+    if (!unlocked) {
+      return `<button class="${className} is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(lesson.jlpt))}">🔒 ${escapeHtml(lesson.jlpt)}</button>`;
+    }
     return `<button class="${className}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(lesson.jlpt)}">${escapeHtml(lesson.jlpt)} · ${escapeHtml(label)}</button>`;
   }
 
   function renderStudyCard(card) {
+    markKanjiSeenAndSave(card, "study_card");
     const progress = getCardProgress(card.id);
     const visible = state.revealed;
     syncReadingCheckCard(card.id);
@@ -5670,7 +17602,7 @@ async function loadCourse() {
     const comboMascot = state.progress.correctCombo >= 3 ? "leya" : "eva";
     const category = comboMascot === "leya" ? "combo" : "welcome";
     return `
-      <aside>
+      <aside data-study-side-host>
         ${renderMascotPanel(comboMascot, comboMascot === "leya" ? "focus" : "thinking", category)}
         <div class="mini-stat-row" style="margin-top:10px">
           ${renderMetric(t("review"), queueCount, "queue", progressWidth(queueCount, Math.max(state.cards.length, 1)))}
@@ -6521,8 +18453,8 @@ async function loadCourse() {
       ? `${t("level")} ${state.progress.level} - ${state.progress.xp} XP - ${state.progress.moonFragments} ${t("coins")}`
       : reward.message;
     return `
-      <div class="reward-backdrop">
-        <article class="reward-modal ${isAchievement ? "is-achievement" : ""}">
+      <div class="reward-backdrop ${isLevel ? "is-level" : ""}">
+        <article class="reward-modal ${isLevel ? "is-level" : ""} ${isAchievement ? "is-achievement" : ""}">
           ${isLevel ? `<img class="reward-logo" src="assets/logo.png" alt="Flash Kanji" />` : ""}
           ${isAchievement ? `<div class="reward-achievement-icon">${achievementIcon(reward.icon)}</div>` : ""}
           ${renderMascot(reward.mascot || "eva", reward.mood || "happy", reward.dialog || "achievement", "reward-mascot")}
@@ -6544,7 +18476,7 @@ async function loadCourse() {
 
   function renderPwaInstallBanner() {
     if (!canShowPwaInstallPrompt()) return "";
-    if (state.detailCardId || state.rewardModal) return "";
+    if (state.detailCardId || state.rewardModal || state.finalTestModal) return "";
     const copy = pwaInstallCopy();
     const isInstruction = !deferredPwaInstallPrompt && isIosSafari();
     return `
@@ -6566,7 +18498,7 @@ async function loadCourse() {
 
   function renderNotificationPermissionBanner() {
     if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible")) return "";
-    if (state.detailCardId || state.rewardModal || canShowPwaInstallPrompt()) return "";
+    if (state.detailCardId || state.rewardModal || state.finalTestModal || canShowPwaInstallPrompt()) return "";
     const copy = notificationPromptCopy();
     return `
       <aside class="pwa-install-banner notification-permission-banner" role="dialog" aria-modal="false" aria-label="${escapeAttr(copy.title)}">
@@ -6609,7 +18541,10 @@ async function loadCourse() {
   }
 
   function mascotImageSrc(character, mood = "normal", category = "welcome") {
-    if (character === "eva") return evaSpritePath(resolveEvaSprite(null, evaMascotEmotion(mood, category)));
+    if (character === "eva") {
+      if (state.rewardModal && state.rewardEvaDisplaySprite) return state.rewardEvaDisplaySprite;
+      return evaSpritePath(resolveEvaSprite(null, evaMascotEmotion(mood, category)));
+    }
     const mascot = getMascot(character);
     return mascot.sprites?.[mood] || Object.values(mascot.sprites || {})[0] || "";
   }
@@ -6655,13 +18590,14 @@ async function loadCourse() {
   function rateActiveCard(rating) {
     const card = findCard(state.activeCardId);
     if (!card || !ratingLabels[rating]) return;
+    markKanjiSeen(card, "srs_rating");
     stopKanjiAudio();
 
     const before = cloneProgress(getCardProgress(card.id));
     const after = calculateNextProgress(before, rating);
     state.progress.cards[card.id] = after;
     updateDailyStats(before, after, rating);
-    updateStreak();
+
 
     const previousCombo = Number(state.progress.correctCombo || 0);
     if (isForgottenRating(rating)) {
@@ -6700,9 +18636,20 @@ async function loadCourse() {
     evaluateAchievements();
     saveProgress();
     state.revealed = false;
-    state.activeCardId = null;
     resetReadingCheck();
-    render();
+    if (state.route === "review") {
+      const due = getDueNowCards().filter((item) => item.id !== card.id);
+      state.activeCardId = due[0]?.id || null;
+    } else if (state.route === "learn") {
+      const lesson = state.lessons.find((item) => item.id === card.lessonId) || ensureActiveLearnLesson(learnLessonsForFilter());
+      const candidates = lesson && isLessonUnlocked(lesson)
+        ? getStudyCandidates(lesson.id, false).filter((item) => item.id !== card.id)
+        : [];
+      state.activeCardId = candidates[0]?.id || null;
+    } else {
+      state.activeCardId = null;
+    }
+    render({ mode: "soft" });
   }
 
   function srsButtonLabels() {
@@ -6847,6 +18794,8 @@ async function loadCourse() {
       dialog: "goal"
     });
     state.progress.daily[key] = today;
+    updateStreak();
+    evaluateAchievements();
   }
 
   function recordAppOpen() {
@@ -6950,15 +18899,6 @@ async function loadCourse() {
     const visits = normalizeVisitState();
     visits.streak = previousVisitDate && dayDifference(previousVisitDate, today) === 1 ? visits.streak + 1 : 1;
     visits.bestStreak = Math.max(visits.bestStreak || 0, visits.streak);
-
-    const studyLast = state.progress.streak.lastStudyDate;
-    if (studyLast !== today) {
-      state.progress.streak.current = studyLast && dayDifference(studyLast, today) === 1 ? state.progress.streak.current + 1 : 1;
-      state.progress.streak.lastStudyDate = today;
-      state.progress.streak.best = Math.max(state.progress.streak.best || 0, state.progress.streak.current);
-      state.progress.streakHistory.push({ date: today, value: state.progress.streak.current });
-      state.progress.streakHistory = state.progress.streakHistory.slice(-120);
-    }
   }
 
   function evaluateAchievements() {
@@ -7008,6 +18948,41 @@ async function loadCourse() {
     if (achievement.kind === "evaClicks") return state.progress.secrets?.evaClicks || 0;
     if (achievement.kind === "nightVisit") return state.progress.secrets?.nightVisit ? 1 : 0;
     if (achievement.kind === "appOpens") return state.progress.appOpens || 0;
+    if (achievement.kind === "n5KanjiStudied") return Object.keys(n5Course().studiedKanji || {}).length;
+    if (achievement.kind === "n5LessonComplete") return Object.keys(n5Course().completedLessons || {}).length;
+    if (achievement.kind === "n5LessonsComplete") return Object.keys(n5Course().completedLessons || {}).length;
+    if (achievement.kind === "n5Writing") return Object.keys(n5Course().writingPractice || {}).length;
+    if (achievement.kind === "n5SrsAll") return Object.keys(n5Course().srsKanji || {}).length;
+    if (achievement.kind === "n5FinalPass") return n5Course().finalTest?.passed ? 1 : 0;
+    if (achievement.kind === "n4Opened") return n4Course().opened ? 1 : 0;
+    if (achievement.kind === "n4LessonComplete") return Object.keys(n4Course().completedLessons || {}).length;
+    if (achievement.kind === "n4LessonsComplete") return Object.keys(n4Course().completedLessons || {}).length;
+    if (achievement.kind === "n4SrsAll") return Object.keys(n4Course().srsKanji || {}).length;
+    if (achievement.kind === "n4GrammarComplete") return Object.keys(n4Course().completedGrammar || {}).length;
+    if (achievement.kind === "n4ReadingComplete") return Object.keys(n4Course().completedReading || {}).length;
+    if (achievement.kind === "n4ListeningComplete") return Object.keys(n4Course().completedListening || {}).length;
+    if (achievement.kind === "n4Writing") return Object.keys(n4Course().writingPractice || {}).length;
+    if (achievement.kind === "n4FinalPass") return n4Course().finalTest?.passed ? 1 : 0;
+    if (achievement.kind === "n3Opened") return n3Course().opened ? 1 : 0;
+    if (achievement.kind === "n3LessonComplete") return Object.keys(n3Course().completedLessons || {}).length;
+    if (achievement.kind === "n3LessonsComplete") return Object.keys(n3Course().completedLessons || {}).length;
+    if (achievement.kind === "n3SrsAll") return Object.keys(n3Course().srsKanji || {}).length;
+    if (achievement.kind === "n3GrammarComplete") return Object.keys(n3Course().completedGrammar || {}).length;
+    if (achievement.kind === "n3ReadingComplete") return Object.keys(n3Course().completedReading || {}).length;
+    if (achievement.kind === "n3ListeningComplete") return Object.keys(n3Course().completedListening || {}).length;
+    if (achievement.kind === "n3Writing") return Object.keys(n3Course().writingPractice || {}).length;
+    if (achievement.kind === "n3ComprehensionAnswers") return Object.values(n3Course().readingAnswers || {}).filter((item) => item && item.correct).length;
+    if (achievement.kind === "n3FinalPass") return n3Course().finalTest?.passed ? 1 : 0;
+    if (achievement.kind === "n2Opened") return n2Course().opened ? 1 : 0;
+    if (achievement.kind === "n2LessonComplete") return Object.keys(n2Course().completedLessons || {}).length;
+    if (achievement.kind === "n2LessonsComplete") return Object.keys(n2Course().completedLessons || {}).length;
+    if (achievement.kind === "n2SrsAll") return Object.keys(n2Course().srsKanji || {}).length;
+    if (achievement.kind === "n2GrammarComplete") return Object.keys(n2Course().completedGrammar || {}).length;
+    if (achievement.kind === "n2ReadingComplete") return Object.keys(n2Course().completedReading || {}).length;
+    if (achievement.kind === "n2ListeningComplete") return Object.keys(n2Course().completedListening || {}).length;
+    if (achievement.kind === "n2Writing") return Object.keys(n2Course().writingPractice || {}).length;
+    if (achievement.kind === "n2ComprehensionAnswers") return Object.values(n2Course().readingAnswers || {}).filter((item) => item && item.correct).length;
+    if (achievement.kind === "n2FinalPass") return n2Course().finalTest?.passed ? 1 : 0;
     if (achievement.kind === "shopComplete") {
       const purchasable = customizationShopItems().filter((item) => !item.defaultOwned && item.price > 0);
       return purchasable.length && purchasable.every((item) => isCustomizationOwned(item.id)) ? 1 : 0;
@@ -7021,6 +18996,7 @@ async function loadCourse() {
 
   function queueReward(reward) {
     if (!state.rewardModal) {
+      rollRewardEvaSprite();
       state.rewardModal = reward;
       showRewardFeedback(reward);
       return;
@@ -7098,26 +19074,75 @@ async function loadCourse() {
     state.progress.daily[todayKey()] = today;
   }
 
+  function shiftDayKey(key, delta) {
+    const date = keyToDate(key);
+    date.setDate(date.getDate() + delta);
+    return dateKey(date);
+  }
+
+  function findLastGoalMetDateBefore(beforeDate) {
+    return Object.keys(state.progress.daily)
+      .filter((key) => key < beforeDate && state.progress.daily[key]?.goalClaimed)
+      .sort()
+      .pop() || null;
+  }
+
+  function countConsecutiveGoalDays(endDate) {
+    let count = 0;
+    let cursor = endDate;
+    while (cursor && state.progress.daily[cursor]?.goalClaimed) {
+      count += 1;
+      cursor = shiftDayKey(cursor, -1);
+    }
+    return count;
+  }
+
+  function reconcileStudyStreak() {
+    const today = todayKey();
+    const streak = state.progress.streak;
+    let last = streak.lastStudyDate;
+
+    if (last === today && !todayStats().goalClaimed) {
+      last = findLastGoalMetDateBefore(today);
+      streak.lastStudyDate = last;
+      streak.current = last ? countConsecutiveGoalDays(last) : 0;
+    } else if (last && !state.progress.daily[last]?.goalClaimed) {
+      last = findLastGoalMetDateBefore(today);
+      streak.lastStudyDate = last;
+      streak.current = last ? countConsecutiveGoalDays(last) : 0;
+    }
+
+    if (!last) {
+      streak.current = 0;
+      return;
+    }
+
+    const gap = dayDifference(last, today);
+    if (gap > 1 && streak.current > 0) streak.current = 0;
+  }
+
   function updateStreak() {
     const today = todayKey();
-    const last = state.progress.streak.lastStudyDate;
+    const streak = state.progress.streak;
+    const last = streak.lastStudyDate;
     if (last === today) return;
-    const lost = Boolean(last && dayDifference(last, today) > 1 && state.progress.streak.current > 0);
-    state.progress.streak.current = last && dayDifference(last, today) === 1 ? state.progress.streak.current + 1 : 1;
-    state.progress.streak.lastStudyDate = today;
-    state.progress.streak.best = Math.max(state.progress.streak.best, state.progress.streak.current);
-    state.progress.streakHistory.push({ date: today, value: state.progress.streak.current });
+
+    const lost = Boolean(last && dayDifference(last, today) > 1 && streak.current > 0);
+    streak.current = last && dayDifference(last, today) === 1 ? streak.current + 1 : 1;
+    streak.lastStudyDate = today;
+    streak.best = Math.max(streak.best || 0, streak.current);
+    state.progress.streakHistory.push({ date: today, value: streak.current });
     state.progress.streakHistory = state.progress.streakHistory.slice(-120);
     adjustEvaRelationship(lost
       ? { discipline: -3.5, trust: -1.4, warmth: -0.8 }
       : { discipline: 1.4, trust: 0.8, warmth: 0.4 },
     lost ? "streak_lost" : "study_streak");
     if (lost) toast(dialogueText("eva", "streakLoss"));
-    if ([1, 7, 30, 100].includes(state.progress.streak.current)) {
+    if ([1, 7, 30, 100].includes(streak.current)) {
       playUxSound("streak_reward");
-      addReward(0, state.rewards.rewards.streakCoins, `streak:${state.progress.streak.current}`);
+      addReward(0, state.rewards.rewards.streakCoins, `streak:${streak.current}`);
     }
-    dispatchEvaEvent("streak_up", { streak: state.progress.streak.current, lost });
+    dispatchEvaEvent("streak_up", { streak: streak.current, lost });
   }
 
   function renderCharts() {
@@ -7152,7 +19177,7 @@ async function loadCourse() {
         labels,
         datasets: [{
           label: t("streak"),
-          data: days.map((day) => state.progress.streakHistory.find((entry) => entry.date === day)?.value || (state.progress.daily[day]?.reviews ? 1 : 0)),
+          data: days.map((day) => state.progress.streakHistory.find((entry) => entry.date === day)?.value ?? 0),
           borderColor: colors.blue,
           backgroundColor: colors.blueSoft,
           fill: true,
@@ -7923,7 +19948,7 @@ async function loadCourse() {
   }
 
   function findCard(id) {
-    return state.cards.find((card) => card.id === String(id));
+    return state.cards.find((card) => String(card.id) === String(id));
   }
 
   function cardMeta(id) {
@@ -7958,6 +19983,7 @@ async function loadCourse() {
   function checkActiveCardReading() {
     const card = findCard(state.readingCheck.cardId || state.activeCardId);
     if (!card) return;
+    markKanjiSeenAndSave(card, "reading_check");
     stopKanjiAudio();
 
     const tokens = normalizeKanaTokens(state.readingCheck.value);
@@ -7978,7 +20004,7 @@ async function loadCourse() {
       message
     };
     playUxSound(status === "correct" ? "answer_correct" : "answer_wrong");
-    render();
+    render({ mode: "soft", animate: false });
     requestAnimationFrame(() => {
       const input = document.getElementById(`readingCheck-${card.id}`);
       if (!input) return;
@@ -8134,20 +20160,59 @@ async function loadCourse() {
     return splitReadingText(value)[0] || String(value || "").trim();
   }
 
-  function autoPlayActiveKanjiAudio() {
-    if (state.route !== "learn" && state.route !== "review") return;
-    const waitForUx = 560 - (Date.now() - lastUxSoundAt);
-    if (waitForUx > 0) {
-      window.setTimeout(autoPlayActiveKanjiAudio, waitForUx);
-      return;
+  function trimKanjiAudioCache() {
+    while (kanjiAudioCache.size > KANJI_AUDIO_CACHE_MAX) {
+      const oldestKey = kanjiAudioCache.keys().next().value;
+      const oldest = kanjiAudioCache.get(oldestKey);
+      if (oldest?.audio && activeKanjiAudio === oldest.audio) activeKanjiAudio = null;
+      oldest?.audio?.pause();
+      kanjiAudioCache.delete(oldestKey);
     }
-    const card = findCard(state.activeCardId);
-    const audio = normalizeAudioPath(card?.audioSrc || card?.audio || "");
-    if (!card || !audio) return;
-    const key = `${state.route}:${card.id}:${audio}`;
-    if (key === lastAutoAudioKey) return;
-    lastAutoAudioKey = key;
-    playKanjiAudio(card, { silent: true });
+  }
+
+  function acquireKanjiAudioEntry(url) {
+    if (!url) return null;
+    let entry = kanjiAudioCache.get(url);
+    if (!entry) {
+      const audio = new Audio();
+      audio.preload = "none";
+      entry = { audio, loaded: false, loading: null };
+      kanjiAudioCache.set(url, entry);
+      trimKanjiAudioCache();
+    }
+    return entry;
+  }
+
+  function loadKanjiAudioEntry(entry, url) {
+    if (!entry) return Promise.reject(new Error("kanji audio entry missing"));
+    if (entry.loaded && entry.audio.src) return Promise.resolve(entry.audio);
+    if (entry.loading) return entry.loading;
+
+    entry.loading = new Promise((resolve, reject) => {
+      const audio = entry.audio;
+      const onReady = () => {
+        cleanup();
+        entry.loaded = true;
+        entry.loading = null;
+        resolve(audio);
+      };
+      const onFail = () => {
+        cleanup();
+        entry.loading = null;
+        entry.loaded = false;
+        reject(new Error("kanji audio load failed"));
+      };
+      const cleanup = () => {
+        audio.removeEventListener("canplaythrough", onReady);
+        audio.removeEventListener("error", onFail);
+      };
+      audio.addEventListener("canplaythrough", onReady, { once: true });
+      audio.addEventListener("error", onFail, { once: true });
+      if (audio.src !== url) audio.src = url;
+      audio.load();
+    });
+
+    return entry.loading;
   }
 
   function stopKanjiAudio() {
@@ -8160,30 +20225,33 @@ async function loadCourse() {
   }
 
   function playKanjiAudio(card, options = {}) {
-    const audio = getKanjiAudioPath(card);
-    if (!audio) {
+    const audioUrl = getKanjiAudioPath(card);
+    if (!audioUrl) {
       return Promise.resolve(options.silent ? false : speakKanjiAudio(card));
     }
 
-    if (activeKanjiAudio) {
+    if (activeKanjiAudio && activeKanjiAudio !== kanjiAudioCache.get(audioUrl)?.audio) {
       activeKanjiAudio.pause();
       activeKanjiAudio.currentTime = 0;
     }
 
-    activeKanjiAudio = new Audio(audio);
-    activeKanjiAudio.preload = "auto";
-    activeKanjiAudio.onended = () => {
-      activeKanjiAudio = null;
-    };
-    activeKanjiAudio.onerror = () => {
-      if (!options.silent) console.warn("Kanji audio file could not be loaded.", { id: card?.id, audio });
-    };
-
-    return activeKanjiAudio.play()
+    const entry = acquireKanjiAudioEntry(audioUrl);
+    return loadKanjiAudioEntry(entry, audioUrl)
+      .then((audio) => {
+        activeKanjiAudio = audio;
+        audio.currentTime = 0;
+        audio.onended = () => {
+          if (activeKanjiAudio === audio) activeKanjiAudio = null;
+        };
+        audio.onerror = () => {
+          if (!options.silent) console.warn("Kanji audio file could not be loaded.", { id: card?.id, audio: audioUrl });
+        };
+        return audio.play();
+      })
       .then(() => true)
       .catch((error) => {
         if (!options.silent && speakKanjiAudio(card)) return true;
-        if (!options.silent) console.warn("Kanji audio playback was blocked or failed.", { id: card?.id, audio, error });
+        if (!options.silent) console.warn("Kanji audio playback was blocked or failed.", { id: card?.id, audio: audioUrl, error });
         return false;
       });
   }
@@ -8263,6 +20331,58 @@ async function loadCourse() {
   function jlptLessonByLevel(jlpt) {
     const key = String(jlpt || "").toUpperCase();
     return state.jlptLessons.find((item) => item.jlpt === key) || null;
+  }
+
+  function jlptCatalogByLevel(jlpt) {
+    const key = String(jlpt || "").toUpperCase();
+    return state.jlptCatalog?.items?.find((item) => item.jlpt === key) || null;
+  }
+
+  function textbookCourseProgress(level) {
+    const key = String(level || "").toUpperCase();
+    if (key === "N5") return n5Course();
+    if (key === "N4") return n4Course();
+    if (key === "N3") return n3Course();
+    if (key === "N2") return n2Course();
+    if (key === "N1") return n1Course();
+    return null;
+  }
+
+  function textbookRequirementLevels(level) {
+    const textbook = jlptCatalogByLevel(level);
+    return Array.isArray(textbook?.previousLevels)
+      ? textbook.previousLevels.map((item) => String(item || "").toUpperCase()).filter(Boolean)
+      : [];
+  }
+
+  function textbookCompleted(level) {
+    return Boolean(textbookCourseProgress(level)?.finalTest?.passed);
+  }
+
+  function isTextbookUnlocked(level) {
+    const key = String(level || "").toUpperCase();
+    const textbook = jlptCatalogByLevel(key);
+    if (!textbook) return key === "N5";
+    const requirements = textbookRequirementLevels(key);
+    if (!requirements.length) return true;
+    return requirements.every((required) => textbookCompleted(required));
+  }
+
+  function formatLevelChain(levels = []) {
+    const list = levels.filter(Boolean);
+    if (!list.length) return "";
+    if (list.length === 1) return list[0];
+    const conjunction = lang() === "ru" ? "и" : "and";
+    if (list.length === 2) return `${list[0]} ${conjunction} ${list[1]}`;
+    return `${list.slice(0, -1).join(", ")} ${conjunction} ${list[list.length - 1]}`;
+  }
+
+  function textbookUnlockText(level) {
+    const requirements = textbookRequirementLevels(level);
+    if (!requirements.length) return lang() === "ru" ? "Откроется после учебника N5." : "Unlocks after the N5 textbook.";
+    return lang() === "ru"
+      ? `Откроется после завершения ${formatLevelChain(requirements)}.`
+      : `Unlocks after completing ${formatLevelChain(requirements)}.`;
   }
 
   function jlptLessonForCard(card) {
@@ -8701,6 +20821,8 @@ async function loadCourse() {
     const settings = state.progress.settings;
     state.progress = defaultProgress();
     state.progress.settings = settings;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
     hydrateProgress();
     syncUxSoundSettings();
     saveProgress();
@@ -8792,10 +20914,10 @@ async function loadCourse() {
     const roomBackground = currentEvaRoomBackground();
     document.documentElement.dataset.customRoom = roomBackground?.id || "bg_study_hub";
     document.documentElement.style.setProperty("--app-room-bg", cssImageUrl(roomBackground?.file || "assets/bg/bg_study_hub.png"));
-    const evaEffect = state.route === "eva-room" ? state.evaRuntime?.currentEffect || evaAutonomy().currentEffect : null;
-    const usableEvaEffect = evaEffect === "none" || (evaEffect && customizationShopItem(evaEffect) && isCustomizationOwned(evaEffect)) ? evaEffect : null;
-    document.documentElement.dataset.customEffect = usableEvaEffect || state.customization?.selected?.effect || "none";
+    const activeEffectId = activeCustomizationEffectId();
+    document.documentElement.dataset.customEffect = activeEffectId || "none";
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", state.progress.settings.theme === "light" ? "#f8f7f2" : "#08080c");
+    syncCyberHudEffects();
   }
 
   function cssImageUrl(value) {
@@ -8844,11 +20966,18 @@ async function loadCourse() {
   }
 
   function cardMeaning(card) {
-    return lang() === "en" ? state.kanjiTranslations[card.id]?.meaning_en || card.meaning_ru : card.meaning_ru;
+    return cardMeaningForLang(card, lang());
+  }
+
+  function cardMeaningForLang(card, language = lang()) {
+    if (!card) return "";
+    if (language === "en") return state.kanjiTranslations[card.id]?.meaning_en || card.meaning_en || card.meaning_ru || "";
+    return card.meaning_ru || state.kanjiTranslations[card.id]?.meaning_en || card.meaning_en || "";
   }
 
   function cardInterface(card) {
-    return lang() === "en" ? state.kanjiTranslations[card.id]?.interface_use_en || card.interface_use : card.interface_use;
+    if (lang() === "en") return state.kanjiTranslations[card.id]?.interface_use_en || card.interface_use_en || card.interface_use || "";
+    return card.interface_use || card.interface_use_en || "";
   }
 
   function exampleTranslation(example) {
@@ -9051,12 +21180,9 @@ async function loadCourse() {
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing) return;
-      refreshing = true;
-      location.reload();
-    });
+    if (window.__flashKanjiSwRegistered) return;
+    window.__flashKanjiSwRegistered = true;
+
     navigator.serviceWorker.addEventListener("message", (event) => {
       if (event.data?.type !== "FLASH_KANJI_CACHE_RESET_DONE") return;
       try {
@@ -9065,40 +21191,17 @@ async function loadCourse() {
         console.warn("Cannot save PWA cache reset marker.", error);
       }
     });
-    window.addEventListener("load", async () => {
+
+    const registerOnce = async () => {
       try {
-        const registration = await navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(BUILD_VERSION)}`);
-        watchServiceWorkerUpdate(registration);
-        await registration.update().catch(console.warn);
-        requestServiceWorkerCacheReset(registration);
+        await navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
       } catch (error) {
-        console.warn(error);
+        console.warn("Service worker registration failed.", error);
       }
-    });
-  }
+    };
 
-  function watchServiceWorkerUpdate(registration) {
-    if (!registration) return;
-    registration.addEventListener("updatefound", () => {
-      const worker = registration.installing;
-      if (!worker) return;
-      worker.addEventListener("statechange", () => {
-        if (worker.state === "installed" || worker.state === "activated") {
-          requestServiceWorkerCacheReset(registration);
-        }
-      });
-    });
-  }
-
-  function requestServiceWorkerCacheReset(registration) {
-    if (!("serviceWorker" in navigator)) return;
-    const marker = `${BUILD_VERSION}:done`;
-    try {
-      if (localStorage.getItem(PWA_CACHE_RESET_STORAGE_KEY) === marker) return;
-    } catch {}
-    const worker = registration?.waiting || registration?.active || navigator.serviceWorker.controller;
-    if (!worker) return;
-    worker.postMessage({ type: "FLASH_KANJI_FORCE_CACHE_RESET", buildVersion: BUILD_VERSION });
+    if (document.readyState === "complete") registerOnce();
+    else window.addEventListener("load", registerOnce, { once: true });
   }
 
   function loadPwaInstallPromptState() {
@@ -9607,7 +21710,8 @@ async function loadCourse() {
   }
 
   function readRouteHash() {
-    const raw = location.hash.replace("#", "");
+    const raw = decodeURIComponent(location.hash.replace("#", ""));
+    if (/^jlpt\/n[1-5](?:\/|$)/i.test(raw)) return "textbooks";
     const route = raw.split("/")[0];
     return routes.includes(route) ? route : "home";
   }
@@ -9616,6 +21720,18 @@ async function loadCourse() {
     const raw = decodeURIComponent(location.hash.replace("#", ""));
     const match = raw.match(/^kanji\/([^/?]+)/);
     return match ? match[1] : "";
+  }
+
+  function readTextbookRouteLevel() {
+    const raw = decodeURIComponent(location.hash.replace("#", ""));
+    const match = raw.match(/^textbooks\/([^/?#]+)/i) || raw.match(/^jlpt\/([^/?#]+)/i);
+    return match ? String(match[1] || "").toUpperCase() : "";
+  }
+
+  function readTextbookRouteSubroute() {
+    const raw = decodeURIComponent(location.hash.replace("#", ""));
+    const match = raw.match(/^textbooks\/[^/?#]+\/([^?#]+)/i) || raw.match(/^jlpt\/[^/?#]+\/([^?#]+)/i);
+    return match ? String(match[1] || "") : "";
   }
 
   function unlockedAchievementCount() {
@@ -9636,96 +21752,4 @@ async function loadCourse() {
   }
 })();
 
-/**
- * ЧАСТЬ 1: Безопасный клиентский скрипт регистрации Service Worker.
- * Этот код размещается в основном JS-файле (index.js / App.jsx) или подключается в index.html.
- */
 
-const APP_VERSION = 'v1.0.2'; // Меняйте версию при каждом деплое
-
-function registerServiceWorkerWithCacheBuster() {
-  if ('serviceWorker' in navigator) {
-    // КРИТИЧЕСКИЙ ФИКС: Запоминаем, управлял ли уже сервис-воркер страницей при загрузке.
-    // Если "wasControlled" равен false, значит это первая установка приложения пользователем.
-    // В таком случае перезагрузка страницы НЕ нужна и только сломает инициализацию React!
-    const wasControlled = !!navigator.serviceWorker.controller;
-
-    // Регистрируем sw.js без query-параметров, так как Vite/Webpack могут отдавать 404 на пути с "?"
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker зарегистрирован с версией:', APP_VERSION);
-
-        // Проверяем наличие обновлений SW в фоновом режиме
-        registration.update();
-
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              // Если новый SW успешно скачался и установился
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('Доступно новое обновление! Активируем...');
-                // Даем команду новому SW немедленно занять рабочее место
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-              }
-            });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('Ошибка регистрации Service Worker:', error);
-      });
-
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      // Перезагружаем страницу ТОЛЬКО если старая версия SW заменяется на новую.
-      // Если это просто первичная активация SW для нового пользователя — не трогаем вкладку!
-      if (wasControlled && !refreshing) {
-        refreshing = true;
-        console.log('PWA успешно обновлено до версии:', APP_VERSION);
-        window.location.reload(); // Мягкая перезагрузка для подтягивания нового кэша
-      }
-    });
-  }
-}
-
-// Запуск после полной загрузки всех ресурсов страницы
-window.addEventListener('load', () => {
-  registerServiceWorkerWithCacheBuster();
-});
-
-
-/**
- * ЧАСТЬ 2: Обработчики для sw.js (в корневом файле вашего сервис-воркера).
- */
-
-/*
-// Код ниже должен находиться внутри вашего sw.js:
-
-const CACHE_NAME = 'flash-kanji-cache-v1.0.2'; // Версия кэша должна совпадать с APP_VERSION
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting()); // Позволяет новому SW сразу активироваться
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[Service Worker] Удаление старого кэша:', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    }).then(() => self.clients.claim()) // Захватывает управление вкладками без перезагрузки
-  );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-*/

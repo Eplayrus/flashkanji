@@ -21,12 +21,16 @@
   <meta name="twitter:image:alt" content="Flash Kanji - preview card with logo, Eva and kanji-learning features." />
   <title>Flash Kanji — учи японские кандзи через SRS, письмо и повторение</title>
   <link rel="canonical" href="https://flashkanji.space/" />
+  <link rel="alternate" hreflang="ru" href="https://flashkanji.space/ru/textbooks/" />
+  <link rel="alternate" hreflang="en" href="https://flashkanji.space/en/textbooks/" />
+  <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
   <link rel="icon" href="./index/assets/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./index/assets/icon-192.png" sizes="192x192" />
-  <link rel="manifest" href="./index/manifest.webmanifest" />
-  <meta http-equiv="refresh" content="0; url=./index/" />
+  <link rel="manifest" href="./index/manifest.webmanifest?v=2026-06-13-bugfix-v4" />
+  <meta http-equiv="refresh" content="0; url=./recovery/entry.html" />
   <script>
-    window.location.replace("./index/");
+    const target = "./recovery/entry.html" + window.location.search + window.location.hash;
+    window.location.replace(target);
   </script>
 </head>
 <body>

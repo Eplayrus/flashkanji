@@ -1,21 +1,115 @@
 {
   "version": 2,
   "categories": [
-    { "id": "learning", "title": { "ru": "Обучение", "en": "Learning" }, "icon": "book" },
-    { "id": "review", "title": { "ru": "Повторение", "en": "Review" }, "icon": "memory" },
-    { "id": "streak", "title": { "ru": "Серия", "en": "Streak" }, "icon": "flame" },
-    { "id": "levels", "title": { "ru": "Уровни", "en": "Levels" }, "icon": "star" },
-    { "id": "fragments", "title": { "ru": "Moon Fragments", "en": "Moon Fragments" }, "icon": "moon" },
-    { "id": "writing", "title": { "ru": "Письмо", "en": "Writing" }, "icon": "brush" },
-    { "id": "sentences", "title": { "ru": "Предложения", "en": "Sentences" }, "icon": "text" },
-    { "id": "secret", "title": { "ru": "Секретные", "en": "Secret" }, "icon": "lock" }
+    {
+      "id": "learning",
+      "title": {
+        "ru": "Обучение",
+        "en": "Learning"
+      },
+      "icon": "book"
+    },
+    {
+      "id": "review",
+      "title": {
+        "ru": "Повторение",
+        "en": "Review"
+      },
+      "icon": "memory"
+    },
+    {
+      "id": "streak",
+      "title": {
+        "ru": "Серия",
+        "en": "Streak"
+      },
+      "icon": "flame"
+    },
+    {
+      "id": "levels",
+      "title": {
+        "ru": "Уровни",
+        "en": "Levels"
+      },
+      "icon": "star"
+    },
+    {
+      "id": "fragments",
+      "title": {
+        "ru": "Moon Fragments",
+        "en": "Moon Fragments"
+      },
+      "icon": "moon"
+    },
+    {
+      "id": "writing",
+      "title": {
+        "ru": "Письмо",
+        "en": "Writing"
+      },
+      "icon": "brush"
+    },
+    {
+      "id": "sentences",
+      "title": {
+        "ru": "Предложения",
+        "en": "Sentences"
+      },
+      "icon": "text"
+    },
+    {
+      "id": "jlpt_n5",
+      "title": {
+        "ru": "JLPT N5",
+        "en": "JLPT N5"
+      },
+      "icon": "book"
+    },
+    {
+      "id": "secret",
+      "title": {
+        "ru": "Секретные",
+        "en": "Secret"
+      },
+      "icon": "lock"
+    },
+    {
+      "id": "jlpt_n4",
+      "title": {
+        "ru": "JLPT N4",
+        "en": "JLPT N4"
+      },
+      "icon": "book"
+    },
+    {
+      "id": "jlpt_n3",
+      "title": {
+        "ru": "JLPT N3",
+        "en": "JLPT N3"
+      },
+      "icon": "star"
+    },
+    {
+      "id": "jlpt_n2",
+      "title": {
+        "ru": "JLPT N2",
+        "en": "JLPT N2"
+      },
+      "icon": "star"
+    }
   ],
   "achievements": [
     {
       "id": "first_kanji",
       "category": "learning",
-      "title": { "ru": "Первый символ", "en": "First symbol" },
-      "description": { "ru": "Изучить первое кандзи.", "en": "Learn the first kanji." },
+      "title": {
+        "ru": "Первый символ",
+        "en": "First symbol"
+      },
+      "description": {
+        "ru": "Изучить первое кандзи.",
+        "en": "Learn the first kanji."
+      },
       "icon": "moon",
       "kind": "learned",
       "target": 1,
@@ -25,8 +119,14 @@
     {
       "id": "moon_student",
       "category": "learning",
-      "title": { "ru": "Ученик Луны", "en": "Moon student" },
-      "description": { "ru": "Изучить 50 кандзи.", "en": "Learn 50 kanji." },
+      "title": {
+        "ru": "Ученик Луны",
+        "en": "Moon student"
+      },
+      "description": {
+        "ru": "Изучить 50 кандзи.",
+        "en": "Learn 50 kanji."
+      },
       "icon": "book",
       "kind": "learned",
       "target": 50,
@@ -36,8 +136,14 @@
     {
       "id": "knowledge_collector",
       "category": "learning",
-      "title": { "ru": "Собиратель знаний", "en": "Knowledge collector" },
-      "description": { "ru": "Изучить 100 кандзи.", "en": "Learn 100 kanji." },
+      "title": {
+        "ru": "Собиратель знаний",
+        "en": "Knowledge collector"
+      },
+      "description": {
+        "ru": "Изучить 100 кандзи.",
+        "en": "Learn 100 kanji."
+      },
       "icon": "book",
       "kind": "learned",
       "target": 100,
@@ -47,8 +153,14 @@
     {
       "id": "library_keeper",
       "category": "learning",
-      "title": { "ru": "Хранитель библиотеки", "en": "Library keeper" },
-      "description": { "ru": "Изучить 500 кандзи.", "en": "Learn 500 kanji." },
+      "title": {
+        "ru": "Хранитель библиотеки",
+        "en": "Library keeper"
+      },
+      "description": {
+        "ru": "Изучить 500 кандзи.",
+        "en": "Learn 500 kanji."
+      },
       "icon": "book",
       "kind": "learned",
       "target": 500,
@@ -58,8 +170,14 @@
     {
       "id": "kanji_sage",
       "category": "learning",
-      "title": { "ru": "Мудрец кандзи", "en": "Kanji sage" },
-      "description": { "ru": "Изучить 1000 кандзи.", "en": "Learn 1000 kanji." },
+      "title": {
+        "ru": "Мудрец кандзи",
+        "en": "Kanji sage"
+      },
+      "description": {
+        "ru": "Изучить 1000 кандзи.",
+        "en": "Learn 1000 kanji."
+      },
       "icon": "moon",
       "kind": "learned",
       "target": 1000,
@@ -69,8 +187,14 @@
     {
       "id": "first_memory",
       "category": "review",
-      "title": { "ru": "Первая память", "en": "First memory" },
-      "description": { "ru": "Пройти первое повторение.", "en": "Complete the first review." },
+      "title": {
+        "ru": "Первая память",
+        "en": "First memory"
+      },
+      "description": {
+        "ru": "Пройти первое повторение.",
+        "en": "Complete the first review."
+      },
       "icon": "memory",
       "kind": "reviews",
       "target": 1,
@@ -80,8 +204,14 @@
     {
       "id": "strong_memory",
       "category": "review",
-      "title": { "ru": "Сильная память", "en": "Strong memory" },
-      "description": { "ru": "Пройти 50 повторений.", "en": "Complete 50 reviews." },
+      "title": {
+        "ru": "Сильная память",
+        "en": "Strong memory"
+      },
+      "description": {
+        "ru": "Пройти 50 повторений.",
+        "en": "Complete 50 reviews."
+      },
       "icon": "memory",
       "kind": "reviews",
       "target": 50,
@@ -91,8 +221,14 @@
     {
       "id": "iron_memory",
       "category": "review",
-      "title": { "ru": "Железная память", "en": "Iron memory" },
-      "description": { "ru": "Пройти 250 повторений.", "en": "Complete 250 reviews." },
+      "title": {
+        "ru": "Железная память",
+        "en": "Iron memory"
+      },
+      "description": {
+        "ru": "Пройти 250 повторений.",
+        "en": "Complete 250 reviews."
+      },
       "icon": "memory",
       "kind": "reviews",
       "target": 250,
@@ -102,8 +238,14 @@
     {
       "id": "moon_memory",
       "category": "review",
-      "title": { "ru": "Лунная память", "en": "Moon memory" },
-      "description": { "ru": "Пройти 1000 повторений.", "en": "Complete 1000 reviews." },
+      "title": {
+        "ru": "Лунная память",
+        "en": "Moon memory"
+      },
+      "description": {
+        "ru": "Пройти 1000 повторений.",
+        "en": "Complete 1000 reviews."
+      },
       "icon": "moon",
       "kind": "reviews",
       "target": 1000,
@@ -113,8 +255,14 @@
     {
       "id": "first_day",
       "category": "streak",
-      "title": { "ru": "Первый день", "en": "First day" },
-      "description": { "ru": "Достичь серии 1 день.", "en": "Reach a 1-day streak." },
+      "title": {
+        "ru": "Первый день",
+        "en": "First day"
+      },
+      "description": {
+        "ru": "Достичь серии 1 день.",
+        "en": "Reach a 1-day streak."
+      },
       "icon": "flame",
       "kind": "streak",
       "target": 1,
@@ -124,8 +272,14 @@
     {
       "id": "discipline_week",
       "category": "streak",
-      "title": { "ru": "Неделя дисциплины", "en": "Discipline week" },
-      "description": { "ru": "Достичь серии 7 дней.", "en": "Reach a 7-day streak." },
+      "title": {
+        "ru": "Неделя дисциплины",
+        "en": "Discipline week"
+      },
+      "description": {
+        "ru": "Достичь серии 7 дней.",
+        "en": "Reach a 7-day streak."
+      },
       "icon": "flame",
       "kind": "streak",
       "target": 7,
@@ -135,8 +289,14 @@
     {
       "id": "moon_cycle",
       "category": "streak",
-      "title": { "ru": "Лунный цикл", "en": "Moon cycle" },
-      "description": { "ru": "Достичь серии 30 дней.", "en": "Reach a 30-day streak." },
+      "title": {
+        "ru": "Лунный цикл",
+        "en": "Moon cycle"
+      },
+      "description": {
+        "ru": "Достичь серии 30 дней.",
+        "en": "Reach a 30-day streak."
+      },
       "icon": "moon",
       "kind": "streak",
       "target": 30,
@@ -146,8 +306,14 @@
     {
       "id": "unstoppable",
       "category": "streak",
-      "title": { "ru": "Неостановимый", "en": "Unstoppable" },
-      "description": { "ru": "Достичь серии 100 дней.", "en": "Reach a 100-day streak." },
+      "title": {
+        "ru": "Неостановимый",
+        "en": "Unstoppable"
+      },
+      "description": {
+        "ru": "Достичь серии 100 дней.",
+        "en": "Reach a 100-day streak."
+      },
       "icon": "flame",
       "kind": "streak",
       "target": 100,
@@ -157,8 +323,14 @@
     {
       "id": "level_rookie",
       "category": "levels",
-      "title": { "ru": "Новичок", "en": "Rookie" },
-      "description": { "ru": "Достичь 5 уровня.", "en": "Reach level 5." },
+      "title": {
+        "ru": "Новичок",
+        "en": "Rookie"
+      },
+      "description": {
+        "ru": "Достичь 5 уровня.",
+        "en": "Reach level 5."
+      },
       "icon": "star",
       "kind": "level",
       "target": 5,
@@ -168,8 +340,14 @@
     {
       "id": "level_explorer",
       "category": "levels",
-      "title": { "ru": "Исследователь", "en": "Explorer" },
-      "description": { "ru": "Достичь 10 уровня.", "en": "Reach level 10." },
+      "title": {
+        "ru": "Исследователь",
+        "en": "Explorer"
+      },
+      "description": {
+        "ru": "Достичь 10 уровня.",
+        "en": "Reach level 10."
+      },
       "icon": "star",
       "kind": "level",
       "target": 10,
@@ -179,8 +357,14 @@
     {
       "id": "level_wanderer",
       "category": "levels",
-      "title": { "ru": "Странник", "en": "Wanderer" },
-      "description": { "ru": "Достичь 20 уровня.", "en": "Reach level 20." },
+      "title": {
+        "ru": "Странник",
+        "en": "Wanderer"
+      },
+      "description": {
+        "ru": "Достичь 20 уровня.",
+        "en": "Reach level 20."
+      },
       "icon": "star",
       "kind": "level",
       "target": 20,
@@ -190,8 +374,14 @@
     {
       "id": "level_master",
       "category": "levels",
-      "title": { "ru": "Мастер", "en": "Master" },
-      "description": { "ru": "Достичь 50 уровня.", "en": "Reach level 50." },
+      "title": {
+        "ru": "Мастер",
+        "en": "Master"
+      },
+      "description": {
+        "ru": "Достичь 50 уровня.",
+        "en": "Reach level 50."
+      },
       "icon": "star",
       "kind": "level",
       "target": 50,
@@ -201,8 +391,14 @@
     {
       "id": "level_legend",
       "category": "levels",
-      "title": { "ru": "Легенда", "en": "Legend" },
-      "description": { "ru": "Достичь 100 уровня.", "en": "Reach level 100." },
+      "title": {
+        "ru": "Легенда",
+        "en": "Legend"
+      },
+      "description": {
+        "ru": "Достичь 100 уровня.",
+        "en": "Reach level 100."
+      },
       "icon": "moon",
       "kind": "level",
       "target": 100,
@@ -212,8 +408,14 @@
     {
       "id": "first_fragment",
       "category": "fragments",
-      "title": { "ru": "Первая находка", "en": "First find" },
-      "description": { "ru": "Получить 10 Moon Fragments.", "en": "Earn 10 Moon Fragments." },
+      "title": {
+        "ru": "Первая находка",
+        "en": "First find"
+      },
+      "description": {
+        "ru": "Получить 10 Moon Fragments.",
+        "en": "Earn 10 Moon Fragments."
+      },
       "icon": "moon",
       "kind": "moonFragments",
       "target": 10,
@@ -223,8 +425,14 @@
     {
       "id": "moon_collector",
       "category": "fragments",
-      "title": { "ru": "Лунный собиратель", "en": "Moon collector" },
-      "description": { "ru": "Получить 100 Moon Fragments.", "en": "Earn 100 Moon Fragments." },
+      "title": {
+        "ru": "Лунный собиратель",
+        "en": "Moon collector"
+      },
+      "description": {
+        "ru": "Получить 100 Moon Fragments.",
+        "en": "Earn 100 Moon Fragments."
+      },
       "icon": "moon",
       "kind": "moonFragments",
       "target": 100,
@@ -234,8 +442,14 @@
     {
       "id": "moon_treasury",
       "category": "fragments",
-      "title": { "ru": "Сокровищница Луны", "en": "Moon treasury" },
-      "description": { "ru": "Получить 1000 Moon Fragments.", "en": "Earn 1000 Moon Fragments." },
+      "title": {
+        "ru": "Сокровищница Луны",
+        "en": "Moon treasury"
+      },
+      "description": {
+        "ru": "Получить 1000 Moon Fragments.",
+        "en": "Earn 1000 Moon Fragments."
+      },
       "icon": "moon",
       "kind": "moonFragments",
       "target": 1000,
@@ -245,8 +459,14 @@
     {
       "id": "first_line",
       "category": "writing",
-      "title": { "ru": "Первая линия", "en": "First line" },
-      "description": { "ru": "Завершить первое упражнение письма.", "en": "Complete the first writing exercise." },
+      "title": {
+        "ru": "Первая линия",
+        "en": "First line"
+      },
+      "description": {
+        "ru": "Завершить первое упражнение письма.",
+        "en": "Complete the first writing exercise."
+      },
       "icon": "brush",
       "kind": "writing",
       "target": 1,
@@ -256,8 +476,14 @@
     {
       "id": "calligrapher",
       "category": "writing",
-      "title": { "ru": "Каллиграф", "en": "Calligrapher" },
-      "description": { "ru": "Завершить 100 упражнений письма.", "en": "Complete 100 writing exercises." },
+      "title": {
+        "ru": "Каллиграф",
+        "en": "Calligrapher"
+      },
+      "description": {
+        "ru": "Завершить 100 упражнений письма.",
+        "en": "Complete 100 writing exercises."
+      },
       "icon": "brush",
       "kind": "writing",
       "target": 100,
@@ -267,8 +493,14 @@
     {
       "id": "reader",
       "category": "sentences",
-      "title": { "ru": "Читатель", "en": "Reader" },
-      "description": { "ru": "Завершить первое упражнение с пропущенными кандзи.", "en": "Complete the first missing-kanji sentence exercise." },
+      "title": {
+        "ru": "Читатель",
+        "en": "Reader"
+      },
+      "description": {
+        "ru": "Завершить первое упражнение с пропущенными кандзи.",
+        "en": "Complete the first missing-kanji sentence exercise."
+      },
       "icon": "text",
       "kind": "sentence",
       "target": 1,
@@ -278,8 +510,14 @@
     {
       "id": "context_understanding",
       "category": "sentences",
-      "title": { "ru": "Понимающий контекст", "en": "Context reader" },
-      "description": { "ru": "Завершить 50 упражнений с предложениями.", "en": "Complete 50 sentence exercises." },
+      "title": {
+        "ru": "Понимающий контекст",
+        "en": "Context reader"
+      },
+      "description": {
+        "ru": "Завершить 50 упражнений с предложениями.",
+        "en": "Complete 50 sentence exercises."
+      },
       "icon": "text",
       "kind": "sentence",
       "target": 50,
@@ -289,8 +527,14 @@
     {
       "id": "eva_watches",
       "category": "secret",
-      "title": { "ru": "Ева наблюдает", "en": "Eva watches" },
-      "description": { "ru": "Нажать на Еву 10 раз.", "en": "Tap Eva 10 times." },
+      "title": {
+        "ru": "Ева наблюдает",
+        "en": "Eva watches"
+      },
+      "description": {
+        "ru": "Нажать на Еву 10 раз.",
+        "en": "Tap Eva 10 times."
+      },
       "icon": "eye",
       "kind": "evaClicks",
       "target": 10,
@@ -301,8 +545,14 @@
     {
       "id": "leya_nearby",
       "category": "secret",
-      "title": { "ru": "Лея рядом", "en": "Leya nearby" },
-      "description": { "ru": "Посетить приложение ночью.", "en": "Visit the app at night." },
+      "title": {
+        "ru": "Лея рядом",
+        "en": "Leya nearby"
+      },
+      "description": {
+        "ru": "Посетить приложение ночью.",
+        "en": "Visit the app at night."
+      },
       "icon": "moon",
       "kind": "nightVisit",
       "target": 1,
@@ -313,8 +563,14 @@
     {
       "id": "crescent",
       "category": "secret",
-      "title": { "ru": "Полумесяц", "en": "Crescent" },
-      "description": { "ru": "Открыть приложение 30 раз.", "en": "Open the app 30 times." },
+      "title": {
+        "ru": "Полумесяц",
+        "en": "Crescent"
+      },
+      "description": {
+        "ru": "Открыть приложение 30 раз.",
+        "en": "Open the app 30 times."
+      },
       "icon": "moon",
       "kind": "appOpens",
       "target": 30,
@@ -325,14 +581,768 @@
     {
       "id": "last_fragment",
       "category": "secret",
-      "title": { "ru": "Последний фрагмент", "en": "Last fragment" },
-      "description": { "ru": "Купить все предметы магазина.", "en": "Buy every shop item." },
+      "title": {
+        "ru": "Последний фрагмент",
+        "en": "Last fragment"
+      },
+      "description": {
+        "ru": "Купить все предметы магазина.",
+        "en": "Buy every shop item."
+      },
       "icon": "lock",
       "kind": "shopComplete",
       "target": 1,
       "rewardXp": 250,
       "rewardFragments": 80,
       "secret": true
+    },
+    {
+      "id": "n5_first_kanji",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "Первый кандзи N5",
+        "en": "First N5 kanji"
+      },
+      "description": {
+        "ru": "Изучить первый кандзи в модуле JLPT N5.",
+        "en": "Study the first kanji in the JLPT N5 module."
+      },
+      "icon": "book",
+      "kind": "n5KanjiStudied",
+      "target": 1,
+      "rewardXp": 20,
+      "rewardFragments": 4
+    },
+    {
+      "id": "n5_first_lesson",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "N5: первый урок",
+        "en": "N5: first lesson"
+      },
+      "description": {
+        "ru": "Пройти первый урок N5.",
+        "en": "Complete the first N5 lesson."
+      },
+      "icon": "star",
+      "kind": "n5LessonComplete",
+      "target": 1,
+      "rewardXp": 35,
+      "rewardFragments": 8
+    },
+    {
+      "id": "n5_halfway",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "N5: половина пути",
+        "en": "N5: halfway"
+      },
+      "description": {
+        "ru": "Пройти 5 уроков N5.",
+        "en": "Complete 5 N5 lessons."
+      },
+      "icon": "moon",
+      "kind": "n5LessonsComplete",
+      "target": 5,
+      "rewardXp": 90,
+      "rewardFragments": 18
+    },
+    {
+      "id": "n5_complete",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "N5 завершён",
+        "en": "N5 complete"
+      },
+      "description": {
+        "ru": "Пройти 10 уроков N5.",
+        "en": "Complete all 10 N5 lessons."
+      },
+      "icon": "star",
+      "kind": "n5LessonsComplete",
+      "target": 10,
+      "rewardXp": 180,
+      "rewardFragments": 35
+    },
+    {
+      "id": "n5_moon_writing",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "Письмо под луной",
+        "en": "Writing under the moon"
+      },
+      "description": {
+        "ru": "Отметить 10 письменных практик N5.",
+        "en": "Mark 10 N5 writing practices."
+      },
+      "icon": "brush",
+      "kind": "n5Writing",
+      "target": 10,
+      "rewardXp": 90,
+      "rewardFragments": 18
+    },
+    {
+      "id": "n5_all_srs",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "80 кандзи N5",
+        "en": "80 N5 kanji"
+      },
+      "description": {
+        "ru": "Добавить все 80 кандзи N5 в SRS.",
+        "en": "Add all 80 N5 kanji to SRS."
+      },
+      "icon": "memory",
+      "kind": "n5SrsAll",
+      "target": 80,
+      "rewardXp": 160,
+      "rewardFragments": 30
+    },
+    {
+      "id": "n5_final_pass",
+      "category": "jlpt_n5",
+      "title": {
+        "ru": "Без страха перед кандзи",
+        "en": "No fear of kanji"
+      },
+      "description": {
+        "ru": "Пройти финальный тест N5 с успешным результатом.",
+        "en": "Pass the N5 final test."
+      },
+      "icon": "star",
+      "kind": "n5FinalPass",
+      "target": 1,
+      "rewardXp": 160,
+      "rewardFragments": 32
+    },
+    {
+      "id": "n4_next_step",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "N4: следующий шаг",
+        "en": "N4: следующий шаг"
+      },
+      "description": {
+        "ru": "Открыть N4 после N5.",
+        "en": "Открыть N4 после N5."
+      },
+      "icon": "star",
+      "kind": "n4Opened",
+      "target": 1,
+      "rewardXp": 25,
+      "rewardFragments": 5
+    },
+    {
+      "id": "n4_first_lesson",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "N4: первый урок",
+        "en": "N4: первый урок"
+      },
+      "description": {
+        "ru": "Пройти первый урок N4.",
+        "en": "Пройти первый урок N4."
+      },
+      "icon": "star",
+      "kind": "n4LessonComplete",
+      "target": 1,
+      "rewardXp": 50,
+      "rewardFragments": 10
+    },
+    {
+      "id": "n4_halfway",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "N4: половина пути",
+        "en": "N4: половина пути"
+      },
+      "description": {
+        "ru": "Пройти 8 уроков N4.",
+        "en": "Пройти 8 уроков N4."
+      },
+      "icon": "star",
+      "kind": "n4LessonsComplete",
+      "target": 8,
+      "rewardXp": 140,
+      "rewardFragments": 26
+    },
+    {
+      "id": "n4_complete",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "N4 завершён",
+        "en": "N4 завершён"
+      },
+      "description": {
+        "ru": "Пройти 17 уроков N4.",
+        "en": "Пройти 17 уроков N4."
+      },
+      "icon": "star",
+      "kind": "n4LessonsComplete",
+      "target": 17,
+      "rewardXp": 280,
+      "rewardFragments": 55
+    },
+    {
+      "id": "n4_all_srs",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "170 кандзи N4",
+        "en": "170 кандзи N4"
+      },
+      "description": {
+        "ru": "Добавить все 170 кандзи N4 в SRS.",
+        "en": "Добавить все 170 кандзи N4 в SRS."
+      },
+      "icon": "star",
+      "kind": "n4SrsAll",
+      "target": 170,
+      "rewardXp": 240,
+      "rewardFragments": 45
+    },
+    {
+      "id": "n4_grammar_alive",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "Грамматика ожила",
+        "en": "Грамматика ожила"
+      },
+      "description": {
+        "ru": "Пройти 10 грамматических конструкций N4.",
+        "en": "Пройти 10 грамматических конструкций N4."
+      },
+      "icon": "star",
+      "kind": "n4GrammarComplete",
+      "target": 10,
+      "rewardXp": 120,
+      "rewardFragments": 22
+    },
+    {
+      "id": "n4_grammar_all",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "48 конструкций N4",
+        "en": "48 конструкций N4"
+      },
+      "description": {
+        "ru": "Пройти все 48 конструкций N4.",
+        "en": "Пройти все 48 конструкций N4."
+      },
+      "icon": "star",
+      "kind": "n4GrammarComplete",
+      "target": 48,
+      "rewardXp": 240,
+      "rewardFragments": 42
+    },
+    {
+      "id": "n4_reader",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "Читатель N4",
+        "en": "Читатель N4"
+      },
+      "description": {
+        "ru": "Пройти 5 reading-текстов N4.",
+        "en": "Пройти 5 reading-текстов N4."
+      },
+      "icon": "star",
+      "kind": "n4ReadingComplete",
+      "target": 5,
+      "rewardXp": 140,
+      "rewardFragments": 25
+    },
+    {
+      "id": "n4_voice",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "Голос N4",
+        "en": "Голос N4"
+      },
+      "description": {
+        "ru": "Пройти 5 listening-скриптов N4.",
+        "en": "Пройти 5 listening-скриптов N4."
+      },
+      "icon": "star",
+      "kind": "n4ListeningComplete",
+      "target": 5,
+      "rewardXp": 140,
+      "rewardFragments": 25
+    },
+    {
+      "id": "n4_moon_writing",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "Письмо под луной II",
+        "en": "Письмо под луной II"
+      },
+      "description": {
+        "ru": "Выполнить 25 письменных практик N4.",
+        "en": "Выполнить 25 письменных практик N4."
+      },
+      "icon": "star",
+      "kind": "n4Writing",
+      "target": 25,
+      "rewardXp": 160,
+      "rewardFragments": 30
+    },
+    {
+      "id": "n4_final_pass",
+      "category": "jlpt_n4",
+      "title": {
+        "ru": "N4 без страха",
+        "en": "N4 без страха"
+      },
+      "description": {
+        "ru": "Пройти финальный тест N4.",
+        "en": "Пройти финальный тест N4."
+      },
+      "icon": "star",
+      "kind": "n4FinalPass",
+      "target": 1,
+      "rewardXp": 220,
+      "rewardFragments": 45
+    },
+    {
+      "id": "n3_opened",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "N3: мост открыт",
+        "en": "N3: Bridge opened"
+      },
+      "description": {
+        "ru": "Открыть интерактивный модуль N3.",
+        "en": "Open the interactive N3 module."
+      },
+      "icon": "star",
+      "kind": "n3Opened",
+      "target": 1,
+      "rewardXp": 30,
+      "rewardFragments": 6
+    },
+    {
+      "id": "n3_first_lesson",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "N3: первый урок",
+        "en": "N3: First lesson"
+      },
+      "description": {
+        "ru": "Пройти первый урок N3.",
+        "en": "Complete the first N3 lesson."
+      },
+      "icon": "star",
+      "kind": "n3LessonComplete",
+      "target": 1,
+      "rewardXp": 60,
+      "rewardFragments": 12
+    },
+    {
+      "id": "n3_10_lessons",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "N3: первая десятка",
+        "en": "N3: First ten"
+      },
+      "description": {
+        "ru": "Пройти 10 уроков N3.",
+        "en": "Complete 10 N3 lessons."
+      },
+      "icon": "star",
+      "kind": "n3LessonsComplete",
+      "target": 10,
+      "rewardXp": 180,
+      "rewardFragments": 34
+    },
+    {
+      "id": "n3_18_lessons",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "N3: середина курса",
+        "en": "N3: Mid-course"
+      },
+      "description": {
+        "ru": "Пройти 18 уроков N3.",
+        "en": "Complete 18 N3 lessons."
+      },
+      "icon": "star",
+      "kind": "n3LessonsComplete",
+      "target": 18,
+      "rewardXp": 260,
+      "rewardFragments": 46
+    },
+    {
+      "id": "n3_complete",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "N3 завершён",
+        "en": "N3 complete"
+      },
+      "description": {
+        "ru": "Пройти все 37 уроков N3.",
+        "en": "Complete all 37 N3 lessons."
+      },
+      "icon": "star",
+      "kind": "n3LessonsComplete",
+      "target": 37,
+      "rewardXp": 360,
+      "rewardFragments": 70
+    },
+    {
+      "id": "n3_all_srs",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "370 кандзи N3",
+        "en": "370 N3 kanji"
+      },
+      "description": {
+        "ru": "Добавить все 370 кандзи N3 в SRS.",
+        "en": "Add all 370 N3 kanji to SRS."
+      },
+      "icon": "star",
+      "kind": "n3SrsAll",
+      "target": 370,
+      "rewardXp": 320,
+      "rewardFragments": 60
+    },
+    {
+      "id": "n3_grammar_20",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "20 конструкций N3",
+        "en": "20 N3 grammar points"
+      },
+      "description": {
+        "ru": "Освоить 20 конструкций N3.",
+        "en": "Complete 20 N3 grammar points."
+      },
+      "icon": "star",
+      "kind": "n3GrammarComplete",
+      "target": 20,
+      "rewardXp": 170,
+      "rewardFragments": 30
+    },
+    {
+      "id": "n3_grammar_all",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "80 конструкций N3",
+        "en": "80 N3 grammar points"
+      },
+      "description": {
+        "ru": "Освоить все 80 конструкций N3.",
+        "en": "Complete all 80 N3 grammar points."
+      },
+      "icon": "star",
+      "kind": "n3GrammarComplete",
+      "target": 80,
+      "rewardXp": 320,
+      "rewardFragments": 58
+    },
+    {
+      "id": "n3_reader",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "Читатель N3",
+        "en": "N3 reader"
+      },
+      "description": {
+        "ru": "Пройти 10 reading-текстов N3.",
+        "en": "Complete 10 N3 reading texts."
+      },
+      "icon": "star",
+      "kind": "n3ReadingComplete",
+      "target": 10,
+      "rewardXp": 190,
+      "rewardFragments": 34
+    },
+    {
+      "id": "n3_voice",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "Голос N3",
+        "en": "N3 voice"
+      },
+      "description": {
+        "ru": "Пройти 10 listening-скриптов N3.",
+        "en": "Complete 10 N3 listening scripts."
+      },
+      "icon": "star",
+      "kind": "n3ListeningComplete",
+      "target": 10,
+      "rewardXp": 190,
+      "rewardFragments": 34
+    },
+    {
+      "id": "n3_writing_50",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "Письмо под луной III",
+        "en": "Moonlit writing III"
+      },
+      "description": {
+        "ru": "Выполнить 50 письменных практик N3.",
+        "en": "Complete 50 N3 writing practices."
+      },
+      "icon": "star",
+      "kind": "n3Writing",
+      "target": 50,
+      "rewardXp": 210,
+      "rewardFragments": 38
+    },
+    {
+      "id": "n3_paragraph_meaning_20",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "Смысл абзаца",
+        "en": "Paragraph meaning"
+      },
+      "description": {
+        "ru": "Дать 20 правильных ответов по смыслу абзацев и чтений N3.",
+        "en": "Give 20 correct paragraph-meaning answers in N3 readings."
+      },
+      "icon": "star",
+      "kind": "n3ComprehensionAnswers",
+      "target": 20,
+      "rewardXp": 170,
+      "rewardFragments": 30
+    },
+    {
+      "id": "n3_final_pass",
+      "category": "jlpt_n3",
+      "title": {
+        "ru": "N3 без паники",
+        "en": "N3 without panic"
+      },
+      "description": {
+        "ru": "Пройти финальный тест N3.",
+        "en": "Pass the N3 final test."
+      },
+      "icon": "star",
+      "kind": "n3FinalPass",
+      "target": 1,
+      "rewardXp": 260,
+      "rewardFragments": 52
+    },
+    {
+      "id": "n2_opened",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "N2: уровень открыт",
+        "en": "N2: level opened"
+      },
+      "description": {
+        "ru": "Открыть интерактивный модуль N2.",
+        "en": "Open the interactive N2 module."
+      },
+      "icon": "star",
+      "kind": "n2Opened",
+      "target": 1,
+      "rewardXp": 35,
+      "rewardFragments": 7
+    },
+    {
+      "id": "n2_first_lesson",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "N2: первый урок",
+        "en": "N2: first lesson"
+      },
+      "description": {
+        "ru": "Пройти первый урок N2.",
+        "en": "Complete the first N2 lesson."
+      },
+      "icon": "star",
+      "kind": "n2LessonComplete",
+      "target": 1,
+      "rewardXp": 70,
+      "rewardFragments": 14
+    },
+    {
+      "id": "n2_10_lessons",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "N2: первая десятка",
+        "en": "N2: first ten"
+      },
+      "description": {
+        "ru": "Пройти 10 уроков N2.",
+        "en": "Complete 10 N2 lessons."
+      },
+      "icon": "star",
+      "kind": "n2LessonsComplete",
+      "target": 10,
+      "rewardXp": 190,
+      "rewardFragments": 34
+    },
+    {
+      "id": "n2_20_lessons",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "N2: середина курса",
+        "en": "N2: mid-course"
+      },
+      "description": {
+        "ru": "Пройти 20 уроков N2.",
+        "en": "Complete 20 N2 lessons."
+      },
+      "icon": "star",
+      "kind": "n2LessonsComplete",
+      "target": 20,
+      "rewardXp": 280,
+      "rewardFragments": 48
+    },
+    {
+      "id": "n2_complete",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "N2 завершён",
+        "en": "N2 complete"
+      },
+      "description": {
+        "ru": "Пройти все 38 уроков N2.",
+        "en": "Complete all 38 N2 lessons."
+      },
+      "icon": "star",
+      "kind": "n2LessonsComplete",
+      "target": 38,
+      "rewardXp": 420,
+      "rewardFragments": 80
+    },
+    {
+      "id": "n2_all_srs",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "380 кандзи N2",
+        "en": "380 N2 kanji"
+      },
+      "description": {
+        "ru": "Добавить все 380 кандзи N2 в SRS.",
+        "en": "Add all 380 N2 kanji to SRS."
+      },
+      "icon": "star",
+      "kind": "n2SrsAll",
+      "target": 380,
+      "rewardXp": 360,
+      "rewardFragments": 68
+    },
+    {
+      "id": "n2_grammar_40",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "40 конструкций N2",
+        "en": "40 N2 grammar points"
+      },
+      "description": {
+        "ru": "Освоить 40 конструкций N2.",
+        "en": "Complete 40 N2 grammar points."
+      },
+      "icon": "star",
+      "kind": "n2GrammarComplete",
+      "target": 40,
+      "rewardXp": 190,
+      "rewardFragments": 34
+    },
+    {
+      "id": "n2_grammar_all",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "120 конструкций N2",
+        "en": "120 N2 grammar points"
+      },
+      "description": {
+        "ru": "Освоить все 120 конструкций N2.",
+        "en": "Complete all 120 N2 grammar points."
+      },
+      "icon": "star",
+      "kind": "n2GrammarComplete",
+      "target": 120,
+      "rewardXp": 360,
+      "rewardFragments": 64
+    },
+    {
+      "id": "n2_reader",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "Читатель N2",
+        "en": "N2 reader"
+      },
+      "description": {
+        "ru": "Пройти все N2 reading-тексты и мини-абзацы.",
+        "en": "Complete all N2 reading texts and mini paragraphs."
+      },
+      "icon": "star",
+      "kind": "n2ReadingComplete",
+      "target": 46,
+      "rewardXp": 230,
+      "rewardFragments": 40
+    },
+    {
+      "id": "n2_voice",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "Голос N2",
+        "en": "N2 voice"
+      },
+      "description": {
+        "ru": "Пройти 6 listening-скриптов N2.",
+        "en": "Complete 6 N2 listening scripts."
+      },
+      "icon": "star",
+      "kind": "n2ListeningComplete",
+      "target": 6,
+      "rewardXp": 180,
+      "rewardFragments": 30
+    },
+    {
+      "id": "n2_writing_60",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "Письмо под луной IV",
+        "en": "Moonlit writing IV"
+      },
+      "description": {
+        "ru": "Выполнить 60 письменных практик N2.",
+        "en": "Complete 60 N2 writing practices."
+      },
+      "icon": "star",
+      "kind": "n2Writing",
+      "target": 60,
+      "rewardXp": 240,
+      "rewardFragments": 42
+    },
+    {
+      "id": "n2_comprehension_30",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "Логика абзаца",
+        "en": "Paragraph logic"
+      },
+      "description": {
+        "ru": "Дать 30 правильных ответов по чтению и логике абзаца N2.",
+        "en": "Give 30 correct answers on N2 readings and paragraph logic."
+      },
+      "icon": "star",
+      "kind": "n2ComprehensionAnswers",
+      "target": 30,
+      "rewardXp": 210,
+      "rewardFragments": 36
+    },
+    {
+      "id": "n2_final_pass",
+      "category": "jlpt_n2",
+      "title": {
+        "ru": "N2 без паники",
+        "en": "N2 without panic"
+      },
+      "description": {
+        "ru": "Пройти финальный тест N2.",
+        "en": "Pass the N2 final test."
+      },
+      "icon": "star",
+      "kind": "n2FinalPass",
+      "target": 1,
+      "rewardXp": 300,
+      "rewardFragments": 56
     }
   ]
 }

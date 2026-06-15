@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "mascots": {
+    "eva": {
+      "role": {
+        "ru": "Наставник",
+        "en": "Mentor"
+      },
+      "name": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "sprites": {
+        "normal": "assets/mascots/eva_normal.png",
+        "happy": "assets/mascots/eva_normal.png",
+        "sad": "assets/mascots/eva_normal.png",
+        "thinking": "assets/mascots/eva_normal.png",
+        "tea": "assets/mascots/eva_normal.png",
+        "speaking": "assets/mascots/eva_normal.png"
+      },
+      "dialogs": {
+        "welcome": {
+          "ru": ["Сегодня хороший прогресс начинается с одной карточки.", "Я рядом. Разберём кандзи спокойно."],
+          "en": ["Good progress starts with one card today.", "I am here. Let's unpack kanji calmly."]
+        },
+        "correct": {
+          "ru": ["Отлично.", "Верно.", "Так держать."],
+          "en": ["Excellent.", "Correct.", "Keep it up."]
+        },
+        "wrong": {
+          "ru": ["Ничего страшного.", "Попробуем ещё раз.", "Почти получилось."],
+          "en": ["No worries.", "Let's try again.", "Almost there."]
+        },
+        "progress": {
+          "ru": ["Очередь повторений стала меньше.", "Сегодняшний план движется хорошо.", "Каждый ответ укрепляет память."],
+          "en": ["The review queue is getting smaller.", "Today's plan is moving well.", "Every answer strengthens memory."]
+        },
+        "streakLoss": {
+          "ru": ["Серия сброшена, но путь не потерян.", "Возвращаем ритм с одной карточки."],
+          "en": ["The streak reset, but the path is not lost.", "We rebuild the rhythm with one card."]
+        },
+        "lessonComplete": {
+          "ru": ["Урок завершён. Хорошая работа.", "Материал закреплён. Идём дальше?"],
+          "en": ["Lesson complete. Good work.", "The material is locked in. Shall we continue?"]
+        },
+        "masteryMilestone": {
+          "ru": ["Освоение растёт. Это уже настоящая база.", "Новый рубеж мастерства открыт."],
+          "en": ["Mastery is growing. This is becoming a real foundation.", "A new mastery milestone is open."]
+        },
+        "achievement": {
+          "ru": ["Достижение открыто.", "Это важный шаг."],
+          "en": ["Achievement unlocked.", "That is an important step."]
+        }
+      }
+    },
+    "leya": {
+      "role": {
+        "ru": "Ассистент мотивации",
+        "en": "Motivation assistant"
+      },
+      "name": {
+        "ru": "Лея",
+        "en": "Leia"
+      },
+      "sprites": {
+        "calm": "assets/mascots/leya_calm.png",
+        "happy": "assets/mascots/leya_calm.png",
+        "focus": "assets/mascots/leya_calm.png",
+        "proud": "assets/mascots/leya_calm.png"
+      },
+      "dialogs": {
+        "welcome": {
+          "ru": ["С возвращением.", "Ещё один урок?", "Осталось совсем немного."],
+          "en": ["Welcome back.", "One more lesson?", "Just a little left."]
+        },
+        "streak": {
+          "ru": ["Серия держится.", "Ты становишься сильнее.", "Не сдавайся."],
+          "en": ["The streak is alive.", "You are getting stronger.", "Do not give up."]
+        },
+        "goal": {
+          "ru": ["Ежедневная цель закрыта.", "Хороший темп."],
+          "en": ["Daily goal complete.", "Good pace."]
+        },
+        "combo": {
+          "ru": ["Серия правильных ответов.", "Ещё немного, и будет бонус."],
+          "en": ["Correct answer streak.", "A little more and there is a bonus."]
+        },
+        "hint": {
+          "ru": ["Подсказка не сдаёт ответ, она открывает тропинку.", "Посмотри на радикал и форму кандзи.", "Свяжи знак с местом, где ты видел его в интерфейсе."],
+          "en": ["A hint does not give the answer; it opens a path.", "Look at the radical and the kanji shape.", "Connect the sign to where you saw it in an interface."]
+        }
+      }
+    }
+  }
+}

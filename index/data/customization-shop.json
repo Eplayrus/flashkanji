@@ -509,112 +509,138 @@
       "type": "decoration",
       "title_ru": "Лунная рамка",
       "title_en": "Moon Frame",
-      "description_ru": "Тонкая рамка с лунным отблеском.",
-      "description_en": "A fine frame with lunar light.",
-      "price": 35,
+      "description_ru": "Тонкая рамка с лунным отблеском. Появляется в комнате, если ты её выбрал.",
+      "description_en": "A fine frame with lunar light. Appears in the room only when selected.",
+      "price": 0,
       "rarity": "common",
       "asset": "assets/shop/decor/deco_moon_frame.png",
       "preview": "assets/shop/previews/deco_moon_frame.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "first_kanji"
+      }
     },
     {
       "id": "deco_golden_accent",
       "type": "decoration",
       "title_ru": "Золотой акцент",
       "title_en": "Golden Accent",
-      "description_ru": "Небольшой тёплый акцент для комнаты.",
-      "description_en": "A small warm accent for the room.",
-      "price": 45,
+      "description_ru": "Тёплый акцент для комнаты. Открывается за первый Moon Fragment.",
+      "description_en": "A warm room accent. Unlocks with your first Moon Fragment.",
+      "price": 0,
       "rarity": "common",
       "asset": "assets/shop/decor/deco_golden_accent.png",
       "preview": "assets/shop/previews/deco_golden_accent.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "first_fragment"
+      }
     },
     {
       "id": "deco_bookshelf",
       "type": "decoration",
       "title_ru": "Книжная полка",
       "title_en": "Bookshelf",
-      "description_ru": "Полка для словарей, тетрадей и старых заметок.",
-      "description_en": "A shelf for dictionaries, notebooks, and old notes.",
-      "price": 85,
+      "description_ru": "Полка для словарей и заметок. Нужна ачивка «Хранитель библиотеки».",
+      "description_en": "A shelf for dictionaries and notes. Requires the Library Keeper achievement.",
+      "price": 0,
       "rarity": "rare",
       "asset": "assets/shop/decor/deco_bookshelf.png",
       "preview": "assets/shop/previews/deco_bookshelf.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "library_keeper"
+      }
     },
     {
       "id": "deco_tea_table",
       "type": "decoration",
       "title_ru": "Чайный столик",
       "title_en": "Tea Table",
-      "description_ru": "Маленький столик для пауз между уроками.",
-      "description_en": "A small table for pauses between lessons.",
-      "price": 90,
+      "description_ru": "Столик для пауз между уроками. Открывается, когда Ева рядом.",
+      "description_en": "A table for pauses between lessons. Unlocks when Eva is nearby.",
+      "price": 0,
       "rarity": "rare",
       "asset": "assets/shop/decor/deco_tea_table.png",
       "preview": "assets/shop/previews/deco_tea_table.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievements",
+        "mode": "any",
+        "ids": ["first_day", "eva_watches"]
+      }
     },
     {
       "id": "deco_kanji_board",
       "type": "decoration",
       "title_ru": "Доска кандзи",
       "title_en": "Kanji Board",
-      "description_ru": "Доска с заметками для практики письма.",
-      "description_en": "A board with notes for writing practice.",
-      "price": 115,
+      "description_ru": "Доска для практики письма. Нужна ачивка «Первая строка».",
+      "description_en": "A board for writing practice. Requires the First Line achievement.",
+      "price": 0,
       "rarity": "rare",
       "asset": "assets/shop/decor/deco_kanji_board.png",
       "preview": "assets/shop/previews/deco_kanji_board.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "first_line"
+      }
     },
     {
       "id": "deco_lantern",
       "type": "decoration",
       "title_ru": "Фонарь",
       "title_en": "Lantern",
-      "description_ru": "Мягкий свет для вечерних повторений.",
-      "description_en": "Soft light for evening reviews.",
-      "price": 160,
+      "description_ru": "Мягкий свет для вечерних повторений. Нужна недельная серия.",
+      "description_en": "Soft light for evening reviews. Requires a week-long streak.",
+      "price": 0,
       "rarity": "epic",
       "asset": "assets/shop/decor/deco_lantern.png",
       "preview": "assets/shop/previews/deco_lantern.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "discipline_week"
+      }
     },
     {
       "id": "deco_plant",
       "type": "decoration",
       "title_ru": "Растение",
       "title_en": "Plant",
-      "description_ru": "Немного зелени для живой комнаты.",
-      "description_en": "A little green for a lived-in room.",
-      "price": 150,
+      "description_ru": "Зелень для живой комнаты. Открывается за «Лунного ученика».",
+      "description_en": "Greenery for a lived-in room. Unlocks with Moon Student.",
+      "price": 0,
       "rarity": "epic",
       "asset": "assets/shop/decor/deco_plant.png",
       "preview": "assets/shop/previews/deco_plant.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievement",
+        "id": "moon_student"
+      }
     },
     {
       "id": "deco_scroll",
       "type": "decoration",
       "title_ru": "Свиток",
       "title_en": "Scroll",
-      "description_ru": "Свиток для важных кандзи и тихих правил.",
-      "description_en": "A scroll for important kanji and quiet rules.",
-      "price": 240,
+      "description_ru": "Свиток для важных кандзи. Нужны «Лунный цикл» и «Мудрец кандзи».",
+      "description_en": "A scroll for important kanji. Requires Moon Cycle and Kanji Sage.",
+      "price": 0,
       "rarity": "epic",
       "asset": "assets/shop/decor/deco_scroll.png",
       "preview": "assets/shop/previews/deco_scroll.png",
       "defaultOwned": false,
-      "unlockCondition": null
+      "unlockCondition": {
+        "type": "achievements",
+        "mode": "all",
+        "ids": ["moon_cycle", "kanji_sage"]
+      }
     },
     {
       "id": "theme_default_dark",
