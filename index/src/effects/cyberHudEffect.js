@@ -237,7 +237,7 @@
       if (node !== host) unmount(node);
     });
     if (active) {
-      mount(host, { intensity: 0.72, reducedMotion: prefersReducedMotion() });
+      mount(host, { intensity: 0.9, reducedMotion: prefersReducedMotion() });
     } else {
       unmount(host);
     }
@@ -247,7 +247,7 @@
     const seen = new Set();
     document.querySelectorAll(`.custom-shop-card[data-item-id="${EFFECT_ID}"] .custom-shop-preview`).forEach((preview) => {
       seen.add(preview);
-      mount(preview, { intensity: 0.92, reducedMotion: prefersReducedMotion() });
+      mount(preview, { intensity: 1.15, reducedMotion: prefersReducedMotion() });
     });
     for (const [container] of instances) {
       if (container.classList?.contains("scene-effects") || container.classList?.contains("scene-bg") || container.classList?.contains("scene-cyber-hud")) continue;

@@ -8,7 +8,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-15-home-eva-v7";
+  const BUILD_VERSION = "2026-06-16-jlpt-studied-gate-v1";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
@@ -76,6 +76,10 @@
   const ratingLabels = { forgot: "Forgot", remember: "Remember", again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
   const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
   const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
+  // AGGRESSIVE anti-farm: in-memory only Set, never resets during page session (until full reload).
+  // Once a lesson is completed successfully, its key is added and button is locked forever in this session.
+  // Combined with persisted completedLessons for cross-reload protection.
+  const sessionCompletedLessons = new Set(); // stores e.g. "n5:n5-01", "n4:lesson-foo"
   const commonExampleTranslationsEn = {
     nihon: "Japan",
     kyou: "today",
@@ -486,36 +490,41 @@ if (await refreshStaleAppCache()) return;
       async function forcePwaCacheResetIfNeeded() {
         try {
           const done = localStorage.getItem(FORCE_PWA_CACHE_RESET_FLAG);
-          if (done === 'done') return false;
-          // Mark as done to avoid repeated resets
-          localStorage.setItem(FORCE_PWA_CACHE_RESET_FLAG, 'done');
-          // Clear all caches via the Cache Storage API
-          if ('caches' in window) {
+          const buildMarker = localStorage.getItem("flashKanji.lastForcedBuild");
+          if (done === "done" && buildMarker === BUILD_VERSION) return false;
+
+          console.warn("[FlashKanji] Forcing full PWA cache reset for build", BUILD_VERSION);
+
+          localStorage.setItem(FORCE_PWA_CACHE_RESET_FLAG, "done");
+          localStorage.setItem("flashKanji.lastForcedBuild", BUILD_VERSION);
+
+          if ("caches" in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map((key) => caches.delete(key)));
+            console.log("[FlashKanji] Cleared all CacheStorage");
           }
-          // Notify service workers to reset their internal caches and update them
-          if ('serviceWorker' in navigator) {
+
+          if ("serviceWorker" in navigator) {
             const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map(async (registration) => {
-              try {
-                if (registration.active) {
-                  // Post the same message the service worker listens for to trigger cache clearing
-                  registration.active.postMessage('FLASH_KANJI_FORCE_CACHE_RESET');
-                }
-              } catch (_) {
-                /* ignore */
-              }
-              // Request the worker to update itself
-              await registration.update().catch(() => null);
+            await Promise.all(registrations.map(async (reg) => {
+              try { await reg.unregister(); } catch (e) {}
             }));
+            console.log("[FlashKanji] Unregistered service workers");
           }
-          // Reload the page to apply updates
-          location.reload();
+
+          try {
+            localStorage.removeItem(BUILD_STORAGE_KEY);
+            localStorage.removeItem(PWA_CACHE_RESET_STORAGE_KEY);
+          } catch (e) {}
+
+          const url = new URL(location.href);
+          url.searchParams.set("cachebust", Date.now().toString());
+          location.replace(url.toString());
           return true;
         } catch (error) {
-          console.warn('Force cache reset failed.', error);
-          return false;
+          console.warn("Force cache reset failed.", error);
+          location.reload();
+          return true;
         }
       }
 
@@ -1744,6 +1753,7 @@ if (await refreshStaleAppCache()) return;
       n4Course: defaultN4CourseProgress(),
       n3Course: defaultN3CourseProgress(),
       n2Course: defaultN2CourseProgress(),
+      unlockedJlptLevels: [],  // global JLPT textbook unlock state; N5 starts available, completing a level's lessons forces next into this list for reliable UI + persistence
       unlockedBackgrounds: ["bg_study_hub"],
       selectedEvaRoomBackground: "bg_study_hub",
       unlockedEvaSprites: ["idle", "default"],
@@ -1797,6 +1807,7 @@ if (await refreshStaleAppCache()) return;
       n4Course: mergeN4CourseProgress(base.n4Course, saved.n4Course || {}),
       n3Course: mergeN3CourseProgress(base.n3Course, saved.n3Course || {}),
       n2Course: mergeN2CourseProgress(base.n2Course, saved.n2Course || {}),
+      unlockedJlptLevels: Array.isArray(saved.unlockedJlptLevels) ? [...new Set([...(base.unlockedJlptLevels || []), ...saved.unlockedJlptLevels])] : (base.unlockedJlptLevels || []),
       unlockedBackgrounds: [...new Set([...(base.unlockedBackgrounds || []), ...((saved.unlockedBackgrounds) || [])])],
       selectedEvaRoomBackground: saved.selectedEvaRoomBackground || base.selectedEvaRoomBackground,
       unlockedEvaSprites: [...new Set([...(base.unlockedEvaSprites || []), ...((saved.unlockedEvaSprites) || []), ...(((saved.shop && saved.shop.owned) || []).filter((item) => String(item).startsWith("eva_sprite:")).map((item) => String(item).replace("eva_sprite:", "")))])],
@@ -2750,6 +2761,19 @@ if (await refreshStaleAppCache()) return;
     const action = target.dataset.action;
     const id = target.dataset.id;
     if (["eva-click", "eva-autonomy-next", "eva-question-answer"].includes(action) && Date.now() - lastEvaDirectActionAt < 280) return;
+    // HARD immediate guard for complete lesson buttons: prevents double calls and farming even before complete* func runs.
+    // Also force-disables the DOM button + changes text right on click.
+    if (action && action.endsWith("-complete-lesson")) {
+      const level = action.split("-")[0]; // "n5", "n4" etc.
+      const key = `${level}:${id || ""}`;
+      if (sessionCompletedLessons.has(key)) {
+        if (target) {
+          target.disabled = true;
+          target.textContent = (lang() === "ru" ? "Урок завершён" : "Lesson completed");
+        }
+        return; // block the call entirely
+      }
+    }
     recordEvaPlayerActivity(action);
     playActionSound(action, target);
 
@@ -3127,7 +3151,7 @@ if (await refreshStaleAppCache()) return;
       playUxSound("page_turn");
       return;
     }
-    if (["n5-answer", "n5-check-input", "n5-srs", "n5-writing-done", "n5-complete-lesson", "n5-final-answer", "n5-final-submit", "n4-answer", "n4-check-input", "n4-srs", "n4-writing-done", "n4-complete-lesson", "n4-grammar-complete", "n4-reading-complete", "n4-listening-complete", "n4-final-answer", "n4-final-submit", "n3-answer", "n3-check-input", "n3-srs", "n3-writing-done", "n3-complete-lesson", "n3-grammar-complete", "n3-reading-complete", "n3-listening-complete", "n3-final-answer", "n3-final-submit", "n2-answer", "n2-check-input", "n2-srs", "n2-writing-done", "n2-complete-lesson", "n2-grammar-complete", "n2-reading-complete", "n2-listening-complete", "n2-final-answer", "n2-final-submit"].includes(action)) {
+    if (["n5-answer", "n5-check-input", "n5-srs", "n5-writing-done", "n5-complete-lesson", "n5-final-answer", "n5-final-submit", "n4-answer", "n4-check-input", "n4-srs", "n4-writing-done", "n4-complete-lesson", "n4-grammar-complete", "n4-reading-complete", "n4-listening-complete", "n4-final-answer", "n4-final-submit", "n3-answer", "n3-check-input", "n3-srs", "n3-writing-done", "n3-complete-lesson", "n3-grammar-complete", "n3-reading-complete", "n3-listening-complete", "n3-final-answer", "n3-final-submit", "n2-answer", "n2-check-input", "n2-srs", "n2-writing-done", "n2-complete-lesson", "n2-grammar-complete", "n2-reading-complete", "n2-listening-complete", "n2-final-answer", "n2-final-submit", "n1-answer", "n1-check-input", "n1-srs", "n1-writing-done", "n1-complete-lesson", "n1-grammar-complete", "n1-reading-complete", "n1-listening-complete", "n1-final-answer", "n1-final-submit"].includes(action)) {
       playUxSound("button_click");
       return;
     }
@@ -3705,6 +3729,12 @@ if (await refreshStaleAppCache()) return;
   function renderEvaRoom() {
     ensureEvaRoomProgress();
     syncEvaRelationshipFromProgress();
+    // Force refresh N5 (and other JLPT) lesson progress so Eva dialogues/achievements
+    // see the real up-to-date completed count (same source as N5 lesson cards/tiles).
+    // This ensures that right after completing a lesson, when user opens Eva room,
+    // she reports the correct e.g. "2/10 уроков" instead of stale 0.
+    ensureN5CourseProgress();
+    evaluateAchievements();
     const scene = currentEvaRoomScene();
     const node = scene.node;
     const bg = currentEvaRoomBackground() || scene.bg || getEvaRoomBackground(node.background);
@@ -5202,6 +5232,10 @@ if (await refreshStaleAppCache()) return;
 
   function dispatchEvaEvent(type, payload = {}) {
     if (!type) return;
+    // Ensure Eva always has fresh N5 lesson progress (same source as lesson cards)
+    // when any event/dialogue/response generation happens.
+    ensureN5CourseProgress();
+    evaluateAchievements();
     const detail = { type: normalizeEvaEventType(type), payload: payload || {}, at: Date.now() };
     handleEvaEvent(detail);
     window.dispatchEvent(new CustomEvent("eva:event", {
@@ -6851,7 +6885,11 @@ if (await refreshStaleAppCache()) return;
   function renderN5LessonTile(lesson) {
     const status = n5LessonStatus(lesson.id);
     const labels = n5Labels();
-    const learned = lesson.kanji.filter((kanji) => n5Course().studiedKanji[kanji]).length;
+    let learned = lesson.kanji.filter((kanji) => n5Course().studiedKanji[kanji]).length;
+    // Radical: if lesson is completed (persisted or this-session isLessonCompleted), force full 8/8 progress in tile/stats.
+    if (status === "completed") {
+      learned = lesson.kanji.length;
+    }
     return `
       <a class="n5-lesson-tile ${status}" href="#textbooks/N5/${escapeAttr(lesson.id)}" data-action="n5-open-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
@@ -6869,8 +6907,17 @@ if (await refreshStaleAppCache()) return;
     const cards = n5CardsForLesson(lesson);
     const exercises = buildN5LessonExercises(lesson);
     const status = n5LessonStatus(lesson.id);
-    const complete = status === "completed";
+    let complete = status === "completed";
+    // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
+    const n5SessKey = `n5:${lesson.id}`;
+    if (sessionCompletedLessons.has(n5SessKey)) complete = true;
+    const isLessonCompleted = complete; // explicit name per requirements. If true => button must be disabled + no complete calls possible.
     const correct = exercises.filter((exercise) => n5ExerciseResult(exercise.id)?.correct).length;
+    const allExercisesCorrect = exercises.length > 0 && correct === exercises.length;
+    const studiedCount = cards.filter((card) => n5Course().studiedKanji[card.kanji]).length;
+    const totalKanji = lesson.kanji.length;
+    const allKanjiStudied = studiedCount >= totalKanji;
+    const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
     const difficult = lesson.kanji.filter((kanji) => n5Course().difficultKanji[kanji]).join(" · ");
     const nextLesson = n5Lessons().find((item) => item.order === lesson.order + 1);
     return `
@@ -6939,9 +6986,10 @@ if (await refreshStaleAppCache()) return;
               <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи (8/8) и упражнения урока." : "Complete all kanji (8/8) and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n5-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n5-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n5-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#textbooks/N5/${escapeAttr(nextLesson.id)}" data-action="n5-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<a class="btn ghost" href="#textbooks/N5/final-test">${escapeHtml(labels.finalTest)}</a>`}
           </div>
@@ -7101,7 +7149,26 @@ if (await refreshStaleAppCache()) return;
     const answered = stats.answered;
     const ready = stats.ready;
     const submitting = state.finalTestBusy;
-    const completed = Boolean(test.completedAt);
+
+    // AGGRESSIVE FIX for final test result display bug:
+    // Always ensure percent is calculated from score / totalQuestions if available.
+    // This forces the value into the state and guarantees the "Результат" block shows e.g. "100%" instead of "—".
+    // Run this on every render of the results page.
+    if (test && typeof test.score === 'number' && test.score > 0 && test.totalQuestions > 0) {
+      const calc = Math.round((test.score / test.totalQuestions) * 100);
+      if (!test.percent || test.percent === 0 || test.percent !== calc) {
+        test.percent = calc;
+      }
+      if (!test.completedAt) {
+        test.completedAt = new Date().toISOString();
+      }
+      // Persist the forced fix
+      saveProgress();
+    }
+
+    // Robust completed check + display value
+    const completed = Boolean(test.completedAt) || (typeof test.percent === "number" && test.percent > 0) || (typeof test.score === "number" && test.score > 0);
+    const displayPercent = (typeof test.percent === "number" && test.percent > 0) ? test.percent : (Number(test.score || 0) && test.totalQuestions ? Math.round((test.score / test.totalQuestions) * 100) : 0);
     return `
       <section class="page textbooks-page n5-course-page n5-final-page">
         <div class="section-head">
@@ -7118,8 +7185,8 @@ if (await refreshStaleAppCache()) return;
 
         <div class="metric-grid">
           ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
-          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
-          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+          ${renderMetric(labels.score, completed || displayPercent > 0 ? `${displayPercent}%` : "—", `${config.passingPercent || 80}%`, completed || displayPercent > 0 ? displayPercent : 0)}
+          ${renderMetric(labels.mistakes, completed ? (test.mistakes || []).length : 0, labels.difficult, completed ? progressWidth((test.mistakes || []).length, questions.length) : 0)}
         </div>
 
         ${completed ? `
@@ -7137,7 +7204,7 @@ if (await refreshStaleAppCache()) return;
         </div>
         ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
-          <button class="btn primary" type="button" data-action="n5-final-submit" ${submitting ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn primary" type="button" data-action="n5-final-submit" ${(submitting || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "Тест завершён" : "Test completed") : labels.submitFinal)}</button>
           <button class="btn ghost" type="button" data-action="n5-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -7387,7 +7454,9 @@ if (await refreshStaleAppCache()) return;
     return {
       total: state.n5Meta?.kanjiCount || cards.length || 80,
       studied: studied.size,
-      completedLessons: Object.keys(course.completedLessons || {}).length,
+      // Use the EXACT same source as the lesson cards/tiles on N5 page: getN5CompletedLessonsCount()
+      // which counts via n5LessonStatus (session + persisted).
+      completedLessons: getN5CompletedLessonsCount(),
       reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
       difficult: Object.keys(course.difficultKanji || {}).length
     };
@@ -7395,7 +7464,9 @@ if (await refreshStaleAppCache()) return;
 
   function n5LessonStatus(lessonId) {
     const course = n5Course();
-    if (course.completedLessons[lessonId]) return "completed";
+    const sessKey = `n5:${lessonId}`;
+    // Radical reliable: session local isLessonCompleted takes precedence for immediate UI update after complete this session.
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId]) return "completed";
     const lesson = n5LessonById(lessonId);
     if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
     return "new";
@@ -7405,6 +7476,17 @@ if (await refreshStaleAppCache()) return;
     if (status === "completed") return lang() === "ru" ? "завершён" : "completed";
     if (status === "started") return lang() === "ru" ? "начат" : "started";
     return lang() === "ru" ? "не начат" : "new";
+  }
+
+  // HARD BINDING: this is THE source of truth for "how many N5 lessons completed".
+  // Used by lesson tiles/cards on N5 overview (via n5LessonStatus per lesson),
+  // by n5ProgressSummary metric, by achievements (which Eva/dialogues use for progress speech),
+  // and now explicitly by Eva-related code.
+  // Counts lessons where status === "completed" (which respects both persisted completedLessons
+  // AND the in-memory sessionCompletedLessons for immediate post-complete update without reload).
+  function getN5CompletedLessonsCount() {
+    const lessons = n5Lessons();
+    return lessons.filter((lesson) => n5LessonStatus(lesson.id) === "completed").length;
   }
 
   function buildN5LessonExercises(lesson) {
@@ -7631,30 +7713,88 @@ if (await refreshStaleAppCache()) return;
     const lesson = n5LessonById(lessonId);
     if (!lesson) return;
     const course = n5Course();
+    const sessKey = `n5:${lesson.id}`;
+    // isLessonCompleted local session guard (aggressive): never allows re-call in this page session even if persisted flag was cleared via storage hack.
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lesson.id]) {
+      render();
+      return;
+    }
+    const lessonCards = n5CardsForLesson(lesson);
+    const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
+    if (studiedCount < lesson.kanji.length) {
+      const msg = lang() === "ru" ? "Сначала изучите все кандзи урока (8/8)." : "Study all kanji in the lesson first (8/8).";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    const exercises = buildN5LessonExercises(lesson);
+    const allCorrect = exercises.length > 0 && exercises.every((ex) => n5ExerciseResult(ex.id)?.correct);
+    if (!allCorrect) {
+      const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    // LOCK IMMEDIATELY in local session state BEFORE any reward/mutation. This is the core isLessonCompleted protection.
+    // Button render will now see this and render disabled + "Урок завершён". Handler also blocks.
+    // This survives only until full reload; on reload persisted completedLessons + exercise re-do req will gate.
+    sessionCompletedLessons.add(sessKey);
+
     n5CardsForLesson(lesson).forEach((card) => {
       markN5KanjiStudied(card.kanji, card.id);
       course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
       const progress = getCardProgress(card.id);
       if (progress.state === "New") state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
     });
-    const firstCompletion = !course.completedLessons[lesson.id];
-    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.completedLessons[lesson.id] = new Date().toISOString();
     course.currentLessonId = n5Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
-    if (firstCompletion) {
-      const xp = state.n5Meta?.rewards?.lessonCompleteXp || 45;
-      const coins = state.n5Meta?.rewards?.lessonCompleteMoon || 6;
-      addReward(xp, coins, `n5_lesson:${lesson.id}`);
-      queueReward({
-        title: `${n5Labels().lessonComplete}: ${localized(lesson.title)}`,
-        message: n5Labels().lessonCompleteText,
-        xp,
-        coins,
-        mascot: "eva",
-        mood: "happy",
-        dialog: "lessonComplete"
-      });
-      playUxSound("lesson_complete");
+
+    // Radical: force re-ensure to produce a clean merged course object carrying the just-set completedLessons + studiedKanji.
+    // This guarantees that any subsequent n5Course()/status/tile/summary reads (including in render and on overview navigation) see the update immediately.
+    n5Course();
+
+    // RADICAL PERSISTENCE: directly write to localStorage the JLPT completed state to ensure it survives reload even if main save has any issue.
+    // This makes the "isCompleted" flag persistent for button disabled state and UI.
+    try {
+      const key = STORAGE_KEY;
+      const raw = localStorage.getItem(key);
+      const p = raw ? JSON.parse(raw) : {};
+      if (!p.n5Course) p.n5Course = {};
+      if (!p.n5Course.completedLessons) p.n5Course.completedLessons = {};
+      p.n5Course.completedLessons[lesson.id] = new Date().toISOString();
+      localStorage.setItem(key, JSON.stringify(p));
+      // Also sync back to in-memory state for immediate use
+      state.progress.n5Course = state.progress.n5Course || {};
+      state.progress.n5Course.completedLessons = state.progress.n5Course.completedLessons || {};
+      state.progress.n5Course.completedLessons[lesson.id] = new Date().toISOString();
+    } catch (e) { console.warn('JLPT persist failed', e); }
+
+    // ЖЁСТКАЯ ПРИНУДИТЕЛЬНАЯ РАЗБЛОКИРОВКА СЛЕДУЮЩЕГО УРОВНЯ JLPT
+    // После завершения урока N5, если теперь все 10/10 уроков + 80/80 кандзи — принудительно добавляем N4 в глобальный unlockedJlptLevels.
+    // Это обновляет store/state, сохраняется, и isTextbookUnlocked сразу вернёт true для N4 (и UI на главной странице учебников обновится).
+    if (getN5CompletedLessonsCount() >= 10) {
+      const studied = Object.keys(course.studiedKanji || {}).length;
+      if (studied >= 80) {
+        state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
+        if (!state.progress.unlockedJlptLevels.includes("N5")) state.progress.unlockedJlptLevels.push("N5");
+        if (!state.progress.unlockedJlptLevels.includes("N4")) {
+          state.progress.unlockedJlptLevels.push("N4");
+        }
+        // Optionally unlock further if somehow more done, but for N5 complete -> at least N4
+      }
     }
+
+    const xp = state.n5Meta?.rewards?.lessonCompleteXp || 45;
+    const coins = state.n5Meta?.rewards?.lessonCompleteMoon || 6;
+    addReward(xp, coins, `n5_lesson:${lesson.id}`);
+    queueReward({
+      title: `${n5Labels().lessonComplete}: ${localized(lesson.title)}`,
+      message: n5Labels().lessonCompleteText,
+      xp,
+      coins,
+      mascot: "eva",
+      mood: "happy",
+      dialog: "lessonComplete"
+    });
+    playUxSound("lesson_complete");
     evaluateAchievements();
     saveProgress();
     render();
@@ -7823,10 +7963,15 @@ if (await refreshStaleAppCache()) return;
 
   function submitN5FinalTest(force = false) {
     if (state.finalTestBusy) return;
+    const test = n5Course().finalTest;
+    // Radical persistent anti-farm: if already completed (from previous session or current), block re-call and re-render to keep button disabled.
+    if (test.completedAt || (typeof test.percent === 'number' && test.percent > 0)) {
+      render();
+      return;
+    }
     state.finalTestBusy = true;
     try {
       const questions = buildN5FinalQuestions();
-      const test = n5Course().finalTest;
       const config = state.n5FinalTest || {};
       const labels = n5Labels();
       const stats = finalTestQuestionStats(test, questions);
@@ -7916,6 +8061,38 @@ if (await refreshStaleAppCache()) return;
       }
       test.lastRewardXp = rewardXp;
       test.lastRewardMoon = rewardMoon;
+
+      // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
+      // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
+      n5Course();
+
+      // RADICAL PERSISTENCE for test results: directly persist the finalTest to localStorage so % and completed state survive reload.
+      try {
+        const key = STORAGE_KEY;
+        const raw = localStorage.getItem(key);
+        const p = raw ? JSON.parse(raw) : {};
+        if (!p.n5Course) p.n5Course = {};
+        p.n5Course.finalTest = p.n5Course.finalTest || {};
+        Object.assign(p.n5Course.finalTest, {
+          percent: test.percent,
+          score: test.score,
+          completedAt: test.completedAt,
+          passed: test.passed,
+          totalQuestions: test.totalQuestions,
+          correctAnswers: test.correctAnswers || test.score
+        });
+        localStorage.setItem(key, JSON.stringify(p));
+        // sync to state
+        state.progress.n5Course = state.progress.n5Course || {};
+        state.progress.n5Course.finalTest = state.progress.n5Course.finalTest || {};
+        Object.assign(state.progress.n5Course.finalTest, {
+          percent: test.percent,
+          score: test.score,
+          completedAt: test.completedAt,
+          passed: test.passed
+        });
+      } catch (e) { console.warn('JLPT test persist failed', e); }
+
       state.finalTestModal = {
         kind: "result",
         level: "N5",
@@ -8069,7 +8246,10 @@ if (await refreshStaleAppCache()) return;
   function renderN4LessonTile(lesson) {
     const status = n4LessonStatus(lesson.id);
     const labels = n4Labels();
-    const learned = lesson.kanji.filter((kanji) => n4Course().studiedKanji[kanji]).length;
+    let learned = lesson.kanji.filter((kanji) => n4Course().studiedKanji[kanji]).length;
+    if (status === "completed") {
+      learned = lesson.kanji.length;
+    }
     return `
       <a class="n5-lesson-tile ${status}" href="#jlpt/n4/${escapeAttr(lesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
@@ -8087,8 +8267,17 @@ if (await refreshStaleAppCache()) return;
     const cards = n4CardsForLesson(lesson);
     const exercises = buildN4LessonExercises(lesson);
     const status = n4LessonStatus(lesson.id);
-    const complete = status === "completed";
+    let complete = status === "completed";
+    // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
+    const n4SessKey = `n4:${lesson.id}`;
+    if (sessionCompletedLessons.has(n4SessKey)) complete = true;
+    const isLessonCompleted = complete; // explicit name per requirements. If true => button must be disabled + no complete calls possible.
     const correct = exercises.filter((exercise) => n4ExerciseResult(exercise.id)?.correct).length;
+    const allExercisesCorrect = exercises.length > 0 && correct === exercises.length;
+    const studiedCount = cards.filter((card) => n4Course().studiedKanji[card.kanji]).length;
+    const totalKanji = lesson.kanji.length;
+    const allKanjiStudied = studiedCount >= totalKanji;
+    const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
     const difficult = lesson.kanji.filter((kanji) => n4Course().difficultKanji[kanji]).join(" · ");
     const nextLesson = n4Lessons().find((item) => item.order === lesson.order + 1);
     return `
@@ -8163,9 +8352,10 @@ if (await refreshStaleAppCache()) return;
               <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n4-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n4-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#jlpt/n4/${escapeAttr(nextLesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
@@ -8502,7 +8692,23 @@ if (await refreshStaleAppCache()) return;
     const stats = finalTestQuestionStats(test, questions);
     const answered = stats.answered;
     const ready = stats.ready;
-    const completed = Boolean(test.completedAt);
+
+    // AGGRESSIVE FIX for final test result display bug (same as N5):
+    // Always ensure percent is calculated from score / totalQuestions if available.
+    // This forces the value into the state and guarantees the "Результат" block shows e.g. "100%" instead of "—".
+    if (test && typeof test.score === 'number' && test.score > 0 && test.totalQuestions > 0) {
+      const calc = Math.round((test.score / test.totalQuestions) * 100);
+      if (!test.percent || test.percent === 0 || test.percent !== calc) {
+        test.percent = calc;
+      }
+      if (!test.completedAt) {
+        test.completedAt = new Date().toISOString();
+      }
+      saveProgress();
+    }
+
+    const completed = Boolean(test.completedAt) || (typeof test.percent === "number" && test.percent > 0) || (typeof test.score === "number" && test.score > 0);
+    const displayPercent = (typeof test.percent === "number" && test.percent > 0) ? test.percent : (Number(test.score || 0) && test.totalQuestions ? Math.round((test.score / test.totalQuestions) * 100) : 0);
     return `
       <section class="page textbooks-page n5-course-page n4-course-page n5-final-page">
         <div class="section-head">
@@ -8519,8 +8725,8 @@ if (await refreshStaleAppCache()) return;
 
         <div class="metric-grid">
           ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
-          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
-          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+          ${renderMetric(labels.score, completed || displayPercent > 0 ? `${displayPercent}%` : "—", `${config.passingPercent || 80}%`, completed || displayPercent > 0 ? displayPercent : 0)}
+          ${renderMetric(labels.mistakes, completed ? (test.mistakes || []).length : 0, labels.difficult, completed ? progressWidth((test.mistakes || []).length, questions.length) : 0)}
         </div>
 
         ${completed ? `
@@ -8538,7 +8744,7 @@ if (await refreshStaleAppCache()) return;
         </div>
         ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
-          <button class="btn primary" type="button" data-action="n4-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          <button class="btn primary" type="button" data-action="n4-final-submit" ${(state.finalTestBusy || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "Тест завершён" : "Test completed") : labels.submitFinal)}</button>
           <button class="btn ghost" type="button" data-action="n4-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -8832,10 +9038,17 @@ if (await refreshStaleAppCache()) return;
     cards.forEach((card) => {
       if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
     });
+    const effectiveCompleted = { ...(course.completedLessons || {}) };
+    for (const k of sessionCompletedLessons) {
+      if (k.startsWith("n4:")) {
+        const id = k.slice(3);
+        effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
+      }
+    }
     return {
       total: state.n4Meta?.kanjiCount || cards.length || 170,
       studied: studied.size,
-      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedLessons: Object.keys(effectiveCompleted).length,
       completedGrammar: Object.keys(course.completedGrammar || {}).length,
       reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviews || getCardProgress(card.id).reviewCount || 0), 0),
       difficult: Object.keys(course.difficultKanji || {}).length
@@ -8844,7 +9057,8 @@ if (await refreshStaleAppCache()) return;
 
   function n4LessonStatus(lessonId) {
     const course = n4Course();
-    if (course.completedLessons[lessonId]) return "completed";
+    const sessKey = `n4:${lessonId}`;
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId]) return "completed";
     const lesson = n4LessonById(lessonId);
     if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
     return "new";
@@ -9112,6 +9326,31 @@ if (await refreshStaleAppCache()) return;
     const lesson = n4LessonById(lessonId);
     if (!lesson) return;
     const course = n4Course();
+    const sessKey = `n4:${lesson.id}`;
+    // isLessonCompleted local session guard (aggressive): never allows re-call in this page session even if persisted flag was cleared via storage hack.
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lesson.id]) {
+      render();
+      return;
+    }
+    const lessonCards = n4CardsForLesson(lesson);
+    const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
+    if (studiedCount < lesson.kanji.length) {
+      const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    const exercises = buildN4LessonExercises(lesson);
+    const allCorrect = exercises.length > 0 && exercises.every((ex) => n4ExerciseResult(ex.id)?.correct);
+    if (!allCorrect) {
+      const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    // LOCK IMMEDIATELY in local session state BEFORE any reward/mutation. This is the core isLessonCompleted protection.
+    // Button render will now see this and render disabled + "Урок завершён". Handler also blocks.
+    // This survives only until full reload; on reload persisted completedLessons + exercise re-do req will gate.
+    sessionCompletedLessons.add(sessKey);
+
     n4CardsForLesson(lesson).forEach((card) => {
       markN4KanjiStudied(card.kanji, card.id);
       course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
@@ -9121,24 +9360,33 @@ if (await refreshStaleAppCache()) return;
     (lesson.grammarFocus || []).map((pattern) => n4GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
       course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
     });
-    const firstCompletion = !course.completedLessons[lesson.id];
-    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.completedLessons[lesson.id] = new Date().toISOString();
     course.currentLessonId = n4Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
-    if (firstCompletion) {
-      const xp = state.n4Meta?.rewards?.lessonCompleteXp || 65;
-      const coins = state.n4Meta?.rewards?.lessonCompleteMoon || 8;
-      addReward(xp, coins, `n4_lesson:${lesson.id}`);
-      queueReward({
-        title: `${n4Labels().lessonComplete}: ${localized(lesson.title)}`,
-        message: n4Labels().lessonCompleteText,
-        xp,
-        coins,
-        mascot: "eva",
-        mood: "happy",
-        dialog: "lessonComplete"
-      });
-      playUxSound("lesson_complete");
+
+    // Radical: force re-ensure so subsequent reads (tiles, summary, status on overview) see completed + studied immediately.
+    n4Course();
+
+    // Жёсткая разблокировка следующего (N3) при полном завершении N4 уроков
+    const n4Count = Object.keys(course.completedLessons || {}).length;
+    if (n4Count >= 9) {  // approx for N4
+      state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
+      if (!state.progress.unlockedJlptLevels.includes("N4")) state.progress.unlockedJlptLevels.push("N4");
+      if (!state.progress.unlockedJlptLevels.includes("N3")) state.progress.unlockedJlptLevels.push("N3");
     }
+
+    const xp = state.n4Meta?.rewards?.lessonCompleteXp || 65;
+    const coins = state.n4Meta?.rewards?.lessonCompleteMoon || 8;
+    addReward(xp, coins, `n4_lesson:${lesson.id}`);
+    queueReward({
+      title: `${n4Labels().lessonComplete}: ${localized(lesson.title)}`,
+      message: n4Labels().lessonCompleteText,
+      xp,
+      coins,
+      mascot: "eva",
+      mood: "happy",
+      dialog: "lessonComplete"
+    });
+    playUxSound("lesson_complete");
     evaluateAchievements();
     saveProgress();
     render();
@@ -9418,10 +9666,15 @@ if (await refreshStaleAppCache()) return;
 
   function submitN4FinalTest(force = false) {
     if (state.finalTestBusy) return;
+    const test = n4Course().finalTest;
+    // Radical persistent anti-farm: if already completed (from previous session or current), block re-call and re-render to keep button disabled.
+    if (test.completedAt || (typeof test.percent === 'number' && test.percent > 0)) {
+      render();
+      return;
+    }
     state.finalTestBusy = true;
     try {
       const questions = buildN4FinalQuestions();
-      const test = n4Course().finalTest;
       const config = state.n4FinalTest || {};
       const labels = n4Labels();
       const stats = finalTestQuestionStats(test, questions);
@@ -9515,6 +9768,11 @@ if (await refreshStaleAppCache()) return;
       }
       test.lastRewardXp = rewardXp;
       test.lastRewardMoon = rewardMoon;
+
+      // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
+      // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
+      n4Course();
+
       state.pendingFocus = null;
       state.finalTestModal = {
         kind: "result",
@@ -9672,7 +9930,10 @@ if (await refreshStaleAppCache()) return;
   function renderN3LessonTile(lesson) {
     const status = n3LessonStatus(lesson.id);
     const labels = n3Labels();
-    const learned = lesson.kanji.filter((kanji) => n3Course().studiedKanji[kanji]).length;
+    let learned = lesson.kanji.filter((kanji) => n3Course().studiedKanji[kanji]).length;
+    if (status === "completed") {
+      learned = lesson.kanji.length;
+    }
     return `
       <a class="n5-lesson-tile ${status}" href="#jlpt/n3/${escapeAttr(lesson.id)}" data-action="n3-open-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
@@ -9690,8 +9951,17 @@ if (await refreshStaleAppCache()) return;
     const cards = n3CardsForLesson(lesson);
     const exercises = buildN3LessonExercises(lesson);
     const status = n3LessonStatus(lesson.id);
-    const complete = status === "completed";
+    let complete = status === "completed";
+    // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
+    const n3SessKey = `n3:${lesson.id}`;
+    if (sessionCompletedLessons.has(n3SessKey)) complete = true;
+    const isLessonCompleted = complete; // explicit name per requirements. If true => button must be disabled + no complete calls possible.
     const correct = exercises.filter((exercise) => n3ExerciseResult(exercise.id)?.correct).length;
+    const allExercisesCorrect = exercises.length > 0 && correct === exercises.length;
+    const studiedCount = cards.filter((card) => n3Course().studiedKanji[card.kanji]).length;
+    const totalKanji = lesson.kanji.length;
+    const allKanjiStudied = studiedCount >= totalKanji;
+    const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
     const difficult = lesson.kanji.filter((kanji) => n3Course().difficultKanji[kanji]).join(" · ");
     const nextLesson = n3Lessons().find((item) => item.order === lesson.order + 1);
     const miniReadingItem = n3LessonReadingItem(lesson);
@@ -9771,9 +10041,10 @@ if (await refreshStaleAppCache()) return;
               ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n3-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n3-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n3-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#jlpt/n3/${escapeAttr(nextLesson.id)}" data-action="n3-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
@@ -10130,7 +10401,21 @@ if (await refreshStaleAppCache()) return;
     const stats = finalTestQuestionStats(test, questions);
     const answered = stats.answered;
     const ready = stats.ready;
-    const completed = Boolean(test.completedAt);
+
+    // AGGRESSIVE FIX for final test result display bug (same as N5):
+    if (test && typeof test.score === 'number' && test.score > 0 && test.totalQuestions > 0) {
+      const calc = Math.round((test.score / test.totalQuestions) * 100);
+      if (!test.percent || test.percent === 0 || test.percent !== calc) {
+        test.percent = calc;
+      }
+      if (!test.completedAt) {
+        test.completedAt = new Date().toISOString();
+      }
+      saveProgress();
+    }
+
+    const completed = Boolean(test.completedAt) || (typeof test.percent === "number" && test.percent > 0) || (typeof test.score === "number" && test.score > 0);
+    const displayPercent = (typeof test.percent === "number" && test.percent > 0) ? test.percent : (Number(test.score || 0) && test.totalQuestions ? Math.round((test.score / test.totalQuestions) * 100) : 0);
     return `
       <section class="page textbooks-page n5-course-page n3-course-page n5-final-page">
         <div class="section-head">
@@ -10147,8 +10432,8 @@ if (await refreshStaleAppCache()) return;
 
         <div class="metric-grid">
           ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
-          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
-          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+          ${renderMetric(labels.score, completed || displayPercent > 0 ? `${displayPercent}%` : "—", `${config.passingPercent || 80}%`, completed || displayPercent > 0 ? displayPercent : 0)}
+          ${renderMetric(labels.mistakes, completed ? (test.mistakes || []).length : 0, labels.difficult, completed ? progressWidth((test.mistakes || []).length, questions.length) : 0)}
         </div>
 
         ${completed ? `
@@ -10468,10 +10753,17 @@ if (await refreshStaleAppCache()) return;
     cards.forEach((card) => {
       if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
     });
+    const effectiveCompleted = { ...(course.completedLessons || {}) };
+    for (const k of sessionCompletedLessons) {
+      if (k.startsWith("n3:")) {
+        const id = k.slice(3);
+        effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
+      }
+    }
     return {
       total: state.n3Meta?.kanjiCount || cards.length || 370,
       studied: studied.size,
-      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedLessons: Object.keys(effectiveCompleted).length,
       completedGrammar: Object.keys(course.completedGrammar || {}).length,
       completedReading: Object.keys(course.completedReading || {}).length,
       completedListening: Object.keys(course.completedListening || {}).length,
@@ -10482,7 +10774,8 @@ if (await refreshStaleAppCache()) return;
 
   function n3LessonStatus(lessonId) {
     const course = n3Course();
-    if (course.completedLessons[lessonId]) return "completed";
+    const sessKey = `n3:${lessonId}`;
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId]) return "completed";
     const lesson = n3LessonById(lessonId);
     if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
     return "new";
@@ -10750,6 +11043,31 @@ if (await refreshStaleAppCache()) return;
     const lesson = n3LessonById(lessonId);
     if (!lesson) return;
     const course = n3Course();
+    const sessKey = `n3:${lesson.id}`;
+    // isLessonCompleted local session guard (aggressive): never allows re-call in this page session even if persisted flag was cleared via storage hack.
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lesson.id]) {
+      render();
+      return;
+    }
+    const lessonCards = n3CardsForLesson(lesson);
+    const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
+    if (studiedCount < lesson.kanji.length) {
+      const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    const exercises = buildN3LessonExercises(lesson);
+    const allCorrect = exercises.length > 0 && exercises.every((ex) => n3ExerciseResult(ex.id)?.correct);
+    if (!allCorrect) {
+      const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    // LOCK IMMEDIATELY in local session state BEFORE any reward/mutation. This is the core isLessonCompleted protection.
+    // Button render will now see this and render disabled + "Урок завершён". Handler also blocks.
+    // This survives only until full reload; on reload persisted completedLessons + exercise re-do req will gate.
+    sessionCompletedLessons.add(sessKey);
+
     n3CardsForLesson(lesson).forEach((card) => {
       markN3KanjiStudied(card.kanji, card.id);
       course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
@@ -10759,24 +11077,31 @@ if (await refreshStaleAppCache()) return;
     (lesson.grammarFocus || []).map((pattern) => n3GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
       course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
     });
-    const firstCompletion = !course.completedLessons[lesson.id];
-    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.completedLessons[lesson.id] = new Date().toISOString();
     course.currentLessonId = n3Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
-    if (firstCompletion) {
-      const xp = state.n3Meta?.rewards?.lessonCompleteXp || 75;
-      const coins = state.n3Meta?.rewards?.lessonCompleteMoon || 9;
-      addReward(xp, coins, `n3_lesson:${lesson.id}`);
-      queueReward({
-        title: `${n3Labels().lessonComplete}: ${localized(lesson.title)}`,
-        message: n3Labels().lessonCompleteText,
-        xp,
-        coins,
-        mascot: "eva",
-        mood: "happy",
-        dialog: "lessonComplete"
-      });
-      playUxSound("lesson_complete");
+
+    n3Course();
+
+    // Force unlock N2 on N3 full complete
+    const n3Count = Object.keys(course.completedLessons || {}).length;
+    if (n3Count >= 37) {
+      state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
+      ["N3","N2"].forEach(l => { if (!state.progress.unlockedJlptLevels.includes(l)) state.progress.unlockedJlptLevels.push(l); });
     }
+
+    const xp = state.n3Meta?.rewards?.lessonCompleteXp || 75;
+    const coins = state.n3Meta?.rewards?.lessonCompleteMoon || 9;
+    addReward(xp, coins, `n3_lesson:${lesson.id}`);
+    queueReward({
+      title: `${n3Labels().lessonComplete}: ${localized(lesson.title)}`,
+      message: n3Labels().lessonCompleteText,
+      xp,
+      coins,
+      mascot: "eva",
+      mood: "happy",
+      dialog: "lessonComplete"
+    });
+    playUxSound("lesson_complete");
     evaluateAchievements();
     saveProgress();
     render();
@@ -11060,10 +11385,15 @@ if (await refreshStaleAppCache()) return;
 
   function submitN3FinalTest(force = false) {
     if (state.finalTestBusy) return;
+    const test = n3Course().finalTest;
+    // Radical persistent anti-farm: if already completed (from previous session or current), block re-call and re-render to keep button disabled.
+    if (test.completedAt || (typeof test.percent === 'number' && test.percent > 0)) {
+      render();
+      return;
+    }
     state.finalTestBusy = true;
     try {
       const questions = buildN3FinalQuestions();
-      const test = n3Course().finalTest;
       const config = state.n3FinalTest || {};
       const labels = n3Labels();
       const stats = finalTestQuestionStats(test, questions);
@@ -11157,6 +11487,11 @@ if (await refreshStaleAppCache()) return;
       }
       test.lastRewardXp = rewardXp;
       test.lastRewardMoon = rewardMoon;
+
+      // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
+      // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
+      n3Course();
+
       state.pendingFocus = null;
       state.finalTestModal = {
         kind: "result",
@@ -11314,7 +11649,10 @@ if (await refreshStaleAppCache()) return;
   function renderN2LessonTile(lesson) {
     const status = n2LessonStatus(lesson.id);
     const labels = n2Labels();
-    const learned = lesson.kanji.filter((kanji) => n2Course().studiedKanji[kanji]).length;
+    let learned = lesson.kanji.filter((kanji) => n2Course().studiedKanji[kanji]).length;
+    if (status === "completed") {
+      learned = lesson.kanji.length;
+    }
     return `
       <a class="n5-lesson-tile ${status}" href="#jlpt/n2/${escapeAttr(lesson.id)}" data-action="n2-open-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
@@ -11332,8 +11670,17 @@ if (await refreshStaleAppCache()) return;
     const cards = n2CardsForLesson(lesson);
     const exercises = buildN2LessonExercises(lesson);
     const status = n2LessonStatus(lesson.id);
-    const complete = status === "completed";
+    let complete = status === "completed";
+    // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
+    const n2SessKey = `n2:${lesson.id}`;
+    if (sessionCompletedLessons.has(n2SessKey)) complete = true;
+    const isLessonCompleted = complete; // explicit name per requirements. If true => button must be disabled + no complete calls possible.
     const correct = exercises.filter((exercise) => n2ExerciseResult(exercise.id)?.correct).length;
+    const allExercisesCorrect = exercises.length > 0 && correct === exercises.length;
+    const studiedCount = cards.filter((card) => n2Course().studiedKanji[card.kanji]).length;
+    const totalKanji = lesson.kanji.length;
+    const allKanjiStudied = studiedCount >= totalKanji;
+    const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
     const difficult = lesson.kanji.filter((kanji) => n2Course().difficultKanji[kanji]).join(" · ");
     const nextLesson = n2Lessons().find((item) => item.order === lesson.order + 1);
     const miniReadingItem = n2LessonReadingItem(lesson);
@@ -11413,9 +11760,10 @@ if (await refreshStaleAppCache()) return;
               ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n2-complete-lesson" data-id="${escapeAttr(lesson.id)}">${escapeHtml(complete ? labels.refreshLesson : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n2-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n2-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#jlpt/n2/${escapeAttr(nextLesson.id)}" data-action="n2-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
@@ -11772,7 +12120,21 @@ if (await refreshStaleAppCache()) return;
     const stats = finalTestQuestionStats(test, questions);
     const answered = stats.answered;
     const ready = stats.ready;
-    const completed = Boolean(test.completedAt);
+
+    // AGGRESSIVE FIX for final test result display bug (same as N5):
+    if (test && typeof test.score === 'number' && test.score > 0 && test.totalQuestions > 0) {
+      const calc = Math.round((test.score / test.totalQuestions) * 100);
+      if (!test.percent || test.percent === 0 || test.percent !== calc) {
+        test.percent = calc;
+      }
+      if (!test.completedAt) {
+        test.completedAt = new Date().toISOString();
+      }
+      saveProgress();
+    }
+
+    const completed = Boolean(test.completedAt) || (typeof test.percent === "number" && test.percent > 0) || (typeof test.score === "number" && test.score > 0);
+    const displayPercent = (typeof test.percent === "number" && test.percent > 0) ? test.percent : (Number(test.score || 0) && test.totalQuestions ? Math.round((test.score / test.totalQuestions) * 100) : 0);
     return `
       <section class="page textbooks-page n5-course-page n2-course-page n5-final-page">
         <div class="section-head">
@@ -11789,8 +12151,8 @@ if (await refreshStaleAppCache()) return;
 
         <div class="metric-grid">
           ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
-          ${renderMetric(labels.score, completed ? `${test.percent}%` : "—", `${config.passingPercent || 80}%`, completed ? test.percent : 0)}
-          ${renderMetric(labels.mistakes, completed ? test.mistakes.length : 0, labels.difficult, completed ? progressWidth(test.mistakes.length, questions.length) : 0)}
+          ${renderMetric(labels.score, completed || displayPercent > 0 ? `${displayPercent}%` : "—", `${config.passingPercent || 80}%`, completed || displayPercent > 0 ? displayPercent : 0)}
+          ${renderMetric(labels.mistakes, completed ? (test.mistakes || []).length : 0, labels.difficult, completed ? progressWidth((test.mistakes || []).length, questions.length) : 0)}
         </div>
 
         ${completed ? `
@@ -12110,10 +12472,17 @@ if (await refreshStaleAppCache()) return;
     cards.forEach((card) => {
       if (getCardProgress(card.id).state !== "New") studied.add(card.kanji);
     });
+    const effectiveCompleted = { ...(course.completedLessons || {}) };
+    for (const k of sessionCompletedLessons) {
+      if (k.startsWith("n2:")) {
+        const id = k.slice(3);
+        effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
+      }
+    }
     return {
       total: state.n2Meta?.kanjiCount || cards.length || 380,
       studied: studied.size,
-      completedLessons: Object.keys(course.completedLessons || {}).length,
+      completedLessons: Object.keys(effectiveCompleted).length,
       completedGrammar: Object.keys(course.completedGrammar || {}).length,
       completedReading: Object.keys(course.completedReading || {}).length,
       completedListening: Object.keys(course.completedListening || {}).length,
@@ -12124,7 +12493,8 @@ if (await refreshStaleAppCache()) return;
 
   function n2LessonStatus(lessonId) {
     const course = n2Course();
-    if (course.completedLessons[lessonId]) return "completed";
+    const sessKey = `n2:${lessonId}`;
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId]) return "completed";
     const lesson = n2LessonById(lessonId);
     if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji])) return "started";
     return "new";
@@ -12392,6 +12762,31 @@ if (await refreshStaleAppCache()) return;
     const lesson = n2LessonById(lessonId);
     if (!lesson) return;
     const course = n2Course();
+    const sessKey = `n2:${lesson.id}`;
+    // isLessonCompleted local session guard (aggressive): never allows re-call in this page session even if persisted flag was cleared via storage hack.
+    if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lesson.id]) {
+      render();
+      return;
+    }
+    const lessonCards = n2CardsForLesson(lesson);
+    const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
+    if (studiedCount < lesson.kanji.length) {
+      const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    const exercises = buildN2LessonExercises(lesson);
+    const allCorrect = exercises.length > 0 && exercises.every((ex) => n2ExerciseResult(ex.id)?.correct);
+    if (!allCorrect) {
+      const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+      if (typeof toast === "function") toast(msg);
+      return;
+    }
+    // LOCK IMMEDIATELY in local session state BEFORE any reward/mutation. This is the core isLessonCompleted protection.
+    // Button render will now see this and render disabled + "Урок завершён". Handler also blocks.
+    // This survives only until full reload; on reload persisted completedLessons + exercise re-do req will gate.
+    sessionCompletedLessons.add(sessKey);
+
     n2CardsForLesson(lesson).forEach((card) => {
       markN2KanjiStudied(card.kanji, card.id);
       course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
@@ -12401,24 +12796,31 @@ if (await refreshStaleAppCache()) return;
     (lesson.grammarFocus || []).map((pattern) => n2GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
       course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
     });
-    const firstCompletion = !course.completedLessons[lesson.id];
-    course.completedLessons[lesson.id] = course.completedLessons[lesson.id] || new Date().toISOString();
+    course.completedLessons[lesson.id] = new Date().toISOString();
     course.currentLessonId = n2Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
-    if (firstCompletion) {
-      const xp = state.n2Meta?.rewards?.lessonCompleteXp || 85;
-      const coins = state.n2Meta?.rewards?.lessonCompleteMoon || 10;
-      addReward(xp, coins, `n2_lesson:${lesson.id}`);
-      queueReward({
-        title: `${n2Labels().lessonComplete}: ${localized(lesson.title)}`,
-        message: n2Labels().lessonCompleteText,
-        xp,
-        coins,
-        mascot: "eva",
-        mood: "happy",
-        dialog: "lessonComplete"
-      });
-      playUxSound("lesson_complete");
+
+    n2Course();
+
+    // Force unlock N1 on N2 full complete
+    const n2Count = Object.keys(course.completedLessons || {}).length;
+    if (n2Count >= 38) {
+      state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
+      ["N2","N1"].forEach(l => { if (!state.progress.unlockedJlptLevels.includes(l)) state.progress.unlockedJlptLevels.push(l); });
     }
+
+    const xp = state.n2Meta?.rewards?.lessonCompleteXp || 85;
+    const coins = state.n2Meta?.rewards?.lessonCompleteMoon || 10;
+    addReward(xp, coins, `n2_lesson:${lesson.id}`);
+    queueReward({
+      title: `${n2Labels().lessonComplete}: ${localized(lesson.title)}`,
+      message: n2Labels().lessonCompleteText,
+      xp,
+      coins,
+      mascot: "eva",
+      mood: "happy",
+      dialog: "lessonComplete"
+    });
+    playUxSound("lesson_complete");
     evaluateAchievements();
     saveProgress();
     render();
@@ -12702,10 +13104,15 @@ if (await refreshStaleAppCache()) return;
 
   function submitN2FinalTest(force = false) {
     if (state.finalTestBusy) return;
+    const test = n2Course().finalTest;
+    // Radical persistent anti-farm: if already completed (from previous session or current), block re-call and re-render to keep button disabled.
+    if (test.completedAt || (typeof test.percent === 'number' && test.percent > 0)) {
+      render();
+      return;
+    }
     state.finalTestBusy = true;
     try {
       const questions = buildN2FinalQuestions();
-      const test = n2Course().finalTest;
       const config = state.n2FinalTest || {};
       const labels = n2Labels();
       const stats = finalTestQuestionStats(test, questions);
@@ -12799,6 +13206,11 @@ if (await refreshStaleAppCache()) return;
       }
       test.lastRewardXp = rewardXp;
       test.lastRewardMoon = rewardMoon;
+
+      // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
+      // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
+      n2Course();
+
       state.pendingFocus = null;
       state.finalTestModal = {
         kind: "result",
@@ -14005,6 +14417,12 @@ if (await refreshStaleAppCache()) return;
     if (!modal) return "";
     const isWarning = modal.kind === "warning";
     const mood = isWarning ? "thinking" : modal.passed ? "proud" : "sad";
+
+    // AGGRESSIVE fallback in modal too: if percent missing but we have correct/total, compute it.
+    if (!isWarning && (!modal.percent || modal.percent === 0) && typeof modal.correct === 'number' && modal.totalQuestions > 0) {
+      modal.percent = Math.round((modal.correct / modal.totalQuestions) * 100);
+    }
+
     const values = isWarning
       ? [
         `<span>${escapeHtml(lang() === "ru" ? "Вопросов" : "Questions")} ${modal.totalQuestions}</span>`,
@@ -15504,8 +15922,11 @@ if (await refreshStaleAppCache()) return;
     if (achievement.kind === "nightVisit") return state.progress.secrets?.nightVisit ? 1 : 0;
     if (achievement.kind === "appOpens") return state.progress.appOpens || 0;
     if (achievement.kind === "n5KanjiStudied") return Object.keys(n5Course().studiedKanji || {}).length;
-    if (achievement.kind === "n5LessonComplete") return Object.keys(n5Course().completedLessons || {}).length;
-    if (achievement.kind === "n5LessonsComplete") return Object.keys(n5Course().completedLessons || {}).length;
+    // HARD BINDING to the same lesson progress source as N5 cards/tiles:
+    // Eva (via achievements in dialogues/responses) must see the real count from getN5CompletedLessonsCount()
+    // (which uses n5LessonStatus, i.e. completed status or 8/8 equivalent via session/persisted).
+    if (achievement.kind === "n5LessonComplete") return getN5CompletedLessonsCount();
+    if (achievement.kind === "n5LessonsComplete") return getN5CompletedLessonsCount();
     if (achievement.kind === "n5Writing") return Object.keys(n5Course().writingPractice || {}).length;
     if (achievement.kind === "n5SrsAll") return Object.keys(n5Course().srsKanji || {}).length;
     if (achievement.kind === "n5FinalPass") return n5Course().finalTest?.passed ? 1 : 0;
@@ -16575,7 +16996,32 @@ if (await refreshStaleAppCache()) return;
     return "";
   }
 
+  function getJlptDetailForCard(card) {
+    if (!card) return null;
+    const level = String(card.jlpt || "").toUpperCase();
+    let catalog = null;
+    if (level === "N5") catalog = state.n5KanjiCatalog;
+    else if (level === "N4") catalog = state.n4KanjiCatalog;
+    else if (level === "N3") catalog = state.n3KanjiCatalog;
+    else if (level === "N2") catalog = state.n2KanjiCatalog;
+    if (!catalog || !Array.isArray(catalog)) return null;
+    return catalog.find((d) => d && d.kanji === card.kanji) || null;
+  }
+
   function cardReadings(card) {
+    const detail = getJlptDetailForCard(card);
+    if (detail && detail.readings) {
+      const r = detail.readings;
+      const arr = (v) => Array.isArray(v) ? v.filter(Boolean).join(" / ") : String(v || "");
+      const onyomiKana = arr(r.onyomi);
+      const kunyomiKana = arr(r.kunyomi);
+      if (onyomiKana || kunyomiKana) {
+        return {
+          onyomi: { kana: onyomiKana || card?.onyomi || "", romaji: (Array.isArray(r.romaji) ? r.romaji[0] : r.romaji) || card?.onyomi_romaji || "" },
+          kunyomi: { kana: kunyomiKana || card?.kunyomi || "", romaji: (Array.isArray(r.romaji) ? r.romaji.slice(1).join(" / ") : "") || card?.kunyomi_romaji || "" }
+        };
+      }
+    }
     const onyomiKana = card?.onyomi || "";
     const onyomiRomaji = card?.onyomi_romaji || "";
     const kunyomiKana = card?.kunyomi || "";
@@ -16818,11 +17264,33 @@ if (await refreshStaleAppCache()) return;
   }
 
   function textbookCompleted(level) {
-    return Boolean(textbookCourseProgress(level)?.finalTest?.passed);
+    const key = String(level || "").toUpperCase();
+    const course = textbookCourseProgress(level);
+    if (!course) return false;
+    if (course.finalTest?.passed) return true;
+
+    // Радикальная надёжная разблокировка: если все уроки уровня завершены (10/10 для N5 + 80/80 кандзи),
+    // считаем учебник "completed" для цепочки разблокировки следующего уровня.
+    // Это позволяет разблокировать N4 сразу после последнего урока N5, даже без финального теста.
+    const textbook = jlptCatalogByLevel(key);
+    const expected = textbook?.lessonCount || (key === "N5" ? 10 : 0);
+    let actual = 0;
+    if (key === "N5") {
+      actual = getN5CompletedLessonsCount();
+      const studied = Object.keys(course.studiedKanji || {}).length;
+      if (actual >= 10 && studied >= 80) return true;
+      if (actual >= expected) return true;
+    } else {
+      actual = Object.keys(course.completedLessons || {}).length;
+      if (actual >= expected) return true;
+    }
+    return false;
   }
 
   function isTextbookUnlocked(level) {
     const key = String(level || "").toUpperCase();
+    // Жёсткая глобальная разблокировка из stored progress (принудительно установленная при завершении предыдущего уровня)
+    if (state.progress.unlockedJlptLevels && state.progress.unlockedJlptLevels.includes(key)) return true;
     const textbook = jlptCatalogByLevel(key);
     if (!textbook) return key === "N5";
     const requirements = textbookRequirementLevels(key);
@@ -17432,6 +17900,13 @@ if (await refreshStaleAppCache()) return;
 
   function cardMeaningForLang(card, language = lang()) {
     if (!card) return "";
+    const detail = getJlptDetailForCard(card);
+    if (detail && detail.meaning) {
+      if (language === "en") {
+        return detail.meaning.en || detail.meaning.ru || card.meaning_en || state.kanjiTranslations[card.id]?.meaning_en || "";
+      }
+      return detail.meaning.ru || card.meaning_ru || state.kanjiTranslations[card.id]?.meaning_en || card.meaning_en || "";
+    }
     if (language === "en") return state.kanjiTranslations[card.id]?.meaning_en || card.meaning_en || card.meaning_ru || "";
     return card.meaning_ru || state.kanjiTranslations[card.id]?.meaning_en || card.meaning_en || "";
   }

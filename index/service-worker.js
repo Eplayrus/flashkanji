@@ -1,5 +1,5 @@
-﻿const CACHE_NAME = "flash-kanji-cache-v99";
-const SW_BUILD_VERSION = "2026-06-15-stable-session-v25";
+﻿const CACHE_NAME = "flash-kanji-cache-v101";
+const SW_BUILD_VERSION = "2026-06-16-jlpt-studied-gate-v1";
 
 const NOTIFICATION_FALLBACKS = {
   review: {
@@ -44,18 +44,18 @@ const PRECACHE_URLS = [
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-15-stable-session-v25",
+  "./styles.css?v=2026-06-16-cache-bust-2",
   "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-15-stable-session-v25",
+  "./script.js?v=2026-06-16-cache-bust-2",
   "./src/effects/cyberHudEffect.js",
-  "./src/effects/cyberHudEffect.js?v=2026-06-15-stable-session-v25",
+  "./src/effects/cyberHudEffect.js?v=2026-06-16-cache-bust-2",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-15-stable-session-v25",
+  "./src/audio/soundManager.js?v=2026-06-16-cache-bust-2",
   "./manifest.webmanifest",
-  "./manifest.webmanifest?v=2026-06-15-stable-session-v25",
+  "./manifest.webmanifest?v=2026-06-16-cache-bust-2",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-15-stable-session-v25",
+  "./vendor/chart.umd.min.js?v=2026-06-16-cache-bust-2",
   "./assets/1.png",
   "./assets/bg/bg_cafe.png",
   "./assets/bg/bg_classroom.png",

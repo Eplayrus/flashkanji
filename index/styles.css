@@ -569,7 +569,7 @@ textarea:focus-visible {
 .cyber-hud-effect {
   --cyber-cyan: #43d6ff;
   --cyber-magenta: #ff4f83;
-  --cyber-hud-glow: rgba(67, 214, 255, 0.28);
+  --cyber-hud-glow: rgba(67, 214, 255, 0.35);
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -1283,8 +1283,8 @@ textarea:focus-visible {
 
 .jlpt-eva-open-btn {
   position: fixed;
-  z-index: 29;
-  right: 14px;
+  z-index: 80;
+  left: 14px;
   bottom: calc(92px + env(safe-area-inset-bottom));
   display: inline-flex;
   align-items: center;
@@ -1329,7 +1329,7 @@ textarea:focus-visible {
 
 .jlpt-eva-dock {
   position: fixed;
-  z-index: 29;
+  z-index: 35;
   right: 10px;
   left: 10px;
   bottom: calc(86px + env(safe-area-inset-bottom));
@@ -6178,7 +6178,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   }
 
   .jlpt-eva-open-btn {
-    right: 10px;
+    left: 10px;
     bottom: calc(96px + env(safe-area-inset-bottom));
   }
 
@@ -6484,7 +6484,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   }
 
   .jlpt-eva-open-btn {
-    right: 8px;
+    left: 8px;
     min-height: 40px;
     padding: 7px 12px;
   }
