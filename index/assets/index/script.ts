@@ -8,7 +8,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-06-shop-previews-v1";
+  const BUILD_VERSION = "2026-06-19-eva-avatar-unify-v2";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
@@ -1983,7 +1983,7 @@
     const scene = currentEvaRoomScene();
     const node = scene.node;
     const bg = currentEvaRoomBackground() || scene.bg || getEvaRoomBackground(node.background);
-    const sprite = evaSpritePath(scene.sprite || resolveEvaSprite(node.sprite));
+    const sprite = scene.sprite || scene.spriteSrc || evaSpritePath(scene.spriteId || resolveEvaSprite(node.sprite));
     const labels = evaRoomLabels();
     const liveLabels = evaLiveLabels();
     const choices = Array.isArray(node.choices) ? node.choices : [];
@@ -2271,7 +2271,7 @@
     const live = evaLiveLabels();
     const autonomy = evaAutonomy();
     const bg = scene.bg || currentEvaRoomBackground();
-    const spriteItem = getEvaSpriteShopItem(scene.sprite || state.progress.selectedEvaSprite);
+    const spriteItem = getEvaSpriteShopItem(scene.spriteId || state.progress.selectedEvaSprite);
     const effectItem = customizationShopItem(scene.effect || autonomy.currentEffect);
     const decorationItem = customizationShopItem(scene.decoration || autonomy.currentDecoration);
     const moodLabel = evaMoodLabel(scene.mood || autonomy.mood);
@@ -3680,12 +3680,13 @@
       const decoration = chooseEvaAutonomyDecoration(line);
       const effect = chooseEvaAutonomyEffect(line);
       const emotion = line.emotion || chooseEvaEmotion(context, mood, "render_fallback");
-      const sprite = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
+      const spriteId = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
+      const sprite = evaSpritePath(spriteId);
       auto = {
         id: line.id,
         category: line.category || "mood",
         text: line.text,
-        sprite,
+        sprite: spriteId,
         background: bg.id,
         decoration,
         effect,
@@ -3700,21 +3701,23 @@
       evaAutonomy().emotion = emotion;
       evaAutonomy().lastSpokeAt = auto.at;
       evaAutonomy().lastRoomId = bg.id;
-      evaAutonomy().lastSprite = sprite;
+      evaAutonomy().lastSprite = spriteId;
       state.evaRuntime.presenceState = auto.state;
       state.evaRuntime.textRevealSkippedLineId = null;
       rememberEvaPresenceLine(line, "render_fallback", context);
-      preloadEvaVisuals(sprite, bg.file);
+      preloadEvaVisuals(spriteId, bg.file);
       scheduleNextEvaAutonomyLine();
       saveProgress();
     }
     if (isEvaAutonomyEnabled() && auto?.text) {
       const bg = getEvaRoomBackground(auto.background) || currentEvaRoomBackground();
+      const spriteId = resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion);
       return {
         isAutonomy: true,
         line: auto,
         bg,
-        sprite: resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion),
+        spriteId,
+        sprite: evaSpritePath(spriteId),
         decoration: auto.decoration || evaAutonomy().currentDecoration,
         effect: auto.effect || evaAutonomy().currentEffect,
         mood: evaAutonomy().mood || evaRelationship().mood,
@@ -3722,7 +3725,7 @@
         node: {
           id: "eva_autonomy_line",
           background: bg.id,
-          sprite: resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion),
+          sprite: auto.sprite || "relationship",
           speaker: { ru: "Ева", en: "Eva" },
           text: auto.text,
           choices: []
@@ -3730,11 +3733,13 @@
       };
     }
     const bg = getEvaRoomBackground(storyNode.background) || currentEvaRoomBackground();
+    const spriteId = resolveEvaSprite(storyNode.sprite, evaAutonomy().emotion);
     return {
       isAutonomy: false,
       line: null,
       bg,
-      sprite: resolveEvaSprite(storyNode.sprite, evaAutonomy().emotion),
+      spriteId,
+      sprite: evaSpritePath(spriteId),
       decoration: evaAutonomy().currentDecoration,
       effect: evaAutonomy().currentEffect,
       mood: evaRelationship().mood,

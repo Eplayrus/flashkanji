@@ -3,15 +3,23 @@
 
   const STORAGE_KEY = "flashKanji.progress.v2";
   const LEGACY_STORAGE_KEY = "flashKanji.progress.v1";
-  const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v1";
+  const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v2";
+  const PWA_INSTALL_STORAGE_KEY_LEGACY = "flashKanji.pwaInstallPrompt.v1";
   const NOTIFICATION_STORAGE_KEY = "flashKanji.notificationPrompt.v1";
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-16-jlpt-studied-gate-v1";
+  const BUILD_VERSION = "2026-06-19-eva-avatar-unify-v2";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
+  const YANDEX_METRIKA_ID = 109492033;
+  const OFFICIAL_SOCIAL_LINKS = {
+    instagram: "https://www.instagram.com/fallinginto_silence?igsh=MWpzYW1ncTB1a3FuNw==",
+    youtube: "https://youtube.com/@fallingintosilence?si=cJ97__ndJ1aaaMae"
+  };
+  const SUPPORT_EMAIL = "aleksey.lebedev606@gmail.com";
+  const SUPPORT_EMAIL_SUBJECT = "Flash Kanji bug report";
       // Guard key for one-time forced PWA cache reset.
       // When set to "done", the app will skip resetting caches on subsequent loads.
       const FORCE_PWA_CACHE_RESET_FLAG = "flashKanji.forcePwaCacheReset.v1";
@@ -188,7 +196,7 @@
     evaRoomShopOpen: false,
     progress: null,
     activeLessonId: null,
-    activeJlptLesson: null,
+    activeJlptLesson: readJlptLessonRouteLevel() || null,
     activeTextbookLevel: readTextbookRouteLevel() || null,
     activeTextbookSubroute: readTextbookRouteSubroute() || null,
     activeCardId: null,
@@ -199,6 +207,7 @@
     rewardQueue: [],
     finalTestModal: null,
     finalTestBusy: false,
+    contactModal: false,
     charts: [],
     filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" },
     dictionaryVisibleCount: DICTIONARY_INITIAL_LIMIT,
@@ -271,16 +280,19 @@
     const kanjiPageId = readKanjiRouteId();
     const textbookLevel = route === "textbooks" ? readTextbookRouteLevel() : null;
     const textbookSubroute = route === "textbooks" ? readTextbookRouteSubroute() : null;
+    const jlptLessonLevel = route === "jlpt-lesson" ? readJlptLessonRouteLevel() : null;
     if (
       route !== state.route
       || (route === "kanji" && kanjiPageId !== state.kanjiPageId)
       || (route === "textbooks" && textbookLevel !== state.activeTextbookLevel)
       || (route === "textbooks" && textbookSubroute !== state.activeTextbookSubroute)
+      || (route === "jlpt-lesson" && jlptLessonLevel !== state.activeJlptLesson)
     ) {
       state.route = route;
       state.kanjiPageId = route === "kanji" ? kanjiPageId : null;
       state.activeTextbookLevel = route === "textbooks" ? textbookLevel : null;
       state.activeTextbookSubroute = route === "textbooks" ? textbookSubroute : null;
+      state.activeJlptLesson = route === "jlpt-lesson" ? jlptLessonLevel : state.activeJlptLesson;
       state.detailCardId = null;
       state.revealed = false;
       state.navMenu = null;
@@ -2569,8 +2581,35 @@ if (await refreshStaleAppCache()) return;
     ensureN5CourseProgress();
     ensureN4CourseProgress();
     ensureN3CourseProgress();
+    ensureN2CourseProgress();
+    if (typeof ensureN1CourseProgress === "function") ensureN1CourseProgress();
+    [n5Course(), n4Course(), n3Course(), n2Course(), typeof n1Course === "function" ? n1Course() : null].filter(Boolean).forEach((course) => normalizeJlptCourseStudyMaps(course));
     const firstUnlocked = state.lessons.find((lesson) => isLessonUnlocked(lesson));
     if (!state.activeLessonId) state.activeLessonId = firstUnlocked?.id || state.lessons[0]?.id || null;
+  }
+
+  function normalizeJlptCourseStudyMaps(course) {
+    if (!course) return;
+    course.studiedKanji ||= {};
+    course.srsKanji ||= {};
+    Object.entries(course.srsKanji).forEach(([kanji, value]) => {
+      if (!course.studiedKanji[kanji]) course.studiedKanji[kanji] = value;
+    });
+    Object.entries(course.studiedKanji).forEach(([kanji, value]) => {
+      if (!course.srsKanji[kanji]) course.srsKanji[kanji] = value;
+    });
+  }
+
+  function syncJlptCourseStudyState(course, kanji, timestamp = new Date().toISOString()) {
+    if (!course || !kanji) return "";
+    course.studiedKanji ||= {};
+    course.srsKanji ||= {};
+    const existingStudy = course.studiedKanji[kanji];
+    const existingSrs = course.srsKanji[kanji];
+    const stamp = existingStudy || existingSrs || timestamp;
+    course.studiedKanji[kanji] = stamp;
+    course.srsKanji[kanji] = existingSrs || stamp;
+    return stamp;
   }
 
   function getCardProgress(cardId) {
@@ -2785,13 +2824,28 @@ if (await refreshStaleAppCache()) return;
       }
       state.navMenu = null;
       if (route === "writing" && state.detailCardId) state.activeCardId = state.detailCardId;
-      setRoute(route);
+      setRoute(route, target.dataset.focus || null, target.dataset.subroute || null);
     }
     if (action === "nav-menu-route") {
       const route = target.dataset.route;
       state.navMenu = null;
       if (route === "writing" && state.detailCardId) state.activeCardId = state.detailCardId;
-      setRoute(route, target.dataset.focus || null);
+      setRoute(route, target.dataset.focus || null, target.dataset.subroute || null);
+    }
+    if (action === "share-page") shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed"));
+    if (action === "contact-email") {
+      state.navMenu = null;
+      state.contactModal = true;
+      render();
+    }
+    if (action === "copy-contact-email") {
+      copyShareText(SUPPORT_EMAIL).then((copied) => {
+        toast(copied ? (lang() === "ru" ? "Email скопирован" : "Email copied") : (lang() === "ru" ? "Не удалось скопировать email" : "Could not copy email"));
+      });
+    }
+    if (action === "close-contact-modal") {
+      state.contactModal = false;
+      render();
     }
     if (action === "close-nav-menu") {
       state.navMenu = null;
@@ -2992,14 +3046,15 @@ if (await refreshStaleAppCache()) return;
         if (!isTextbookUnlocked(jlpt)) {
           state.activeTextbookLevel = jlpt;
           state.activeJlptLesson = jlpt;
-          setRoute("textbooks");
+          setRoute("textbooks", null, jlpt);
           toast(textbookUnlockText(jlpt));
           return;
         }
         state.activeJlptLesson = jlpt;
-        setRoute("jlpt-lesson");
+        setRoute("jlpt-lesson", null, jlpt);
       }
     }
+    if (action === "social-link") reachMetricGoal(`social_${String(target.dataset.network || "").toLowerCase()}_opened`, { network: target.dataset.network || "", section: state.route });
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
       state.rewardModal = state.rewardQueue.shift() || null;
@@ -3231,10 +3286,11 @@ if (await refreshStaleAppCache()) return;
   function handleKeydown(event) {
     if (handleMoonCheatKey(event)) return;
 
-    if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.navMenu)) {
+    if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.navMenu)) {
       state.detailCardId = null;
       state.rewardModal = null;
       state.finalTestModal = null;
+      state.contactModal = false;
       state.navMenu = null;
       render();
       return;
@@ -3273,11 +3329,20 @@ if (await refreshStaleAppCache()) return;
 
   function setRoute(route, focus = null, subroute = null) {
     state.route = routes.includes(route) ? route : "home";
-    state.activeTextbookLevel = state.route === "textbooks" ? (subroute ? String(subroute).toUpperCase() : null) : null;
-    state.activeTextbookSubroute = null;
+    if (state.route === "textbooks") {
+      state.activeTextbookLevel = subroute ? String(subroute).toUpperCase() : state.activeTextbookLevel;
+      state.activeTextbookSubroute = null;
+    } else if (state.route === "jlpt-lesson") {
+      state.activeJlptLesson = subroute ? String(subroute).toUpperCase() : state.activeJlptLesson || readJlptLessonRouteLevel() || null;
+    } else {
+      state.activeTextbookLevel = null;
+      state.activeTextbookSubroute = null;
+    }
     const nextHash = state.route === "textbooks" && state.activeTextbookLevel
       ? `#textbooks/${encodeURIComponent(state.activeTextbookLevel)}`
-      : `#${state.route}`;
+      : state.route === "jlpt-lesson" && state.activeJlptLesson
+        ? `#jlpt-lesson/${encodeURIComponent(state.activeJlptLesson)}`
+        : `#${state.route}`;
     if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
     if (state.route !== "kanji") state.kanjiPageId = null;
     state.detailCardId = null;
@@ -3285,6 +3350,7 @@ if (await refreshStaleAppCache()) return;
     state.navMenu = null;
     state.finalTestModal = null;
     state.finalTestBusy = false;
+    state.contactModal = false;
     state.pendingFocus = focus;
     if (state.route !== "eva-room") state.evaRoomShopOpen = false;
     resetReadingCheck();
@@ -3304,6 +3370,7 @@ if (await refreshStaleAppCache()) return;
     state.pendingFocus = null;
     state.finalTestModal = null;
     state.finalTestBusy = false;
+    state.contactModal = false;
     state.evaRoomShopOpen = false;
     resetReadingCheck();
     const nextHash = `#kanji/${encodeURIComponent(card.id)}`;
@@ -3341,7 +3408,7 @@ if (await refreshStaleAppCache()) return;
     if (state.route === "jlpt-lesson") html = renderJlptLessonPage();
     if (state.route === "textbooks") html = renderTextbooksPage();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
-    document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal));
+    document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal));
     requestAnimationFrame(() => {
       applyPendingFocus();
       syncScrollToggleButton();
@@ -3349,7 +3416,7 @@ if (await refreshStaleAppCache()) return;
   }
 
   function renderGlobalOverlays() {
-    const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
+    const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
     return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
   }
 
@@ -3738,7 +3805,7 @@ if (await refreshStaleAppCache()) return;
     const scene = currentEvaRoomScene();
     const node = scene.node;
     const bg = currentEvaRoomBackground() || scene.bg || getEvaRoomBackground(node.background);
-    const sprite = evaSpritePath(scene.sprite || resolveEvaSprite(node.sprite));
+    const sprite = scene.sprite || scene.spriteSrc || evaSpritePath(scene.spriteId || resolveEvaSprite(node.sprite));
     const labels = evaRoomLabels();
     const liveLabels = evaLiveLabels();
     const choices = Array.isArray(node.choices) ? node.choices : [];
@@ -4044,7 +4111,7 @@ if (await refreshStaleAppCache()) return;
     const live = evaLiveLabels();
     const autonomy = evaAutonomy();
     const bg = scene.bg || currentEvaRoomBackground();
-    const spriteItem = getEvaSpriteShopItem(scene.sprite || state.progress.selectedEvaSprite);
+    const spriteItem = getEvaSpriteShopItem(scene.spriteId || state.progress.selectedEvaSprite);
     const effectItem = customizationShopItem(state.customization?.selected?.effect);
     const decorationItem = customizationShopItem(scene.decoration || autonomy.currentDecoration);
     const moodLabel = evaMoodLabel(scene.mood || autonomy.mood);
@@ -5689,12 +5756,13 @@ if (await refreshStaleAppCache()) return;
       const decoration = chooseEvaAutonomyDecoration(line);
       const effect = chooseEvaAutonomyEffect(line);
       const emotion = line.emotion || chooseEvaEmotion(context, mood, "render_fallback");
-      const sprite = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
+      const spriteId = resolveEvaSprite(chooseEvaAutonomySprite(line), emotion);
+      const sprite = evaSpritePath(spriteId);
       auto = {
         id: line.id,
         category: line.category || "mood",
         text: line.text,
-        sprite,
+        sprite: spriteId,
         background: bg.id,
         decoration,
         effect,
@@ -5709,21 +5777,23 @@ if (await refreshStaleAppCache()) return;
       evaAutonomy().emotion = emotion;
       evaAutonomy().lastSpokeAt = auto.at;
       evaAutonomy().lastRoomId = bg.id;
-      evaAutonomy().lastSprite = sprite;
+      evaAutonomy().lastSprite = spriteId;
       state.evaRuntime.presenceState = auto.state;
       state.evaRuntime.textRevealSkippedLineId = null;
       rememberEvaPresenceLine(line, "render_fallback", context);
-      preloadEvaVisuals(sprite, bg.file);
+      preloadEvaVisuals(spriteId, bg.file);
       scheduleNextEvaAutonomyLine();
       saveProgress();
     }
     if (isEvaAutonomyEnabled() && auto?.text) {
       const bg = getEvaRoomBackground(auto.background) || currentEvaRoomBackground();
+      const spriteId = resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion);
       return {
         isAutonomy: true,
         line: auto,
         bg,
-        sprite: resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion),
+        spriteId,
+        sprite: evaSpritePath(spriteId),
         decoration: auto.decoration || evaAutonomy().currentDecoration,
         effect: auto.effect || evaAutonomy().currentEffect,
         mood: evaAutonomy().mood || evaRelationship().mood,
@@ -5731,7 +5801,7 @@ if (await refreshStaleAppCache()) return;
         node: {
           id: "eva_autonomy_line",
           background: bg.id,
-          sprite: resolveEvaSprite(auto.sprite || "relationship", auto.emotion || evaAutonomy().emotion),
+          sprite: auto.sprite || "relationship",
           speaker: { ru: "Ева", en: "Eva" },
           text: auto.text,
           choices: []
@@ -5739,11 +5809,13 @@ if (await refreshStaleAppCache()) return;
       };
     }
     const bg = getEvaRoomBackground(storyNode.background) || currentEvaRoomBackground();
+    const spriteId = resolveEvaSprite(storyNode.sprite, evaAutonomy().emotion);
     return {
       isAutonomy: false,
       line: null,
       bg,
-      sprite: resolveEvaSprite(storyNode.sprite, evaAutonomy().emotion),
+      spriteId,
+      sprite: evaSpritePath(spriteId),
       decoration: evaAutonomy().currentDecoration,
       effect: evaAutonomy().currentEffect,
       mood: evaRelationship().mood,
@@ -6458,7 +6530,8 @@ if (await refreshStaleAppCache()) return;
           <div class="actions">
             <a class="btn ghost" href="#textbooks/${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "Страница учебника" : "Textbook page")}</a>
             <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Все учебники" : "All textbooks")}</button>
-            <button class="btn ghost" type="button" data-action="route" data-route="learn">${escapeHtml(labels.back)}</button>
+            ${renderShareButton("lesson", { level: lesson.jlpt, lessonId: lesson.id })}
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks" data-subroute="${escapeAttr(lesson.jlpt)}">${escapeHtml(labels.back)}</button>
           </div>
         </div>
         <div class="actions jlpt-switcher">
@@ -6565,7 +6638,10 @@ if (await refreshStaleAppCache()) return;
             <h1>${escapeHtml(labels.title)}</h1>
             <p>${escapeHtml(labels.description)}</p>
           </div>
-          <button class="btn primary" type="button" data-action="route" data-route="learn">${escapeHtml(lang() === "ru" ? "К урокам" : "To lessons")}</button>
+          <div class="actions">
+            ${renderShareButton("textbooks")}
+            <button class="btn primary" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(defaultJlptLessonLevel())}">${escapeHtml(labels.study)}</button>
+          </div>
         </div>
         <div class="textbook-grid" id="textbook-grid">
           ${items.map((item) => `
@@ -6716,6 +6792,7 @@ if (await refreshStaleAppCache()) return;
             <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.back)}</button>
             <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
             <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.lessonPage)}</button>
+            ${renderShareButton("textbook", { level: textbook.jlpt })}
           </div>
         </div>
 
@@ -7803,7 +7880,7 @@ if (await refreshStaleAppCache()) return;
   function markN5KanjiStudied(kanji, cardId = null) {
     if (!kanji) return;
     const course = n5Course();
-    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+    syncJlptCourseStudyState(course, kanji);
   }
 
   function markN5KanjiDifficult(kanji, cardId = null) {
@@ -9395,7 +9472,7 @@ if (await refreshStaleAppCache()) return;
   function markN4KanjiStudied(kanji, cardId = null) {
     if (!kanji) return;
     const course = n4Course();
-    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+    syncJlptCourseStudyState(course, kanji);
   }
 
   function markN4KanjiDifficult(kanji, cardId = null) {
@@ -11110,7 +11187,7 @@ if (await refreshStaleAppCache()) return;
   function markN3KanjiStudied(kanji, cardId = null) {
     if (!kanji) return;
     const course = n3Course();
-    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+    syncJlptCourseStudyState(course, kanji);
   }
 
   function markN3KanjiDifficult(kanji, cardId = null) {
@@ -12829,7 +12906,7 @@ if (await refreshStaleAppCache()) return;
   function markN2KanjiStudied(kanji, cardId = null) {
     if (!kanji) return;
     const course = n2Course();
-    course.studiedKanji[kanji] = course.studiedKanji[kanji] || new Date().toISOString();
+    syncJlptCourseStudyState(course, kanji);
   }
 
   function markN2KanjiDifficult(kanji, cardId = null) {
@@ -13421,6 +13498,9 @@ if (await refreshStaleAppCache()) return;
           <div>
             <h1>${escapeHtml(t("review"))}</h1>
             <p>${due.length} ${escapeHtml(t("cardsToday"))}</p>
+          </div>
+          <div class="actions">
+            ${renderShareButton("srs")}
           </div>
         </div>
         <div class="study-layout" data-section="review-card">
@@ -15212,7 +15292,10 @@ if (await refreshStaleAppCache()) return;
             <h1>${escapeHtml(t("stats"))}</h1>
             <p>${escapeHtml(t("xp"))} · ${escapeHtml(t("level"))} · ${escapeHtml(t("coins"))}</p>
           </div>
-          <button class="btn primary" type="button" data-action="route" data-route="achievements">◐ ${escapeHtml(t("achievements"))}</button>
+          <div class="actions">
+            ${renderShareButton("stats")}
+            <button class="btn primary" type="button" data-action="route" data-route="achievements">◐ ${escapeHtml(t("achievements"))}</button>
+          </div>
         </div>
         <div class="metric-grid">
           ${renderMetric(t("xp"), state.progress.xp, `${t("level")} ${state.progress.level}`, getLevelInfo().percent)}
@@ -15329,7 +15412,10 @@ if (await refreshStaleAppCache()) return;
             <h1>${escapeHtml(t("achievements"))}</h1>
             <p>${escapeHtml(lang() === "ru" ? "Лунные цели, секреты Евы и Леи, награды за прогресс." : "Moon goals, Eva and Leya secrets, and progress rewards.")}</p>
           </div>
-          <button class="btn" type="button" data-action="route" data-route="stats">▥ ${escapeHtml(t("stats"))}</button>
+          <div class="actions">
+            ${renderShareButton("achievements")}
+            <button class="btn" type="button" data-action="route" data-route="stats">▥ ${escapeHtml(t("stats"))}</button>
+          </div>
         </div>
         <div class="metric-grid">
           ${renderMetric(t("achievements"), `${unlocked}/${items.length}`, lang() === "ru" ? "открыто" : "unlocked", progressWidth(unlocked, items.length))}
@@ -15454,9 +15540,48 @@ if (await refreshStaleAppCache()) return;
     `;
   }
 
+  function renderContactModal() {
+    if (!state.contactModal) return "";
+    const title = lang() === "ru" ? "Сообщить об ошибке" : "Report a bug";
+    const description = lang() === "ru"
+      ? "Если почтовое приложение не открывается, скопируй адрес и отправь сообщение вручную."
+      : "If your mail app does not open, copy the address and send the message manually.";
+    const copyLabel = lang() === "ru" ? "Скопировать email" : "Copy email";
+    const openLabel = lang() === "ru" ? "Открыть почту" : "Open email";
+    const closeLabel = lang() === "ru" ? "Закрыть" : "Close";
+    const subject = encodeURIComponent(SUPPORT_EMAIL_SUBJECT);
+    const body = encodeURIComponent(lang() === "ru"
+      ? "Привет! Я нашел ошибку в Flash Kanji:\n\n"
+      : "Hi! I found an issue in Flash Kanji:\n\n");
+    const mailto = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    return `
+      <div class="reward-backdrop contact-backdrop">
+        <article class="reward-modal contact-modal" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle" aria-describedby="contactModalDesc">
+          <div class="contact-modal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <rect x="3" y="5" width="18" height="14" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="2" />
+              <path d="M4 7.5 12 13l8-5.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            </svg>
+          </div>
+          <h2 id="contactModalTitle">${escapeHtml(title)}</h2>
+          <p id="contactModalDesc">${escapeHtml(description)}</p>
+          <div class="contact-email-block">
+            <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>
+            <small>${escapeHtml(lang() === "ru" ? "Для багов, багрепортов и ошибок интерфейса." : "For bugs, bug reports, and UI issues.")}</small>
+          </div>
+          <div class="actions contact-modal-actions">
+            <button class="btn ghost" type="button" data-action="copy-contact-email">${escapeHtml(copyLabel)}</button>
+            <a class="btn primary" href="${escapeAttr(mailto)}">${escapeHtml(openLabel)}</a>
+            <button class="btn" type="button" data-action="close-contact-modal">${escapeHtml(closeLabel)}</button>
+          </div>
+        </article>
+      </div>
+    `;
+  }
+
   function renderPwaInstallBanner() {
     if (!canShowPwaInstallPrompt()) return "";
-    if (state.detailCardId || state.rewardModal || state.finalTestModal) return "";
+    if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal) return "";
     const copy = pwaInstallCopy();
     const isInstruction = !deferredPwaInstallPrompt && isIosSafari();
     return `
@@ -15478,7 +15603,7 @@ if (await refreshStaleAppCache()) return;
 
   function renderNotificationPermissionBanner() {
     if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible")) return "";
-    if (state.detailCardId || state.rewardModal || state.finalTestModal || canShowPwaInstallPrompt()) return "";
+    if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || canShowPwaInstallPrompt()) return "";
     const copy = notificationPromptCopy();
     return `
       <aside class="pwa-install-banner notification-permission-banner" role="dialog" aria-modal="false" aria-label="${escapeAttr(copy.title)}">
@@ -15763,6 +15888,10 @@ if (await refreshStaleAppCache()) return;
   }
 
   function recordAppOpen() {
+    const visits = normalizeVisitState();
+    const key = todayKey();
+    if (!visits.firstVisitDate) visits.firstVisitDate = key;
+    visits.lastVisitDate = key;
     state.progress.appOpens = Number(state.progress.appOpens || 0) + 1;
     const hour = new Date().getHours();
     if (hour >= 22 || hour < 5) state.progress.secrets.nightVisit = true;
@@ -15810,24 +15939,13 @@ if (await refreshStaleAppCache()) return;
   function claimDailyBonus() {
     const key = todayKey();
     const visits = normalizeVisitState();
-    const previousVisitDate = visits.lastVisitDate;
-
-    if (!visits.firstVisitDate) {
-      visits.firstVisitDate = key;
-      visits.lastVisitDate = key;
-      visits.streak = 1;
-      visits.bestStreak = Math.max(visits.bestStreak || 0, visits.streak);
-      return;
-    }
+    const previousClaimDate = visits.lastDailyBonusDate || visits.firstVisitDate || visits.lastVisitDate;
 
     if (state.progress.dailyBonuses[key] || visits.lastDailyBonusDate === key) {
-      visits.lastVisitDate = key;
       return;
     }
 
-    if (previousVisitDate === key) return;
-
-    updateVisitStreak(previousVisitDate, key);
+    updateVisitStreak(previousClaimDate, key);
     visits.lastVisitDate = key;
     visits.lastDailyBonusDate = key;
     state.progress.dailyBonuses[key] = new Date().toISOString();
@@ -17465,7 +17583,7 @@ if (await refreshStaleAppCache()) return;
   function jlptLessonLabels() {
     return lang() === "ru"
       ? {
-        back: "К урокам",
+        back: "К учебнику",
         courseMap: "Полноценный JLPT-модуль",
         courseText: "Краткая стратегия уровня, чтения, лексика и практика. Данные хранятся в JSON, поэтому урок можно расширять без изменения логики.",
         available: "кандзи уровня",
@@ -17476,7 +17594,7 @@ if (await refreshStaleAppCache()) return;
         checkpoint: "Чекпоинт"
       }
       : {
-        back: "Back to lessons",
+        back: "Back to textbook",
         courseMap: "Full JLPT module",
         courseText: "Level strategy, readings, vocabulary, and practice. The content lives in JSON, so lessons can grow without changing app logic.",
         available: "level kanji",
@@ -17533,46 +17651,239 @@ if (await refreshStaleAppCache()) return;
     toast(t("export"));
   }
 
-  async function shareAchievement() {
-    const reward = state.rewardModal || {};
-    const text = achievementShareText(reward);
-    const url = appShareUrl();
-
-    if (!navigator.share) {
-      await copyShareFallback(text, url);
-      return;
-    }
-
+  function reachMetricGoal(goal, params = {}) {
     try {
-      const imageBlob = await createAchievementCardBlob(reward);
-      if (imageBlob && typeof File !== "undefined") {
-        const file = new File([imageBlob], `flash-kanji-level-${state.progress.level}.png`, { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            title: "Flash Kanji",
-            text,
-            url,
-            files: [file]
-          });
-          return;
-        }
-      }
-
-      await navigator.share({
-        title: "Flash Kanji",
-        text,
-        url
-      });
+      if (typeof window.ym !== "function") return false;
+      window.ym(YANDEX_METRIKA_ID, "reachGoal", goal, params);
+      return true;
     } catch (error) {
-      if (error && error.name === "AbortError") return;
-      try {
-        await navigator.share({ title: "Flash Kanji", text, url });
-        return;
-      } catch (shareError) {
-        if (shareError && shareError.name === "AbortError") return;
-      }
-      await copyShareFallback(text, url);
+      console.warn("Metric goal failed.", error);
+      return false;
     }
+  }
+
+  function shareContextFromTarget(target) {
+    return {
+      level: target.dataset.shareLevel || target.dataset.level || "",
+      lessonId: target.dataset.shareLessonId || target.dataset.lessonId || target.dataset.lesson || "",
+      toastKey: target.dataset.shareToastKey || "",
+      reward: target.dataset.shareReward ? state.rewardModal || null : null
+    };
+  }
+
+  function canonicalJlptLevel(value) {
+    const level = String(value || "").toUpperCase();
+    return LEVEL_ORDER.includes(level) ? level : "";
+  }
+
+  function defaultJlptLessonLevel() {
+    return canonicalJlptLevel(state.activeJlptLesson)
+      || canonicalJlptLevel(state.activeTextbookLevel)
+      || canonicalJlptLevel(state.jlptLessons.find((item) => isTextbookUnlocked(item.jlpt))?.jlpt)
+      || canonicalJlptLevel(state.jlptLessons[0]?.jlpt)
+      || "N5";
+  }
+
+  function shareSectionHash(section, context = {}) {
+    const normalized = String(section || state.route || "home").toLowerCase();
+    if (normalized === "textbooks") return "textbooks";
+    if (normalized === "textbook") return `textbooks/${encodeURIComponent(canonicalJlptLevel(context.level || state.activeTextbookLevel || defaultJlptLessonLevel()) || defaultJlptLessonLevel())}`;
+    if (normalized === "lesson") return `jlpt-lesson/${encodeURIComponent(canonicalJlptLevel(context.level || state.activeJlptLesson || defaultJlptLessonLevel()) || defaultJlptLessonLevel())}`;
+    if (normalized === "srs") return "review";
+    if (normalized === "stats") return "stats";
+    if (normalized === "achievements") return "achievements";
+    if (normalized === "achievement") return state.route || "home";
+    return normalized || "home";
+  }
+
+  function shareSectionUrl(section = state.route, context = {}) {
+    const url = new URL(location.href);
+    url.search = "";
+    url.hash = shareSectionHash(section, context);
+    return url.href;
+  }
+
+  function shareSectionTitle(section = state.route, context = {}) {
+    const normalized = String(section || state.route || "home").toLowerCase();
+    const level = canonicalJlptLevel(context.level || state.activeJlptLesson || state.activeTextbookLevel || "");
+    const ru = lang() === "ru";
+    const titles = {
+      textbooks: ru ? "Учебники Flash Kanji" : "Flash Kanji textbooks",
+      textbook: ru ? "Учебник Flash Kanji" : "Flash Kanji textbook",
+      lesson: ru ? "Урок Flash Kanji" : "Flash Kanji lesson",
+      srs: ru ? "Повторение Flash Kanji" : "Flash Kanji review",
+      stats: ru ? "Статистика Flash Kanji" : "Flash Kanji stats",
+      achievements: ru ? "Достижения Flash Kanji" : "Flash Kanji achievements",
+      achievement: ru ? "Flash Kanji" : "Flash Kanji"
+    };
+    const base = titles[normalized] || titles.achievement;
+    return level && ["textbook", "lesson"].includes(normalized) ? `${base} ${level}` : base;
+  }
+
+  function shareSectionText(section = state.route, context = {}) {
+    const normalized = String(section || state.route || "home").toLowerCase();
+    const level = canonicalJlptLevel(context.level || state.activeJlptLesson || state.activeTextbookLevel || "");
+    const textbook = level ? jlptCatalogByLevel(level) : null;
+    const lesson = context.lesson || (level ? jlptLessonByLevel(level) : null);
+    const ru = lang() === "ru";
+    if (normalized === "textbooks") {
+      return ru
+        ? "Функциональные учебники JLPT N5-N1 внутри Flash Kanji."
+        : "Functional JLPT N5-N1 textbooks inside Flash Kanji.";
+    }
+    if (normalized === "textbook") {
+      const title = localized(textbook?.displayTitle || textbook?.title || {});
+      const lessons = Number(textbook?.lessonCount || 0);
+      const kanji = Number(textbook?.kanjiCount || 0);
+      return ru
+        ? `${title || "Учебник"}: ${lessons} уроков и ${kanji} кандзи.`
+        : `${title || "Textbook"}: ${lessons} lessons and ${kanji} kanji.`;
+    }
+    if (normalized === "lesson") {
+      const title = localized(lesson?.title || {});
+      const summary = localized(lesson?.summary || {});
+      return ru
+        ? `${level ? `${level} · ` : ""}${title || "Урок"} — ${summary || "урок в Flash Kanji"}.`
+        : `${level ? `${level} · ` : ""}${title || "Lesson"} — ${summary || "a Flash Kanji lesson"}.`;
+    }
+    if (normalized === "srs") {
+      return ru ? "Очередь повторений Flash Kanji." : "Flash Kanji review queue.";
+    }
+    if (normalized === "stats") {
+      return ru ? "Моя статистика и прогресс во Flash Kanji." : "My Flash Kanji stats and progress.";
+    }
+    if (normalized === "achievements") {
+      return ru ? "Достижения и секреты Flash Kanji." : "Flash Kanji achievements and secrets.";
+    }
+    if (normalized === "achievement") {
+      return achievementShareText(context.reward || state.rewardModal || {});
+    }
+    return "Flash Kanji.";
+  }
+
+  function shareButtonLabel() {
+    return lang() === "ru" ? "Поделиться" : "Share";
+  }
+
+  function renderShareButton(section = state.route, context = {}) {
+    const level = canonicalJlptLevel(context.level || "");
+    const lessonId = String(context.lessonId || context.lesson?.id || "");
+    const label = context.label || shareButtonLabel();
+    return `
+      <button class="btn ghost share-btn" type="button" data-action="share-page" data-share-section="${escapeAttr(section)}" ${level ? `data-share-level="${escapeAttr(level)}"` : ""} ${lessonId ? `data-share-lesson-id="${escapeAttr(lessonId)}"` : ""} ${context.toastKey ? `data-share-toast-key="${escapeAttr(context.toastKey)}"` : ""}>
+        <span class="btn-icon" aria-hidden="true">${shareIconSvg()}</span>
+        <span>${escapeHtml(label)}</span>
+      </button>
+    `;
+  }
+
+  function renderSocialLink(network) {
+    const href = OFFICIAL_SOCIAL_LINKS[network];
+    if (!href) return "";
+    const label = network === "instagram"
+      ? (lang() === "ru" ? "Instagram" : "Instagram")
+      : (lang() === "ru" ? "YouTube" : "YouTube");
+    return `
+      <a class="icon-btn social-link social-link-${escapeAttr(network)}" href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}" data-action="social-link" data-network="${escapeAttr(network)}">
+        ${socialIconSvg(network)}
+      </a>
+    `;
+  }
+
+  function shareIconSvg() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M15 5h4v4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        <path d="M10 14 19 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        <path d="M19 14v5H5V5h5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      </svg>
+    `;
+  }
+
+  function socialIconSvg(network) {
+    if (network === "youtube") {
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="3" y="6" width="18" height="12" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M10 9.5 15 12 10 14.5Z" fill="currentColor"/>
+        </svg>
+      `;
+    }
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="4" y="4" width="16" height="16" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="17" cy="7" r="1.2" fill="currentColor"/>
+      </svg>
+    `;
+  }
+
+  async function shareFlashKanji(payload, options = {}) {
+    const toastKey = options.toastKey || "shareLinkCopied";
+    const shareData = {
+      title: payload.title,
+      text: payload.text,
+      url: payload.url
+    };
+    if (payload.files?.length && navigator.canShare?.({ files: payload.files })) {
+      shareData.files = payload.files;
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return "share";
+      } catch (error) {
+        if (error && error.name === "AbortError") return "abort";
+      }
+    }
+    const copied = await copyShareFallback(payload.text, payload.url, toastKey);
+    return copied ? "copy" : "failed";
+  }
+
+  async function buildShareData(section = state.route, context = {}) {
+    const normalized = String(section || state.route || "home").toLowerCase();
+    const reward = context.reward || state.rewardModal || null;
+    const payload = {
+      section: normalized,
+      title: shareSectionTitle(normalized, context),
+      text: shareSectionText(normalized, context),
+      url: shareSectionUrl(normalized, context),
+      files: []
+    };
+    if (normalized === "achievement" || reward) {
+      const imageBlob = await createAchievementCardBlob(reward || {});
+      if (imageBlob && typeof File !== "undefined") {
+        payload.files = [new File([imageBlob], `flash-kanji-achievement-${state.progress.level}.png`, { type: "image/png" })];
+      }
+    }
+    return payload;
+  }
+
+  async function shareSection(section = state.route, context = {}) {
+    const normalized = String(section || state.route || "home").toLowerCase();
+    const shareContext = { ...context };
+    if (!shareContext.level) {
+      shareContext.level = context.level || state.activeJlptLesson || state.activeTextbookLevel || "";
+    }
+    reachMetricGoal("share_opened", { section: normalized, level: canonicalJlptLevel(shareContext.level) || "" });
+    const payload = await buildShareData(normalized, shareContext);
+    const result = await shareFlashKanji(payload, { toastKey: context.toastKey || "shareLinkCopied" });
+    if (result === "share") {
+      reachMetricGoal("share_completed", { section: normalized, method: payload.files?.length ? "file" : "web_share" });
+      return true;
+    }
+    if (result === "copy") {
+      reachMetricGoal("share_link_copied", { section: normalized });
+      reachMetricGoal("share_completed", { section: normalized, method: "copy" });
+      return true;
+    }
+    if (result === "abort") return false;
+    toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed");
+    return false;
+  }
+
+  async function shareAchievement() {
+    await shareSection("achievement", { reward: state.rewardModal || {}, toastKey: "shareCopied" });
   }
 
   function achievementShareText(reward = {}) {
@@ -17583,11 +17894,8 @@ if (await refreshStaleAppCache()) return;
     return `${prefix}: ${t("level")} ${level}, ${xp} XP, ${coins} Moon Fragments.`;
   }
 
-  function appShareUrl() {
-    const url = new URL(location.href);
-    url.search = "";
-    url.hash = "home";
-    return url.href;
+  function appShareUrl(section = state.route, context = {}) {
+    return shareSectionUrl(section, context);
   }
 
   async function createAchievementCardBlob(reward = {}) {
@@ -17685,9 +17993,10 @@ if (await refreshStaleAppCache()) return;
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
   }
 
-  async function copyShareFallback(text, url) {
+  async function copyShareFallback(text, url, toastKey = "shareLinkCopied") {
     const copied = await copyShareText(`${text}\n${url}`);
-    toast(copied ? t("shareCopied") : text);
+    toast(copied ? t(toastKey) : text);
+    return copied;
   }
 
   async function copyShareText(text) {
@@ -18169,10 +18478,10 @@ if (await refreshStaleAppCache()) return;
   function loadPwaInstallPromptState() {
     const base = { declineCount: 0, nextShowAt: 0, neverShow: false, installed: false };
     try {
-      const raw = localStorage.getItem(PWA_INSTALL_STORAGE_KEY);
+      const raw = localStorage.getItem(PWA_INSTALL_STORAGE_KEY) || localStorage.getItem(PWA_INSTALL_STORAGE_KEY_LEGACY);
       if (!raw) return base;
       const saved = JSON.parse(raw);
-      return {
+      const nextState = {
         ...base,
         ...saved,
         declineCount: Number(saved.declineCount || 0),
@@ -18180,6 +18489,10 @@ if (await refreshStaleAppCache()) return;
         neverShow: Boolean(saved.neverShow),
         installed: Boolean(saved.installed)
       };
+      if (!localStorage.getItem(PWA_INSTALL_STORAGE_KEY)) {
+        localStorage.setItem(PWA_INSTALL_STORAGE_KEY, JSON.stringify(nextState));
+      }
+      return nextState;
     } catch (error) {
       console.warn("PWA install prompt state reset.", error);
       return base;
@@ -18201,6 +18514,7 @@ if (await refreshStaleAppCache()) return;
   }
 
   async function handlePwaInstallRequest() {
+    reachMetricGoal("pwa_install_clicked", { available: Boolean(deferredPwaInstallPrompt), ios: isIosSafari() });
     if (isPwaInstalled()) {
       handlePwaInstallAccepted();
       return;
@@ -18238,11 +18552,15 @@ if (await refreshStaleAppCache()) return;
     const promptState = state.pwaInstallPrompt || loadPwaInstallPromptState();
     if (isPwaInstalled() || promptState.installed || promptState.neverShow) return false;
     if (Date.now() < Number(promptState.nextShowAt || 0)) return false;
+    const firstVisitDate = state.progress?.visits?.firstVisitDate;
+    if (!firstVisitDate) return false;
+    if (dayDifference(firstVisitDate, todayKey()) < 1) return false;
     return Boolean(deferredPwaInstallPrompt) || isIosSafari();
   }
 
   function showPwaInstallBanner() {
     if (canShowPwaInstallPrompt()) {
+      reachMetricGoal("pwa_prompt_shown", { source: deferredPwaInstallPrompt ? "browser" : "ios" });
       playUxSound("notification_soft");
       render();
     }
@@ -18257,6 +18575,7 @@ if (await refreshStaleAppCache()) return;
       nextShowAt: 0
     };
     savePwaInstallPromptState();
+    reachMetricGoal("pwa_installed", { platform: isIosSafari() ? "ios" : "browser" });
     scheduleNotificationPromptCheck();
     if (state.progress && state.i18n) render();
   }
@@ -18279,12 +18598,12 @@ if (await refreshStaleAppCache()) return;
     const hour = 60 * 60 * 1000;
     const day = 24 * hour;
     const delays = {
-      1: 12 * hour,
+      1: day,
       2: 48 * hour,
       3: 7 * day,
       4: 30 * day
     };
-    return declineCount >= 5 ? 0 : Date.now() + (delays[declineCount] || 12 * hour);
+    return declineCount >= 5 ? 0 : Date.now() + (delays[declineCount] || day);
   }
 
   function syncPwaInstallInstalledFlag() {
@@ -18544,7 +18863,7 @@ if (await refreshStaleAppCache()) return;
       lesson: {
         title: ru ? "Новые знания ждут" : "New knowledge awaits",
         body: ru ? "Продолжите изучение кандзи." : "Continue learning kanji.",
-        url: "./index.html#learn"
+        url: "./index.html#textbooks"
       }
     };
     const item = payloads[type] || payloads.review;
@@ -18696,6 +19015,12 @@ if (await refreshStaleAppCache()) return;
     return match ? String(match[1] || "") : "";
   }
 
+  function readJlptLessonRouteLevel() {
+    const raw = decodeURIComponent(location.hash.replace("#", ""));
+    const match = raw.match(/^jlpt-lesson\/([^/?#]+)/i);
+    return match ? String(match[1] || "").toUpperCase() : "";
+  }
+
   function unlockedAchievementCount() {
     return achievementList().filter((item) => isAchievementUnlocked(item.id)).length;
   }
@@ -18713,99 +19038,3 @@ if (await refreshStaleAppCache()) return;
     return escapeHtml(value);
   }
 })();
-
-/**
- * ЧАСТЬ 1: Безопасный клиентский скрипт регистрации Service Worker.
- * Этот код размещается в основном JS-файле (index.js / App.jsx) или подключается в index.html.
- */
-
-const APP_VERSION = '2026-06-12-n2-interactive-textbook-v1'; // Меняйте версию при каждом деплое
-
-function registerServiceWorkerWithCacheBuster() {
-  if ('serviceWorker' in navigator) {
-    // КРИТИЧЕСКИЙ ФИКС: Запоминаем, управлял ли уже сервис-воркер страницей при загрузке.
-    // Если "wasControlled" равен false, значит это первая установка приложения пользователем.
-    // В таком случае перезагрузка страницы НЕ нужна и только сломает инициализацию React!
-    const wasControlled = !!navigator.serviceWorker.controller;
-
-    // Регистрируем service-worker.js с cache-buster, чтобы GitHub Pages не держал старую версию.
-    navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(APP_VERSION)}`)
-      .then((registration) => {
-        console.log('Service Worker зарегистрирован с версией:', APP_VERSION);
-
-        // Проверяем наличие обновлений SW в фоновом режиме
-        registration.update();
-
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              // Если новый SW успешно скачался и установился
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('Доступно новое обновление! Активируем...');
-                // Даем команду новому SW немедленно занять рабочее место
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-              }
-            });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('Ошибка регистрации Service Worker:', error);
-      });
-
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      // Перезагружаем страницу ТОЛЬКО если старая версия SW заменяется на новую.
-      // Если это просто первичная активация SW для нового пользователя — не трогаем вкладку!
-      if (wasControlled && !refreshing) {
-        refreshing = true;
-        console.log('PWA успешно обновлено до версии:', APP_VERSION);
-        window.location.reload(); // Мягкая перезагрузка для подтягивания нового кэша
-      }
-    });
-  }
-}
-
-// Запуск после полной загрузки всех ресурсов страницы
-window.addEventListener('load', () => {
-  registerServiceWorkerWithCacheBuster();
-});
-
-
-/**
- * ЧАСТЬ 2: Обработчики для sw.js (в корневом файле вашего сервис-воркера).
- */
-
-/*
-// Код ниже должен находиться внутри вашего sw.js:
-
-  const CACHE_NAME = 'flash-kanji-cache-v90'; // Версия кэша должна совпадать с APP_VERSION
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting()); // Позволяет новому SW сразу активироваться
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[Service Worker] Удаление старого кэша:', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    }).then(() => self.clients.claim()) // Захватывает управление вкладками без перезагрузки
-  );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-*/
-
-

@@ -232,9 +232,10 @@ textarea:focus-visible {
   top: 0;
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 8px 12px;
   min-height: 64px;
   padding: calc(env(safe-area-inset-top) + 10px) 14px 10px;
   border-bottom: 1px solid var(--line);
@@ -262,10 +263,17 @@ textarea:focus-visible {
   filter: drop-shadow(0 8px 12px var(--shadow));
 }
 
+.header-social-actions {
+  display: flex;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
 .header-actions {
   display: flex;
   gap: 7px;
   flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .icon-btn {
@@ -2481,6 +2489,69 @@ textarea:focus-visible {
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent-2), #ffffff 10%), var(--accent));
   color: #111014;
+}
+
+.contact-backdrop {
+  z-index: 4;
+}
+
+.contact-modal {
+  width: min(100%, 500px);
+  text-align: left;
+}
+
+.contact-modal-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 34%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-2), transparent 84%);
+  color: var(--accent-2);
+}
+
+.contact-modal-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.contact-modal h2,
+.contact-modal p {
+  text-align: left;
+}
+
+.contact-email-block {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text), transparent 95%);
+}
+
+.contact-email-block strong {
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+.contact-email-block small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.contact-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.contact-modal-actions .btn,
+.contact-modal-actions a.btn {
+  min-width: 138px;
 }
 
 .pwa-install-banner {
