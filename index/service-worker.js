@@ -1,23 +1,23 @@
-const CACHE_NAME = "flash-kanji-cache-v105";
-const SW_BUILD_VERSION = "2026-06-19-eva-avatar-unify-v2";
+const CACHE_NAME = "flash-kanji-cache-v113";
+const SW_BUILD_VERSION = "2026-06-20-onboarding-tour-v9";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-19-eva-avatar-unify-v2",
+  "./styles.css?v=2026-06-20-onboarding-tour-v9",
   "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-19-eva-avatar-unify-v2",
+  "./script.js?v=2026-06-20-onboarding-tour-v9",
   "./manifest.webmanifest",
-  "./manifest.webmanifest?v=2026-06-19-eva-avatar-unify-v2",
+  "./manifest.webmanifest?v=2026-06-20-onboarding-tour-v9",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-19-eva-avatar-unify-v2",
+  "./src/audio/soundManager.js?v=2026-06-20-onboarding-tour-v9",
   "./src/effects/cyberHudEffect.js",
-  "./src/effects/cyberHudEffect.js?v=2026-06-19-eva-avatar-unify-v2",
+  "./src/effects/cyberHudEffect.js?v=2026-06-20-onboarding-tour-v9",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-19-eva-avatar-unify-v2",
+  "./vendor/chart.umd.min.js?v=2026-06-20-onboarding-tour-v9",
   "./assets/favicon.ico",
   "./assets/favicon.png",
   "./assets/icon-192.png",

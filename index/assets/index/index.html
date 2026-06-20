@@ -13,6 +13,7 @@
   <meta name="robots" content="index, follow" />
   <meta property="og:site_name" content="Flash Kanji" />
   <meta property="og:locale" content="ru_RU" />
+  <meta property="og:locale:alternate" content="en_US" />
   <meta property="og:title" content="Flash Kanji — учи японские кандзи" />
   <meta property="og:description" content="SRS, уроки JLPT, практика письма, словарь и игровая система Moon Fragments." />
   <meta property="og:type" content="website" />
@@ -29,12 +30,15 @@
   <meta name="twitter:image:alt" content="Flash Kanji - preview card with logo, Eva and kanji-learning features." />
   <title>Flash Kanji — учи японские кандзи через SRS, письмо и повторение</title>
   <link rel="canonical" href="https://flashkanji.space/" />
+  <link rel="alternate" hreflang="ru" href="https://flashkanji.space/ru/textbooks/" />
+  <link rel="alternate" hreflang="en" href="https://flashkanji.space/en/textbooks/" />
+  <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
   <link rel="icon" href="assets/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" sizes="192x192" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="manifest" href="manifest.webmanifest?v=2026-06-20-onboarding-tour-v9" />
   <link rel="preload" href="assets/logo.png" as="image" />
   <link rel="preload" href="assets/mascots/eva/eva_default_pack/eva_idle.png" as="image" />
- <link rel="stylesheet" href="styles.css?v=2026-06-19-eva-avatar-unify-v2" />
+ <link rel="stylesheet" href="styles.css?v=2026-06-20-onboarding-tour-v9" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -50,6 +54,20 @@
     }
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Flash Kanji JLPT textbooks",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "url": "https://flashkanji.space/ru/textbooks/n5/", "name": "Flash Kanji N5 textbook" },
+      { "@type": "ListItem", "position": 2, "url": "https://flashkanji.space/ru/textbooks/n4/", "name": "Flash Kanji N4 textbook" },
+      { "@type": "ListItem", "position": 3, "url": "https://flashkanji.space/ru/textbooks/n3/", "name": "Flash Kanji N3 textbook" },
+      { "@type": "ListItem", "position": 4, "url": "https://flashkanji.space/ru/textbooks/n2/", "name": "Flash Kanji N2 textbook" },
+      { "@type": "ListItem", "position": 5, "url": "https://flashkanji.space/ru/textbooks/n1/", "name": "Flash Kanji N1 textbook" }
+    ]
+  }
+  </script>
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
@@ -62,20 +80,33 @@
     ym(109492033, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
   </script>
   <!-- /Yandex.Metrika counter -->
- <script src="vendor/chart.umd.min.js?v=2026-06-19-eva-avatar-unify-v2" defer></script>
- <script src="src/audio/soundManager.js?v=2026-06-19-eva-avatar-unify-v2" defer></script>
- <script src="script.js?v=2026-06-19-eva-avatar-unify-v2" defer></script>
+ <script src="vendor/chart.umd.min.js?v=2026-06-20-onboarding-tour-v9" defer></script>
+ <script src="src/audio/soundManager.js?v=2026-06-20-onboarding-tour-v9" defer></script>
+ <script src="src/effects/cyberHudEffect.js?v=2026-06-20-onboarding-tour-v9" defer></script>
+ <script src="script.js?v=2026-06-20-onboarding-tour-v9" defer></script>
 </head>
 <body>
   <noscript><div><img src="https://mc.yandex.ru/watch/109492033" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
   <div class="app-shell">
     <div class="scene-bg" aria-hidden="true"></div>
+    <div class="scene-effects" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
 
     <header class="app-header" aria-label="Flash Kanji">
       <button class="brand-mark" type="button" data-action="route" data-route="home" aria-label="На главную">
         <img src="assets/logo.png" alt="" />
       </button>
-      <div class="header-social-actions" aria-label="Социальные ссылки">
+      <button class="icon-btn header-social-toggle" type="button" data-action="toggle-header-socials" aria-controls="headerSocialActions" aria-expanded="false" aria-label="Соцсети" title="Соцсети">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+          <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+          <circle cx="18" cy="12" r="1.7" fill="currentColor" />
+        </svg>
+      </button>
+      <div class="header-social-actions" id="headerSocialActions" aria-label="Социальные ссылки">
         <a class="icon-btn social-link social-link-instagram" href="https://www.instagram.com/fallinginto_silence?igsh=MWpzYW1ncTB1a3FuNw==" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram" data-action="social-link" data-network="instagram">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <rect x="4" y="4" width="16" height="16" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2" />
@@ -99,7 +130,13 @@
       <div class="header-actions">
         <button class="icon-btn" type="button" data-action="theme" aria-label="Сменить тему" title="Тема">◐</button>
         <button class="icon-btn" type="button" data-action="language" aria-label="Сменить язык" title="Язык">RU</button>
-        <button class="icon-btn" type="button" data-action="sound" aria-label="Звук" title="Звук">♪</button>
+        <button class="icon-btn" type="button" data-action="sound" aria-label="Звук" title="Звук">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 10v4h4l6 4V6l-6 4H4Z" fill="currentColor" />
+            <path d="M16 9c1 1 1.5 2 1.5 3s-.5 2-1.5 3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            <path d="M18.5 6.5c2 1.9 2.5 4.1 2.5 5.5s-.5 3.6-2.5 5.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+          </svg>
+        </button>
         <button class="icon-btn" type="button" data-action="export" aria-label="Экспорт прогресса" title="Экспорт">⇩</button>
         <button class="icon-btn" type="button" data-action="import" aria-label="Импорт прогресса" title="Импорт">⇧</button>
       </div>
@@ -111,25 +148,28 @@
       <button class="nav-btn is-active" type="button" data-action="route" data-route="home">
         <span>⌂</span><small>Главная</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="learn" aria-haspopup="menu" aria-expanded="false">
+      <button class="nav-btn" type="button" data-action="route" data-route="learn" data-tour="jlpt-lessons" aria-haspopup="menu" aria-expanded="false">
         <span>文</span><small>Урок</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="review" aria-haspopup="menu" aria-expanded="false">
+      <button class="nav-btn" type="button" data-action="route" data-route="review" data-tour="srs-review" aria-haspopup="menu" aria-expanded="false">
         <span>↻</span><small>Повтор</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="dictionary">
+      <button class="nav-btn" type="button" data-action="route" data-route="dictionary" data-tour="dictionary">
         <span>典</span><small>Словарь</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="writing" aria-haspopup="menu" aria-expanded="false">
+      <button class="nav-btn" type="button" data-action="route" data-route="writing" data-tour="writing-practice" aria-haspopup="menu" aria-expanded="false">
         <span>筆</span><small>Письмо</small>
       </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="stats" aria-haspopup="menu" aria-expanded="false">
+      <button class="nav-btn" type="button" data-action="route" data-route="stats" data-tour="profile-progress-nav" aria-haspopup="menu" aria-expanded="false">
         <span>▥</span><small>Статы</small>
       </button>
     </nav>
 
     <input id="progressImport" type="file" accept="application/json,.json" hidden />
     <div id="toast" class="toast" role="status" hidden></div>
+    <div class="scene-cyber-hud" aria-hidden="true"></div>
   </div>
 </body>
 </html>
+
+

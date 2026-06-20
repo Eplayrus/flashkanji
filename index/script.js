@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   "use strict";
 
   const STORAGE_KEY = "flashKanji.progress.v2";
@@ -9,7 +9,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-19-eva-avatar-unify-v2";
+  const BUILD_VERSION = "2026-06-20-onboarding-tour-v9";
   const EVA_DEFAULT_PACK = "eva_default_pack";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
@@ -141,6 +141,15 @@
     hibiku: "to sound, to resonate"
   };
   const sentenceRewardFallback = { xp: 12, coins: 2 };
+  const ONBOARDING_STORAGE_VERSION = 2;
+  const ONBOARDING_STORAGE_KEY = `flashKanjiOnboardingCompleted.v${ONBOARDING_STORAGE_VERSION}`;
+  const ONBOARDING_STORAGE_KEY_LEGACY = "flashKanjiOnboardingCompleted";
+  const ONBOARDING_AUDIENCE_STORAGE_KEY = "flashKanjiOnboardingAudience.v1";
+  const ONBOARDING_INITIAL_DELAY = 850;
+  const ONBOARDING_RETRY_DELAY = 450;
+  const ONBOARDING_DIALOG_WIDTH = 392;
+  const ONBOARDING_DIALOG_MAX_WIDTH = 420;
+  const ONBOARDING_GAP = 14;
   const routes = ["home", "learn", "review", "dictionary", "kanji", "writing", "stats", "achievements", "eva-room", "jlpt-lesson", "textbooks"];
   const DICTIONARY_INITIAL_LIMIT = 72;
   const DICTIONARY_INCREMENT = 96;
@@ -259,6 +268,19 @@
   let toastTimer = 0;
   let deferredPwaInstallPrompt = null;
   let notificationPromptTimer = 0;
+  let onboardingScheduleTimer = 0;
+  let onboardingLayoutRaf = 0;
+  let onboardingScrollHandler = null;
+  let onboardingResizeHandler = null;
+  let onboardingKeydownHandler = null;
+  let onboardingFocusRestore = null;
+  let onboardingRoot = null;
+  let onboardingSpotlight = null;
+  let onboardingDialog = null;
+  let onboardingStepIndex = -1;
+  let onboardingActive = false;
+  let onboardingView = "step";
+  let onboardingTargetElement = null;
   let evaAutonomyTimer = 0;
   let evaSpriteRotationTimer = 0;
   let evaSpriteRotationTick = Math.floor(Date.now() / 60000);
@@ -297,6 +319,7 @@
     if (event.detail?.handledByFlashKanji) return;
     handleEvaEvent(event.detail || {});
   });
+  window.startFlashKanjiOnboarding = startFlashKanjiOnboarding;
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) maybeShowNotificationPrompt("usage");
     if (!document.hidden && state.route === "eva-room" && maybeRunEvaAutonomy("return")) {
@@ -345,6 +368,8 @@
     state.progress = loadProgress();
     document.documentElement.dataset.lowPower = LOW_POWER_MODE ? "1" : "0";
     syncUxSoundSettings();
+    syncHeaderSoundButton();
+    syncHeaderSocialToggleButton();
     applyTheme();
 
     try {
@@ -395,16 +420,20 @@
       state.lessonTranslations = lessonTranslations.items || {};
       state.monetization = monetization;
       hydrateProgress();
+      clearLegacyFlashKanjiOnboardingState();
       hydrateCustomization();
       applyTheme();
       syncPwaInstallInstalledFlag();
+      const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
       recordAppOpen();
+      refreshFlashKanjiOnboardingAudience(hadPriorVisit);
       claimDailyBonus();
       evaluateAchievements();
       saveProgress();
       render();
       registerServiceWorker();
       void primeDeferredDataForRoute(state.route);
+      scheduleFlashKanjiOnboarding();
     } catch (error) {
       console.error(error);
       app.innerHTML = renderLoadError(error);
@@ -627,18 +656,21 @@
     return LOW_POWER_MODE ? 2 : 4;
   }
 
+  function prefersReducedMotion() {
+    return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
   function detectLowPowerDevice() {
     try {
       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
       const memory = Number(navigator.deviceMemory || 0);
       const cores = Number(navigator.hardwareConcurrency || 0);
-      const reducedMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       return Boolean(
         connection?.saveData
         || ["slow-2g", "2g"].includes(String(connection?.effectiveType || ""))
         || (memory > 0 && memory <= 2)
         || (cores > 0 && cores <= 4)
-        || reducedMotion
+        || prefersReducedMotion()
       );
     } catch {
       return false;
@@ -664,6 +696,10 @@
         : "";
     if (route === "eva-room") {
       await loadEvaBundle({ render: false });
+    }
+    if (route === "review") {
+      await Promise.all(LEVEL_ORDER.map((level) => loadJlptLevelBundle(level, { render: false })));
+      await yieldToMain();
     }
     if (routeLevel) {
       await loadJlptLevelBundle(routeLevel, { render: false });
@@ -1311,6 +1347,7 @@
       ...item,
       id: String(item.id || item.courseCardId || item.kanji || ""),
       courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+      lessonId: item.lessonId || item.lesson_id || null,
       kanji: String(item.kanji || ""),
       meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
       readings: item.readings || {},
@@ -1322,12 +1359,26 @@
   function applyN5CatalogToCards() {
     if (!Array.isArray(state.n5KanjiCatalog) || !state.n5KanjiCatalog.length) return;
     const detailsByKanji = new Map(state.n5KanjiCatalog.map((item) => [item.kanji, item]));
+    const n5KanjiInCards = new Set();
     state.cards = state.cards.map((card) => {
       const detail = detailsByKanji.get(card.kanji);
       if (!detail) return card;
       const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
       if (level && level !== "N5") return card;
+      n5KanjiInCards.add(detail.kanji);
       return mergeN5CardDetail(card, detail);
+    });
+    state.n5KanjiCatalog.forEach((detail) => {
+      if (n5KanjiInCards.has(detail.kanji)) return;
+      state.cards.push(mergeN5CardDetail({
+        id: detail.courseCardId || detail.id,
+        kanji: detail.kanji,
+        lessonId: detail.lessonId || null,
+        jlpt: "N5",
+        examples: [],
+        source: "n5-catalog"
+      }, detail));
+      n5KanjiInCards.add(detail.kanji);
     });
   }
 
@@ -1336,6 +1387,7 @@
     const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
     const examples = (detail.examples || []).map((example) => ({
       ...example,
+      reading: displayHiragana(example.reading || example.hiragana || example.kana || ""),
       translation: example.translation_ru || example.translation || ""
     }));
     const firstExample = examples[0] || {};
@@ -1345,11 +1397,12 @@
     return {
       ...card,
       jlpt: "N5",
+      lessonId: card.lessonId || detail.lessonId || null,
       meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
       meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
-      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
-      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
-      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      onyomi: displayHiragana(arrayText(readings.onyomi) || card.onyomi || ""),
+      kunyomi: displayHiragana(arrayText(readings.kunyomi) || card.kunyomi || ""),
+      hiragana: displayHiragana((Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || ""),
       romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
       examples: examples.length ? examples : card.examples,
       apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
@@ -1498,6 +1551,7 @@
     const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
     const examples = (detail.examples || []).map((example) => ({
       ...example,
+      reading: displayHiragana(example.reading || example.hiragana || example.kana || ""),
       translation: example.translation_ru || example.translation || example.translation_en || ""
     }));
     const firstExample = examples[0] || {};
@@ -1511,9 +1565,9 @@
       lessonId: card.lessonId || detail.lessonId || null,
       meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
       meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
-      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
-      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
-      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      onyomi: displayHiragana(arrayText(readings.onyomi) || card.onyomi || ""),
+      kunyomi: displayHiragana(arrayText(readings.kunyomi) || card.kunyomi || ""),
+      hiragana: displayHiragana((Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || ""),
       romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
       examples: examples.length ? examples : card.examples,
       apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
@@ -1696,6 +1750,7 @@
     const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
     const examples = (detail.examples || []).map((example) => ({
       ...example,
+      reading: displayHiragana(example.reading || example.hiragana || example.kana || ""),
       translation: example.translation_ru || example.translation || example.translation_en || ""
     }));
     const firstExample = examples[0] || {};
@@ -1709,9 +1764,9 @@
       lessonId: card.lessonId || detail.lessonId || null,
       meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
       meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
-      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
-      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
-      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      onyomi: displayHiragana(arrayText(readings.onyomi) || card.onyomi || ""),
+      kunyomi: displayHiragana(arrayText(readings.kunyomi) || card.kunyomi || ""),
+      hiragana: displayHiragana((Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || ""),
       romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
       examples: examples.length ? examples : card.examples,
       apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
@@ -1938,6 +1993,7 @@
     const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
     const examples = (detail.examples || []).map((example) => ({
       ...example,
+      reading: displayHiragana(example.reading || example.hiragana || example.kana || ""),
       translation: example.translation_ru || example.translation || example.translation_en || ""
     }));
     const firstExample = examples[0] || {};
@@ -1951,9 +2007,9 @@
       lessonId: card.lessonId || detail.lessonId || null,
       meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
       meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
-      onyomi: arrayText(readings.onyomi) || card.onyomi || "",
-      kunyomi: arrayText(readings.kunyomi) || card.kunyomi || "",
-      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || "",
+      onyomi: displayHiragana(arrayText(readings.onyomi) || card.onyomi || ""),
+      kunyomi: displayHiragana(arrayText(readings.kunyomi) || card.kunyomi || ""),
+      hiragana: displayHiragana((Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || ""),
       romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
       examples: examples.length ? examples : card.examples,
       apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
@@ -2151,6 +2207,7 @@
       return !looksCorrupt(example.word) && !looksCorrupt(example.reading) && !looksCorrupt(example.translation_ru || example.translation || example.translation_en);
     }).map((example) => ({
       ...example,
+      reading: displayHiragana(example.reading || example.hiragana || example.kana || ""),
       translation: cleanText(example.translation_ru, example.translation, example.translation_en)
     }));
     const firstExample = examples[0] || {};
@@ -2164,11 +2221,11 @@
       lessonId: card.lessonId || detail.lessonId || null,
       meaning_ru: cleanText(card.meaning_ru, detail.meaning?.ru, detail.meaning_ru),
       meaning_en: cleanText(card.meaning_en, detail.meaning?.en, detail.meaning?.ru, card.meaning_ru),
-      onyomi: arrayText(readings.onyomi) || detail.onyomi || card.onyomi || "",
+      onyomi: displayHiragana(arrayText(readings.onyomi) || detail.onyomi || card.onyomi || ""),
       onyomi_romaji: arrayText(readings.onyomiRomaji || readings.onyomi_romaji) || detail.onyomi_romaji || card.onyomi_romaji || "",
-      kunyomi: arrayText(readings.kunyomi) || detail.kunyomi || card.kunyomi || "",
+      kunyomi: displayHiragana(arrayText(readings.kunyomi) || detail.kunyomi || card.kunyomi || ""),
       kunyomi_romaji: arrayText(readings.kunyomiRomaji || readings.kunyomi_romaji) || detail.kunyomi_romaji || card.kunyomi_romaji || "",
-      hiragana: (Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || detail.hiragana || firstExample.reading || card.hiragana || "",
+      hiragana: displayHiragana((Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || detail.hiragana || firstExample.reading || card.hiragana || ""),
       romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || detail.romaji || firstExample.romaji || card.romaji || "",
       examples: examples.length ? examples : card.examples,
       apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
@@ -2318,11 +2375,12 @@
       favorites: {},
       transactions: [],
       streakHistory: [],
-      streak: { current: 0, best: 0, lastStudyDate: null },
+      streak: { current: 0, best: 0, lastStudyDate: null, pendingReward: null },
       visits: { firstVisitDate: null, lastVisitDate: null, lastDailyBonusDate: null, streak: 0, bestStreak: 0 },
       lessonCompletions: {},
       achievements: {},
       dailyBonuses: {},
+      dailyBonusPending: null,
       writingPractice: { completed: 0, cards: {} },
       secrets: { evaClicks: 0, nightVisit: false },
       sentencePractice: {
@@ -2348,7 +2406,7 @@
       n4Course: defaultN4CourseProgress(),
       n3Course: defaultN3CourseProgress(),
       n2Course: defaultN2CourseProgress(),
-      unlockedJlptLevels: [],  // global JLPT textbook unlock state; N5 starts available, completing a level's lessons forces next into this list for reliable UI + persistence
+      unlockedJlptLevels: LEVEL_ORDER.slice(),  // JLPT textbooks and lesson modules start fully open; the list stays for compatibility and stats.
       n1Course: defaultN1CourseProgress(),
       unlockedBackgrounds: ["bg_study_hub"],
       selectedEvaRoomBackground: "bg_study_hub",
@@ -2380,7 +2438,7 @@
       ...base,
       ...saved,
       version: APP_VERSION,
-      settings: { ...base.settings, ...(saved.settings || {}) },
+      settings: mergeSettings(base.settings, saved.settings || {}),
       cards: { ...base.cards, ...(saved.cards || {}) },
       seenCards: { ...base.seenCards, ...(saved.seenCards || {}) },
       seenKanji: { ...base.seenKanji, ...(saved.seenKanji || {}) },
@@ -2388,11 +2446,12 @@
       favorites: { ...base.favorites, ...(saved.favorites || {}) },
       transactions: Array.isArray(saved.transactions) ? saved.transactions : base.transactions,
       streakHistory: Array.isArray(saved.streakHistory) ? saved.streakHistory : base.streakHistory,
-      streak: { ...base.streak, ...(saved.streak || {}) },
+      streak: mergeStreakProgress(base.streak, saved.streak || {}),
       visits: { ...base.visits, ...(saved.visits || {}) },
       lessonCompletions: { ...base.lessonCompletions, ...(saved.lessonCompletions || {}) },
       achievements: { ...base.achievements, ...(saved.achievements || {}) },
       dailyBonuses: { ...base.dailyBonuses, ...(saved.dailyBonuses || {}) },
+      dailyBonusPending: normalizePendingDailyBonus(saved.dailyBonusPending || null),
       appOpens: Number(saved.appOpens || base.appOpens),
       totalMoonFragmentsEarned: Number(saved.totalMoonFragmentsEarned || base.totalMoonFragmentsEarned),
       writingPractice: { ...base.writingPractice, ...(saved.writingPractice || {}) },
@@ -2405,7 +2464,11 @@
       n3Course: mergeN3CourseProgress(base.n3Course, saved.n3Course || {}),
       n2Course: mergeN2CourseProgress(base.n2Course, saved.n2Course || {}),
       n1Course: mergeN1CourseProgress(base.n1Course, saved.n1Course || {}),
-      unlockedJlptLevels: Array.isArray(saved.unlockedJlptLevels) ? [...new Set([...(base.unlockedJlptLevels || []), ...saved.unlockedJlptLevels])] : (base.unlockedJlptLevels || []),
+      unlockedJlptLevels: [...new Set([
+        ...(Array.isArray(base.unlockedJlptLevels) ? base.unlockedJlptLevels : []),
+        ...(Array.isArray(saved.unlockedJlptLevels) ? saved.unlockedJlptLevels : []),
+        ...LEVEL_ORDER
+      ])],
       unlockedBackgrounds: [...new Set([...(base.unlockedBackgrounds || []), ...((saved.unlockedBackgrounds) || [])])],
       selectedEvaRoomBackground: saved.selectedEvaRoomBackground || base.selectedEvaRoomBackground,
       unlockedEvaSprites: [...new Set([...(base.unlockedEvaSprites || []), ...((saved.unlockedEvaSprites) || []), ...(((saved.shop && saved.shop.owned) || []).filter((item) => String(item).startsWith("eva_sprite:")).map((item) => String(item).replace("eva_sprite:", "")))])],
@@ -2430,6 +2493,55 @@
         equipped: { ...base.shop.equipped, ...((saved.shop && saved.shop.equipped) || {}) }
       }
     };
+  }
+
+  function mergeSettings(base, saved) {
+    const merged = { ...base, ...(saved || {}) };
+    merged.sound = normalizeBooleanSetting(merged.sound, base.sound !== false);
+    merged.uxSound = normalizeBooleanSetting(merged.uxSound, base.uxSound !== false);
+    merged.languageAutoDetected = normalizeBooleanSetting(merged.languageAutoDetected, base.languageAutoDetected !== false);
+    merged.languageManuallySelected = normalizeBooleanSetting(merged.languageManuallySelected, base.languageManuallySelected === true);
+    return merged;
+  }
+
+  function mergeStreakProgress(base, saved) {
+    const merged = { ...base, ...(saved || {}) };
+    merged.current = normalizeNumber(merged.current, base.current || 0);
+    merged.best = normalizeNumber(merged.best, base.best || 0);
+    merged.lastStudyDate = merged.lastStudyDate || null;
+    merged.pendingReward = normalizePendingStreakReward(merged.pendingReward);
+    return merged;
+  }
+
+  function normalizePendingStreakReward(value) {
+    if (!value || typeof value !== "object") return null;
+    const milestone = normalizeNumber(value.milestone, 0);
+    const availableOn = typeof value.availableOn === "string" ? value.availableOn : "";
+    if (!milestone || !availableOn) return null;
+    return { milestone, availableOn };
+  }
+
+  function normalizePendingDailyBonus(value) {
+    if (!value || typeof value !== "object") return null;
+    const availableOn = typeof value.availableOn === "string" ? value.availableOn : "";
+    if (!availableOn) return null;
+    return { availableOn };
+  }
+
+  function normalizeBooleanSetting(value, fallback = true) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (["false", "0", "off", "no", "disabled"].includes(normalized)) return false;
+      if (["true", "1", "on", "yes", "enabled"].includes(normalized)) return true;
+    }
+    return fallback;
+  }
+
+  function normalizeNumber(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
   }
 
   function defaultJlptModuleEvaState(level = "N5") {
@@ -3864,6 +3976,27 @@
       setRoute(route, target.dataset.focus || null, target.dataset.subroute || null);
     }
     if (action === "share-page") shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed"));
+    if (action === "toggle-header-socials") setHeaderSocialOpen(!isHeaderSocialOpen());
+    if (action === "repeat-onboarding") {
+      startFlashKanjiOnboarding({ force: true });
+      return;
+    }
+    if (action === "onboarding-next") {
+      flashKanjiOnboardingAdvance();
+      return;
+    }
+    if (action === "onboarding-prev") {
+      flashKanjiOnboardingBack();
+      return;
+    }
+    if (action === "onboarding-continue") {
+      flashKanjiOnboardingOpenLearn();
+      return;
+    }
+    if (action === "onboarding-close" || action === "onboarding-skip") {
+      stopFlashKanjiOnboarding({ completed: true });
+      return;
+    }
     if (action === "contact-email") {
       state.navMenu = null;
       state.contactModal = true;
@@ -4401,6 +4534,10 @@
       playUxSound("menu_close");
       return;
     }
+    if (action === "toggle-header-socials") {
+      playUxSound(isHeaderSocialOpen() ? "menu_close" : "menu_open");
+      return;
+    }
     if (action === "show-answer" || action === "open-card") {
       playUxSound("card_flip");
       return;
@@ -4422,6 +4559,7 @@
       return;
     }
     if (target?.matches("button, .btn, [role='button']")) playUxSound("button_click");
+    if (action !== "toggle-header-socials") setHeaderSocialOpen(false);
   }
 
   function isStudyCardAction(action, target) {
@@ -4491,6 +4629,7 @@
   }
 
   function handleKeydown(event) {
+    if (handleFlashKanjiOnboardingKeydown(event)) return;
     if (handleMoonCheatKey(event)) return;
 
     if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.navMenu)) {
@@ -4633,6 +4772,7 @@
       applyPendingFocus();
       syncScrollToggleButton();
       syncCyberHudEffects();
+      syncFlashKanjiOnboarding();
     });
   }
 
@@ -4782,6 +4922,524 @@
   function renderGlobalOverlays() {
     const overlays = `${renderJlptEvaBottomDock()}${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
     return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
+  }
+
+  function ensureFlashKanjiOnboardingRoot() {
+    if (onboardingRoot?.isConnected) return onboardingRoot;
+    if (!document.body) return null;
+    if (!onboardingRoot) {
+      onboardingRoot = document.createElement("div");
+      onboardingRoot.className = "flash-kanji-onboarding-root";
+      onboardingRoot.setAttribute("role", "presentation");
+      onboardingRoot.setAttribute("aria-hidden", "false");
+    }
+    if (!onboardingRoot.isConnected) document.body.appendChild(onboardingRoot);
+    return onboardingRoot;
+  }
+
+  const FLASH_KANJI_ONBOARDING_STEPS = [
+    {
+      target: null,
+      title: { ru: "Добро пожаловать", en: "Welcome" },
+      text: { ru: "Привет! Я Ева. Давай быстро покажу, как устроен Flash Kanji.", en: "Hi! I am Eva. Let me quickly show you how Flash Kanji works." }
+    },
+    {
+      target: "[data-tour='jlpt-lessons']",
+      title: { ru: "Уроки JLPT", en: "JLPT lessons" },
+      text: { ru: "Здесь находятся уроки от JLPT N5 до N1. Начни со своего уровня и постепенно открывай новые темы.", en: "Here are the lessons from JLPT N5 to N1. Start with your level and unlock new topics step by step." }
+    },
+    {
+      target: "[data-tour='srs-review']",
+      title: { ru: "Карточки и повторение", en: "Cards and review" },
+      text: { ru: "Изученные кандзи будут возвращаться на повторение. Так ты не забудешь их через несколько дней.", en: "Studied kanji will come back for review so you do not forget them after a few days." }
+    },
+    {
+      target: "[data-tour='dictionary']",
+      title: { ru: "Словарь", en: "Dictionary" },
+      text: { ru: "В словаре можно посмотреть чтения, значения, примеры слов и подробную информацию о каждом кандзи.", en: "In the dictionary you can check readings, meanings, word examples, and detailed kanji info." }
+    },
+    {
+      target: "[data-tour='writing-practice']",
+      title: { ru: "Практика написания", en: "Writing practice" },
+      text: { ru: "Здесь можно потренироваться писать кандзи по чертам прямо на экране.", en: "Here you can practice writing kanji stroke by stroke прямо on the screen." }
+    },
+    {
+      target: ["[data-tour='eva-room']", "[data-tour='profile-progress']", "[data-tour='profile-progress-nav']"],
+      title: { ru: "Комната Евы", en: "Eva room" },
+      text: (target) => (target?.dataset?.tour === "eva-room"
+        ? { ru: "А это моя комната. Здесь можно поговорить со мной, менять фон и использовать лунные фрагменты.", en: "This is my room. Here you can talk to me, change the background, and use Moon Fragments." }
+        : { ru: "Если комнаты Евы на этой странице нет, смотри на статистику, XP и серию дней.", en: "If Eva Room is not on this page, look at your stats, XP, and streak." })
+    }
+  ];
+
+  const FLASH_KANJI_ONBOARDING_FINAL_COPY = {
+    title: { ru: "Готово!", en: "All set!" },
+    text: { ru: "Выбери первый урок и начни изучать японский. Я буду рядом.", en: "Pick your first lesson and start learning Japanese. I will be right here." },
+    start: { ru: "Начать обучение", en: "Start learning" },
+    close: { ru: "Закрыть", en: "Close" }
+  };
+
+  function isFlashKanjiOnboardingCompleted() {
+    try {
+      return localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  function loadFlashKanjiOnboardingAudience() {
+    try {
+      return localStorage.getItem(ONBOARDING_AUDIENCE_STORAGE_KEY) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function setFlashKanjiOnboardingAudience(audience) {
+    try {
+      localStorage.setItem(ONBOARDING_AUDIENCE_STORAGE_KEY, audience);
+    } catch {}
+  }
+
+  function hasFlashKanjiReturningSignals(progress = state.progress) {
+    if (!progress) return false;
+    return Boolean(
+      Number(progress.appOpens || 0) > 0
+      || Object.keys(progress.lessonCompletions || {}).length > 0
+      || Object.keys(progress.cards || {}).length > 0
+      || Object.keys(progress.seenKanji || {}).length > 0
+      || Object.keys(progress.daily || {}).length > 0
+      || Object.keys(progress.favorites || {}).length > 0
+      || Object.keys(progress.transactions || {}).length > 0
+      || Number(progress.totalMoonFragmentsEarned || 0) > 0
+      || Number(progress.secrets?.evaClicks || 0) > 0
+      || Number(progress.secrets?.nightVisit ? 1 : 0) > 0
+      || Number(progress.visits?.streak || 0) > 0
+      || Number(progress.visits?.bestStreak || 0) > 0
+    );
+  }
+
+  function refreshFlashKanjiOnboardingAudience(hadPriorVisit = false) {
+    const audience = loadFlashKanjiOnboardingAudience();
+    if (audience === "returning" || audience === "completed") return audience;
+    if (isFlashKanjiOnboardingCompleted()) {
+      setFlashKanjiOnboardingAudience("completed");
+      return "completed";
+    }
+    if (hadPriorVisit) {
+      setFlashKanjiOnboardingAudience("returning");
+      return "returning";
+    }
+    setFlashKanjiOnboardingAudience("new");
+    return "new";
+  }
+
+  function shouldShowFlashKanjiOnboarding() {
+    if (isFlashKanjiOnboardingCompleted()) return false;
+    const audience = loadFlashKanjiOnboardingAudience();
+    if (audience === "returning" || audience === "completed") return false;
+    if (audience === "new") return true;
+    return refreshFlashKanjiOnboardingAudience(hasFlashKanjiReturningSignals()) === "new";
+  }
+
+  function clearLegacyFlashKanjiOnboardingState() {
+    try {
+      if (localStorage.getItem(ONBOARDING_STORAGE_KEY_LEGACY) === "true") {
+        localStorage.removeItem(ONBOARDING_STORAGE_KEY_LEGACY);
+      }
+    } catch {}
+  }
+
+  function setFlashKanjiOnboardingCompleted() {
+    try {
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+      setFlashKanjiOnboardingAudience("completed");
+    } catch {}
+  }
+
+  function isFlashKanjiOnboardingActive() {
+    return onboardingActive;
+  }
+
+  function flashKanjiOnboardingStepCount() {
+    return FLASH_KANJI_ONBOARDING_STEPS.length;
+  }
+
+  function flashKanjiOnboardingCurrentStep() {
+    return FLASH_KANJI_ONBOARDING_STEPS[clamp(onboardingStepIndex, 0, flashKanjiOnboardingStepCount() - 1)] || FLASH_KANJI_ONBOARDING_STEPS[0];
+  }
+
+  function flashKanjiOnboardingTargetSelectors(step = flashKanjiOnboardingCurrentStep()) {
+    if (!step?.target) return [];
+    return Array.isArray(step.target) ? step.target : [step.target];
+  }
+
+  function flashKanjiOnboardingTarget(step = flashKanjiOnboardingCurrentStep()) {
+    return flashKanjiOnboardingTargetSelectors(step).map((selector) => document.querySelector(selector)).find(Boolean) || null;
+  }
+
+  function flashKanjiOnboardingText(copy, target = null) {
+    if (typeof copy === "function") return flashKanjiOnboardingText(copy(target), target);
+    return localized(copy || { ru: "", en: "" });
+  }
+
+  function canStartFlashKanjiOnboardingNow() {
+    if (onboardingActive) return false;
+    if (!state.progress || !state.i18n || !state.lessons.length) return false;
+    if (!document.body || document.visibilityState !== "visible") return false;
+    if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.navMenu) return false;
+    return true;
+  }
+
+  function scheduleFlashKanjiOnboarding(force = false, delay = ONBOARDING_INITIAL_DELAY) {
+    clearTimeout(onboardingScheduleTimer);
+    if (!force && !shouldShowFlashKanjiOnboarding()) return;
+    onboardingScheduleTimer = window.setTimeout(() => {
+      onboardingScheduleTimer = 0;
+      startFlashKanjiOnboarding({ force });
+    }, delay);
+  }
+
+  function startFlashKanjiOnboarding(options = {}) {
+    const force = Boolean(options.force);
+    let rendered = false;
+    if (onboardingActive) {
+      if (!force) return true;
+      stopFlashKanjiOnboarding({ completed: false, silent: true });
+    }
+    if (!force && !shouldShowFlashKanjiOnboarding()) return false;
+    if (!canStartFlashKanjiOnboardingNow()) {
+      scheduleFlashKanjiOnboarding(force, ONBOARDING_RETRY_DELAY);
+      return false;
+    }
+
+    clearTimeout(onboardingScheduleTimer);
+    try {
+      onboardingFocusRestore = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      onboardingActive = true;
+      onboardingView = "step";
+      onboardingStepIndex = 0;
+      document.body.classList.add("onboarding-open");
+      const shell = document.querySelector(".app-shell");
+      if (shell) {
+        shell.setAttribute("aria-hidden", "true");
+        try {
+          shell.inert = true;
+        } catch {}
+      }
+      ensureFlashKanjiOnboardingRoot();
+      renderFlashKanjiOnboarding();
+      flashKanjiOnboardingLayout();
+      rendered = true;
+      window.addEventListener("scroll", scheduleFlashKanjiOnboardingLayout, { passive: true });
+      window.addEventListener("resize", scheduleFlashKanjiOnboardingLayout);
+      window.addEventListener("orientationchange", scheduleFlashKanjiOnboardingLayout);
+      scheduleFlashKanjiOnboardingLayout();
+      focusFlashKanjiOnboarding();
+      return true;
+    } catch (error) {
+      console.error("Flash Kanji onboarding failed to start.", error);
+      stopFlashKanjiOnboarding({ completed: false, silent: true });
+      if (!rendered) scheduleFlashKanjiOnboarding(force, ONBOARDING_RETRY_DELAY);
+      return false;
+    }
+  }
+
+  function stopFlashKanjiOnboarding(options = {}) {
+    const { completed = true, silent = false, routeTo = null } = options;
+    clearTimeout(onboardingScheduleTimer);
+    onboardingScheduleTimer = 0;
+    cancelAnimationFrame(onboardingLayoutRaf);
+    onboardingLayoutRaf = 0;
+    window.removeEventListener("scroll", scheduleFlashKanjiOnboardingLayout);
+    window.removeEventListener("resize", scheduleFlashKanjiOnboardingLayout);
+    window.removeEventListener("orientationchange", scheduleFlashKanjiOnboardingLayout);
+    if (onboardingTargetElement) onboardingTargetElement.classList.remove("is-onboarding-target");
+    onboardingTargetElement = null;
+    onboardingActive = false;
+    onboardingView = "step";
+    onboardingStepIndex = 0;
+    if (onboardingRoot) {
+      onboardingRoot.remove();
+      onboardingRoot = null;
+      onboardingSpotlight = null;
+      onboardingDialog = null;
+    }
+    document.body.classList.remove("onboarding-open");
+    const shell = document.querySelector(".app-shell");
+    if (shell) {
+      shell.removeAttribute("aria-hidden");
+      try {
+        shell.inert = false;
+      } catch {}
+    }
+    if (completed) setFlashKanjiOnboardingCompleted();
+    if (!silent) {
+      if (routeTo) {
+        setRoute(routeTo);
+      } else {
+        render();
+      }
+    }
+    if (onboardingFocusRestore?.focus) {
+      requestAnimationFrame(() => {
+        try {
+          onboardingFocusRestore.focus();
+        } catch {}
+      });
+    }
+  }
+
+  function renderFlashKanjiOnboarding() {
+    if (!ensureFlashKanjiOnboardingRoot()) return;
+    onboardingRoot.style.visibility = "hidden";
+    const step = onboardingView === "final" ? null : flashKanjiOnboardingCurrentStep();
+    const target = onboardingView === "final" ? null : flashKanjiOnboardingTarget(step);
+    const titleCopy = onboardingView === "final" ? FLASH_KANJI_ONBOARDING_FINAL_COPY.title : step.title;
+    const textCopy = onboardingView === "final" ? FLASH_KANJI_ONBOARDING_FINAL_COPY.text : flashKanjiOnboardingText(step.text, target);
+    const indicator = onboardingView === "final"
+      ? (lang() === "ru" ? "Готово" : "Done")
+      : `${onboardingStepIndex + 1} ${lang() === "ru" ? "из" : "of"} ${flashKanjiOnboardingStepCount()}`;
+    const title = localized(titleCopy);
+    const text = localized(textCopy);
+    const targetTour = target?.dataset?.tour || "";
+    const avatar = mascotImageSrc("eva", "calm", "welcome");
+    const total = flashKanjiOnboardingStepCount();
+    onboardingRoot.classList.toggle("is-final", onboardingView === "final");
+    onboardingRoot.classList.toggle("has-target", Boolean(target));
+    onboardingRoot.dataset.view = onboardingView;
+    const actions = onboardingView === "final"
+      ? `
+        <button class="btn primary" type="button" data-action="onboarding-continue">${escapeHtml(localized(FLASH_KANJI_ONBOARDING_FINAL_COPY.start))}</button>
+        <button class="btn ghost" type="button" data-action="onboarding-close">${escapeHtml(localized(FLASH_KANJI_ONBOARDING_FINAL_COPY.close))}</button>
+      `
+      : onboardingStepIndex === 0
+        ? `
+          <button class="btn primary" type="button" data-action="onboarding-next">${escapeHtml(lang() === "ru" ? "Начать" : "Start")}</button>
+          <button class="btn ghost" type="button" data-action="onboarding-skip">${escapeHtml(lang() === "ru" ? "Пропустить" : "Skip")}</button>
+        `
+        : `
+          <button class="btn ghost" type="button" data-action="onboarding-prev">${escapeHtml(lang() === "ru" ? "Назад" : "Back")}</button>
+          <button class="btn primary" type="button" data-action="onboarding-next">${escapeHtml(lang() === "ru" ? "Далее" : "Next")}</button>
+          <button class="btn ghost" type="button" data-action="onboarding-skip">${escapeHtml(lang() === "ru" ? "Пропустить" : "Skip")}</button>
+        `;
+
+    onboardingRoot.innerHTML = `
+      ${onboardingView === "final" ? "" : `<div class="flash-kanji-onboarding-scrim" aria-hidden="true"></div>`}
+      ${onboardingView === "final" || target ? "" : `<div class="flash-kanji-onboarding-scrim" aria-hidden="true"></div>`}
+      <div class="flash-kanji-onboarding-spotlight${target ? "" : " is-hidden"}" data-onboarding-spotlight aria-hidden="true"></div>
+      <section class="flash-kanji-onboarding-dialog${onboardingView === "final" ? " is-final" : ""}" role="dialog" aria-modal="true" aria-labelledby="flashKanjiOnboardingTitle" aria-describedby="flashKanjiOnboardingDesc" tabindex="-1">
+        <div class="flash-kanji-onboarding-head">
+          <span class="pill">${escapeHtml(indicator)}</span>
+          <span class="pill">${escapeHtml(title)}</span>
+        </div>
+        <div class="flash-kanji-onboarding-body">
+          <img class="flash-kanji-onboarding-eva" src="${escapeAttr(avatar)}" alt="${escapeAttr(lang() === "ru" ? "Ева" : "Eva")}" loading="eager" decoding="async" />
+          <div class="flash-kanji-onboarding-copy">
+            <h2 id="flashKanjiOnboardingTitle">${escapeHtml(title)}</h2>
+            <p id="flashKanjiOnboardingDesc">${escapeHtml(text)}</p>
+          </div>
+        </div>
+        <div class="actions flash-kanji-onboarding-actions">${actions}</div>
+      </section>
+    `;
+    onboardingSpotlight = $('[data-onboarding-spotlight]', onboardingRoot);
+    onboardingDialog = $(".flash-kanji-onboarding-dialog", onboardingRoot);
+    if (onboardingTargetElement && onboardingTargetElement !== target) onboardingTargetElement.classList.remove("is-onboarding-target");
+    onboardingTargetElement = target || null;
+    if (onboardingTargetElement) onboardingTargetElement.classList.add("is-onboarding-target");
+    if (onboardingDialog) onboardingDialog.dataset.totalSteps = String(total);
+    scheduleFlashKanjiOnboardingLayout();
+  }
+
+  function scheduleFlashKanjiOnboardingLayout() {
+    if (!onboardingActive) return;
+    if (onboardingLayoutRaf) return;
+    onboardingLayoutRaf = requestAnimationFrame(() => {
+      onboardingLayoutRaf = 0;
+      flashKanjiOnboardingLayout();
+    });
+  }
+
+  function flashKanjiOnboardingLayout() {
+    if (!onboardingActive || !onboardingRoot || !onboardingDialog) return;
+    const target = onboardingView === "final" ? null : onboardingTargetElement || flashKanjiOnboardingTarget();
+    const reduced = prefersReducedMotion();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const compact = viewportWidth < 1024 || viewportHeight < 720;
+    const dialogRect = onboardingDialog.getBoundingClientRect();
+    const dialogWidth = Math.min(Math.max(dialogRect.width || ONBOARDING_DIALOG_WIDTH, 320), Math.min(ONBOARDING_DIALOG_MAX_WIDTH, viewportWidth - 20));
+    const dialogHeight = Math.min(Math.max(dialogRect.height || 220, 180), Math.max(180, viewportHeight - 24));
+    onboardingDialog.style.maxWidth = `${Math.min(ONBOARDING_DIALOG_MAX_WIDTH, Math.max(320, viewportWidth - 24))}px`;
+    onboardingDialog.style.maxHeight = `${Math.max(180, viewportHeight - 24)}px`;
+
+    if (target) {
+      if (!target.isConnected) {
+        renderFlashKanjiOnboarding();
+        return;
+      }
+      const targetRect = target.getBoundingClientRect();
+      if (targetRect.top < 8 || targetRect.bottom > viewportHeight - 8 || targetRect.left < 8 || targetRect.right > viewportWidth - 8) {
+        target.scrollIntoView({ block: "center", inline: "nearest", behavior: reduced ? "auto" : "smooth" });
+        window.setTimeout(scheduleFlashKanjiOnboardingLayout, reduced ? 0 : 280);
+        onboardingRoot.style.visibility = "hidden";
+        return;
+      }
+
+      const gap = ONBOARDING_GAP;
+      const mobile = compact;
+      const spaces = {
+        top: targetRect.top - gap,
+        bottom: viewportHeight - targetRect.bottom - gap,
+        left: targetRect.left - gap,
+        right: viewportWidth - targetRect.right - gap
+      };
+      const fits = {
+        top: spaces.top >= dialogHeight,
+        bottom: spaces.bottom >= dialogHeight,
+        left: spaces.left >= dialogWidth,
+        right: spaces.right >= dialogWidth
+      };
+      let placement = "bottom";
+      if (compact) {
+        placement = "center";
+      } else {
+        placement = fits.top ? "top" : fits.bottom ? "bottom" : fits.right ? "right" : fits.left ? "left" : "center";
+      }
+      const clampLeft = (value) => clamp(Math.round(value), 12, Math.max(12, viewportWidth - dialogWidth - 12));
+      const clampTop = (value) => clamp(Math.round(value), 12, Math.max(12, viewportHeight - dialogHeight - 12));
+      let left = Math.round((viewportWidth - dialogWidth) / 2);
+      let top = Math.round((viewportHeight - dialogHeight) / 2);
+      if (compact) {
+        left = Math.round((viewportWidth - dialogWidth) / 2);
+        top = clampTop(Math.min(viewportHeight - dialogHeight - 12, Math.max(12, viewportHeight * 0.14)));
+      } else if (placement === "top") {
+        left = clampLeft(targetRect.left + (targetRect.width - dialogWidth) / 2);
+        top = clampTop(targetRect.top - dialogHeight - gap);
+      } else if (placement === "bottom") {
+        left = clampLeft(targetRect.left + (targetRect.width - dialogWidth) / 2);
+        top = clampTop(targetRect.bottom + gap);
+      } else if (placement === "left") {
+        left = clampLeft(targetRect.left - dialogWidth - gap);
+        top = clampTop(targetRect.top + (targetRect.height - dialogHeight) / 2);
+      } else if (placement === "right") {
+        left = clampLeft(targetRect.right + gap);
+        top = clampTop(targetRect.top + (targetRect.height - dialogHeight) / 2);
+      }
+      onboardingDialog.style.left = `${left}px`;
+      onboardingDialog.style.top = `${top}px`;
+      onboardingDialog.dataset.placement = placement;
+      if (onboardingSpotlight) {
+        const padding = 12;
+        onboardingSpotlight.hidden = false;
+        onboardingSpotlight.style.left = `${Math.round(targetRect.left - padding)}px`;
+        onboardingSpotlight.style.top = `${Math.round(targetRect.top - padding)}px`;
+        onboardingSpotlight.style.width = `${Math.round(targetRect.width + padding * 2)}px`;
+        onboardingSpotlight.style.height = `${Math.round(targetRect.height + padding * 2)}px`;
+        onboardingSpotlight.style.borderRadius = `${Math.max(6, Math.round(parseFloat(getComputedStyle(target).borderRadius || "8") || 8))}px`;
+      }
+    } else {
+      onboardingDialog.style.left = `${Math.round((viewportWidth - dialogWidth) / 2)}px`;
+      onboardingDialog.style.top = `${Math.round(Math.min(viewportHeight - dialogHeight - 12, Math.max(12, viewportHeight * 0.18)))}px`;
+      onboardingDialog.dataset.placement = "center";
+      if (onboardingSpotlight) onboardingSpotlight.hidden = true;
+    }
+
+    onboardingRoot.style.visibility = "visible";
+    focusFlashKanjiOnboarding();
+  }
+
+  function syncFlashKanjiOnboarding() {
+    if (!onboardingActive) return;
+    renderFlashKanjiOnboarding();
+  }
+
+  function focusFlashKanjiOnboarding() {
+    if (!onboardingDialog) return;
+    const preferred = onboardingDialog.querySelector('[data-action="onboarding-next"], [data-action="onboarding-continue"], [data-action="onboarding-start"], [data-action="onboarding-prev"]');
+    const buttons = onboardingDialog.querySelectorAll("button");
+    const next = preferred || buttons[0] || onboardingDialog;
+    try {
+      next.focus?.();
+    } catch {}
+  }
+
+  function flashKanjiOnboardingFocusableElements() {
+    if (!onboardingDialog) return [];
+    return Array.from(onboardingDialog.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')).filter((item) => item instanceof HTMLElement);
+  }
+
+  function flashKanjiOnboardingCycleFocus(direction = 1) {
+    const focusables = flashKanjiOnboardingFocusableElements();
+    if (!focusables.length) return;
+    const current = document.activeElement;
+    const index = focusables.indexOf(current);
+    const nextIndex = index === -1
+      ? (direction > 0 ? 0 : focusables.length - 1)
+      : (index + direction + focusables.length) % focusables.length;
+    focusables[nextIndex]?.focus?.();
+  }
+
+  function handleFlashKanjiOnboardingKeydown(event) {
+    if (!onboardingActive) return false;
+    if (event.key === "Tab") {
+      event.preventDefault();
+      flashKanjiOnboardingCycleFocus(event.shiftKey ? -1 : 1);
+      return true;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      stopFlashKanjiOnboarding({ completed: true });
+      return true;
+    }
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      flashKanjiOnboardingAdvance();
+      return true;
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      flashKanjiOnboardingBack();
+      return true;
+    }
+    return false;
+  }
+
+  function flashKanjiOnboardingAdvance() {
+    if (!onboardingActive) return;
+    const lastIndex = flashKanjiOnboardingStepCount() - 1;
+    if (onboardingView === "final") return;
+    if (onboardingStepIndex < lastIndex) {
+      onboardingStepIndex += 1;
+      renderFlashKanjiOnboarding();
+      return;
+    }
+    onboardingView = "final";
+    renderFlashKanjiOnboarding();
+  }
+
+  function flashKanjiOnboardingBack() {
+    if (!onboardingActive) return;
+    if (onboardingView === "final") {
+      onboardingView = "step";
+      onboardingStepIndex = flashKanjiOnboardingStepCount() - 1;
+      renderFlashKanjiOnboarding();
+      return;
+    }
+    if (onboardingStepIndex > 0) {
+      onboardingStepIndex -= 1;
+      renderFlashKanjiOnboarding();
+    }
+  }
+
+  function flashKanjiOnboardingComplete(routeTo = null) {
+    stopFlashKanjiOnboarding({ completed: true, routeTo });
+  }
+
+  function flashKanjiOnboardingOpenLearn() {
+    state.activeLearnJlpt = "N5";
+    flashKanjiOnboardingComplete("learn");
   }
 
   function jlptEvaSupportedLevels() {
@@ -5030,6 +5688,8 @@
     });
     const languageButton = $('[data-action="language"]');
     if (languageButton) languageButton.textContent = lang().toUpperCase();
+    syncHeaderSoundButton();
+    syncHeaderSocialToggleButton();
   }
 
   function renderHome() {
@@ -5287,7 +5947,7 @@
     const checkpoints = [1, 7, 30, 100];
     const goalMet = todayStats().goalClaimed;
     return `
-      <article class="metric streak-card">
+      <article class="metric streak-card" data-tour="profile-progress">
         <span>${escapeHtml(t("streak"))}</span>
         <strong>${state.progress.streak.current}</strong>
         <small>${escapeHtml(goalMet ? t("streakGoalDone") : t("streakGoalHint"))}</small>
@@ -5305,7 +5965,7 @@
       ? { title: "Комната Евы", text: "Мини-новелла, разговоры и уютные фоны за Moon Fragments.", action: "Войти" }
       : { title: "Eva Room", text: "A cozy mini visual novel with backgrounds and Moon Fragments.", action: "Enter" };
     return `
-      <article class="eva-room-entry">
+      <article class="eva-room-entry" data-tour="eva-room">
         <div class="eva-room-entry-bg">
           <img src="${escapeAttr(bg.file)}" alt="" loading="lazy" onerror="this.hidden=true" />
         </div>
@@ -9270,7 +9930,7 @@
   }
 
   function n5CardsForLesson(lesson) {
-    return (lesson?.kanji || []).map((kanji) => n5CardByKanji(kanji)).filter(Boolean);
+    return (lesson?.kanji || []).map((kanji) => n5CardByKanji(kanji, lesson)).filter(Boolean);
   }
 
   function n5AllCards() {
@@ -9282,32 +9942,41 @@
     });
   }
 
-  function n5CardByKanji(kanji) {
+  function n5CardByKanji(kanji, lesson = null) {
     const literal = String(kanji || "");
     const detail = state.n5KanjiCatalog?.find((item) => item.kanji === literal) || null;
     const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N5")
       || state.cards.find((item) => item.kanji === literal)
       || null;
-    if (card && detail) return mergeN5CardDetail(card, detail);
+    const lessonId = lesson?.id || detail?.lessonId || null;
+    if (card && detail) return mergeN5CardDetail({ ...card, lessonId: card.lessonId || lessonId }, detail);
     if (card) return card;
     if (!detail) return null;
     return mergeN5CardDetail({
       id: detail.courseCardId || detail.id,
       kanji: detail.kanji,
+      lessonId,
       jlpt: "N5",
       examples: []
     }, detail);
   }
 
+  function normalizedCardExamples(card, examples = []) {
+    const list = (Array.isArray(examples) ? examples : []).slice(0, 3).map((example) => ({
+      ...example,
+      reading: displayHiragana(example.reading || example.hiragana || example.kana || card.hiragana || "")
+    }));
+    if (list.length) return list;
+    return [{ word: card.kanji, reading: displayHiragana(card.hiragana || ""), romaji: card.romaji || "", translation: cardMeaning(card) }];
+  }
+
   function n5CardExamples(card) {
-    const examples = Array.isArray(card.examples) ? card.examples : [];
-    if (examples.length) return examples.slice(0, 3);
-    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+    return normalizedCardExamples(card, card.examples);
   }
 
   function n5CardHint(card, example) {
     const word = example?.word || card.kanji;
-    const reading = example?.reading || card.hiragana || "";
+    const reading = displayHiragana(example?.reading || card.hiragana || "");
     return lang() === "ru"
       ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}» и сразу проговори слово: ${word}${reading ? ` (${reading})` : ""}.`
       : `Connect ${card.kanji} with "${cardMeaning(card)}" and say the word right away: ${word}${reading ? ` (${reading})` : ""}.`;
@@ -10886,15 +11555,13 @@
   }
 
   function n4CardExamples(card) {
-    const examples = Array.isArray(card.examples) ? card.examples : [];
-    if (examples.length) return examples.slice(0, 3);
-    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+    return normalizedCardExamples(card, card.examples);
   }
 
   function n4CardHint(card, example) {
     if (lang() === "ru" && card.n4Detail?.hintRu) return card.n4Detail.hintRu;
     const word = example?.word || card.kanji;
-    const reading = example?.reading || card.hiragana || "";
+    const reading = displayHiragana(example?.reading || card.hiragana || "");
     return lang() === "ru"
       ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
       : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
@@ -12602,15 +13269,13 @@
   }
 
   function n3CardExamples(card) {
-    const examples = Array.isArray(card.examples) ? card.examples : [];
-    if (examples.length) return examples.slice(0, 3);
-    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+    return normalizedCardExamples(card, card.examples);
   }
 
   function n3CardHint(card, example) {
     if (lang() === "ru" && card.n3Detail?.hintRu) return card.n3Detail.hintRu;
     const word = example?.word || card.kanji;
-    const reading = example?.reading || card.hiragana || "";
+    const reading = displayHiragana(example?.reading || card.hiragana || "");
     return lang() === "ru"
       ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
       : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
@@ -14316,15 +14981,13 @@
   }
 
   function n2CardExamples(card) {
-    const examples = Array.isArray(card.examples) ? card.examples : [];
-    if (examples.length) return examples.slice(0, 3);
-    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+    return normalizedCardExamples(card, card.examples);
   }
 
   function n2CardHint(card, example) {
     if (lang() === "ru" && card.n2Detail?.hintRu) return card.n2Detail.hintRu;
     const word = example?.word || card.kanji;
-    const reading = example?.reading || card.hiragana || "";
+    const reading = displayHiragana(example?.reading || card.hiragana || "");
     return lang() === "ru"
       ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
       : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
@@ -16285,9 +16948,7 @@
   }
 
   function n1CardExamples(card) {
-    const examples = Array.isArray(card.examples) ? card.examples : [];
-    if (examples.length) return examples.slice(0, 3);
-    return [{ word: card.kanji, reading: card.hiragana || "", romaji: card.romaji || "", translation: cardMeaning(card) }];
+    return normalizedCardExamples(card, card.examples);
   }
 
   function n1ProgressSummary() {
@@ -17218,7 +17879,7 @@
           <span class="pill">${escapeHtml(module.jlpt)}</span>
         </div>
         <div class="jlpt-sentence-line">${renderJlptSentenceLine(drill, selectedTiles, wrongIndexes)}</div>
-        <p class="label">${escapeHtml(drill.reading)}</p>
+        <p class="label">${escapeHtml(displayHiragana(drill.reading))}</p>
         <div class="sentence-tiles jlpt-tiles">
           ${drill.tiles.map((tile, index) => {
             const used = selected.includes(index);
@@ -18069,6 +18730,10 @@
     return String(value || "").replace(/[\u30a1-\u30f6]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0x60));
   }
 
+  function displayHiragana(value) {
+    return toHiragana(String(value || "").normalize("NFKC"));
+  }
+
   function sentenceReadingFromCard(kanji, card = state.cards.find((item) => item.kanji === kanji)) {
     const reading = card?.onyomi || card?.kunyomi || card?.hiragana || "";
     return String(reading).split("/")[0].trim() || "かな";
@@ -18333,7 +18998,7 @@
     return `
       <div class="reading-box">
         <span class="label">${escapeHtml(label)}</span>
-        <strong>${escapeHtml(kana || "—")}</strong>
+        <strong>${escapeHtml(displayHiragana(kana) || "—")}</strong>
         <small>${escapeHtml(romaji || "—")}</small>
       </div>
     `;
@@ -18355,11 +19020,12 @@
     const progress = getCardProgress(card.id);
     const visible = state.revealed;
     syncReadingCheckCard(card.id);
+    const cardLabel = card.lessonTitle || lessonTitleById(card.lessonId) || card.jlpt || "";
     return `
       <article class="study-card">
         <div class="study-topline">
           <div class="tag-row compact-tags">
-            <span class="pill">${escapeHtml(lessonTitleById(card.lessonId))}</span>
+            <span class="pill">${escapeHtml(cardLabel)}</span>
             ${renderStatePill(progress.state)}
           </div>
           ${renderKanjiAudioButton(card)}
@@ -18402,7 +19068,7 @@
       <li class="example-item">
         <div class="example-main">
           <b>${escapeHtml(example.word)}</b>
-          <span>${escapeHtml(example.reading)}</span>
+          <span>${escapeHtml(displayHiragana(example.reading))}</span>
           <span class="example-romaji">${escapeHtml(example.romaji)}</span>
         </div>
         <small class="example-translation">${escapeHtml(exampleTranslation(example))}</small>
@@ -18435,11 +19101,12 @@
   function renderStudySidePanel(card, queueCount) {
     const comboMascot = state.progress.correctCombo >= 3 ? "leya" : "eva";
     const category = comboMascot === "leya" ? "combo" : "welcome";
+    const queueBase = state.route === "review" ? Math.max(getJlptReviewPoolCards().length, 1) : Math.max(state.cards.length, 1);
     return `
       <aside data-study-side-host>
         ${renderMascotPanel(comboMascot, comboMascot === "leya" ? "focus" : "thinking", category)}
         <div class="mini-stat-row" style="margin-top:10px">
-          ${renderMetric(t("review"), queueCount, "queue", progressWidth(queueCount, Math.max(state.cards.length, 1)))}
+          ${renderMetric(t("review"), queueCount, "queue", progressWidth(queueCount, queueBase))}
           ${renderMetric("Combo", state.progress.correctCombo, `${state.progress.bestCorrectCombo} best`, progressWidth(state.progress.correctCombo, 10))}
         </div>
         ${card ? `<article class="tool-panel profile-panel">
@@ -19110,6 +19777,13 @@
                 </span>
                 <button class="btn ${isUxSoundEnabled() ? "success" : "ghost"}" type="button" data-action="toggle-ux-sound">${isUxSoundEnabled() ? "On" : "Off"}</button>
               </div>
+              <div class="settings-row">
+                <span>
+                  <strong>${escapeHtml(lang() === "ru" ? "Экскурсия" : "Onboarding")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "Покажи мини-экскурсию для нового пользователя." : "Show the first-time guided tour again.")}</small>
+                </span>
+                <button class="btn ghost" type="button" data-action="repeat-onboarding">${escapeHtml(lang() === "ru" ? "Повторить экскурсию" : "Repeat tour")}</button>
+              </div>
               <label class="settings-row settings-row-range">
                 <span>
                   <strong>${escapeHtml(lang() === "ru" ? "Громкость UX" : "UX volume")}</strong>
@@ -19360,6 +20034,7 @@
   }
 
   function renderPwaInstallBanner() {
+    if (isFlashKanjiOnboardingActive()) return "";
     if (!canShowPwaInstallPrompt()) return "";
     if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal) return "";
     const copy = pwaInstallCopy();
@@ -19382,6 +20057,7 @@
   }
 
   function renderNotificationPermissionBanner() {
+    if (isFlashKanjiOnboardingActive()) return "";
     if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible")) return "";
     if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || canShowPwaInstallPrompt()) return "";
     const copy = notificationPromptCopy();
@@ -19690,6 +20366,33 @@
     state.progress.appOpens = Number(state.progress.appOpens || 0) + 1;
     const hour = new Date().getHours();
     if (hour >= 22 || hour < 5) state.progress.secrets.nightVisit = true;
+    claimPendingStreakReward();
+  }
+
+  function claimPendingStreakReward() {
+    const streak = state.progress.streak;
+    const pending = normalizePendingStreakReward(streak.pendingReward);
+    if (!pending) return false;
+    if (todayKey() < pending.availableOn) return false;
+
+    streak.pendingReward = null;
+    const coins = state.rewards.rewards.streakCoins;
+    playUxSound("streak_reward");
+    addReward(0, coins, `streak:${pending.milestone}:claim`);
+    queueReward({
+      title: lang() === "ru" ? "Награда за стрик" : "Streak reward",
+      message: lang() === "ru"
+        ? `Бонус за серию ${pending.milestone} дней готов.`
+        : `Your ${pending.milestone}-day streak bonus is ready.`,
+      xp: 0,
+      coins,
+      mascot: "eva",
+      mood: "achievement",
+      dialog: "achievement"
+    });
+    evaluateAchievements();
+    saveProgress();
+    return true;
   }
 
   function handleMascotClick(character) {
@@ -19734,12 +20437,26 @@
   function claimDailyBonus() {
     const key = todayKey();
     const visits = normalizeVisitState();
-    const previousClaimDate = visits.lastDailyBonusDate || visits.firstVisitDate || visits.lastVisitDate;
-
-    if (state.progress.dailyBonuses[key] || visits.lastDailyBonusDate === key) {
-      return;
+    const claimedPending = claimPendingDailyBonus();
+    const pending = normalizePendingDailyBonus(state.progress.dailyBonusPending);
+    if (pending && pending.availableOn > key) return;
+    if (pending && pending.availableOn <= key && !claimedPending) {
+      state.progress.dailyBonusPending = null;
     }
+    state.progress.dailyBonusPending = { availableOn: shiftDayKey(key, 1) };
+    saveProgress();
+  }
 
+  function claimPendingDailyBonus() {
+    const key = todayKey();
+    const visits = normalizeVisitState();
+    const pending = normalizePendingDailyBonus(state.progress.dailyBonusPending);
+    if (!pending) return false;
+    if (todayKey() < pending.availableOn) return false;
+    if (state.progress.dailyBonuses[key] || visits.lastDailyBonusDate === key) return false;
+
+    state.progress.dailyBonusPending = null;
+    const previousClaimDate = visits.lastDailyBonusDate || visits.firstVisitDate || visits.lastVisitDate;
     updateVisitStreak(previousClaimDate, key);
     visits.lastVisitDate = key;
     visits.lastDailyBonusDate = key;
@@ -19758,6 +20475,7 @@
     });
     evaluateAchievements();
     prepareDailyNotifications();
+    return true;
   }
 
   function normalizeVisitState() {
@@ -20001,6 +20719,7 @@
   }
 
   function updateStreak() {
+    claimPendingStreakReward();
     const today = todayKey();
     const streak = state.progress.streak;
     const last = streak.lastStudyDate;
@@ -20018,10 +20737,13 @@
     lost ? "streak_lost" : "study_streak");
     if (lost) toast(dialogueText("eva", "streakLoss"));
     if ([1, 7, 30, 100].includes(streak.current)) {
-      playUxSound("streak_reward");
-      addReward(0, state.rewards.rewards.streakCoins, `streak:${streak.current}`);
+      streak.pendingReward = {
+        milestone: streak.current,
+        availableOn: shiftDayKey(today, 1)
+      };
     }
     dispatchEvaEvent("streak_up", { streak: streak.current, lost });
+    saveProgress();
   }
 
   function renderCharts() {
@@ -20721,8 +21443,29 @@
       .sort(compareStudyCards);
   }
 
+  function getJlptReviewPoolCards() {
+    const seen = new Set();
+    const cards = [];
+    LEVEL_ORDER.forEach((level) => {
+      jlptModuleEligibleCards(level).forEach((card) => {
+        const id = String(card?.id || "");
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        cards.push(card);
+      });
+    });
+    return cards.sort(compareStudyCards);
+  }
+
   function getDueNowCards() {
-    return getStudyCandidates(null, true);
+    const now = new Date();
+    return getJlptReviewPoolCards()
+      .filter((card) => {
+        const progress = getCardProgress(card.id);
+        if (progress.state === "New") return false;
+        return progress.dueAt && new Date(progress.dueAt) <= now;
+      })
+      .sort(compareStudyCards);
   }
 
   function getTodayCards() {
@@ -20970,21 +21713,21 @@
     if (detail && detail.readings) {
       const r = detail.readings;
       const arr = (v) => Array.isArray(v) ? v.filter(Boolean).join(" / ") : String(v || "");
-      const onyomiKana = arr(r.onyomi);
-      const kunyomiKana = arr(r.kunyomi);
+      const onyomiKana = displayHiragana(arr(r.onyomi));
+      const kunyomiKana = displayHiragana(arr(r.kunyomi));
       const onyomiRomaji = arr(r.romaji ? (Array.isArray(r.romaji) ? r.romaji : [r.romaji]) : null); // prefer if present
       const kunyomiRomaji = arr(r.romaji ? (Array.isArray(r.romaji) ? r.romaji.slice(1) : []) : null); // rough
       // better: fall to card if no specific
       if (onyomiKana || kunyomiKana) {
         return {
-          onyomi: { kana: onyomiKana || card?.onyomi || "", romaji: (Array.isArray(r.romaji) ? r.romaji[0] : r.romaji) || card?.onyomi_romaji || "" },
-          kunyomi: { kana: kunyomiKana || card?.kunyomi || "", romaji: (Array.isArray(r.romaji) ? r.romaji.slice(1).join(" / ") : "") || card?.kunyomi_romaji || "" }
+          onyomi: { kana: onyomiKana || displayHiragana(card?.onyomi || ""), romaji: (Array.isArray(r.romaji) ? r.romaji[0] : r.romaji) || card?.onyomi_romaji || "" },
+          kunyomi: { kana: kunyomiKana || displayHiragana(card?.kunyomi || ""), romaji: (Array.isArray(r.romaji) ? r.romaji.slice(1).join(" / ") : "") || card?.kunyomi_romaji || "" }
         };
       }
     }
-    const onyomiKana = card?.onyomi || "";
+    const onyomiKana = displayHiragana(card?.onyomi || "");
     const onyomiRomaji = card?.onyomi_romaji || "";
-    const kunyomiKana = card?.kunyomi || "";
+    const kunyomiKana = displayHiragana(card?.kunyomi || "");
     const kunyomiRomaji = card?.kunyomi_romaji || "";
     if (onyomiKana || kunyomiKana || onyomiRomaji || kunyomiRomaji) {
       return {
@@ -21193,7 +21936,7 @@
   }
 
   function isLessonUnlocked(lesson) {
-    return state.progress.level >= unlockLevel(lesson);
+    return Boolean(lesson);
   }
 
   function unlockLevel(lesson) {
@@ -21292,7 +22035,8 @@
 
   function isTextbookUnlocked(level) {
     const key = String(level || "").toUpperCase();
-    // Жёсткая глобальная разблокировка из stored progress (принудительно установленная при завершении предыдущего уровня)
+    if (LEVEL_ORDER.includes(key)) return true;
+    // Compatibility fallback for older saves and any future custom unlock state.
     if (state.progress.unlockedJlptLevels && state.progress.unlockedJlptLevels.includes(key)) return true;
     const textbook = jlptCatalogByLevel(key);
     if (!textbook) return key === "N5";
@@ -21426,6 +22170,18 @@
 
   function cardsForJlpt(jlpt) {
     const key = String(jlpt || "").toUpperCase();
+    if (!key) return [];
+    const spec = jlptModuleSpec(key);
+    const cards = spec && typeof spec.allCards === "function" ? spec.allCards() : [];
+    if (cards.length) {
+      const seen = new Set();
+      return cards.filter((card) => {
+        const id = String(card?.id || "");
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+    }
     return state.cards.filter((card) => String(card.jlpt || "").toUpperCase() === key);
   }
 
@@ -21969,14 +22725,15 @@
   }
 
   function toggleSound() {
-    state.progress.settings.sound = !state.progress.settings.sound;
+    state.progress.settings.sound = !normalizeBooleanSetting(state.progress.settings.sound, true);
     syncUxSoundSettings();
+    syncHeaderSoundButton();
     saveProgress();
     toast(state.progress.settings.sound ? "♪" : "×");
   }
 
   function toggleUxSound() {
-    state.progress.settings.uxSound = state.progress.settings.uxSound === false;
+    state.progress.settings.uxSound = !normalizeBooleanSetting(state.progress.settings.uxSound, true);
     syncUxSoundSettings();
     saveProgress();
     toast(state.progress.settings.uxSound ? "UX On" : "UX Off");
@@ -22005,7 +22762,62 @@
   }
 
   function isUxSoundEnabled() {
-    return state.progress?.settings?.sound !== false && state.progress?.settings?.uxSound !== false;
+    return normalizeBooleanSetting(state.progress?.settings?.sound, true) && normalizeBooleanSetting(state.progress?.settings?.uxSound, true);
+  }
+
+  function syncHeaderSoundButton() {
+    const button = $('[data-action="sound"]');
+    if (!button) return;
+    const enabled = normalizeBooleanSetting(state.progress?.settings?.sound, true);
+    const label = lang() === "ru"
+      ? (enabled ? "Звук" : "Звук выключен")
+      : (enabled ? "Sound" : "Sound off");
+    button.classList.toggle("is-muted", !enabled);
+    button.setAttribute("aria-pressed", String(enabled));
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.innerHTML = soundButtonIcon(enabled);
+  }
+
+  function soundButtonIcon(enabled) {
+    return enabled
+      ? `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 10v4h4l6 4V6l-6 4H4Z" fill="currentColor" />
+          <path d="M16 9c1 1 1.5 2 1.5 3s-.5 2-1.5 3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+          <path d="M18.5 6.5c2 1.9 2.5 4.1 2.5 5.5s-.5 3.6-2.5 5.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+        </svg>
+      `
+      : `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 10v4h4l6 4V6l-6 4H4Z" fill="currentColor" />
+          <path d="M16 8 20 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+        </svg>
+      `;
+  }
+
+  function syncHeaderSocialToggleButton() {
+    const button = $('[data-action="toggle-header-socials"]');
+    if (!button) return;
+    const open = isHeaderSocialOpen();
+    const label = lang() === "ru"
+      ? (open ? "Скрыть соцсети" : "Открыть соцсети")
+      : (open ? "Hide social links" : "Open social links");
+    button.setAttribute("aria-expanded", String(open));
+    button.classList.toggle("is-active", open);
+    button.setAttribute("aria-label", label);
+    button.title = label;
+  }
+
+  function setHeaderSocialOpen(value) {
+    const header = document.querySelector(".app-header");
+    if (!header) return;
+    header.classList.toggle("is-social-open", Boolean(value));
+    syncHeaderSocialToggleButton();
+  }
+
+  function isHeaderSocialOpen() {
+    return Boolean(document.querySelector(".app-header")?.classList.contains("is-social-open"));
   }
 
   function getUxSoundVolume() {
@@ -22697,7 +23509,10 @@
     if (!("Notification" in window) || Notification.permission !== "granted") return false;
     if (state.notificationPrompt.lastShown?.[type] === todayKey()) return false;
     if (type === "review") return getDueNowCards().length > 0;
-    if (type === "daily_bonus") return Boolean(state.progress.visits?.firstVisitDate) && !state.progress.dailyBonuses[todayKey()];
+    if (type === "daily_bonus") {
+      const pending = normalizePendingDailyBonus(state.progress.dailyBonusPending);
+      return Boolean(state.progress.visits?.firstVisitDate) && Boolean(pending) && pending.availableOn <= todayKey() && !state.progress.dailyBonuses[todayKey()];
+    }
     if (type === "lesson") return getUnlockedNewCards().length > 0;
     if (type === "streak") return (state.progress.streak.current || state.progress.visits?.streak || 0) > 0;
     return true;
