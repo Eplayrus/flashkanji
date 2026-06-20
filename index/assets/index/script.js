@@ -9,7 +9,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-20-onboarding-tour-v9";
+  const BUILD_VERSION = "2026-06-20-dark-theme-default-v10";
   const EVA_DEFAULT_PACK = "eva_default_pack";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
@@ -2352,13 +2352,12 @@
   }
 
   function defaultProgress() {
-    const theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     const language = detectInitialLanguage();
     return {
       version: APP_VERSION,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      settings: { theme, sound: true, uxSound: true, uxVolume: 0.75, language, languageAutoDetected: true, languageManuallySelected: false, dailyGoal: 10 },
+      settings: { theme: "dark", themeManuallySelected: false, sound: true, uxSound: true, uxVolume: 0.75, language, languageAutoDetected: true, languageManuallySelected: false, dailyGoal: 10 },
       xp: 0,
       level: 1,
       moonFragments: 0,
@@ -2497,11 +2496,18 @@
 
   function mergeSettings(base, saved) {
     const merged = { ...base, ...(saved || {}) };
+    merged.theme = normalizeThemeSetting(merged.theme, base.theme || "dark");
+    merged.themeManuallySelected = normalizeBooleanSetting(merged.themeManuallySelected, base.themeManuallySelected === true);
+    if (!merged.themeManuallySelected) merged.theme = "dark";
     merged.sound = normalizeBooleanSetting(merged.sound, base.sound !== false);
     merged.uxSound = normalizeBooleanSetting(merged.uxSound, base.uxSound !== false);
     merged.languageAutoDetected = normalizeBooleanSetting(merged.languageAutoDetected, base.languageAutoDetected !== false);
     merged.languageManuallySelected = normalizeBooleanSetting(merged.languageManuallySelected, base.languageManuallySelected === true);
     return merged;
+  }
+
+  function normalizeThemeSetting(value, fallback = "dark") {
+    return value === "light" || value === "dark" ? value : fallback;
   }
 
   function mergeStreakProgress(base, saved) {
@@ -22711,6 +22717,7 @@
 
   function toggleTheme() {
     state.progress.settings.theme = state.progress.settings.theme === "dark" ? "light" : "dark";
+    state.progress.settings.themeManuallySelected = true;
     applyTheme();
     saveProgress();
     render();

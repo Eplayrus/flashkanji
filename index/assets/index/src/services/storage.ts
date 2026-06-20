@@ -41,8 +41,7 @@ export function createDefaultProgress(theme: "dark" | "light" = "dark"): UserPro
 }
 
 export function loadProgress(): UserProgress {
-  const theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-  const base = createDefaultProgress(theme);
+  const base = createDefaultProgress("dark");
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return base;
 
