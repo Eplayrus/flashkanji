@@ -9,7 +9,9 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-21-boot-recovery-v19";
+  const BUILD_VERSION = "2026-06-21-textbooks-primary-v28";
+  const MASCOT_SPEECH_AUTO_HIDE_MS = 7000;
+  const MASCOT_SPEECH_STORAGE_KEY = `flashKanji.hiddenMascotSpeeches:${BUILD_VERSION}`;
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
@@ -261,6 +263,7 @@
   let moonCheatBuffer = "";
   let recentEvaMascotLineIds = [];
   const notificationTimers = new Map();
+  const mascotSpeechTimers = new Map();
   const notificationUsageStartedAt = Date.now();
   const writingSession = {
     cardId: null,
@@ -2982,6 +2985,10 @@ if (await refreshStaleAppCache()) return;
       stopFlashKanjiOnboarding({ completed: true });
       return;
     }
+    if (action === "dismiss-mascot-speech") {
+      dismissMascotSpeech(target.dataset.speechKey || "");
+      return;
+    }
     if (action === "contact-email") {
       state.navMenu = null;
       state.contactModal = true;
@@ -3122,7 +3129,7 @@ if (await refreshStaleAppCache()) return;
     if (action === "n5-review") openN5Review(target.dataset.mode || null);
     if (action === "n5-answer") answerN5Exercise(target);
     if (action === "n5-check-input") checkN5InputExercise(id);
-    if (action === "n5-srs") handleN5SrsAction(id, target.dataset.rating || "good");
+    if (action === "n5-srs") handleN5SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
     if (action === "n5-writing-done") markN5Writing(id);
     if (action === "n5-complete-lesson") completeN5Lesson(id);
     if (action === "n5-final-answer") answerN5FinalQuestion(target);
@@ -3138,7 +3145,7 @@ if (await refreshStaleAppCache()) return;
     if (action === "n4-final") openN4FinalTest();
     if (action === "n4-answer") answerN4Exercise(target);
     if (action === "n4-check-input") checkN4InputExercise(id);
-    if (action === "n4-srs") handleN4SrsAction(id, target.dataset.rating || "good");
+    if (action === "n4-srs") handleN4SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
     if (action === "n4-writing-done") markN4Writing(id);
     if (action === "n4-complete-lesson") completeN4Lesson(id);
     if (action === "n4-grammar-complete") completeN4Grammar(id, target.dataset.value || "");
@@ -3157,7 +3164,7 @@ if (await refreshStaleAppCache()) return;
     if (action === "n3-final") openN3FinalTest();
     if (action === "n3-answer") answerN3Exercise(target);
     if (action === "n3-check-input") checkN3InputExercise(id);
-    if (action === "n3-srs") handleN3SrsAction(id, target.dataset.rating || "good");
+    if (action === "n3-srs") handleN3SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
     if (action === "n3-writing-done") markN3Writing(id);
     if (action === "n3-complete-lesson") completeN3Lesson(id);
     if (action === "n3-grammar-complete") completeN3Grammar(id, target.dataset.value || "");
@@ -3176,7 +3183,7 @@ if (await refreshStaleAppCache()) return;
     if (action === "n2-final") openN2FinalTest();
     if (action === "n2-answer") answerN2Exercise(target);
     if (action === "n2-check-input") checkN2InputExercise(id);
-    if (action === "n2-srs") handleN2SrsAction(id, target.dataset.rating || "good");
+    if (action === "n2-srs") handleN2SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
     if (action === "n2-writing-done") markN2Writing(id);
     if (action === "n2-complete-lesson") completeN2Lesson(id);
     if (action === "n2-grammar-complete") completeN2Grammar(id, target.dataset.value || "");
@@ -3203,6 +3210,9 @@ if (await refreshStaleAppCache()) return;
         setRoute("jlpt-lesson", null, jlpt);
       }
     }
+    if (action === "open-jlpt-lesson-start") {
+      openJlptLessonStart(target.dataset.jlpt || defaultJlptLessonLevel());
+    }
     if (action === "social-link") reachMetricGoal(`social_${String(target.dataset.network || "").toLowerCase()}_opened`, { network: target.dataset.network || "", section: state.route });
     if (action === "play-audio") playAudioPlaceholder(target.dataset.audio, target.dataset.label);
     if (action === "close-reward") {
@@ -3218,7 +3228,7 @@ if (await refreshStaleAppCache()) return;
     }
     if (action === "buy-shop") buyCustomizationItem(id);
     if (action === "start-due") {
-      setRoute(getDueNowCards().length ? "review" : "learn");
+      setRoute("textbooks");
       if (!getDueNowCards().length) toast(dialogueText("eva", "welcome"));
     }
     if (action === "start-lesson" || action === "select-lesson") {
@@ -3351,7 +3361,7 @@ if (await refreshStaleAppCache()) return;
       playUxSound("card_flip");
       return;
     }
-    if (["close-reward", "close-detail", "pwa-later", "notification-later"].includes(action)) {
+    if (["close-reward", "close-detail", "pwa-later", "notification-later", "dismiss-mascot-speech"].includes(action)) {
       playUxSound("menu_close");
       return;
     }
@@ -3568,6 +3578,7 @@ if (await refreshStaleAppCache()) return;
     if (state.route === "textbooks") html = renderTextbooksPage();
     app.innerHTML = `${html}${renderGlobalOverlays()}`;
     document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal));
+    syncMascotSpeechTimers();
     requestAnimationFrame(() => {
       applyPendingFocus();
       syncScrollToggleButton();
@@ -4179,12 +4190,12 @@ if (await refreshStaleAppCache()) return;
     const ru = lang() === "ru";
     const items = {
       learn: [
-        { route: "learn", focus: "lesson-card", icon: "文", title: ru ? "Текущий урок" : "Current lesson", text: ru ? "Карточки и новые кандзи." : "Cards and new kanji." },
-        { route: "learn", focus: "lesson-tabs", icon: "段", title: ru ? "Выбор урока" : "Lesson list", text: ru ? "Перейти к списку уроков." : "Jump to lesson picker." },
+        { action: "open-jlpt-lesson-start", jlpt: currentLearnTextbookLevel(), icon: "文", title: ru ? "Текущий урок" : "Current lesson", text: ru ? "Открыть последний урок учебника." : "Open the latest lesson in the textbook." },
+        { route: "review", focus: "review-card", icon: "↻", title: "SRS", text: ru ? "Перейти к повторениям." : "Go to review." },
         { route: "textbooks", focus: "textbook-grid", icon: "冊", title: ru ? "Учебники" : "Textbooks", text: ru ? "Открыть страницы учебников JLPT." : "Open JLPT textbook pages." }
       ],
       review: [
-        { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "SRS-карточки на сегодня." : "Today’s SRS queue." },
+        { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "Карточки повторения на сегодня." : "Today's review queue." },
         { route: "review", focus: "sentence-practice", icon: "文", title: ru ? "Практика предложений" : "Sentence practice", text: ru ? "Вставь кандзи в пропуск." : "Fill kanji into blanks." }
       ],
       writing: [
@@ -4213,7 +4224,7 @@ if (await refreshStaleAppCache()) return;
         </div>
         <div class="nav-popover-list">
           ${items.map((item) => `
-            <button class="nav-popover-item" type="button" role="menuitem" data-action="nav-menu-route" data-route="${escapeAttr(item.route)}" data-focus="${escapeAttr(item.focus)}">
+            <button class="nav-popover-item" type="button" role="menuitem" ${item.action ? `data-action="${escapeAttr(item.action)}"${item.jlpt ? ` data-jlpt="${escapeAttr(item.jlpt)}"` : ""}` : `data-action="nav-menu-route" data-route="${escapeAttr(item.route)}" data-focus="${escapeAttr(item.focus)}"`}>
               <span>${escapeHtml(item.icon)}</span>
               <b>${escapeHtml(item.title)}</b>
               <small>${escapeHtml(item.text)}</small>
@@ -4280,13 +4291,13 @@ if (await refreshStaleAppCache()) return;
       <section class="page">
         <div class="hero-grid">
           <section class="hero-panel">
-            <p class="eyebrow">SRS · JLPT N5-N1 · PWA</p>
+            <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
             <h1 class="hero-title">Flash Kanji</h1>
             <p class="hero-subtitle">${escapeHtml(t("tagline"))}</p>
             <div class="hero-actions">
-              <button class="btn primary" type="button" data-action="start-due">▶ ${escapeHtml(t("study"))}</button>
+              <button class="btn primary" type="button" data-action="route" data-route="textbooks">冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
               <button class="btn" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
-              <button class="btn ghost" type="button" data-action="route" data-route="textbooks">冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
+              <button class="btn ghost" type="button" data-action="route" data-route="review">↻ ${escapeHtml(lang() === "ru" ? "Повторение" : "Review")}</button>
             </div>
             ${renderHomeEvaPanel(homeScene)}
             ${renderHeroDecoration()}
@@ -4310,7 +4321,7 @@ if (await refreshStaleAppCache()) return;
             <h2>${escapeHtml(daily ? lessonTitle(daily) : "-")}</h2>
             <p>${escapeHtml(daily ? lessonSummary(daily) : "")}</p>
           </div>
-          <button class="btn primary" type="button" data-action="start-lesson" data-id="${escapeAttr(daily?.id || "")}">▶ ${escapeHtml(t("study"))}</button>
+          <button class="btn primary" type="button" data-action="route" data-route="textbooks">▶ ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
         </article>
 
         ${renderEvaRoomEntry()}
@@ -4325,8 +4336,8 @@ if (await refreshStaleAppCache()) return;
 
         <div class="section-head">
           <div>
-            <h2>${escapeHtml(t("lessons"))}</h2>
-            <p>${escapeHtml(t("lessonsStored"))}</p>
+            <h2>${escapeHtml(lang() === "ru" ? "JLPT-модули" : "JLPT modules")}</h2>
+            <p>${escapeHtml(lang() === "ru" ? "Открой учебники и переходи к уровню." : "Open textbooks and jump into each level.")}</p>
           </div>
         </div>
         <div class="lesson-grid">${state.lessons.map(renderLessonTile).join("")}</div>
@@ -7006,7 +7017,7 @@ if (await refreshStaleAppCache()) return;
     const glyph = locked ? "鎖" : lessonCards[0]?.kanji || "文";
     const width = progressWidth(mastered, lessonCards.length);
     return `
-      <button class="lesson-tile ${locked ? "is-locked" : ""} ${lessonStatusClass(status)}" type="button" data-action="start-lesson" data-id="${escapeAttr(lesson.id)}">
+      <button class="lesson-tile ${locked ? "is-locked" : ""} ${lessonStatusClass(status)}" type="button" id="textbook-lesson-${escapeAttr(lesson.id)}" data-action="start-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="lesson-glyph">${escapeHtml(glyph)}</span>
         <span>
           <span class="pill">${escapeHtml(lesson.jlpt)}</span>
@@ -7059,6 +7070,21 @@ if (await refreshStaleAppCache()) return;
   function learnLessonsForFilter() {
     const level = String(state.activeLearnJlpt || "all").toUpperCase();
     return state.lessons.filter((lesson) => level === "ALL" || String(lesson.jlpt || "").toUpperCase() === level);
+  }
+
+  function currentLearnLesson() {
+    const lessons = learnLessonsForFilter();
+    return lessons.find((lesson) => lesson.id === state.activeLessonId)
+      || lessons.find((lesson) => isLessonUnlocked(lesson))
+      || lessons[0]
+      || state.lessons.find((lesson) => lesson.id === state.activeLessonId)
+      || state.lessons.find((lesson) => isLessonUnlocked(lesson))
+      || state.lessons[0]
+      || null;
+  }
+
+  function currentLearnTextbookLevel() {
+    return canonicalJlptLevel(currentLearnLesson()?.jlpt) || defaultJlptLessonLevel();
   }
 
   function ensureActiveLearnLesson(lessons) {
@@ -7323,7 +7349,7 @@ if (await refreshStaleAppCache()) return;
           </div>
           <div class="actions">
             ${renderShareButton("textbooks")}
-            <button class="btn primary" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(defaultJlptLessonLevel())}">${escapeHtml(labels.study)}</button>
+            <button class="btn primary" type="button" data-action="open-jlpt-lesson-start" data-jlpt="${escapeAttr(defaultJlptLessonLevel())}">${escapeHtml(labels.study)}</button>
           </div>
         </div>
         <div class="textbook-grid" id="textbook-grid">
@@ -7427,12 +7453,16 @@ if (await refreshStaleAppCache()) return;
     }
     state.activeTextbookLevel = textbook.jlpt;
     state.activeJlptLesson = textbook.jlpt;
-    const lesson = jlptLessonByLevel(textbook.jlpt) || state.jlptLessons[0];
     const textbookLessons = (textbook.lessonIds || [])
       .map((lessonId) => state.lessons.find((item) => item.id === lessonId))
       .filter(Boolean);
     const extraLessons = state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === String(textbook.jlpt || "").toUpperCase() && !textbookLessons.includes(item));
     const orderedLessons = [...textbookLessons, ...extraLessons].slice(0, Math.max(textbook.lessonCount || textbookLessons.length, textbookLessons.length));
+    const lesson = state.activeTextbookSubroute
+      ? orderedLessons.find((item) => item.id === state.activeTextbookSubroute)
+        || jlptLessonByLevel(textbook.jlpt)
+        || state.jlptLessons[0]
+      : jlptLessonByLevel(textbook.jlpt) || state.jlptLessons[0];
     const labels = lang() === "ru"
       ? {
         title: "Страница учебника",
@@ -7458,7 +7488,7 @@ if (await refreshStaleAppCache()) return;
         previous: "Previous levels",
         next: "Next levels"
       };
-    const openLessonId = textbook.lessonIds?.[0] || orderedLessons[0]?.id || "";
+    const openLessonId = textbookContinueLessonId(textbook.jlpt) || textbook.lessonIds?.[0] || orderedLessons[0]?.id || "";
     const cycle = localized(textbook.recommendedCycle || {});
     const goal = localized(textbook.goal || {});
     const prevLinks = (textbook.previousLevels || []).map((level) => `<a class="pill" href="#textbooks/${escapeAttr(level)}">${escapeHtml(level)}</a>`).join("");
@@ -7552,7 +7582,7 @@ if (await refreshStaleAppCache()) return;
             <h2>${escapeHtml(labels.lessons)}</h2>
             <p>${escapeHtml(lang() === "ru" ? "Карточки, входящие в этот учебник, и быстрые переходы в урок." : "Cards included in this textbook, with quick jumps into lessons.")}</p>
           </div>
-          ${openLessonId ? `<button class="btn primary" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.openLesson)}</button>` : ""}
+          ${openLessonId ? `<button class="btn primary" type="button" data-action="open-jlpt-lesson-start" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.openLesson)}</button>` : ""}
         </div>
         <div class="lesson-grid">
           ${orderedLessons.map((item) => renderLessonTile(item)).join("") || `<article class="empty-state"><h3>${escapeHtml(lang() === "ru" ? "Уроки скоро появятся" : "Lessons will appear soon")}</h3></article>`}
@@ -7785,9 +7815,9 @@ if (await refreshStaleAppCache()) return;
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN5CardSentence(card, lesson)}
         <div class="textbook-actions">
-          <button class="btn primary" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn primary" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
           <button class="btn success" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-          <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
           <button class="btn ghost" type="button" data-action="n5-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
@@ -7858,7 +7888,7 @@ if (await refreshStaleAppCache()) return;
       <section class="page textbooks-page n5-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N5 · SRS</p>
+            <p class="eyebrow">JLPT N5 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -8010,23 +8040,23 @@ if (await refreshStaleAppCache()) return;
         reviews: "Повторения",
         difficult: "Сложные",
         filterDifficult: "фильтр",
-        srs: "SRS",
+        srs: "Повторение",
         lessons: "уроков",
         lessonsTitle: "10 уроков по 8 кандзи",
-        lessonsDescription: "Каждый урок ведёт от знака к слову, предложению, упражнению, письму и SRS.",
+        lessonsDescription: "Каждый урок ведёт от знака к слову, предложению, упражнению, письму и повторению.",
         reviewPlan: "План повторения на 30 дней",
         day: "день",
         lesson: "Урок",
         backToN5: "К N5",
         lessonChain: "Кандзи -> слово -> предложение -> практика",
-        lessonChainText: "Сначала узнаёшь знак, затем видишь чтение в слове, читаешь предложение, отвечаешь и отправляешь карточку в SRS.",
+        lessonChainText: "Сначала узнаёшь знак, затем видишь чтение в слове, читаешь предложение, отвечаешь и отправляешь карточку в повторение.",
         exercises: "Упражнения",
         correct: "верно",
         sentences: "Примеры предложений",
         sentencesText: "Читай вслух: так чтение перестаёт быть отдельной таблицей.",
         exercisesText: "Смешанная практика работает внутри урока и повторения.",
         lessonComplete: "Урок завершён",
-        lessonCompleteText: "Кандзи урока доступны в N5-повторении и общем SRS.",
+        lessonCompleteText: "Кандзи урока доступны в повторении.",
         lessonResult: "Итог урока",
         lessonResultText: "Заверши урок, когда все 8 кандзи добавлены в повторение.",
         completeLesson: "Завершить урок",
@@ -8037,8 +8067,8 @@ if (await refreshStaleAppCache()) return;
         step: "шаг",
         onyomi: "онъёми",
         kunyomi: "кунъёми",
-        addToSrs: "Добавить в SRS",
-        know: "Я знаю",
+        addToSrs: "В повторение",
+        know: "Знаю",
         hard: "Сложно",
         writingPractice: "Практика письма",
         markWritten: "Написано",
@@ -8057,9 +8087,9 @@ if (await refreshStaleAppCache()) return;
         submitFinal: "Завершить тест",
         reviewAll: "Повторить весь N5",
         finalPassed: "N5 пройден",
-        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
         finalNeedsReview: "Нужно повторить",
-        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
       }
       : {
         title: "JLPT N5",
@@ -8075,7 +8105,7 @@ if (await refreshStaleAppCache()) return;
         reviews: "Reviews",
         difficult: "Difficult",
         filterDifficult: "filter",
-        srs: "SRS",
+        srs: "Review",
         lessons: "lessons",
         lessonsTitle: "10 lessons, 8 kanji each",
         lessonsDescription: "Each lesson moves from sign to word, sentence, exercise, writing, and SRS.",
@@ -8102,7 +8132,7 @@ if (await refreshStaleAppCache()) return;
         step: "step",
         onyomi: "onyomi",
         kunyomi: "kunyomi",
-        addToSrs: "Add to SRS",
+        addToSrs: "Send to review",
         know: "I know",
         hard: "Hard",
         writingPractice: "Writing practice",
@@ -8434,17 +8464,25 @@ if (await refreshStaleAppCache()) return;
     render();
   }
 
-  function handleN5SrsAction(cardId, rating) {
+  function handleN5SrsAction(cardId, rating, source = "review") {
     const card = findCard(cardId);
     if (!card) return;
+    const lessonHard = source === "lesson" && rating === "again";
+    const progressRating = lessonHard ? "good" : rating;
+    const displayRating = lessonHard ? "hard" : rating;
     const before = cloneProgress(getCardProgress(card.id));
-    const after = calculateNextProgress(before, rating);
+    const after = calculateNextProgress(before, progressRating, displayRating);
     state.progress.cards[card.id] = after;
-    updateDailyStats(before, after, rating);
+    updateDailyStats(before, after, displayRating);
     updateStreak();
     markN5KanjiStudied(card.kanji, card.id);
     n5Course().srsKanji[card.kanji] = new Date().toISOString();
-    if (isForgottenRating(rating)) {
+    if (lessonHard) {
+      markN5KanjiDifficult(card.kanji, card.id, false);
+      state.progress.totalCorrect += 1;
+      addReward(state.n5Meta?.rewards?.hardXp || 2, 1, `n5_srs_lesson_hard:${card.id}`);
+      playUxSound("answer_correct");
+    } else if (isForgottenRating(rating)) {
       markN5KanjiDifficult(card.kanji, card.id);
       state.progress.totalWrong += 1;
       addReward(state.n5Meta?.rewards?.hardXp || 2, 0, `n5_srs_hard:${card.id}`);
@@ -8575,10 +8613,10 @@ if (await refreshStaleAppCache()) return;
     syncJlptCourseStudyState(course, kanji);
   }
 
-  function markN5KanjiDifficult(kanji, cardId = null) {
+  function markN5KanjiDifficult(kanji, cardId = null, updateProgress = true) {
     if (!kanji) return;
     n5Course().difficultKanji[kanji] = new Date().toISOString();
-    if (cardId) {
+    if (updateProgress && cardId) {
       const progress = getCardProgress(cardId);
       if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
     }
@@ -8699,7 +8737,7 @@ if (await refreshStaleAppCache()) return;
         type,
         cardId: card.id,
         kanji: card.kanji,
-        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
         answer: "remember",
         answerLabel: lang() === "ru" ? "Помню" : "Remember",
         options: [
@@ -9160,9 +9198,9 @@ if (await refreshStaleAppCache()) return;
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN4CardSentence(card, lesson)}
         <div class="textbook-actions">
-          <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
           <button class="btn success" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-          <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
           <button class="btn ghost" type="button" data-action="n4-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
@@ -9261,7 +9299,7 @@ if (await refreshStaleAppCache()) return;
       <section class="page textbooks-page n5-course-page n4-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N4 · SRS</p>
+            <p class="eyebrow">JLPT N4 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -9560,10 +9598,10 @@ if (await refreshStaleAppCache()) return;
         completedGrammar: "Грамматика",
         reviews: "Повторения",
         difficult: "Сложные",
-        srs: "SRS",
+        srs: "Повторение",
         lessons: "уроков",
         lessonsTitle: "17 уроков примерно по 10 кандзи",
-        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, упражнение, письмо и SRS.",
+        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, упражнение, письмо и повторение.",
         reviewPlan: "План повторения на 45 дней",
         day: "день",
         lesson: "Урок",
@@ -9571,7 +9609,7 @@ if (await refreshStaleAppCache()) return;
         n5Bridge: "N5 bridge",
         n5BridgeText: "Перед N4 полезно держать активной базу N5: она станет опорой для более длинных предложений.",
         reviewN5Base: "Повторить базу N5 перед N4",
-        lessonChain: "Кандзи -> слово -> грамматика -> предложение -> текст -> упражнение -> письмо -> SRS",
+        lessonChain: "Кандзи -> слово -> грамматика -> предложение -> текст -> упражнение -> письмо -> повторение",
         lessonChainText: "N4 больше не живёт списком знаков: каждый знак сразу получает слово, грамматическую связку и контекст.",
         duration: "Длительность",
         minutes: "мин",
@@ -9581,7 +9619,7 @@ if (await refreshStaleAppCache()) return;
         sentencesText: "Прочитай вслух и отметь, где грамматика держит смысл предложения.",
         exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику и активное вспоминание.",
         lessonComplete: "Урок завершён",
-        lessonCompleteText: "Кандзи урока добавлены в N4-review и общий SRS.",
+        lessonCompleteText: "Кандзи урока добавлены в повторение.",
         lessonResult: "Итог урока",
         lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
         completeLesson: "Завершить урок",
@@ -9592,8 +9630,8 @@ if (await refreshStaleAppCache()) return;
         step: "шаг",
         onyomi: "онъёми",
         kunyomi: "кунъёми",
-        addToSrs: "Добавить в SRS",
-        know: "Я знаю",
+        addToSrs: "В повторение",
+        know: "Знаю",
         hard: "Сложно",
         writingPractice: "Практика письма",
         markWritten: "Написано",
@@ -9610,7 +9648,7 @@ if (await refreshStaleAppCache()) return;
         reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N4.",
         noReviewCards: "Сейчас нет карточек в этом фильтре.",
         kanjiListTitle: "170 кандзи N4",
-        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в SRS или открыть письмо.",
+        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в повторение или открыть письмо.",
         grammarTitle: "48 грамматических конструкций N4",
         grammarText: "Короткие рабочие карточки: функция, формула, пример и проверка понимания.",
         readingTitle: "Тексты для чтения N4",
@@ -9624,9 +9662,9 @@ if (await refreshStaleAppCache()) return;
         submitFinal: "Завершить тест",
         reviewAll: "Повторить весь N4",
         finalPassed: "N4 пройден",
-        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
         finalNeedsReview: "Нужно повторить",
-        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
       }
       : {
         title: "JLPT N4",
@@ -9647,7 +9685,7 @@ if (await refreshStaleAppCache()) return;
         completedGrammar: "Grammar",
         reviews: "Reviews",
         difficult: "Difficult",
-        srs: "SRS",
+        srs: "Повторение",
         lessons: "lessons",
         lessonsTitle: "17 lessons, about 10 kanji each",
         lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, exercise, writing, and SRS.",
@@ -9679,7 +9717,7 @@ if (await refreshStaleAppCache()) return;
         step: "step",
         onyomi: "onyomi",
         kunyomi: "kunyomi",
-        addToSrs: "Add to SRS",
+        addToSrs: "Send to review",
         know: "I know",
         hard: "Hard",
         writingPractice: "Writing practice",
@@ -10045,17 +10083,25 @@ if (await refreshStaleAppCache()) return;
     render();
   }
 
-  function handleN4SrsAction(cardId, rating) {
+  function handleN4SrsAction(cardId, rating, source = "review") {
     const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
     if (!card) return;
+    const lessonHard = source === "lesson" && rating === "again";
+    const progressRating = lessonHard ? "good" : rating;
+    const displayRating = lessonHard ? "hard" : rating;
     const before = cloneProgress(getCardProgress(card.id));
-    const after = calculateNextProgress(before, rating);
+    const after = calculateNextProgress(before, progressRating, displayRating);
     state.progress.cards[card.id] = after;
-    updateDailyStats(before, after, rating);
+    updateDailyStats(before, after, displayRating);
     updateStreak();
     markN4KanjiStudied(card.kanji, card.id);
     n4Course().srsKanji[card.kanji] = new Date().toISOString();
-    if (isForgottenRating(rating)) {
+    if (lessonHard) {
+      markN4KanjiDifficult(card.kanji, card.id, false);
+      state.progress.totalCorrect += 1;
+      addReward(state.n4Meta?.rewards?.hardXp || 2, 1, `n4_srs_lesson_hard:${card.id}`);
+      playUxSound("answer_correct");
+    } else if (isForgottenRating(rating)) {
       markN4KanjiDifficult(card.kanji, card.id);
       state.progress.totalWrong += 1;
       addReward(state.n4Meta?.rewards?.hardXp || 2, 0, `n4_srs_hard:${card.id}`);
@@ -10165,10 +10211,10 @@ if (await refreshStaleAppCache()) return;
     syncJlptCourseStudyState(course, kanji);
   }
 
-  function markN4KanjiDifficult(kanji, cardId = null) {
+  function markN4KanjiDifficult(kanji, cardId = null, updateProgress = true) {
     if (!kanji) return;
     n4Course().difficultKanji[kanji] = new Date().toISOString();
-    if (cardId) {
+    if (updateProgress && cardId) {
       const progress = getCardProgress(cardId);
       if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
     }
@@ -10400,7 +10446,7 @@ if (await refreshStaleAppCache()) return;
         type,
         cardId: card.id,
         kanji: card.kanji,
-        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
         answer: "remember",
         answerLabel: lang() === "ru" ? "Помню" : "Remember",
         options: [
@@ -10867,9 +10913,9 @@ if (await refreshStaleAppCache()) return;
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN3CardSentence(card, lesson)}
         <div class="textbook-actions">
-          <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
           <button class="btn success" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-          <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
           <button class="btn ghost" type="button" data-action="n3-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
@@ -10968,7 +11014,7 @@ if (await refreshStaleAppCache()) return;
       <section class="page textbooks-page n5-course-page n3-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N3 · SRS</p>
+            <p class="eyebrow">JLPT N3 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -11267,10 +11313,10 @@ if (await refreshStaleAppCache()) return;
         completedListening: "Listening",
         reviews: "Повторения",
         difficult: "Сложные",
-        srs: "SRS",
+        srs: "Повторение",
         lessons: "уроков",
         lessonsTitle: "37 уроков примерно по 10 кандзи",
-        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, мини-текст, упражнения, письмо и SRS.",
+        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, мини-текст, упражнения, письмо и повторение.",
         reviewPlan: "План повторения на 60 дней",
         day: "день",
         lesson: "Урок",
@@ -11278,7 +11324,7 @@ if (await refreshStaleAppCache()) return;
         n5Bridge: "N5/N4 bridge",
         n5BridgeText: "Если база N5 и N4 дырявая, N3 будет ощущаться как стена. Сначала проверь частицы, базовые связки, условные формы и привычные повседневные конструкции.",
         reviewN5Base: "Повторить N5/N4 перед N3",
-        lessonChain: "Кандзи -> слово -> грамматика -> предложение -> абзац -> чтение -> вывод -> SRS",
+        lessonChain: "Кандзи -> слово -> грамматика -> предложение -> абзац -> чтение -> вывод -> повторение",
         lessonChainText: "N3 больше не живёт списком знаков: каждый знак сразу входит в слово, грамматическую связку, мини-текст и повторение по смыслу.",
         duration: "Длительность",
         minutes: "мин",
@@ -11288,7 +11334,7 @@ if (await refreshStaleAppCache()) return;
         sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
         exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, мини-чтение и активное вспоминание.",
         lessonComplete: "Урок завершён",
-        lessonCompleteText: "Кандзи урока добавлены в N3-review и общий SRS.",
+        lessonCompleteText: "Кандзи урока добавлены в повторение.",
         lessonResult: "Итог урока",
         lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
         completeLesson: "Завершить урок",
@@ -11299,8 +11345,8 @@ if (await refreshStaleAppCache()) return;
         step: "шаг",
         onyomi: "онъёми",
         kunyomi: "кунъёми",
-        addToSrs: "Добавить в SRS",
-        know: "Я знаю",
+        addToSrs: "В повторение",
+        know: "Знаю",
         hard: "Сложно",
         writingPractice: "Практика письма",
         markWritten: "Написано",
@@ -11319,7 +11365,7 @@ if (await refreshStaleAppCache()) return;
         reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N3.",
         noReviewCards: "Сейчас нет карточек в этом фильтре.",
         kanjiListTitle: "370 кандзи N3",
-        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в SRS или открыть письмо.",
+        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в повторение или открыть письмо.",
         grammarTitle: "80 грамматических конструкций N3",
         grammarText: "Рабочие карточки с функцией, формулой, примером и проверкой понимания в письменном и разговорном контексте.",
         readingTitle: "Тексты для чтения N3",
@@ -11333,9 +11379,9 @@ if (await refreshStaleAppCache()) return;
         submitFinal: "Завершить тест",
         reviewAll: "Повторить весь N3",
         finalPassed: "N3 пройден",
-        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
         finalNeedsReview: "Нужно повторить",
-        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
       }
       : {
         title: "JLPT N3",
@@ -11358,7 +11404,7 @@ if (await refreshStaleAppCache()) return;
         completedListening: "Listening",
         reviews: "Reviews",
         difficult: "Difficult",
-        srs: "SRS",
+        srs: "Повторение",
         lessons: "lessons",
         lessonsTitle: "37 lessons, about 10 kanji each",
         lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, mini reading, exercises, writing, and SRS.",
@@ -11390,7 +11436,7 @@ if (await refreshStaleAppCache()) return;
         step: "step",
         onyomi: "onyomi",
         kunyomi: "kunyomi",
-        addToSrs: "Add to SRS",
+        addToSrs: "Send to review",
         know: "I know",
         hard: "Hard",
         writingPractice: "Writing practice",
@@ -11760,17 +11806,25 @@ if (await refreshStaleAppCache()) return;
     render();
   }
 
-  function handleN3SrsAction(cardId, rating) {
+  function handleN3SrsAction(cardId, rating, source = "review") {
     const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
     if (!card) return;
+    const lessonHard = source === "lesson" && rating === "again";
+    const progressRating = lessonHard ? "good" : rating;
+    const displayRating = lessonHard ? "hard" : rating;
     const before = cloneProgress(getCardProgress(card.id));
-    const after = calculateNextProgress(before, rating);
+    const after = calculateNextProgress(before, progressRating, displayRating);
     state.progress.cards[card.id] = after;
-    updateDailyStats(before, after, rating);
+    updateDailyStats(before, after, displayRating);
     updateStreak();
     markN3KanjiStudied(card.kanji, card.id);
     n3Course().srsKanji[card.kanji] = new Date().toISOString();
-    if (isForgottenRating(rating)) {
+    if (lessonHard) {
+      markN3KanjiDifficult(card.kanji, card.id, false);
+      state.progress.totalCorrect += 1;
+      addReward(state.n3Meta?.rewards?.hardXp || 2, 1, `n3_srs_lesson_hard:${card.id}`);
+      playUxSound("answer_correct");
+    } else if (isForgottenRating(rating)) {
       markN3KanjiDifficult(card.kanji, card.id);
       state.progress.totalWrong += 1;
       addReward(state.n3Meta?.rewards?.hardXp || 2, 0, `n3_srs_hard:${card.id}`);
@@ -11878,10 +11932,10 @@ if (await refreshStaleAppCache()) return;
     syncJlptCourseStudyState(course, kanji);
   }
 
-  function markN3KanjiDifficult(kanji, cardId = null) {
+  function markN3KanjiDifficult(kanji, cardId = null, updateProgress = true) {
     if (!kanji) return;
     n3Course().difficultKanji[kanji] = new Date().toISOString();
-    if (cardId) {
+    if (updateProgress && cardId) {
       const progress = getCardProgress(cardId);
       if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
     }
@@ -12117,7 +12171,7 @@ if (await refreshStaleAppCache()) return;
         type,
         cardId: card.id,
         kanji: card.kanji,
-        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
         answer: "remember",
         answerLabel: lang() === "ru" ? "Помню" : "Remember",
         options: [
@@ -12584,9 +12638,9 @@ if (await refreshStaleAppCache()) return;
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN2CardSentence(card, lesson)}
         <div class="textbook-actions">
-          <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
           <button class="btn success" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-          <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+          <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
           <button class="btn ghost" type="button" data-action="n2-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
@@ -12685,7 +12739,7 @@ if (await refreshStaleAppCache()) return;
       <section class="page textbooks-page n5-course-page n2-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N2 · SRS</p>
+            <p class="eyebrow">JLPT N2 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -12984,10 +13038,10 @@ if (await refreshStaleAppCache()) return;
         completedListening: "Аудирование",
         reviews: "Повторения",
         difficult: "Сложные",
-        srs: "SRS",
+        srs: "Повторение",
         lessons: "уроков",
         lessonsTitle: "38 уроков примерно по 10 кандзи",
-        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, абзац, авторскую позицию, вывод, письмо и SRS.",
+        lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, абзац, авторскую позицию, вывод, письмо и повторение.",
         reviewPlan: "План повторения на 90 дней",
         day: "день",
         lesson: "Урок",
@@ -12995,7 +13049,7 @@ if (await refreshStaleAppCache()) return;
         n5Bridge: "N5/N4/N3 bridge",
         n5BridgeText: "Если база N5, N4 или N3 дырявая, N2 будет ощущаться как стена. Перед стартом проверь частицы, связки, условные формы, N3-грамматику и навык видеть причину, уступку и вывод в абзаце.",
         reviewN5Base: "Повторить N5/N4/N3 перед N2",
-        lessonChain: "Кандзи -> слово -> грамматика -> абзац -> позиция автора -> вывод -> SRS",
+        lessonChain: "Кандзи -> слово -> грамматика -> абзац -> позиция автора -> вывод -> повторение",
         lessonChainText: "N2 больше не живёт списком знаков: каждый знак сразу входит в слово, формальную связку, мини-абзац и логику аргумента.",
         duration: "Длительность",
         minutes: "мин",
@@ -13005,7 +13059,7 @@ if (await refreshStaleAppCache()) return;
         sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
         exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, структуру абзаца, позицию автора и активное вспоминание.",
         lessonComplete: "Урок завершён",
-        lessonCompleteText: "Кандзи урока добавлены в N2-review и общий SRS.",
+        lessonCompleteText: "Кандзи урока добавлены в повторение.",
         lessonResult: "Итог урока",
         lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
         completeLesson: "Завершить урок",
@@ -13016,8 +13070,8 @@ if (await refreshStaleAppCache()) return;
         step: "шаг",
         onyomi: "онъёми",
         kunyomi: "кунъёми",
-        addToSrs: "Добавить в SRS",
-        know: "Я знаю",
+        addToSrs: "В повторение",
+        know: "Знаю",
         hard: "Сложно",
         writingPractice: "Практика письма",
         markWritten: "Написано",
@@ -13036,7 +13090,7 @@ if (await refreshStaleAppCache()) return;
         reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N2.",
         noReviewCards: "Сейчас нет карточек в этом фильтре.",
         kanjiListTitle: "380 кандзи N2",
-        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в SRS или открыть письмо.",
+        kanjiListText: "Полный список из учебника: можно быстро добавить знаки в повторение или открыть письмо.",
         grammarTitle: "120 грамматических конструкций N2",
         grammarText: "Рабочие карточки с функцией, формулой, примером и проверкой понимания в письменном аргументе и живом контексте.",
         readingTitle: "Тексты для чтения N2",
@@ -13050,9 +13104,9 @@ if (await refreshStaleAppCache()) return;
         submitFinal: "Завершить тест",
         reviewAll: "Повторить весь N2",
         finalPassed: "N2 пройден",
-        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в SRS.",
+        finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
         finalNeedsReview: "Нужно повторить",
-        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в SRS."
+        finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
       }
       : {
         title: "JLPT N2",
@@ -13107,7 +13161,7 @@ if (await refreshStaleAppCache()) return;
         step: "step",
         onyomi: "onyomi",
         kunyomi: "kunyomi",
-        addToSrs: "Add to SRS",
+        addToSrs: "Send to review",
         know: "I know",
         hard: "Hard",
         writingPractice: "Writing practice",
@@ -13477,17 +13531,25 @@ if (await refreshStaleAppCache()) return;
     render();
   }
 
-  function handleN2SrsAction(cardId, rating) {
+  function handleN2SrsAction(cardId, rating, source = "review") {
     const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
     if (!card) return;
+    const lessonHard = source === "lesson" && rating === "again";
+    const progressRating = lessonHard ? "good" : rating;
+    const displayRating = lessonHard ? "hard" : rating;
     const before = cloneProgress(getCardProgress(card.id));
-    const after = calculateNextProgress(before, rating);
+    const after = calculateNextProgress(before, progressRating, displayRating);
     state.progress.cards[card.id] = after;
-    updateDailyStats(before, after, rating);
+    updateDailyStats(before, after, displayRating);
     updateStreak();
     markN2KanjiStudied(card.kanji, card.id);
     n2Course().srsKanji[card.kanji] = new Date().toISOString();
-    if (isForgottenRating(rating)) {
+    if (lessonHard) {
+      markN2KanjiDifficult(card.kanji, card.id, false);
+      state.progress.totalCorrect += 1;
+      addReward(state.n2Meta?.rewards?.hardXp || 2, 1, `n2_srs_lesson_hard:${card.id}`);
+      playUxSound("answer_correct");
+    } else if (isForgottenRating(rating)) {
       markN2KanjiDifficult(card.kanji, card.id);
       state.progress.totalWrong += 1;
       addReward(state.n2Meta?.rewards?.hardXp || 2, 0, `n2_srs_hard:${card.id}`);
@@ -13595,10 +13657,10 @@ if (await refreshStaleAppCache()) return;
     syncJlptCourseStudyState(course, kanji);
   }
 
-  function markN2KanjiDifficult(kanji, cardId = null) {
+  function markN2KanjiDifficult(kanji, cardId = null, updateProgress = true) {
     if (!kanji) return;
     n2Course().difficultKanji[kanji] = new Date().toISOString();
-    if (cardId) {
+    if (updateProgress && cardId) {
       const progress = getCardProgress(cardId);
       if (progress.state !== "New") state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
     }
@@ -13834,7 +13896,7 @@ if (await refreshStaleAppCache()) return;
         type,
         cardId: card.id,
         kanji: card.kanji,
-        prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+        prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
         answer: "remember",
         answerLabel: lang() === "ru" ? "Помню" : "Remember",
         options: [
@@ -16000,7 +16062,7 @@ if (await refreshStaleAppCache()) return;
           <article class="chart-panel"><h3>${escapeHtml(t("activity"))}</h3><div class="chart-box"><canvas id="activityChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("streak"))}</h3><div class="chart-box"><canvas id="streakChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("jlptProgress"))}</h3><div class="chart-box"><canvas id="jlptChart"></canvas></div></article>
-          <article class="chart-panel"><h3>SRS</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
+          <article class="chart-panel"><h3>Повторение</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("errors"))}</h3><div class="chart-box"><canvas id="mistakeChart"></canvas></div></article>
           <article class="tool-panel">${renderAchievementsList()}</article>
           <article class="tool-panel" data-section="shop-panel">${renderShop()}</article>
@@ -16340,12 +16402,80 @@ if (await refreshStaleAppCache()) return;
     const mascot = getMascot(character);
     const image = mascotImageSrc(character, mood, category);
     const phrase = formatMascotDialogueText(dialogueText(character, category));
+    const speechKey = `${className || "mascot"}:${character}:${category}:${state.route}:${state.activeTextbookLevel || state.activeJlptLesson || ""}`.toLowerCase();
+    if (isMascotSpeechDismissed(speechKey)) {
+      return `
+      <div class="${className} mascot-${character} mood-${mood}" data-action="mascot-click" data-character="${escapeAttr(character)}">
+        <img src="${escapeAttr(image)}" alt="${escapeAttr(localized(mascot.name))}" />
+      </div>
+    `;
+    }
     return `
       <div class="${className} mascot-${character} mood-${mood}" data-action="mascot-click" data-character="${escapeAttr(character)}">
         <img src="${escapeAttr(image)}" alt="${escapeAttr(localized(mascot.name))}" />
-        <div class="speech">${escapeHtml(phrase)}</div>
+        <div class="speech speech-dismissible" data-mascot-speech-key="${escapeAttr(speechKey)}" data-autohide-ms="${MASCOT_SPEECH_AUTO_HIDE_MS}">
+          <button class="speech-close" type="button" data-action="dismiss-mascot-speech" data-speech-key="${escapeAttr(speechKey)}" aria-label="${escapeAttr(lang() === "ru" ? "Закрыть облако" : "Close speech bubble")}">×</button>
+          <span class="speech-text">${escapeHtml(phrase)}</span>
+        </div>
       </div>
     `;
+  }
+
+  function loadDismissedMascotSpeeches() {
+    try {
+      const raw = sessionStorage.getItem(MASCOT_SPEECH_STORAGE_KEY);
+      return raw ? JSON.parse(raw) || {} : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveDismissedMascotSpeeches(value) {
+    try {
+      sessionStorage.setItem(MASCOT_SPEECH_STORAGE_KEY, JSON.stringify(value || {}));
+    } catch {
+      // ignore storage failures
+    }
+  }
+
+  function isMascotSpeechDismissed(key) {
+    if (!key) return false;
+    return Boolean(loadDismissedMascotSpeeches()[key]);
+  }
+
+  function dismissMascotSpeech(key) {
+    if (!key) return;
+    const hidden = loadDismissedMascotSpeeches();
+    hidden[key] = Date.now();
+    saveDismissedMascotSpeeches(hidden);
+    const timer = mascotSpeechTimers.get(key);
+    if (timer) {
+      clearTimeout(timer);
+      mascotSpeechTimers.delete(key);
+    }
+    render();
+  }
+
+  function syncMascotSpeechTimers() {
+    const visibleSpeechKeys = new Set();
+    $$("[data-mascot-speech-key][data-autohide-ms]").forEach((speech) => {
+      const key = String(speech.dataset.mascotSpeechKey || "");
+      if (!key || isMascotSpeechDismissed(key)) return;
+      visibleSpeechKeys.add(key);
+      if (mascotSpeechTimers.has(key)) return;
+      const autohideMs = Number(speech.dataset.autohideMs || 0);
+      if (!autohideMs) return;
+      const timer = window.setTimeout(() => {
+        mascotSpeechTimers.delete(key);
+        dismissMascotSpeech(key);
+      }, autohideMs);
+      mascotSpeechTimers.set(key, timer);
+    });
+    for (const [key, timer] of mascotSpeechTimers) {
+      if (visibleSpeechKeys.has(key)) continue;
+      clearTimeout(timer);
+      mascotSpeechTimers.delete(key);
+    }
   }
 
   function mascotImageSrc(character, mood = "normal", category = "welcome") {
@@ -16448,8 +16578,8 @@ if (await refreshStaleAppCache()) return;
 
   function srsButtonLabels() {
     return lang() === "ru"
-      ? { forgot: "Не помню", remember: "Помню", forgotHint: "вернём быстро", rememberHint: "SRS выберет срок" }
-      : { forgot: "Forgot", remember: "Remember", forgotHint: "review soon", rememberHint: "SRS decides" };
+      ? { forgot: "Не помню", remember: "Помню", forgotHint: "вернём быстро", rememberHint: "Повторение выберет срок" }
+      : { forgot: "Forgot", remember: "Remember", forgotHint: "review soon", rememberHint: "review decides" };
   }
 
   function srsDecisionHint(card) {
@@ -16484,10 +16614,10 @@ if (await refreshStaleAppCache()) return;
     return rating === "forgot" || rating === "again";
   }
 
-  function calculateNextProgress(before, rating) {
+  function calculateNextProgress(before, rating, displayRating = rating) {
     const now = new Date();
     const next = cloneProgress(before);
-    const inputRating = rating;
+    const inputRating = displayRating;
     const decisionRating = resolveSrsDecision(before, rating);
     rating = decisionRating;
     const oldState = before.state || "New";
@@ -18223,6 +18353,81 @@ if (await refreshStaleAppCache()) return;
       : `Unlocks after completing ${formatLevelChain(requirements)}.`;
   }
 
+  function textbookLessonsForLevel(level) {
+    const canonical = canonicalJlptLevel(level);
+    if (!canonical) return [];
+    const textbook = jlptCatalogByLevel(canonical);
+    if (!textbook) return [];
+    const textbookLessons = (textbook.lessonIds || [])
+      .map((lessonId) => state.lessons.find((item) => item.id === lessonId))
+      .filter(Boolean);
+    const textbookLessonIds = new Set(textbookLessons.map((lesson) => lesson.id));
+    const extraLessons = state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === canonical && !textbookLessonIds.has(item.id));
+    return [...textbookLessons, ...extraLessons].slice(0, Math.max(textbook.lessonCount || textbookLessons.length, textbookLessons.length));
+  }
+
+  function textbookContinueLessonId(level) {
+    const canonical = canonicalJlptLevel(level);
+    if (!canonical) return "";
+    const lessons = textbookLessonsForLevel(canonical);
+    if (!lessons.length) return "";
+    const progressMap = canonical === "N5"
+      ? (n5Course().completedLessons || {})
+      : canonical === "N4"
+        ? (n4Course().completedLessons || {})
+        : canonical === "N3"
+          ? (n3Course().completedLessons || {})
+          : canonical === "N2"
+            ? (n2Course().completedLessons || {})
+            : (state.progress.lessonCompletions || {});
+    const completedLessons = lessons.filter((lesson) => progressMap[lesson.id]);
+    if (!completedLessons.length) return lessons[0]?.id || "";
+    completedLessons.sort((a, b) => {
+      const bTime = Date.parse(progressMap[b.id] || "") || 0;
+      const aTime = Date.parse(progressMap[a.id] || "") || 0;
+      if (bTime !== aTime) return bTime - aTime;
+      return (b.order || 0) - (a.order || 0);
+    });
+    return completedLessons[0]?.id || lessons[0]?.id || "";
+  }
+
+  function openJlptLessonStart(level) {
+    const canonical = canonicalJlptLevel(level);
+    if (!canonical || !jlptLessonByLevel(canonical)) return;
+    if (!isTextbookUnlocked(canonical)) {
+      state.activeTextbookLevel = canonical;
+      state.activeJlptLesson = canonical;
+      setRoute("textbooks", null, canonical);
+      toast(textbookUnlockText(canonical));
+      return;
+    }
+
+    const previousRoute = state.route;
+    const lessonId = textbookContinueLessonId(canonical);
+    const hasDedicatedLessonPage = ["N5", "N4", "N3", "N2"].includes(canonical);
+    const nextHash = lessonId
+      ? `#textbooks/${encodeURIComponent(canonical)}/${encodeURIComponent(lessonId)}`
+      : `#textbooks/${encodeURIComponent(canonical)}`;
+
+    state.route = "textbooks";
+    state.activeTextbookLevel = canonical;
+    state.activeJlptLesson = canonical;
+    state.activeTextbookSubroute = lessonId || null;
+    state.kanjiPageId = null;
+    state.detailCardId = null;
+    state.revealed = false;
+    state.navMenu = null;
+    state.finalTestModal = null;
+    state.finalTestBusy = false;
+    state.contactModal = false;
+    state.pendingFocus = !hasDedicatedLessonPage && lessonId ? `#textbook-lesson-${lessonId}` : null;
+    if (previousRoute !== "eva-room") state.evaRoomShopOpen = false;
+    resetReadingCheck();
+    if (location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    scrollPageToTop();
+    render();
+  }
+
   function jlptLessonForCard(card) {
     return card ? jlptLessonByLevel(card.jlpt) : null;
   }
@@ -18728,7 +18933,7 @@ if (await refreshStaleAppCache()) return;
 
     context.fillStyle = "rgba(255,255,255,0.74)";
     context.font = "700 28px system-ui, sans-serif";
-    context.fillText("Flash Kanji | SRS Japanese learning", 70, 558);
+    context.fillText("Flash Kanji | JLPT Japanese learning", 70, 558);
 
     context.strokeStyle = "rgba(255, 225, 90, 0.7)";
     context.lineWidth = 3;

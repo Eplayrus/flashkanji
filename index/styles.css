@@ -2098,8 +2098,41 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
    * context (from `.hero-mascot`) which sits below the hero title.
    * Assigning a higher z‑index ensures the bubble floats above the
    * large hero title and logo.
-   */
+  */
   z-index: 5;
+}
+
+.speech.speech-dismissible {
+  padding: 12px 35px 12px 13px;
+  overflow: hidden;
+}
+
+.speech-text {
+  display: block;
+}
+
+.speech-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface-3), transparent 8%);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.speech-close:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent), transparent 76%);
 }
 
 .speech::after {
@@ -3382,9 +3415,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 }
 
 .n5-hero-mascot .speech {
-  right: 46px;
-  bottom: 74px;
-  width: min(22vw, 168px);
+  right: calc(100% + 18px);
+  bottom: 18px;
+  width: min(24vw, 188px);
   font-size: 0.84rem;
 }
 
@@ -6706,9 +6739,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   }
 
   .n5-hero-mascot .speech {
-    right: 62px;
-    bottom: 84px;
-    width: min(52vw, 200px);
+    right: calc(100% + 14px);
+    bottom: 18px;
+    width: min(56vw, 204px);
     font-size: 0.9rem;
   }
 
@@ -7002,8 +7035,8 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   }
 
   .n5-hero-mascot .speech {
-    right: 56px;
-    bottom: 78px;
+    right: calc(100% + 12px);
+    bottom: 16px;
     width: min(60vw, 184px);
     font-size: 0.84rem;
   }

@@ -3324,7 +3324,7 @@
         if (action === "buy-shop")
             buyCustomizationItem(id);
         if (action === "start-due") {
-            setRoute(getDueNowCards().length ? "review" : "learn");
+            setRoute("textbooks");
             if (!getDueNowCards().length)
                 toast(dialogueText("eva", "welcome"));
         }
@@ -4328,7 +4328,7 @@
                 { route: "textbooks", focus: "textbook-grid", icon: "冊", title: ru ? "Учебники" : "Textbooks", text: ru ? "Открыть страницы учебников JLPT." : "Open JLPT textbook pages." }
             ],
             review: [
-                { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "SRS-карточки на сегодня." : "Today’s SRS queue." },
+                { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "Карточки повторения на сегодня." : "Today's review queue." },
                 { route: "review", focus: "sentence-practice", icon: "文", title: ru ? "Практика предложений" : "Sentence practice", text: ru ? "Вставь кандзи в пропуск." : "Fill kanji into blanks." }
             ],
             writing: [
@@ -4424,11 +4424,11 @@
       <section class="page">
         <div class="hero-grid">
           <section class="hero-panel">
-            <p class="eyebrow">SRS · JLPT N5-N1 · PWA</p>
+            <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
             <h1 class="hero-title">Flash Kanji</h1>
             <p class="hero-subtitle">${escapeHtml(t("tagline"))}</p>
             <div class="hero-actions">
-              <button class="btn primary" type="button" data-action="start-due">▶ ${escapeHtml(t("study"))}</button>
+              <button class="btn primary" type="button" data-action="route" data-route="textbooks">冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
               <button class="btn" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
               <button class="btn ghost" type="button" data-action="route" data-route="textbooks">冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
             </div>
@@ -4469,8 +4469,8 @@
 
         <div class="section-head">
           <div>
-            <h2>${escapeHtml(t("lessons"))}</h2>
-            <p>${escapeHtml(t("lessonsStored"))}</p>
+            <h2>${escapeHtml(lang() === "ru" ? "JLPT-модули" : "JLPT modules")}</h2>
+            <p>${escapeHtml(lang() === "ru" ? "Открой учебники и переходи к уровню." : "Open textbooks and jump into each level.")}</p>
           </div>
         </div>
         <div class="lesson-grid">${state.lessons.map(renderLessonTile).join("")}</div>
@@ -8029,7 +8029,7 @@
       <section class="page textbooks-page n5-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N5 · SRS</p>
+            <p class="eyebrow">JLPT N5 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -8175,8 +8175,8 @@
                 reviews: "Повторения",
                 difficult: "Сложные",
                 filterDifficult: "фильтр",
-                srs: "SRS",
-                lessons: "уроков",
+        srs: "Повторение",
+        lessons: "уроков",
                 lessonsTitle: "10 уроков по 8 кандзи",
                 lessonsDescription: "Каждый урок ведёт от знака к слову, предложению, упражнению, письму и SRS.",
                 reviewPlan: "План повторения на 30 дней",
@@ -8202,8 +8202,8 @@
                 step: "шаг",
                 onyomi: "онъёми",
                 kunyomi: "кунъёми",
-                addToSrs: "Добавить в SRS",
-                know: "Я знаю",
+                addToSrs: "В повторение",
+                know: "Знаю",
                 hard: "Сложно",
                 writingPractice: "Практика письма",
                 markWritten: "Написано",
@@ -8240,8 +8240,8 @@
                 reviews: "Reviews",
                 difficult: "Difficult",
                 filterDifficult: "filter",
-                srs: "SRS",
-                lessons: "lessons",
+        srs: "Review",
+        lessons: "lessons",
                 lessonsTitle: "10 lessons, 8 kanji each",
                 lessonsDescription: "Each lesson moves from sign to word, sentence, exercise, writing, and SRS.",
                 reviewPlan: "30-day review plan",
@@ -8267,7 +8267,7 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
-                addToSrs: "Add to SRS",
+                addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
                 writingPractice: "Writing practice",
@@ -8862,7 +8862,7 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
                 answerLabel: lang() === "ru" ? "Помню" : "Remember",
                 options: [
@@ -9423,7 +9423,7 @@
       <section class="page textbooks-page n5-course-page n4-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N4 · SRS</p>
+            <p class="eyebrow">JLPT N4 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -9743,8 +9743,8 @@
                 step: "шаг",
                 onyomi: "онъёми",
                 kunyomi: "кунъёми",
-                addToSrs: "Добавить в SRS",
-                know: "Я знаю",
+                addToSrs: "В повторение",
+                know: "Знаю",
                 hard: "Сложно",
                 writingPractice: "Практика письма",
                 markWritten: "Написано",
@@ -9830,7 +9830,7 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
-                addToSrs: "Add to SRS",
+                addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
                 writingPractice: "Writing practice",
@@ -10545,7 +10545,7 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
                 answerLabel: lang() === "ru" ? "Помню" : "Remember",
                 options: [
@@ -11111,7 +11111,7 @@
       <section class="page textbooks-page n5-course-page n3-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N3 · SRS</p>
+            <p class="eyebrow">JLPT N3 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -11431,8 +11431,8 @@
                 step: "шаг",
                 onyomi: "онъёми",
                 kunyomi: "кунъёми",
-                addToSrs: "Добавить в SRS",
-                know: "Я знаю",
+                addToSrs: "В повторение",
+                know: "Знаю",
                 hard: "Сложно",
                 writingPractice: "Практика письма",
                 markWritten: "Написано",
@@ -11522,7 +11522,7 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
-                addToSrs: "Add to SRS",
+                addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
                 writingPractice: "Writing practice",
@@ -12242,7 +12242,7 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
                 answerLabel: lang() === "ru" ? "Помню" : "Remember",
                 options: [
@@ -12808,7 +12808,7 @@
       <section class="page textbooks-page n5-course-page n2-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N2 · SRS</p>
+            <p class="eyebrow">JLPT N2 · Повторение</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -13128,8 +13128,8 @@
                 step: "шаг",
                 onyomi: "онъёми",
                 kunyomi: "кунъёми",
-                addToSrs: "Добавить в SRS",
-                know: "Я знаю",
+                addToSrs: "В повторение",
+                know: "Знаю",
                 hard: "Сложно",
                 writingPractice: "Практика письма",
                 markWritten: "Написано",
@@ -13219,7 +13219,7 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
-                addToSrs: "Add to SRS",
+                addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
                 writingPractice: "Writing practice",
@@ -13939,7 +13939,7 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-SRS: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini SRS: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
                 answerLabel: lang() === "ru" ? "Помню" : "Remember",
                 options: [
@@ -16026,7 +16026,7 @@
           <article class="chart-panel"><h3>${escapeHtml(t("activity"))}</h3><div class="chart-box"><canvas id="activityChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("streak"))}</h3><div class="chart-box"><canvas id="streakChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("jlptProgress"))}</h3><div class="chart-box"><canvas id="jlptChart"></canvas></div></article>
-          <article class="chart-panel"><h3>SRS</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
+          <article class="chart-panel"><h3>Повторение</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("errors"))}</h3><div class="chart-box"><canvas id="mistakeChart"></canvas></div></article>
           <article class="tool-panel">${renderAchievementsList()}</article>
           <article class="tool-panel" data-section="shop-panel">${renderShop()}</article>
@@ -16472,8 +16472,8 @@
     }
     function srsButtonLabels() {
         return lang() === "ru"
-            ? { forgot: "Не помню", remember: "Помню", forgotHint: "вернём быстро", rememberHint: "SRS выберет срок" }
-            : { forgot: "Forgot", remember: "Remember", forgotHint: "review soon", rememberHint: "SRS decides" };
+            ? { forgot: "Не помню", remember: "Помню", forgotHint: "вернём быстро", rememberHint: "Повторение выберет срок" }
+            : { forgot: "Forgot", remember: "Remember", forgotHint: "review soon", rememberHint: "review decides" };
     }
     function srsDecisionHint(card) {
         const labels = srsButtonLabels();
@@ -18778,7 +18778,7 @@
         context.fillText(`${cardFragments} Moon Fragments`, 70, 482);
         context.fillStyle = "rgba(255,255,255,0.74)";
         context.font = "700 28px system-ui, sans-serif";
-        context.fillText("Flash Kanji | SRS Japanese learning", 70, 558);
+        context.fillText("Flash Kanji | JLPT Japanese learning", 70, 558);
         context.strokeStyle = "rgba(255, 225, 90, 0.7)";
         context.lineWidth = 3;
         context.strokeRect(34, 30, width - 68, height - 60);
