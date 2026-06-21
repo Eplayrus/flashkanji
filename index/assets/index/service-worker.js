@@ -1,23 +1,23 @@
-const CACHE_NAME = "flash-kanji-cache-v114";
-const SW_BUILD_VERSION = "2026-06-20-dark-theme-default-v10";
+const CACHE_NAME = "flash-kanji-cache-v123";
+const SW_BUILD_VERSION = "2026-06-21-boot-recovery-v19";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-20-dark-theme-default-v10",
+  "./styles.css?v=2026-06-21-boot-recovery-v19",
   "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-20-dark-theme-default-v10",
+  "./script.js?v=2026-06-21-boot-recovery-v19",
   "./manifest.webmanifest",
-  "./manifest.webmanifest?v=2026-06-20-dark-theme-default-v10",
+  "./manifest.webmanifest?v=2026-06-21-boot-recovery-v19",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-20-dark-theme-default-v10",
+  "./src/audio/soundManager.js?v=2026-06-21-boot-recovery-v19",
   "./src/effects/cyberHudEffect.js",
-  "./src/effects/cyberHudEffect.js?v=2026-06-20-dark-theme-default-v10",
+  "./src/effects/cyberHudEffect.js?v=2026-06-21-boot-recovery-v19",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-20-dark-theme-default-v10",
+  "./vendor/chart.umd.min.js?v=2026-06-21-boot-recovery-v19",
   "./assets/favicon.ico",
   "./assets/favicon.png",
   "./assets/icon-192.png",

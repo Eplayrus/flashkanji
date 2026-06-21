@@ -9,10 +9,11 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-20-dark-theme-default-v10";
+  const BUILD_VERSION = "2026-06-21-boot-recovery-v19";
   const MOON_CHEAT_CODE = "moonfarm";
   const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
   const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
+  const BOOT_RECOVERY_STORAGE_KEY = "flashKanji.bootRecovery.v1";
   const YANDEX_METRIKA_ID = 109492033;
   const OFFICIAL_SOCIAL_LINKS = {
     instagram: "https://www.instagram.com/fallinginto_silence?igsh=MWpzYW1ncTB1a3FuNw==",
@@ -239,6 +240,7 @@
   let toastTimer = 0;
   let deferredPwaInstallPrompt = null;
   let notificationPromptTimer = 0;
+  let notificationPromptAutoDockTimer = 0;
   let onboardingScheduleTimer = 0;
   let onboardingLayoutRaf = 0;
   let onboardingScrollHandler = null;
@@ -487,8 +489,14 @@ if (await refreshStaleAppCache()) return;
       startEvaSpriteRotationLoop();
       scheduleNotificationPromptCheck();
       prepareDailyNotifications();
+      try {
+        sessionStorage.removeItem(BOOT_RECOVERY_STORAGE_KEY);
+      } catch (error) {
+        console.warn("Could not clear boot recovery marker after successful startup.", error);
+      }
     } catch (error) {
       console.error(error);
+      if (await attemptBootRecovery(error)) return;
       app.innerHTML = renderLoadError(error);
     }
   }
@@ -2944,6 +2952,16 @@ if (await refreshStaleAppCache()) return;
     }
     if (action === "share-page") shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed"));
     if (action === "toggle-header-socials") setHeaderSocialOpen(!isHeaderSocialOpen());
+    if (action === "notification-center") {
+      if (state.notificationPromptVisible) {
+        dockNotificationPrompt();
+        return;
+      }
+      if (state.notificationPrompt?.docked || canShowNotificationPrompt("header")) {
+        maybeShowNotificationPrompt("header");
+      }
+      return;
+    }
     if (action === "repeat-onboarding") {
       startFlashKanjiOnboarding({ force: true });
       return;
@@ -3337,6 +3355,10 @@ if (await refreshStaleAppCache()) return;
       playUxSound("menu_close");
       return;
     }
+    if (action === "notification-center") {
+      playUxSound("notification_soft");
+      return;
+    }
     if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate", "open-jlpt-lesson", "n5-open-lesson", "n5-overview", "n5-review", "n4-open-lesson", "n4-overview", "n4-review", "n4-kanji", "n4-grammar", "n4-reading", "n4-listening", "n4-final", "n3-open-lesson", "n3-overview", "n3-review", "n3-kanji", "n3-grammar", "n3-reading", "n3-listening", "n3-final", "n2-open-lesson", "n2-overview", "n2-review", "n2-kanji", "n2-grammar", "n2-reading", "n2-listening", "n2-final"].includes(action)) {
       playUxSound("page_turn");
       return;
@@ -3345,7 +3367,7 @@ if (await refreshStaleAppCache()) return;
       playUxSound("button_click");
       return;
     }
-    if (["pwa-install", "notification-allow", "set-goal"].includes(action)) {
+    if (["pwa-install", "notification-allow", "notification-center", "set-goal"].includes(action)) {
       playUxSound("notification_soft");
       return;
     }
@@ -4240,6 +4262,7 @@ if (await refreshStaleAppCache()) return;
     const languageButton = $('[data-action="language"]');
     if (languageButton) languageButton.textContent = lang().toUpperCase();
     syncHeaderSoundButton();
+    syncHeaderNotificationButton();
     syncHeaderSocialToggleButton();
   }
 
@@ -16199,6 +16222,10 @@ if (await refreshStaleAppCache()) return;
         <article class="reward-modal ${isLevel ? "is-level" : ""} ${isAchievement ? "is-achievement" : ""}">
           ${isLevel ? `<img class="reward-logo" src="assets/logo.png" alt="Flash Kanji" />` : ""}
           ${isAchievement ? `<div class="reward-achievement-icon">${achievementIcon(reward.icon)}</div>` : ""}
+          <div class="reward-modal-actions">
+            ${isLevel ? `<button class="btn primary share-btn" type="button" data-action="share-achievement">${escapeHtml(t("shareAchievement"))}</button>` : ""}
+            <button class="btn primary" type="button" data-action="close-reward">OK</button>
+          </div>
           ${renderMascot(reward.mascot || "eva", reward.mood || "happy", reward.dialog || "achievement", "reward-mascot")}
           <h2>${escapeHtml(reward.title)}</h2>
           <p>${escapeHtml(message)}</p>
@@ -16209,8 +16236,6 @@ if (await refreshStaleAppCache()) return;
             ${reward.coins ? `<span>+${reward.coins} ${escapeHtml(t("coins"))}</span>` : ""}
             ${isLevel ? `<span>${state.progress.moonFragments} ${escapeHtml(t("coins"))}</span>` : ""}
           </div>
-          ${isLevel ? `<button class="btn primary share-btn" type="button" data-action="share-achievement">${escapeHtml(t("shareAchievement"))}</button>` : ""}
-          <button class="btn primary" type="button" data-action="close-reward">OK</button>
         </article>
       </div>
     `;
@@ -17271,12 +17296,27 @@ if (await refreshStaleAppCache()) return;
     return Math.max(1, data?.strokeOrder?.length || Number(card?.strokes || 1));
   }
 
+  function writingPalette() {
+    const style = getComputedStyle(document.documentElement);
+    const get = (name: string) => style.getPropertyValue(name).trim();
+    return {
+      paper: get("--writing-paper") || get("--surface") || "#ffffff",
+      border: get("--writing-paper-border") || get("--line") || "#d0d5dd",
+      grid: get("--writing-grid") || get("--line") || "#d0d5dd",
+      gridStrong: get("--writing-grid-strong") || get("--line-strong") || "#98a2b3",
+      ink: get("--writing-ink") || get("--text") || "#111014",
+      guide: get("--writing-guide") || get("--muted") || "#5f6670",
+      templateOpacity: Number(get("--writing-template-opacity") || "0.16") || 0.16
+    };
+  }
+
   function drawKanjiSvgStrokes(context, canvas, strokeData, options = {}) {
     const activeIndex = clamp(Number(options.activeIndex || 0), 0, Math.max(0, strokeData.strokeOrder.length - 1));
     const transform = kanjiSvgTransform(strokeData, canvas, options.padding || 22);
+    const palette = writingPalette();
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
     const active = getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim();
-    const muted = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim();
+    const muted = palette.guide;
     strokeData.strokeOrder.forEach((stroke, index) => {
       const isPast = index < activeIndex;
       const isActive = index === activeIndex;
@@ -17351,11 +17391,11 @@ if (await refreshStaleAppCache()) return;
   }
 
   function drawWritingFallbackTemplate(context, canvas, card, activeIndex = 0) {
-    const textColor = getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    const palette = writingPalette();
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim();
     context.save();
-    context.globalAlpha = 0.16;
-    context.fillStyle = textColor;
+    context.globalAlpha = palette.templateOpacity;
+    context.fillStyle = palette.ink;
     context.font = `900 ${Math.floor(canvas.height * 0.7)}px "Noto Sans JP", "Yu Gothic", serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -17375,8 +17415,9 @@ if (await refreshStaleAppCache()) return;
   function drawSmoothStroke(context, rawPoints, options = {}) {
     const points = rawPoints.map(toCanvasPoint).filter(Boolean);
     if (!context || !points.length) return;
+    const palette = writingPalette();
     context.save();
-    context.strokeStyle = options.color || getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    context.strokeStyle = options.color || palette.ink;
     context.lineWidth = options.width || 12;
     context.lineCap = "round";
     context.lineJoin = "round";
@@ -17411,17 +17452,18 @@ if (await refreshStaleAppCache()) return;
   function drawStrokeNumber(context, stroke, number, active) {
     const first = toCanvasPoint(stroke[0]);
     if (!first) return;
+    const palette = writingPalette();
     context.save();
     context.fillStyle = active
       ? getComputedStyle(document.documentElement).getPropertyValue("--accent-2").trim()
       : getComputedStyle(document.documentElement).getPropertyValue("--surface-2").trim();
-    context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line-strong").trim();
+    context.strokeStyle = palette.border;
     context.lineWidth = 1;
     context.beginPath();
     context.arc(first.x, first.y, active ? 13 : 10, 0, Math.PI * 2);
     context.fill();
     context.stroke();
-    context.fillStyle = active ? "#111014" : getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
+    context.fillStyle = active ? "#111014" : palette.ink;
     context.font = "800 12px system-ui";
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -17431,15 +17473,17 @@ if (await refreshStaleAppCache()) return;
 
   function clearCanvas(context, canvas) {
     if (!context || !canvas) return;
+    const palette = writingPalette();
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--surface").trim();
+    context.fillStyle = palette.paper;
     context.fillRect(0, 0, canvas.width, canvas.height);
     drawGrid(context, canvas);
   }
 
   function drawGrid(context, canvas) {
+    const palette = writingPalette();
     context.save();
-    context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line").trim();
+    context.strokeStyle = palette.grid;
     context.lineWidth = 1;
     context.setLineDash([8, 8]);
     context.beginPath();
@@ -17453,7 +17497,7 @@ if (await refreshStaleAppCache()) return;
     context.lineTo(0, canvas.height);
     context.stroke();
     context.setLineDash([]);
-    context.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--line-strong").trim();
+    context.strokeStyle = palette.gridStrong;
     context.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
     context.restore();
   }
@@ -17625,7 +17669,7 @@ if (await refreshStaleAppCache()) return;
     const seen = new Set();
     const cards = [];
     LEVEL_ORDER.forEach((level) => {
-      jlptModuleEligibleCards(level).forEach((card) => {
+      cardsForJlpt(level).forEach((card) => {
         const id = String(card?.id || "");
         if (!id || seen.has(id)) return;
         seen.add(id);
@@ -18288,17 +18332,6 @@ if (await refreshStaleAppCache()) return;
   function cardsForJlpt(jlpt) {
     const key = String(jlpt || "").toUpperCase();
     if (!key) return [];
-    const spec = jlptModuleSpec(key);
-    const cards = spec && typeof spec.allCards === "function" ? spec.allCards() : [];
-    if (cards.length) {
-      const seen = new Set();
-      return cards.filter((card) => {
-        const id = String(card?.id || "");
-        if (!id || seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      });
-    }
     return state.cards.filter((card) => String(card.jlpt || "").toUpperCase() === key);
   }
 
@@ -18913,6 +18946,43 @@ if (await refreshStaleAppCache()) return;
       `;
   }
 
+  function notificationButtonIcon(active) {
+    return active
+      ? `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 4.25a4.25 4.25 0 0 0-4.25 4.25v2.12c0 .79-.18 1.56-.53 2.25L6 15.56c-.2.4.09.87.54.87h10.92c.45 0 .74-.47.54-.87l-1.22-2.69a4.75 4.75 0 0 1-.53-2.25V8.5A4.25 4.25 0 0 0 12 4.25Z" fill="currentColor" />
+          <path d="M9.65 18.5a2.4 2.4 0 0 0 4.7 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+          <circle cx="17.5" cy="6.5" r="2" fill="currentColor" />
+        </svg>
+      `
+      : `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 4.25a4.25 4.25 0 0 0-4.25 4.25v2.12c0 .79-.18 1.56-.53 2.25L6 15.56c-.2.4.09.87.54.87h10.92c.45 0 .74-.47.54-.87l-1.22-2.69a4.75 4.75 0 0 1-.53-2.25V8.5A4.25 4.25 0 0 0 12 4.25Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" />
+          <path d="M9.65 18.5a2.4 2.4 0 0 0 4.7 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+        </svg>
+      `;
+  }
+
+  function syncHeaderNotificationButton() {
+    const button = $('[data-action="notification-center"]');
+    if (!button) return;
+    const prompt = state.notificationPrompt || loadNotificationPromptState();
+    const available = Boolean(prompt.docked || state.notificationPromptVisible || canShowNotificationPrompt("header"));
+    const open = Boolean(state.notificationPromptVisible);
+    const label = open
+      ? (lang() === "ru" ? "Скрыть уведомление" : "Hide notification")
+      : (prompt.docked
+        ? (lang() === "ru" ? "Открыть уведомление" : "Open notification")
+        : (lang() === "ru" ? "Уведомления" : "Notifications"));
+    button.hidden = !available;
+    button.classList.toggle("is-active", open);
+    button.classList.toggle("has-prompt", Boolean(prompt.docked || open));
+    button.setAttribute("aria-pressed", String(open));
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.innerHTML = notificationButtonIcon(open);
+  }
+
   function syncHeaderSocialToggleButton() {
     const button = $('[data-action="toggle-header-socials"]');
     if (!button) return;
@@ -19238,6 +19308,87 @@ if (await refreshStaleAppCache()) return;
     return `<section class="empty-state" style="margin-top:24px"><span class="kanji-char">警</span><h1>Data error</h1><p>${escapeHtml(error.message)}</p></section>`;
   }
 
+  function clearFlashKanjiStorage() {
+    try {
+      const keys = [];
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key) continue;
+        if (key.startsWith("flashKanji") || key.startsWith("flashkanji")) keys.push(key);
+      }
+      [
+        STORAGE_KEY,
+        LEGACY_STORAGE_KEY,
+        PWA_INSTALL_STORAGE_KEY,
+        PWA_INSTALL_STORAGE_KEY_LEGACY,
+        NOTIFICATION_STORAGE_KEY,
+        CUSTOMIZATION_STORAGE_KEY,
+        EVA_STATE_STORAGE_KEY,
+        BUILD_STORAGE_KEY,
+        PWA_CACHE_RESET_STORAGE_KEY,
+        FORCE_PWA_CACHE_RESET_FLAG,
+        ONBOARDING_STORAGE_KEY,
+        ONBOARDING_STORAGE_KEY_LEGACY,
+        ONBOARDING_AUDIENCE_STORAGE_KEY,
+        "flashKanji.lastForcedBuild"
+      ].forEach((key) => keys.push(key));
+      [...new Set(keys)].forEach((key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (error) {
+          console.warn(`Could not remove storage key ${key}.`, error);
+        }
+      });
+    } catch (error) {
+      console.warn("Could not clear Flash Kanji storage during boot recovery.", error);
+    }
+  }
+
+  async function clearRuntimeCachesAndServiceWorkers() {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(async (registration) => {
+        try {
+          await registration.unregister();
+        } catch (error) {
+          console.warn("Could not unregister service worker during boot recovery.", error);
+        }
+      }));
+    }
+  }
+
+  async function attemptBootRecovery(error) {
+    try {
+      const stage = Number(sessionStorage.getItem(BOOT_RECOVERY_STORAGE_KEY) || "0");
+      if (stage >= 2) return false;
+      const nextStage = stage + 1;
+      sessionStorage.setItem(BOOT_RECOVERY_STORAGE_KEY, String(nextStage));
+      console.warn(`[FlashKanji] Boot failed, attempting recovery stage ${nextStage}.`, error);
+      if (nextStage >= 2) clearFlashKanjiStorage();
+      await clearRuntimeCachesAndServiceWorkers();
+      try {
+        localStorage.removeItem(BUILD_STORAGE_KEY);
+        localStorage.removeItem(PWA_CACHE_RESET_STORAGE_KEY);
+        localStorage.removeItem(FORCE_PWA_CACHE_RESET_FLAG);
+        localStorage.removeItem("flashKanji.lastForcedBuild");
+      } catch (storageError) {
+        console.warn("Boot recovery marker cleanup failed.", storageError);
+      }
+      const url = new URL(location.href);
+      url.searchParams.set("cachebust", Date.now().toString());
+      url.searchParams.set("bootRecovery", String(nextStage));
+      location.replace(url.toString());
+      return true;
+    } catch (recoveryError) {
+      console.warn("Boot recovery failed.", recoveryError);
+      return false;
+    }
+  }
+
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
     let refreshing = false;
@@ -19465,7 +19616,8 @@ if (await refreshStaleAppCache()) return;
       acceptedAt: null,
       lastAskedAt: 0,
       lastShown: {},
-      periodicSync: false
+      periodicSync: false,
+      docked: false
     };
     try {
       const raw = localStorage.getItem(NOTIFICATION_STORAGE_KEY);
@@ -19478,7 +19630,8 @@ if (await refreshStaleAppCache()) return;
         nextShowAt: Number(saved.nextShowAt || 0),
         neverShow: Boolean(saved.neverShow),
         enabled: Boolean(saved.enabled),
-        lastShown: saved.lastShown && typeof saved.lastShown === "object" ? saved.lastShown : {}
+        lastShown: saved.lastShown && typeof saved.lastShown === "object" ? saved.lastShown : {},
+        docked: Boolean(saved.docked)
       };
     } catch (error) {
       console.warn("Notification prompt state reset.", error);
@@ -19492,6 +19645,32 @@ if (await refreshStaleAppCache()) return;
     } catch (error) {
       console.warn("Cannot save notification prompt state.", error);
     }
+  }
+
+  function clearNotificationPromptAutoDockTimer() {
+    clearTimeout(notificationPromptAutoDockTimer);
+    notificationPromptAutoDockTimer = 0;
+  }
+
+  function startNotificationPromptAutoDockTimer() {
+    clearNotificationPromptAutoDockTimer();
+    if (!state.notificationPromptVisible) return;
+    notificationPromptAutoDockTimer = window.setTimeout(() => {
+      if (!state.notificationPromptVisible) return;
+      dockNotificationPrompt();
+    }, 5000);
+  }
+
+  function dockNotificationPrompt() {
+    clearNotificationPromptAutoDockTimer();
+    if (!state.notificationPromptVisible && state.notificationPrompt?.docked) return;
+    state.notificationPromptVisible = false;
+    state.notificationPrompt = {
+      ...state.notificationPrompt,
+      docked: true
+    };
+    saveNotificationPromptState();
+    render();
   }
 
   function isNotificationInstallEligible() {
@@ -19515,7 +19694,13 @@ if (await refreshStaleAppCache()) return;
       return false;
     }
     state.notificationPromptVisible = true;
+    state.notificationPrompt = {
+      ...state.notificationPrompt,
+      docked: false
+    };
+    saveNotificationPromptState();
     playUxSound("notification_soft");
+    startNotificationPromptAutoDockTimer();
     render();
     return true;
   }
@@ -19529,6 +19714,7 @@ if (await refreshStaleAppCache()) return;
 
   async function handleNotificationPermissionAccepted() {
     state.notificationPromptVisible = false;
+    clearNotificationPromptAutoDockTimer();
     if (!("Notification" in window)) {
       handleNotificationPermissionDeclined();
       return;
@@ -19553,12 +19739,14 @@ if (await refreshStaleAppCache()) return;
 
   function handleNotificationPermissionGranted() {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
+    clearNotificationPromptAutoDockTimer();
     state.notificationPrompt = {
       ...loadNotificationPromptState(),
       ...state.notificationPrompt,
       permission: "granted",
       enabled: true,
       neverShow: true,
+      docked: false,
       acceptedAt: state.notificationPrompt.acceptedAt || new Date().toISOString(),
       nextShowAt: 0
     };
@@ -19570,6 +19758,7 @@ if (await refreshStaleAppCache()) return;
     const current = state.notificationPrompt || loadNotificationPromptState();
     const declineCount = Math.min(Number(current.declineCount || 0) + 1, 5);
     state.notificationPromptVisible = false;
+    clearNotificationPromptAutoDockTimer();
     state.notificationPrompt = {
       ...current,
       permission: "Notification" in window ? Notification.permission : "unsupported",
@@ -19577,6 +19766,7 @@ if (await refreshStaleAppCache()) return;
       nextShowAt: scheduleNextNotificationPrompt(declineCount),
       neverShow: declineCount >= 5,
       enabled: false,
+      docked: false,
       lastAskedAt: Date.now()
     };
     saveNotificationPromptState();
@@ -19761,6 +19951,12 @@ if (await refreshStaleAppCache()) return;
 
   function dayDifference(fromKey, toKey) {
     return Math.round((keyToDate(toKey) - keyToDate(fromKey)) / 86400000);
+  }
+
+  function shiftDayKey(key, days) {
+    const date = keyToDate(key);
+    date.setDate(date.getDate() + days);
+    return dateKey(date);
   }
 
   function lastDays(count) {

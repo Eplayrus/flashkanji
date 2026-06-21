@@ -18,6 +18,27 @@
   --kanji-font: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
   --ui-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --app-room-bg: url("assets/bg/bg_study_hub.png");
+  --writing-paper: var(--surface);
+  --writing-paper-border: var(--line);
+  --writing-grid: var(--line);
+  --writing-grid-strong: var(--line-strong);
+  --writing-ink: var(--text);
+  --writing-guide: var(--muted);
+  --writing-template-opacity: 0.16;
+  --kanji-panel: color-mix(in srgb, var(--surface-2), var(--bg) 12%);
+  --kanji-panel-strong: color-mix(in srgb, var(--surface-3), var(--bg) 12%);
+  --logo-filter: drop-shadow(0 8px 12px var(--shadow));
+  --control-surface: var(--surface-2);
+  --control-surface-hover: color-mix(in srgb, var(--surface-2), var(--text) 4%);
+  --control-border: var(--line);
+  --control-border-hover: var(--line-strong);
+  --control-soft-surface: color-mix(in srgb, var(--surface-2), var(--accent) 6%);
+  --control-soft-border: color-mix(in srgb, var(--accent), transparent 58%);
+  --control-accent-surface: color-mix(in srgb, var(--accent-2), transparent 82%);
+  --control-accent-surface-strong: color-mix(in srgb, var(--accent-2), transparent 72%);
+  --control-shadow: 0 14px 28px color-mix(in srgb, var(--shadow), transparent 12%);
+  --icon-tone: var(--text);
+  --icon-boost: none;
 }
 
 [data-theme="light"] {
@@ -37,6 +58,27 @@
   --accent-4: #006b8f;
   --danger: #b3261e;
   --shadow: rgba(32, 34, 42, 0.16);
+  --writing-paper: rgba(254, 253, 249, 0.98);
+  --writing-paper-border: rgba(24, 27, 34, 0.18);
+  --writing-grid: rgba(24, 27, 34, 0.22);
+  --writing-grid-strong: rgba(24, 27, 34, 0.34);
+  --writing-ink: #15161c;
+  --writing-guide: rgba(35, 39, 47, 0.74);
+  --writing-template-opacity: 0.26;
+  --kanji-panel: rgba(246, 248, 251, 0.98);
+  --kanji-panel-strong: rgba(238, 242, 247, 0.98);
+  --logo-filter: brightness(0.28) saturate(0.82) contrast(1.12) drop-shadow(0 6px 10px rgba(32, 34, 42, 0.12));
+  --control-surface: rgba(252, 251, 248, 0.99);
+  --control-surface-hover: color-mix(in srgb, rgba(252, 251, 248, 0.99), var(--accent) 6%);
+  --control-border: rgba(27, 31, 39, 0.2);
+  --control-border-hover: rgba(27, 31, 39, 0.34);
+  --control-soft-surface: color-mix(in srgb, rgba(255, 250, 251, 0.99), var(--accent) 8%);
+  --control-soft-border: color-mix(in srgb, var(--accent), transparent 36%);
+  --control-accent-surface: color-mix(in srgb, var(--accent-2), transparent 70%);
+  --control-accent-surface-strong: color-mix(in srgb, var(--accent-2), transparent 58%);
+  --control-shadow: 0 14px 28px rgba(32, 34, 42, 0.1);
+  --icon-tone: #15161c;
+  --icon-boost: brightness(0.78) contrast(1.2) saturate(0.85);
 }
 
 :root[data-custom-theme="theme_moon_gold"] {
@@ -1200,11 +1242,38 @@ textarea:focus-visible {
   max-height: 42px;
   object-fit: contain;
   object-position: left center;
-  filter: drop-shadow(0 8px 12px var(--shadow));
+  filter: var(--logo-filter);
 }
 
 .header-social-toggle {
   flex: 0 0 auto;
+}
+
+.header-notification-toggle {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.header-notification-toggle.has-prompt {
+  border-color: color-mix(in srgb, var(--accent-2), transparent 28%);
+}
+
+.header-notification-toggle.is-active {
+  border-color: color-mix(in srgb, var(--accent), transparent 12%);
+  background: var(--control-accent-surface-strong);
+  color: var(--text);
+}
+
+.header-notification-toggle.has-prompt::after {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-2), transparent 35%);
+  content: "";
 }
 
 .header-social-actions {
@@ -1245,6 +1314,22 @@ textarea:focus-visible {
   width: 18px;
   height: 18px;
   display: block;
+}
+
+.icon-btn,
+.social-link,
+.nav-btn > span,
+.nav-popover-item > span,
+.lesson-glyph,
+.achievement-icon,
+.scroll-position-toggle-icon,
+.contact-modal-icon,
+.reward-achievement-icon {
+  color: var(--icon-tone);
+}
+
+[data-theme="light"] :is(.icon-btn svg, .social-link svg, .btn-icon svg, .contact-modal-icon svg) {
+  filter: var(--icon-boost);
 }
 
 .icon-btn:hover {
@@ -1838,45 +1923,48 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   gap: 8px;
   min-height: 42px;
   padding: 10px 13px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: var(--surface-2);
+  background: var(--control-surface);
   color: var(--text);
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  box-shadow: var(--control-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  border-color: var(--line-strong);
+  border-color: var(--control-border-hover);
+  background: var(--control-surface-hover);
 }
 
 .btn.primary {
-  border-color: color-mix(in srgb, var(--accent), transparent 15%);
-  background: linear-gradient(135deg, var(--accent), #9d0a2d);
+  border-color: color-mix(in srgb, var(--accent), transparent 4%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent), white 2%), #9d0a2d);
   color: #fff;
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent), transparent 70%);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent), transparent 58%);
 }
 
 .btn.success {
-  border-color: color-mix(in srgb, var(--accent-3), transparent 25%);
-  background: color-mix(in srgb, var(--accent-3), transparent 80%);
+  border-color: color-mix(in srgb, var(--accent-3), transparent 12%);
+  background: color-mix(in srgb, var(--accent-3), transparent 72%);
 }
 
 .btn.warning {
-  border-color: color-mix(in srgb, var(--accent-2), transparent 20%);
-  background: color-mix(in srgb, var(--accent-2), transparent 82%);
+  border-color: color-mix(in srgb, var(--accent-2), transparent 8%);
+  background: var(--control-accent-surface);
 }
 
 .btn.danger {
-  border-color: color-mix(in srgb, var(--danger), transparent 20%);
-  background: color-mix(in srgb, var(--danger), transparent 82%);
+  border-color: color-mix(in srgb, var(--danger), transparent 10%);
+  background: color-mix(in srgb, var(--danger), transparent 72%);
 }
 
 .btn.ghost {
-  background: transparent;
+  border-color: var(--control-soft-border);
+  background: var(--control-soft-surface);
 }
 
 .btn small {
@@ -3471,7 +3559,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--text), transparent 94%);
+  background: var(--kanji-panel);
   font-family: var(--kanji-font);
   font-size: clamp(1.15rem, 4.8vw, 1.85rem);
   line-height: 1;
@@ -3522,7 +3610,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   border-radius: 8px;
   background:
     linear-gradient(45deg, transparent 0 48%, color-mix(in srgb, var(--accent), transparent 74%) 48% 52%, transparent 52%),
-    color-mix(in srgb, var(--text), transparent 95%);
+    var(--kanji-panel-strong);
   font-family: var(--kanji-font);
   font-size: 5rem;
   line-height: 1;
@@ -3541,7 +3629,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 .n5-word-list p {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--text), transparent 96%);
+  background: var(--kanji-panel);
 }
 
 .n5-readings div {
@@ -4067,7 +4155,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   height: 82px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--accent-2), transparent 86%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-2), transparent 86%), transparent 58%),
+    var(--kanji-panel);
   font-family: var(--kanji-font);
   font-size: 3.6rem;
   line-height: 1;
@@ -4137,7 +4227,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   border-radius: 8px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent-2), transparent 78%), transparent 48%),
-    color-mix(in srgb, var(--surface-2), var(--bg) 42%);
+    var(--kanji-panel-strong);
   font-family: var(--kanji-font);
   font-size: clamp(7rem, 37vw, 14rem);
   line-height: 1;
@@ -4380,9 +4470,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   display: block;
   width: 100%;
   max-width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--writing-paper-border);
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--writing-paper);
   touch-action: none;
 }
 
@@ -4391,9 +4481,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   gap: 10px;
   margin-top: 10px;
   padding: 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--text), transparent 95%);
+  background: var(--control-surface);
 }
 
 .writing-step-head {
@@ -4442,12 +4532,13 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   gap: 8px;
   width: 100%;
   padding: 9px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--text), transparent 95%);
+  background: var(--control-surface);
   color: var(--text);
   text-align: left;
   cursor: pointer;
+  box-shadow: var(--control-shadow);
 }
 
 .writing-guide-list b {
@@ -4461,8 +4552,8 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 }
 
 .writing-guide-list .is-active button {
-  border-color: color-mix(in srgb, var(--accent-2), transparent 28%);
-  background: color-mix(in srgb, var(--accent-2), transparent 86%);
+  border-color: color-mix(in srgb, var(--accent-2), transparent 8%);
+  background: var(--control-accent-surface);
 }
 
 .writing-guide-list .is-active b {
@@ -4482,9 +4573,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   height: 34px;
   margin-bottom: 10px;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--text), transparent 94%);
+  background: var(--control-surface);
 }
 
 .writing-score i {
@@ -4751,6 +4842,8 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 
 .reward-modal {
   width: min(100%, 420px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
   padding: 18px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
@@ -4759,6 +4852,14 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
     var(--surface-2);
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
   text-align: center;
+}
+
+.reward-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 10px;
 }
 
 .reward-backdrop.is-level {
@@ -4811,7 +4912,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   max-height: 78px;
   object-fit: contain;
   margin: 0 auto 10px;
-  filter: drop-shadow(0 10px 24px rgba(255, 225, 90, 0.18));
+  filter: var(--logo-filter);
 }
 
 .reward-modal h2 {
@@ -4880,8 +4981,8 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 }
 
 .reward-modal .share-btn {
-  width: 100%;
-  margin: 4px 0 8px;
+  min-width: 138px;
+  margin: 0;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent-2), #ffffff 10%), var(--accent));
   color: #111014;
@@ -4988,7 +5089,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   width: 64px;
   max-height: 48px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(255, 225, 90, 0.18));
+  filter: var(--logo-filter);
 }
 
 .notification-bell {
@@ -5107,10 +5208,10 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   min-height: 70px;
   margin: 0 auto;
   padding: 7px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border-hover);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--bg), transparent 8%);
-  box-shadow: 0 16px 36px var(--shadow);
+  background: color-mix(in srgb, var(--control-surface), transparent 4%);
+  box-shadow: 0 16px 36px color-mix(in srgb, var(--shadow), transparent 10%);
   backdrop-filter: blur(18px);
 }
 
@@ -5121,10 +5222,11 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   gap: 2px;
   min-width: 0;
   min-height: 54px;
-  border: 1px solid transparent;
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: transparent;
+  background: var(--control-surface);
   color: var(--muted);
+  box-shadow: var(--control-shadow);
   cursor: pointer;
 }
 
@@ -5143,9 +5245,14 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 }
 
 .nav-btn.is-active {
-  border-color: color-mix(in srgb, var(--accent), transparent 35%);
-  background: color-mix(in srgb, var(--accent), transparent 84%);
+  border-color: color-mix(in srgb, var(--accent), transparent 10%);
+  background: var(--control-accent-surface);
   color: var(--text);
+}
+
+.nav-btn:hover {
+  border-color: var(--control-border-hover);
+  background: var(--control-surface-hover);
 }
 
 .nav-btn.has-menu::after {
@@ -5169,12 +5276,12 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   width: min(calc(100% - 28px), 460px);
   margin: 0 auto;
   padding: 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--control-border-hover);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent), transparent 86%), transparent 52%),
-    color-mix(in srgb, var(--surface), transparent 2%);
-  box-shadow: 0 24px 56px var(--shadow);
+    linear-gradient(135deg, color-mix(in srgb, var(--accent), transparent 76%), transparent 52%),
+    color-mix(in srgb, var(--control-surface), transparent 2%);
+  box-shadow: 0 24px 56px color-mix(in srgb, var(--shadow), transparent 6%);
   backdrop-filter: blur(20px);
   animation: pop 0.16s ease both;
 }
@@ -5205,18 +5312,23 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   align-items: center;
   min-height: 62px;
   padding: 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
-  background: var(--surface-2);
+  background: var(--control-surface);
   color: var(--text);
   text-align: left;
   cursor: pointer;
-  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .nav-popover-item:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent), transparent 30%);
+  border-color: color-mix(in srgb, var(--accent), transparent 18%);
+  background: var(--control-surface-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 10px 20px color-mix(in srgb, var(--accent), transparent 88%);
 }
 
 .nav-popover-item > span {
@@ -5225,9 +5337,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   place-items: center;
   width: 42px;
   height: 42px;
-  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 45%);
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 26%);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--accent-2), transparent 88%);
+  background: var(--control-accent-surface);
   color: var(--accent-2);
   font-weight: 900;
 }
@@ -5296,6 +5408,25 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 .scroll-position-toggle-down .scroll-position-toggle-icon {
   background: color-mix(in srgb, var(--accent-4), transparent 78%);
   color: var(--accent-4);
+}
+
+[data-theme="light"] .achievement-icon,
+[data-theme="light"] .scroll-position-toggle-icon,
+[data-theme="light"] .nav-popover-item > span,
+[data-theme="light"] .contact-modal-icon,
+[data-theme="light"] .reward-achievement-icon {
+  color: var(--icon-tone);
+}
+
+[data-theme="light"] .achievement-icon,
+[data-theme="light"] .scroll-position-toggle-icon,
+[data-theme="light"] .contact-modal-icon,
+[data-theme="light"] .reward-achievement-icon {
+  border-color: color-mix(in srgb, var(--icon-tone), transparent 82%);
+}
+
+[data-theme="light"] .nav-popover-item > span {
+  border-color: color-mix(in srgb, var(--icon-tone), transparent 76%);
 }
 
 .is-focus-pulse {
@@ -7155,6 +7286,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 .seo-logo img {
   width: 88px;
   height: auto;
+  filter: var(--logo-filter);
 }
 
 .seo-topbar nav,
