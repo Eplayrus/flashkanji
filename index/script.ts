@@ -9,7 +9,7 @@
   const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
   const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
   const APP_VERSION = 3;
-  const BUILD_VERSION = "2026-06-21-textbooks-primary-v28";
+  const BUILD_VERSION = "2026-06-22-onboarding-textbooks-v29";
   const MASCOT_SPEECH_AUTO_HIDE_MS = 7000;
   const MASCOT_SPEECH_STORAGE_KEY = `flashKanji.hiddenMascotSpeeches:${BUILD_VERSION}`;
   const MOON_CHEAT_CODE = "moonfarm";
@@ -132,7 +132,7 @@
     hibiku: "to sound, to resonate"
   };
   const sentenceRewardFallback = { xp: 12, coins: 2 };
-  const ONBOARDING_STORAGE_VERSION = 2;
+  const ONBOARDING_STORAGE_VERSION = 3;
   const ONBOARDING_STORAGE_KEY = `flashKanjiOnboardingCompleted.v${ONBOARDING_STORAGE_VERSION}`;
   const ONBOARDING_STORAGE_KEY_LEGACY = "flashKanjiOnboardingCompleted";
   const ONBOARDING_AUDIENCE_STORAGE_KEY = "flashKanjiOnboardingAudience.v1";
@@ -2982,7 +2982,7 @@ if (await refreshStaleAppCache()) return;
       return;
     }
     if (action === "onboarding-close" || action === "onboarding-skip") {
-      stopFlashKanjiOnboarding({ completed: true });
+      stopFlashKanjiOnboarding({ completed: action === "onboarding-close" });
       return;
     }
     if (action === "dismiss-mascot-speech") {
@@ -3611,9 +3611,9 @@ if (await refreshStaleAppCache()) return;
       text: { ru: "Привет! Я Ева. Быстро покажу, где что находится и как пользоваться Flash Kanji.", en: "Hi! I am Eva. I will quickly show you where everything is and how Flash Kanji works." }
     },
     {
-      target: "[data-tour='jlpt-lessons']",
-      title: { ru: "JLPT уроки", en: "JLPT lessons" },
-      text: { ru: "Здесь собраны уроки N5-N1. Начни с подходящего уровня и постепенно открывай новые темы.", en: "This is where the N5-N1 lessons live. Start with your level and unlock more as you go." }
+      target: "[data-route='textbooks']",
+      title: { ru: "Учебники", en: "Textbooks" },
+      text: { ru: "Это главный вход в Flash Kanji. Здесь открываются учебники N5-N1 и путь к урокам каждого уровня.", en: "This is the main entrance to Flash Kanji. Open N5-N1 textbooks here and continue into each level's lessons." }
     },
     {
       target: "[data-tour='srs-review']",
@@ -3641,8 +3641,8 @@ if (await refreshStaleAppCache()) return;
 
   const FLASH_KANJI_ONBOARDING_FINAL_COPY = {
     title: { ru: "Готово!", en: "All set!" },
-    text: { ru: "Выбери первый урок и начинай учить японский. Я рядом.", en: "Pick your first lesson and start learning Japanese. I will be right here." },
-    start: { ru: "Начать обучение", en: "Start learning" },
+    text: { ru: "Открой учебники и начни с N5. Я рядом.", en: "Open the textbooks and start with N5. I will be right here." },
+    start: { ru: "Открыть учебники", en: "Open textbooks" },
     close: { ru: "Закрыть", en: "Close" }
   };
 
@@ -3702,11 +3702,7 @@ if (await refreshStaleAppCache()) return;
   }
 
   function shouldShowFlashKanjiOnboarding() {
-    if (isFlashKanjiOnboardingCompleted()) return false;
-    const audience = loadFlashKanjiOnboardingAudience();
-    if (audience === "returning" || audience === "completed") return false;
-    if (audience === "new") return true;
-    return refreshFlashKanjiOnboardingAudience(hasFlashKanjiReturningSignals()) === "new";
+    return !isFlashKanjiOnboardingCompleted();
   }
 
   function clearLegacyFlashKanjiOnboardingState() {
@@ -4059,7 +4055,7 @@ if (await refreshStaleAppCache()) return;
     }
     if (event.key === "Escape") {
       event.preventDefault();
-      stopFlashKanjiOnboarding({ completed: true });
+      stopFlashKanjiOnboarding({ completed: onboardingView === "final" });
       return true;
     }
     if (event.key === "ArrowRight") {
@@ -4107,8 +4103,7 @@ if (await refreshStaleAppCache()) return;
   }
 
   function flashKanjiOnboardingOpenLearn() {
-    state.activeLearnJlpt = "N5";
-    flashKanjiOnboardingComplete("learn");
+    flashKanjiOnboardingComplete("textbooks");
   }
 
   function scrollPageToTop() {
