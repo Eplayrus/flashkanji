@@ -1348,6 +1348,48 @@ textarea:focus-visible {
   padding: 14px 14px calc(96px + env(safe-area-inset-bottom));
 }
 
+.app-shell[data-booting="true"] :is(button, a, input, select, textarea) {
+  pointer-events: none;
+  cursor: wait;
+}
+
+.app-shell[data-booting="true"] :is(.btn, .icon-btn, .nav-btn) {
+  opacity: 0.72;
+}
+
+.boot-screen {
+  display: grid;
+  align-items: start;
+  min-height: min(76svh, 760px);
+  padding-top: clamp(22px, 5svh, 64px);
+}
+
+.boot-panel {
+  width: min(100%, 560px);
+  display: grid;
+  gap: 14px;
+  padding: clamp(20px, 4vw, 34px);
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 48%);
+  border-radius: 8px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface), transparent 4%), color-mix(in srgb, var(--surface-2), transparent 12%));
+  box-shadow: 0 22px 64px color-mix(in srgb, var(--shadow), transparent 8%);
+  backdrop-filter: blur(16px);
+}
+
+.boot-panel .hero-title,
+.boot-panel .hero-subtitle {
+  margin: 0;
+}
+
+.boot-panel .hero-actions {
+  pointer-events: none;
+}
+
+.boot-status {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .page {
   animation: page-in 0.28s ease both;
 }

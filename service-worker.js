@@ -1,4 +1,4 @@
-const ROOT_CLEANUP_VERSION = "2026-06-13-scroll-toggle-v3";
+const ROOT_CLEANUP_VERSION = "2026-06-23-readings-audit-v31";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());

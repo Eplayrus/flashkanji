@@ -8,7 +8,7 @@
     const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
     const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
     const APP_VERSION = 3;
-    const BUILD_VERSION = "2026-06-22-onboarding-textbooks-v29";
+    const BUILD_VERSION = "2026-06-23-readings-audit-v31";
     const MASCOT_SPEECH_AUTO_HIDE_MS = 7000;
     const MASCOT_SPEECH_STORAGE_KEY = `flashKanji.hiddenMascotSpeeches:${BUILD_VERSION}`;
     const MOON_CHEAT_CODE = "moonfarm";
@@ -251,6 +251,9 @@
     let onboardingActive = false;
     let onboardingView = "step";
     let onboardingTargetElement = null;
+    let chartLibraryPromise = null;
+    let soundManagerScriptPromise = null;
+    let cyberHudScriptPromise = null;
     let evaAutonomyTimer = 0;
     let evaSpriteRotationTimer = 0;
     let evaSpriteRotationTick = Math.floor(Date.now() / 60000);
@@ -333,12 +336,15 @@
             return;
         if (await refreshStaleAppCache())
             return;
-        app.innerHTML = renderLoading();
+        setAppBooting(true);
+        if (!app.innerHTML.trim())
+            app.innerHTML = renderLoading();
+        else
+            app.setAttribute("aria-busy", "true");
         state.progress = loadProgress();
         syncUxSoundSettings();
         syncHeaderSoundButton();
         syncHeaderSocialToggleButton();
-        preloadUxSounds();
         applyTheme();
         try {
             const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, achievements, jlptCatalog, jlptLessons, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, monetization, customizationShop, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaExpandedDialogues, evaFisPersonality, evaPresence] = await Promise.all([
@@ -480,6 +486,8 @@
             evaluateAchievements();
             saveProgress();
             render();
+            setAppBooting(false);
+            loadDeferredEnhancements();
             registerServiceWorker();
             scheduleFlashKanjiOnboarding();
             startEvaAutonomyLoop();
@@ -497,8 +505,57 @@
             console.error(error);
             if (await attemptBootRecovery(error))
                 return;
+            setAppBooting(false);
             app.innerHTML = renderLoadError(error);
         }
+    }
+    function setAppBooting(isBooting) {
+        const shell = document.querySelector(".app-shell");
+        if (shell) {
+            if (isBooting)
+                shell.setAttribute("data-booting", "true");
+            else
+                shell.removeAttribute("data-booting");
+        }
+        if (app)
+            app.setAttribute("aria-busy", isBooting ? "true" : "false");
+    }
+    function loadDeferredScript(src, id) {
+        if (!src)
+            return Promise.resolve();
+        if (id && document.getElementById(id))
+            return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            if (id)
+                script.id = id;
+            script.src = src;
+            script.defer = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Cannot load ${src}`));
+            document.head.appendChild(script);
+        });
+    }
+    function versionedAsset(src) {
+        return `${src}?v=${encodeURIComponent(BUILD_VERSION)}`;
+    }
+    function loadChartLibrary() {
+        if (window.Chart)
+            return Promise.resolve();
+        chartLibraryPromise ||= loadDeferredScript(versionedAsset("vendor/chart.umd.min.js"), "flash-kanji-chartjs");
+        return chartLibraryPromise;
+    }
+    function loadDeferredEnhancements() {
+        window.setTimeout(() => {
+            soundManagerScriptPromise ||= loadDeferredScript(versionedAsset("src/audio/soundManager.js"), "flash-kanji-sound-manager")
+                .then(() => {
+                syncUxSoundSettings();
+                preloadUxSounds();
+            })
+                .catch((error) => console.warn("UX sound module failed to load.", error));
+            cyberHudScriptPromise ||= loadDeferredScript(versionedAsset("src/effects/cyberHudEffect.js"), "flash-kanji-cyber-hud")
+                .catch((error) => console.warn("Cyber HUD module failed to load.", error));
+        }, 450);
     }
     async function refreshStaleAppCache() {
         try {
@@ -17141,8 +17198,15 @@
     function renderCharts() {
         if (state.route !== "stats")
             return;
-        if (!window.Chart)
+        if (!window.Chart) {
+            loadChartLibrary()
+                .then(() => {
+                if (state.route === "stats")
+                    renderCharts();
+            })
+                .catch((error) => console.warn("Chart.js failed to load.", error));
             return;
+        }
         const days = lastDays(10);
         const labels = days.map((day) => day.slice(5));
         const colors = chartColors();
@@ -18103,42 +18167,156 @@
             return null;
         return catalog.find((d) => d && d.kanji === card.kanji) || null;
     }
+    const READING_ROMAJI_BASE = {
+        あ: "a", い: "i", う: "u", え: "e", お: "o",
+        か: "ka", き: "ki", く: "ku", け: "ke", こ: "ko",
+        が: "ga", ぎ: "gi", ぐ: "gu", げ: "ge", ご: "go",
+        さ: "sa", し: "shi", す: "su", せ: "se", そ: "so",
+        ざ: "za", じ: "ji", ず: "zu", ぜ: "ze", ぞ: "zo",
+        た: "ta", ち: "chi", つ: "tsu", て: "te", と: "to",
+        だ: "da", ぢ: "ji", づ: "zu", で: "de", ど: "do",
+        な: "na", に: "ni", ぬ: "nu", ね: "ne", の: "no",
+        は: "ha", ひ: "hi", ふ: "fu", へ: "he", ほ: "ho",
+        ば: "ba", び: "bi", ぶ: "bu", べ: "be", ぼ: "bo",
+        ぱ: "pa", ぴ: "pi", ぷ: "pu", ぺ: "pe", ぽ: "po",
+        ま: "ma", み: "mi", む: "mu", め: "me", も: "mo",
+        や: "ya", ゆ: "yu", よ: "yo",
+        ら: "ra", り: "ri", る: "ru", れ: "re", ろ: "ro",
+        わ: "wa", ゐ: "i", ゑ: "e", を: "o", ん: "n",
+        ゔ: "vu"
+    };
+    const READING_ROMAJI_YOON = {
+        きゃ: "kya", きゅ: "kyu", きょ: "kyo",
+        ぎゃ: "gya", ぎゅ: "gyu", ぎょ: "gyo",
+        しゃ: "sha", しゅ: "shu", しょ: "sho",
+        じゃ: "ja", じゅ: "ju", じょ: "jo",
+        ちゃ: "cha", ちゅ: "chu", ちょ: "cho",
+        ぢゃ: "ja", ぢゅ: "ju", ぢょ: "jo",
+        にゃ: "nya", にゅ: "nyu", にょ: "nyo",
+        ひゃ: "hya", ひゅ: "hyu", ひょ: "hyo",
+        びゃ: "bya", びゅ: "byu", びょ: "byo",
+        ぴゃ: "pya", ぴゅ: "pyu", ぴょ: "pyo",
+        みゃ: "mya", みゅ: "myu", みょ: "myo",
+        りゃ: "rya", りゅ: "ryu", りょ: "ryo",
+        ふぁ: "fa", ふぃ: "fi", ふぇ: "fe", ふぉ: "fo",
+        しぇ: "she", じぇ: "je", ちぇ: "che",
+        てぃ: "ti", でぃ: "di", とぅ: "tu", どぅ: "du",
+        つぁ: "tsa", つぃ: "tsi", つぇ: "tse", つぉ: "tso",
+        うぃ: "wi", うぇ: "we", うぉ: "wo",
+        ゔぁ: "va", ゔぃ: "vi", ゔぇ: "ve", ゔぉ: "vo"
+    };
     function cardReadings(card) {
         const detail = getJlptDetailForCard(card);
         if (detail && detail.readings) {
             const r = detail.readings;
-            const arr = (v) => Array.isArray(v) ? v.filter(Boolean).join(" / ") : String(v || "");
-            const onyomiKana = arr(r.onyomi);
-            const kunyomiKana = arr(r.kunyomi);
-            if (onyomiKana || kunyomiKana) {
+            const onyomi = readingGroupFromKana(r.onyomi, r.onyomi_romaji || card?.onyomi_romaji, card?.onyomi);
+            const kunyomi = readingGroupFromKana(r.kunyomi, r.kunyomi_romaji || card?.kunyomi_romaji, card?.kunyomi);
+            if (onyomi.kana || kunyomi.kana) {
                 return {
-                    onyomi: { kana: displayHiragana(onyomiKana || card?.onyomi || ""), romaji: (Array.isArray(r.romaji) ? r.romaji[0] : r.romaji) || card?.onyomi_romaji || "" },
-                    kunyomi: { kana: displayHiragana(kunyomiKana || card?.kunyomi || ""), romaji: (Array.isArray(r.romaji) ? r.romaji.slice(1).join(" / ") : "") || card?.kunyomi_romaji || "" }
+                    onyomi,
+                    kunyomi
                 };
             }
         }
-        const onyomiKana = displayHiragana(card?.onyomi || "");
-        const onyomiRomaji = card?.onyomi_romaji || "";
-        const kunyomiKana = displayHiragana(card?.kunyomi || "");
-        const kunyomiRomaji = card?.kunyomi_romaji || "";
-        if (onyomiKana || kunyomiKana || onyomiRomaji || kunyomiRomaji) {
+        const onyomi = readingGroupFromKana(card?.onyomi, card?.onyomi_romaji);
+        const kunyomi = readingGroupFromKana(card?.kunyomi, card?.kunyomi_romaji);
+        if (onyomi.kana || kunyomi.kana || onyomi.romaji || kunyomi.romaji) {
             return {
-                onyomi: { kana: onyomiKana, romaji: onyomiRomaji },
-                kunyomi: { kana: kunyomiKana, romaji: kunyomiRomaji }
+                onyomi,
+                kunyomi
             };
         }
-        const kana = splitReadingText(card?.hiragana);
-        const romaji = splitReadingText(card?.romaji);
         return {
-            onyomi: { kana: kana[0] || "", romaji: romaji[0] || "" },
-            kunyomi: { kana: kana.slice(1).join(" / "), romaji: romaji.slice(1).join(" / ") }
+            onyomi: { kana: "", romaji: "" },
+            kunyomi: { kana: "", romaji: "" }
         };
     }
     function splitReadingText(value) {
-        return String(value || "")
-            .split("/")
+        const source = Array.isArray(value) ? value.join(" / ") : String(value || "");
+        return source
+            .split(/[\/／,，、・･;；]+/u)
             .map((part) => part.trim())
             .filter(Boolean);
+    }
+    function readingGroupFromKana(kanaSource, romajiSource = "", fallbackKana = "") {
+        const kanaParts = splitReadingText(kanaSource).length ? splitReadingText(kanaSource) : splitReadingText(fallbackKana);
+        const romajiParts = splitReadingText(romajiSource);
+        const pairs = kanaParts.map((kana, index) => ({
+            kana: displayHiragana(kana),
+            romaji: romajiForReadingPair(kana, romajiParts[index])
+        })).filter((pair) => pair.kana || pair.romaji);
+        return {
+            kana: pairs.map((pair) => pair.kana).filter(Boolean).join(" / "),
+            romaji: pairs.map((pair) => pair.romaji).filter(Boolean).join(" / ")
+        };
+    }
+    function romajiForReadingPair(kana, romaji) {
+        const expected = romanizeReadingKana(kana);
+        if (!expected)
+            return romaji || "";
+        if (!romaji)
+            return expected;
+        return normalizeReadingRomaji(romaji) === normalizeReadingRomaji(expected) ? romaji : expected;
+    }
+    function romanizeReadingKana(value) {
+        const chars = [...normalizeReadingKana(value)];
+        let result = "";
+        let geminate = false;
+        for (let i = 0; i < chars.length; i += 1) {
+            const char = chars[i];
+            const next = chars[i + 1] || "";
+            if (char === "っ") {
+                geminate = true;
+                continue;
+            }
+            if (char === "ー") {
+                const vowel = lastReadingVowel(result);
+                if (vowel)
+                    result += vowel;
+                continue;
+            }
+            let roma = "";
+            const pair = char + next;
+            if (READING_ROMAJI_YOON[pair]) {
+                roma = READING_ROMAJI_YOON[pair];
+                i += 1;
+            }
+            else if (READING_ROMAJI_BASE[char]) {
+                roma = READING_ROMAJI_BASE[char];
+            }
+            else if (/[a-zA-Z0-9]/u.test(char)) {
+                roma = char.toLowerCase();
+            }
+            else {
+                geminate = false;
+                continue;
+            }
+            if (geminate) {
+                const consonant = roma.match(/^[bcdfghjklmnpqrstvwxyz]/u)?.[0] || "";
+                if (consonant && consonant !== "n")
+                    result += consonant;
+                geminate = false;
+            }
+            result += roma;
+        }
+        return result;
+    }
+    function normalizeReadingKana(value) {
+        return kataToHira(String(value || "").normalize("NFKC"))
+            .replace(/[()（）\[\]［］{}｛｝]/gu, "")
+            .replace(/[.\-‐‑‒–—―\s]/gu, "")
+            .trim();
+    }
+    function lastReadingVowel(value) {
+        const match = String(value || "").match(/[aeiou](?!.*[aeiou])/u);
+        return match?.[0] || "";
+    }
+    function normalizeReadingRomaji(value) {
+        return String(value || "")
+            .toLowerCase()
+            .normalize("NFKD")
+            .replace(/[\u0300-\u036f]/gu, "")
+            .replace(/[^a-z0-9]+/gu, "");
     }
     function readingLabel(kind) {
         if (kind === "onyomi")
@@ -19535,7 +19713,20 @@
         toastTimer = window.setTimeout(() => { element.hidden = true; }, 2400);
     }
     function renderLoading() {
-        return `<section class="loading"><div><strong>Flash Kanji</strong><p>Loading...</p></div></section>`;
+        return `
+      <section class="boot-screen loading" aria-label="Flash Kanji loading">
+        <div class="boot-panel">
+          <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
+          <h1 class="hero-title">Flash Kanji</h1>
+          <p class="hero-subtitle">${escapeHtml(lang() === "ru" ? "Кандзи через учебники, SRS-повторение и практику письма." : "Kanji through textbooks, SRS review, and writing practice.")}</p>
+          <div class="hero-actions" aria-hidden="true">
+            <button class="btn primary" type="button" disabled>冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
+            <button class="btn" type="button" disabled>典 ${escapeHtml(lang() === "ru" ? "Словарь" : "Dictionary")}</button>
+            <button class="btn ghost" type="button" disabled>↻ ${escapeHtml(lang() === "ru" ? "Повторение" : "Review")}</button>
+          </div>
+          <div class="boot-status" role="status">${escapeHtml(lang() === "ru" ? "Загрузка Flash Kanji..." : "Loading Flash Kanji...")}</div>
+        </div>
+      </section>`;
     }
     function renderLoadError(error) {
         return `<section class="empty-state" style="margin-top:24px"><span class="kanji-char">警</span><h1>Data error</h1><p>${escapeHtml(error.message)}</p></section>`;

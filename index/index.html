@@ -35,10 +35,11 @@
   <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
   <link rel="icon" href="assets/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" sizes="192x192" />
-  <link rel="manifest" href="manifest.webmanifest?v=2026-06-22-onboarding-textbooks-v29" />
-  <link rel="preload" href="assets/logo.png" as="image" />
+  <link rel="manifest" href="manifest.webmanifest?v=2026-06-23-readings-audit-v31" />
+  <link rel="preload" href="assets/logo.png" as="image" fetchpriority="high" />
+  <link rel="preload" href="assets/bg_1.png" as="image" fetchpriority="high" />
   <link rel="preload" href="assets/mascots/eva/eva_default_pack/eva_idle.png" as="image" />
- <link rel="stylesheet" href="styles.css?v=2026-06-22-onboarding-textbooks-v29" />
+ <link rel="stylesheet" href="styles.css?v=2026-06-23-readings-audit-v31" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -80,14 +81,11 @@
     ym(109492033, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
   </script>
   <!-- /Yandex.Metrika counter -->
- <script src="vendor/chart.umd.min.js?v=2026-06-22-onboarding-textbooks-v29" defer></script>
- <script src="src/audio/soundManager.js?v=2026-06-22-onboarding-textbooks-v29" defer></script>
- <script src="src/effects/cyberHudEffect.js?v=2026-06-22-onboarding-textbooks-v29" defer></script>
- <script src="script.js?v=2026-06-22-onboarding-textbooks-v29" defer></script>
+ <script src="script.js?v=2026-06-23-readings-audit-v31" defer></script>
 </head>
 <body>
   <noscript><div><img src="https://mc.yandex.ru/watch/109492033" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-  <div class="app-shell">
+  <div class="app-shell" data-booting="true">
     <div class="scene-bg" aria-hidden="true"></div>
     <div class="scene-effects" aria-hidden="true">
       <span></span><span></span><span></span><span></span>
@@ -97,7 +95,7 @@
 
     <header class="app-header" aria-label="Flash Kanji">
       <button class="brand-mark" type="button" data-action="route" data-route="home" aria-label="На главную">
-        <img src="assets/logo.png" alt="" />
+        <img src="assets/logo.png" alt="" fetchpriority="high" />
       </button>
       <button class="icon-btn header-social-toggle" type="button" data-action="toggle-header-socials" aria-controls="headerSocialActions" aria-expanded="false" aria-label="Соцсети" title="Соцсети">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -148,7 +146,21 @@
       </div>
     </header>
 
-    <main id="app" class="app-main" aria-live="polite"></main>
+    <main id="app" class="app-main" aria-live="polite" aria-busy="true">
+      <section class="boot-screen" aria-label="Flash Kanji loading">
+        <div class="boot-panel">
+          <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
+          <h1 class="hero-title">Flash Kanji</h1>
+          <p class="hero-subtitle">Кандзи через учебники, SRS-повторение и практику письма.</p>
+          <div class="hero-actions" aria-hidden="true">
+            <button class="btn primary" type="button" disabled>冊 Учебники</button>
+            <button class="btn" type="button" disabled>典 Словарь</button>
+            <button class="btn ghost" type="button" disabled>↻ Повторение</button>
+          </div>
+          <div class="boot-status" role="status">Загрузка Flash Kanji...</div>
+        </div>
+      </section>
+    </main>
 
     <nav class="bottom-nav" aria-label="Основная навигация">
       <button class="nav-btn is-active" type="button" data-action="route" data-route="home">

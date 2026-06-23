@@ -1,23 +1,23 @@
-const CACHE_NAME = "flash-kanji-cache-v133";
-const SW_BUILD_VERSION = "2026-06-22-onboarding-textbooks-v29";
+const CACHE_NAME = "flash-kanji-cache-v135";
+const SW_BUILD_VERSION = "2026-06-23-readings-audit-v31";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./index/index.html",
   "./styles.css",
-  "./styles.css?v=2026-06-22-onboarding-textbooks-v29",
+  "./styles.css?v=2026-06-23-readings-audit-v31",
   "./kanji-page.css",
   "./script.js",
-  "./script.js?v=2026-06-22-onboarding-textbooks-v29",
+  "./script.js?v=2026-06-23-readings-audit-v31",
   "./manifest.webmanifest",
-  "./manifest.webmanifest?v=2026-06-22-onboarding-textbooks-v29",
+  "./manifest.webmanifest?v=2026-06-23-readings-audit-v31",
   "./src/audio/soundManager.js",
-  "./src/audio/soundManager.js?v=2026-06-22-onboarding-textbooks-v29",
+  "./src/audio/soundManager.js?v=2026-06-23-readings-audit-v31",
   "./src/effects/cyberHudEffect.js",
-  "./src/effects/cyberHudEffect.js?v=2026-06-22-onboarding-textbooks-v29",
+  "./src/effects/cyberHudEffect.js?v=2026-06-23-readings-audit-v31",
   "./vendor/chart.umd.min.js",
-  "./vendor/chart.umd.min.js?v=2026-06-22-onboarding-textbooks-v29",
+  "./vendor/chart.umd.min.js?v=2026-06-23-readings-audit-v31",
   "./assets/favicon.ico",
   "./assets/favicon.png",
   "./assets/icon-192.png",
