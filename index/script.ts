@@ -1964,6 +1964,8 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             achievements: {},
             dailyBonuses: {},
             dailyBonusPending: null,
+            lastOpenedJlptLesson: null,
+            lastOpenedJlptLessons: {},
             writingPractice: { completed: 0, cards: {} },
             secrets: { evaClicks: 0, nightVisit: false },
             learningPath: defaultLearningPathProgress(),
@@ -2035,6 +2037,8 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             achievements: { ...base.achievements, ...(saved.achievements || {}) },
             dailyBonuses: { ...base.dailyBonuses, ...(saved.dailyBonuses || {}) },
             dailyBonusPending: normalizePendingDailyBonus(saved.dailyBonusPending || null),
+            lastOpenedJlptLesson: normalizeJlptLessonVisit(saved.lastOpenedJlptLesson || null),
+            lastOpenedJlptLessons: mergeJlptLessonVisits(saved.lastOpenedJlptLessons || {}),
             appOpens: Number(saved.appOpens || base.appOpens),
             totalMoonFragmentsEarned: Number(saved.totalMoonFragmentsEarned || base.totalMoonFragmentsEarned),
             writingPractice: { ...base.writingPractice, ...(saved.writingPractice || {}) },
@@ -3363,12 +3367,17 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
     }
     function homeLessonAction() {
         const labels = learningPathLabels();
-        const level = currentLearnTextbookLevel() || defaultJlptLessonLevel();
-        const lesson = currentLearnLesson();
-        const status = lessonProgressStatus(lesson);
+        const recent = mostRecentStoredJlptLessonVisit();
+        const level = recent?.level || defaultJlptLessonLevel();
+        const lessonId = recent?.lessonId || textbookContinueLessonId(level);
+        const course = textbookCourseProgress(level);
+        const firstLessonId = firstTextbookLessonId(level);
+        const hasHistory = Boolean(recent?.lessonId
+            || (course && (Object.keys(course.completedLessons || {}).length > 0 || (course.currentLessonId && course.currentLessonId !== firstLessonId))));
         return {
-            label: status === "started" || status === "completed" ? labels.resume : labels.start,
-            level
+            label: hasHistory ? labels.resume : labels.start,
+            level,
+            lessonId
         };
     }
     function learningPathSummaryStats() {
@@ -3718,6 +3727,17 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             else
                 submitN5FinalTest(true);
         }
+        if (action === "final-test-next-level") {
+            const nextLevel = canonicalJlptLevel(target.dataset.nextLevel || "");
+            const nextLessonId = String(target.dataset.nextLesson || "");
+            if (!nextLevel || !nextLessonId)
+                return;
+            state.finalTestModal = null;
+            state.finalTestBusy = false;
+            state.pendingFocus = null;
+            openJlptLessonStart(nextLevel, nextLessonId);
+            return;
+        }
         if (action === "scroll-page-edge") {
             if ((target.dataset.direction || getScrollToggleDirection()) === "up")
                 scrollPageToTop();
@@ -4055,7 +4075,9 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
                 toast(dialogueText("eva", "welcome"));
         }
         if (action === "home-lesson") {
-            openJlptLessonStart(currentLearnTextbookLevel() || defaultJlptLessonLevel());
+            const level = canonicalJlptLevel(target.dataset.level || "") || defaultJlptLessonLevel();
+            const lessonId = String(target.dataset.lessonId || "");
+            openJlptLessonStart(level, lessonId);
         }
         if (action === "home-review") {
             if (getDueNowCards().length) {
@@ -5219,9 +5241,15 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
               ${summaryStats.map(renderHomeSummaryStat).join("")}
             </div>
             <div class="home-primary-actions">
-              <button class="btn primary home-primary-cta" type="button" data-action="home-lesson" data-tour="home-lesson">${escapeHtml(lessonAction.label)}</button>
+              <button class="btn primary home-primary-cta" type="button" data-action="home-lesson" data-tour="home-lesson" data-level="${escapeAttr(lessonAction.level)}" data-lesson-id="${escapeAttr(lessonAction.lessonId || "")}">${escapeHtml(lessonAction.label)}</button>
               ${reviewQueue > 0 ? `<button class="btn ghost home-primary-cta" type="button" data-action="home-review" data-tour="home-review">${escapeHtml(`${labels.reviewAction}: ${reviewQueue}`)}</button>` : ""}
             </div>
+            ${!isPwaInstalled() ? `
+              <div class="home-install-cta">
+                <button class="btn ghost" type="button" data-action="pwa-install">${escapeHtml(pwaInstallCopy().install)}</button>
+                <p class="home-install-hint">${escapeHtml(pwaInstallCopy().description)}${isIosSafari() ? ` ${escapeHtml(pwaInstallCopy().iosInstruction)}` : ""}</p>
+              </div>
+            ` : ""}
           </div>
           <div class="home-eva-stage">
             ${renderHomeEvaCompact(homeScene)}
@@ -8914,6 +8942,9 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
                 || jlptLessonByLevel(textbook.jlpt)
                 || state.jlptLessons[0]
             : jlptLessonByLevel(textbook.jlpt) || state.jlptLessons[0];
+        if (state.activeTextbookSubroute && lesson?.id) {
+            rememberJlptLessonVisit(level, lesson.id, "textbook_page");
+        }
         const labels = lang() === "ru"
             ? {
                 title: "\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430",
@@ -9053,6 +9084,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         const lesson = n5LessonById(subroute);
         if (lesson) {
             n5Course().currentLessonId = lesson.id;
+            rememberJlptLessonVisit("N5", lesson.id, "n5_lesson_page");
             markJlptLessonKanjiSeen("N5", lesson, "n5_lesson_page");
             return renderN5LessonPage(textbook, lesson);
         }
@@ -9605,6 +9637,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
               <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
             </div>
             <button class="btn primary" type="button" data-action="n5-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${renderJlptNextLevelButton("N5", "btn primary")}
           </section>
         ` : ""}
 
@@ -9614,6 +9647,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
           <button class="btn primary" type="button" data-action="n5-final-submit" ${(submitting || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "\u0422\u0435\u0441\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Test completed") : labels.submitFinal)}</button>
+          ${renderJlptNextLevelButton("N5", "btn ghost")}
           <button class="btn ghost" type="button" data-action="n5-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -10315,6 +10349,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         if (!lesson)
             return;
         n5Course().currentLessonId = lesson.id;
+        rememberJlptLessonVisit("N5", lesson.id, "n5_lesson_open");
         markJlptLessonKanjiSeen("N5", lesson, "n5_lesson_open");
         setN5Hash(lesson.id);
     }
@@ -10654,6 +10689,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         const lesson = n4LessonById(subroute);
         if (lesson) {
             n4Course().currentLessonId = lesson.id;
+            rememberJlptLessonVisit("N4", lesson.id, "n4_lesson_page");
             markJlptLessonKanjiSeen("N4", lesson, "n4_lesson_page");
             return renderN4LessonPage(textbook, lesson);
         }
@@ -11223,6 +11259,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
               <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
             </div>
             <button class="btn primary" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${renderJlptNextLevelButton("N4", "btn primary")}
           </section>
         ` : ""}
 
@@ -11232,6 +11269,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
           <button class="btn primary" type="button" data-action="n4-final-submit" ${(state.finalTestBusy || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "\u0422\u0435\u0441\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Test completed") : labels.submitFinal)}</button>
+          ${renderJlptNextLevelButton("N4", "btn ghost")}
           <button class="btn ghost" type="button" data-action="n4-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -11977,6 +12015,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         if (!lesson)
             return;
         n4Course().currentLessonId = lesson.id;
+        rememberJlptLessonVisit("N4", lesson.id, "n4_lesson_open");
         markJlptLessonKanjiSeen("N4", lesson, "n4_lesson_open");
         setN4Hash(lesson.id);
     }
@@ -12345,6 +12384,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         const lesson = n3LessonById(subroute);
         if (lesson) {
             n3Course().currentLessonId = lesson.id;
+            rememberJlptLessonVisit("N3", lesson.id, "n3_lesson_page");
             markJlptLessonKanjiSeen("N3", lesson, "n3_lesson_page");
             return renderN3LessonPage(textbook, lesson);
         }
@@ -12940,6 +12980,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
               <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
             </div>
             <button class="btn primary" type="button" data-action="n3-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${renderJlptNextLevelButton("N3", "btn primary")}
           </section>
         ` : ""}
 
@@ -12949,6 +12990,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
           <button class="btn primary" type="button" data-action="n3-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          ${renderJlptNextLevelButton("N3", "btn ghost")}
           <button class="btn ghost" type="button" data-action="n3-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -13705,6 +13747,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         if (!lesson)
             return;
         n3Course().currentLessonId = lesson.id;
+        rememberJlptLessonVisit("N3", lesson.id, "n3_lesson_open");
         markJlptLessonKanjiSeen("N3", lesson, "n3_lesson_open");
         setN3Hash(lesson.id);
     }
@@ -14073,6 +14116,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         const lesson = n2LessonById(subroute);
         if (lesson) {
             n2Course().currentLessonId = lesson.id;
+            rememberJlptLessonVisit("N2", lesson.id, "n2_lesson_page");
             markJlptLessonKanjiSeen("N2", lesson, "n2_lesson_page");
             return renderN2LessonPage(textbook, lesson);
         }
@@ -14668,6 +14712,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
               <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
             </div>
             <button class="btn primary" type="button" data-action="n2-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${renderJlptNextLevelButton("N2", "btn primary")}
           </section>
         ` : ""}
 
@@ -14677,6 +14722,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
           <button class="btn primary" type="button" data-action="n2-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          ${renderJlptNextLevelButton("N2", "btn ghost")}
           <button class="btn ghost" type="button" data-action="n2-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -15430,6 +15476,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         if (!lesson)
             return;
         n2Course().currentLessonId = lesson.id;
+        rememberJlptLessonVisit("N2", lesson.id, "n2_lesson_open");
         markJlptLessonKanjiSeen("N2", lesson, "n2_lesson_open");
         setN2Hash(lesson.id);
     }
@@ -16902,6 +16949,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             return "";
         const isWarning = modal.kind === "warning";
         const mood = isWarning ? "thinking" : modal.passed ? "proud" : "sad";
+        const nextLevelButton = isWarning ? "" : renderJlptNextLevelButton(modal.level, "btn ghost");
         // AGGRESSIVE fallback in modal too: if percent missing but we have correct/total, compute it.
         if (!isWarning && (!modal.percent || modal.percent === 0) && typeof modal.correct === 'number' && modal.totalQuestions > 0) {
             modal.percent = Math.round((modal.correct / modal.totalQuestions) * 100);
@@ -16934,6 +16982,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             ${isWarning && modal.allowIncomplete ? `<button class="btn ghost" type="button" data-action="final-test-force-submit" data-level="${escapeAttr(modal.level || "N5")}">${escapeHtml(modal.forceLabel || (lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u043E\u0442\u0432\u0435\u0442\u043E\u0432" : "Finish anyway"))}</button>` : ""}
             ${!isWarning && modal.reviewAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAction)}" data-mode="difficult">${escapeHtml(modal.repeatLabel || (lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438" : "Repeat mistakes"))}</button>` : ""}
             ${!isWarning && modal.reviewAllAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAllAction)}" data-mode="all">${escapeHtml(modal.reviewAllLabel || (lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0432\u0435\u0441\u044C \u0442\u0435\u0441\u0442" : "Review all"))}</button>` : ""}
+            ${nextLevelButton}
             <button class="btn primary" type="button" data-action="close-final-test-modal">${escapeHtml(modal.closeLabel || "OK")}</button>
           </div>
         </article>
@@ -20251,6 +20300,12 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         const lessons = textbookLessonsForLevel(canonical);
         if (!lessons.length)
             return "";
+        const recent = mostRecentJlptLessonVisit(canonical);
+        if (recent?.lessonId && textbookLessonExists(canonical, recent.lessonId))
+            return recent.lessonId;
+        const active = textbookCourseProgress(canonical)?.currentLessonId || "";
+        if (active && textbookLessonExists(canonical, active))
+            return active;
         const progressMap = canonical === "N5"
             ? (n5Course().completedLessons || {})
             : canonical === "N4"
@@ -20272,7 +20327,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         });
         return completedLessons[0]?.id || lessons[0]?.id || "";
     }
-    function openJlptLessonStart(level) {
+    function openJlptLessonStart(level, preferredLessonId = "") {
         const canonical = canonicalJlptLevel(level);
         if (!canonical || !jlptLessonByLevel(canonical))
             return;
@@ -20284,7 +20339,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             return;
         }
         const previousRoute = state.route;
-        const lessonId = textbookContinueLessonId(canonical);
+        const lessonId = String(preferredLessonId || "") || textbookContinueLessonId(canonical);
         const hasDedicatedLessonPage = ["N5", "N4", "N3", "N2"].includes(canonical);
         const nextHash = lessonId
             ? `#textbooks/${encodeURIComponent(canonical)}/${encodeURIComponent(lessonId)}`
@@ -20303,6 +20358,8 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         state.pendingFocus = !hasDedicatedLessonPage && lessonId ? `#textbook-lesson-${lessonId}` : null;
         if (previousRoute !== "eva-room")
             state.evaRoomShopOpen = false;
+        if (lessonId)
+            rememberJlptLessonVisit(canonical, lessonId, "open_jlpt");
         resetReadingCheck();
         if (location.hash !== nextHash)
             history.replaceState(null, "", nextHash);
@@ -20545,6 +20602,121 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
     function canonicalJlptLevel(value) {
         const level = String(value || "").toUpperCase();
         return LEVEL_ORDER.includes(level) ? level : "";
+    }
+    function normalizeJlptLessonVisit(value) {
+        if (!value || typeof value !== "object")
+            return null;
+        const level = canonicalJlptLevel(value.level);
+        const lessonId = String(value.lessonId || "");
+        if (!level || !lessonId)
+            return null;
+        const updatedAt = typeof value.updatedAt === "string" && value.updatedAt ? value.updatedAt : new Date().toISOString();
+        return {
+            level,
+            lessonId,
+            updatedAt,
+            source: typeof value.source === "string" && value.source ? value.source : "open"
+        };
+    }
+    function mergeJlptLessonVisits(saved = {}) {
+        const merged = {};
+        Object.entries(saved || {}).forEach(([level, value]) => {
+            const canonical = canonicalJlptLevel(level);
+            const visit = normalizeJlptLessonVisit({ ...(typeof value === "object" && value ? value : {}), level: canonical || level });
+            if (canonical && visit)
+                merged[canonical] = visit;
+        });
+        return merged;
+    }
+    function textbookLessonExists(level, lessonId) {
+        const canonical = canonicalJlptLevel(level);
+        const rawLessonId = String(lessonId || "");
+        if (!canonical || !rawLessonId)
+            return false;
+        return textbookLessonsForLevel(canonical).some((lesson) => lesson.id === rawLessonId);
+    }
+    function firstTextbookLessonId(level) {
+        return textbookLessonsForLevel(level)[0]?.id || "";
+    }
+    function mostRecentJlptLessonVisit(level = "") {
+        const canonical = canonicalJlptLevel(level);
+        if (canonical) {
+            const visit = normalizeJlptLessonVisit(state.progress.lastOpenedJlptLessons?.[canonical] || null)
+                || (normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null)?.level === canonical
+                    ? normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null)
+                    : null);
+            if (visit && textbookLessonExists(canonical, visit.lessonId))
+                return visit;
+            return null;
+        }
+        const visits = [
+            normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null),
+            ...Object.values(state.progress.lastOpenedJlptLessons || {}).map((visit) => normalizeJlptLessonVisit(visit)).filter(Boolean)
+        ].filter(Boolean);
+        visits.sort((a, b) => (Date.parse(b.updatedAt || "") || 0) - (Date.parse(a.updatedAt || "") || 0));
+        const visit = visits.find((item) => textbookLessonExists(item.level, item.lessonId)) || null;
+        return visit;
+    }
+    function mostRecentStoredJlptLessonVisit(level = "") {
+        const canonical = canonicalJlptLevel(level);
+        if (canonical) {
+            return normalizeJlptLessonVisit(state.progress.lastOpenedJlptLessons?.[canonical] || null)
+                || (normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null)?.level === canonical
+                    ? normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null)
+                    : null);
+        }
+        const visits = [
+            normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null),
+            ...Object.values(state.progress.lastOpenedJlptLessons || {}).map((visit) => normalizeJlptLessonVisit(visit)).filter(Boolean)
+        ].filter(Boolean);
+        visits.sort((a, b) => (Date.parse(b.updatedAt || "") || 0) - (Date.parse(a.updatedAt || "") || 0));
+        return visits[0] || null;
+    }
+    function jlptNextLevel(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return "";
+        const index = LEVEL_ORDER.indexOf(canonical);
+        return index >= 0 && index < LEVEL_ORDER.length - 1 ? LEVEL_ORDER[index + 1] : "";
+    }
+    function rememberJlptLessonVisit(level, lessonId, source = "open") {
+        const canonical = canonicalJlptLevel(level);
+        const rawLessonId = String(lessonId || "");
+        if (!canonical || !rawLessonId)
+            return null;
+        const visit = {
+            level: canonical,
+            lessonId: rawLessonId,
+            updatedAt: new Date().toISOString(),
+            source
+        };
+        const previousLevel = normalizeJlptLessonVisit(state.progress.lastOpenedJlptLessons?.[canonical] || null);
+        const previousGlobal = normalizeJlptLessonVisit(state.progress.lastOpenedJlptLesson || null);
+        state.progress.lastOpenedJlptLessons ||= {};
+        state.progress.lastOpenedJlptLessons[canonical] = visit;
+        state.progress.lastOpenedJlptLesson = visit;
+        const course = textbookCourseProgress(canonical);
+        if (course && course.currentLessonId !== rawLessonId)
+            course.currentLessonId = rawLessonId;
+        const changed = !previousLevel
+            || previousLevel.lessonId !== rawLessonId
+            || previousLevel.level !== canonical
+            || previousGlobal?.lessonId !== rawLessonId
+            || previousGlobal?.level !== canonical;
+        if (changed)
+            saveProgress();
+        return visit;
+    }
+    function renderJlptNextLevelButton(level, className = "btn ghost") {
+        const current = canonicalJlptLevel(level);
+        const next = jlptNextLevel(current);
+        if (!current || !next)
+            return "";
+        const nextLessonId = firstTextbookLessonId(next);
+        if (!nextLessonId)
+            return "";
+        const label = lang() === "ru" ? `Первый урок ${next}` : `${next} lesson 1`;
+        return `<button class="${escapeAttr(className)}" type="button" data-action="final-test-next-level" data-level="${escapeAttr(current)}" data-next-level="${escapeAttr(next)}" data-next-lesson="${escapeAttr(nextLessonId)}">${escapeHtml(label)}</button>`;
     }
     function defaultJlptLessonLevel() {
         return canonicalJlptLevel(state.activeJlptLesson)
@@ -21562,8 +21734,13 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             return;
         }
         if (!deferredPwaInstallPrompt) {
-            if (isIosSafari())
+            if (isIosSafari()) {
                 toast(pwaInstallCopy().iosInstruction);
+                return;
+            }
+            toast(lang() === "ru"
+                ? "Установка появится в меню браузера или после предложения PWA."
+                : "Install from the browser menu or once the PWA prompt appears.");
             return;
         }
         const promptEvent = deferredPwaInstallPrompt;
@@ -21663,7 +21840,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
                 title: "Install Flash Kanji on your home screen?",
                 description: "Your progress, lessons and reviews will open like a real app.",
                 iosInstruction: "Tap Share -> Add to Home Screen.",
-                install: "Install",
+                install: "Install app",
                 later: "Later"
             };
         }
@@ -21672,7 +21849,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             title: "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C Flash Kanji \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u044B\u0439 \u044D\u043A\u0440\u0430\u043D?",
             description: "\u0422\u0430\u043A \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441, \u0443\u0440\u043E\u043A\u0438 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u0431\u0443\u0434\u0443\u0442 \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0442\u044C\u0441\u044F \u043A\u0430\u043A \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435.",
             iosInstruction: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F \u2192 \u041D\u0430 \u044D\u043A\u0440\u0430\u043D \u0414\u043E\u043C\u043E\u0439.",
-            install: "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C",
+            install: "\u0443\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
             later: "\u041F\u043E\u0437\u0436\u0435"
         };
     }
@@ -22129,6 +22306,3 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         return escapeHtml(value);
     }
 })();
-
-
-
