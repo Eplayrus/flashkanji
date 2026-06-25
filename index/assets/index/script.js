@@ -19441,9 +19441,11 @@
                 console.warn("Cannot save PWA cache reset marker.", error);
             }
         });
-        window.addEventListener("load", async () => {
+        const startRegistration = async () => {
             try {
-                const registration = await navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(BUILD_VERSION)}`);
+                const serviceWorkerUrl = new URL("../service-worker.js", document.baseURI);
+                serviceWorkerUrl.searchParams.set("v", BUILD_VERSION);
+                const registration = await navigator.serviceWorker.register(serviceWorkerUrl.href);
                 watchServiceWorkerUpdate(registration);
                 await registration.update().catch(console.warn);
                 requestServiceWorkerCacheReset(registration);
@@ -19451,7 +19453,15 @@
             catch (error) {
                 console.warn(error);
             }
-        });
+        };
+        if (document.readyState === "loading") {
+            window.addEventListener("load", () => {
+                void startRegistration();
+            }, { once: true });
+        }
+        else {
+            void startRegistration();
+        }
     }
     function watchServiceWorkerUpdate(registration) {
         if (!registration)

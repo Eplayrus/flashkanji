@@ -8079,6 +8079,31 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   text-align: left;
 }
 
+.lesson-study-actions .btn {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-height: 62px;
+  white-space: normal;
+}
+
+.lesson-study-actions .btn small {
+  color: color-mix(in srgb, currentColor, transparent 32%);
+}
+
+.pwa-install-help-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 12px;
+  padding-left: 20px;
+  color: var(--text);
+}
+
+.pwa-install-help-list li {
+  line-height: 1.45;
+}
+
 .lesson-player-feedback {
   padding: 12px;
   border: 1px solid var(--line);

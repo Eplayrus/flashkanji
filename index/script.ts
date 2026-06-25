@@ -248,6 +248,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         finalTestModal: null,
         finalTestBusy: false,
         contactModal: false,
+        pwaInstallHelpVisible: false,
         charts: [],
         filters: { query: "", jlpt: "all", strokes: "all", radical: "all", favorites: "all" },
         dictionaryVisibleCount: DICTIONARY_INITIAL_LIMIT,
@@ -3697,6 +3698,10 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             state.contactModal = false;
             render();
         }
+        if (action === "close-pwa-install-help") {
+            state.pwaInstallHelpVisible = false;
+            render();
+        }
         if (action === "close-nav-menu") {
             state.navMenu = null;
             render();
@@ -4292,7 +4297,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             playUxSound("card_flip");
             return;
         }
-        if (["close-reward", "close-detail", "pwa-later", "notification-later", "dismiss-mascot-speech"].includes(action)) {
+        if (["close-reward", "close-detail", "close-pwa-install-help", "pwa-later", "notification-later", "dismiss-mascot-speech"].includes(action)) {
             playUxSound("menu_close");
             return;
         }
@@ -4387,11 +4392,12 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             return;
         if (handleMoonCheatKey(event))
             return;
-        if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.navMenu)) {
+        if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.navMenu)) {
             state.detailCardId = null;
             state.rewardModal = null;
             state.finalTestModal = null;
             state.contactModal = false;
+            state.pwaInstallHelpVisible = false;
             state.navMenu = null;
             render();
             return;
@@ -4557,7 +4563,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         if (state.route === "textbooks")
             html = renderTextbooksPage();
         app.innerHTML = `${html}${renderGlobalOverlays()}`;
-        document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal));
+        document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible));
         syncMascotSpeechTimers();
         requestAnimationFrame(() => {
             applyPendingFocus();
@@ -4566,7 +4572,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
         });
     }
     function renderGlobalOverlays() {
-        const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
+        const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderPwaInstallHelpModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
         return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
     }
     function ensureFlashKanjiOnboardingRoot() {
@@ -9298,8 +9304,8 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
           </div>
         </div>
         <div class="lesson-choice-grid lesson-study-actions">
-          <button class="btn success" type="button" data-action="${escapeAttr(answerAction)}" data-level="${escapeAttr(playerLevel)}" data-lesson="${escapeAttr(lessonId)}" data-card="${escapeAttr(card.id)}" data-value="remember">${escapeHtml(labels.remember)}</button>
-          <button class="btn danger" type="button" data-action="${escapeAttr(answerAction)}" data-level="${escapeAttr(playerLevel)}" data-lesson="${escapeAttr(lessonId)}" data-card="${escapeAttr(card.id)}" data-value="forget">${escapeHtml(labels.notRemember)}</button>
+          <button class="btn success" type="button" data-action="${escapeAttr(answerAction)}" data-level="${escapeAttr(playerLevel)}" data-lesson="${escapeAttr(lessonId)}" data-card="${escapeAttr(card.id)}" data-value="remember">${escapeHtml(labels.remember)}<small>${escapeHtml(lang() === "ru" ? "\u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435" : "to review")}</small></button>
+          <button class="btn danger" type="button" data-action="${escapeAttr(answerAction)}" data-level="${escapeAttr(playerLevel)}" data-lesson="${escapeAttr(lessonId)}" data-card="${escapeAttr(card.id)}" data-value="forget">${escapeHtml(labels.notRemember)}<small>${escapeHtml(lang() === "ru" ? "\u0435\u0449\u0451 \u0440\u0430\u0437" : "show again")}</small></button>
         </div>
       </article>
     `;
@@ -18002,8 +18008,66 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
       </div>
     `;
     }
+    function renderPwaInstallHelpModal() {
+        if (!state.pwaInstallHelpVisible)
+            return "";
+        const isIos = isIosSafari();
+        const title = lang() === "ru"
+            ? "\u041A\u0430\u043A \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435"
+            : "How to install the app";
+        const description = lang() === "ru"
+            ? "\u041A\u043D\u043E\u043F\u043A\u0430 \u043E\u0442\u043A\u0440\u044B\u043B\u0430 \u043F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0443, \u043F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u0431\u0440\u0430\u0443\u0437\u0435\u0440 \u0435\u0449\u0451 \u043D\u0435 \u043F\u043E\u043A\u0430\u0437\u0430\u043B \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0438."
+            : "The button opened a quick guide because the browser has not yet shown the system install prompt.";
+        const closeLabel = lang() === "ru" ? "\u041F\u043E\u043D\u044F\u0442\u043D\u043E" : "Got it";
+        const steps = isIos
+            ? (lang() === "ru"
+                ? [
+                    "\u041E\u0442\u043A\u0440\u043E\u0439 Flash Kanji \u0432 Safari.",
+                    "\u041D\u0430\u0436\u043C\u0438 \u201C\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F\u201D, \u0437\u0430\u0442\u0435\u043C \u201C\u041D\u0430 \u044D\u043A\u0440\u0430\u043D \u0414\u043E\u043C\u043E\u0439\u201D.",
+                    "\u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0443."
+                ]
+                : [
+                    "Open Flash Kanji in Safari.",
+                    "Tap Share, then choose Add to Home Screen.",
+                    "Confirm the install."
+                ])
+            : (lang() === "ru"
+                ? [
+                    "\u041E\u0442\u043A\u0440\u043E\u0439 \u043C\u0435\u043D\u044E \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430.",
+                    "\u041D\u0430\u0439\u0434\u0438 \u043F\u0443\u043D\u043A\u0442 \u201C\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435\u201D \u0438\u043B\u0438 \u201C\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C Flash Kanji\u201D.",
+                    "\u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0443."
+                ]
+                : [
+                    "Open the browser menu.",
+                    "Choose Install app or Install Flash Kanji.",
+                    "Confirm the install."
+                ]);
+        return `
+      <div class="reward-backdrop contact-backdrop pwa-install-help-backdrop">
+        <article class="reward-modal contact-modal pwa-install-help-modal" role="dialog" aria-modal="true" aria-labelledby="pwaInstallHelpTitle">
+          <div class="contact-modal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 4v9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+              <path d="M8.5 9.5 12 13l3.5-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+              <path d="M5 16.5h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </div>
+          <h2 id="pwaInstallHelpTitle">${escapeHtml(title)}</h2>
+          <p>${escapeHtml(description)}</p>
+          <ul class="pwa-install-help-list">
+            ${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+          </ul>
+          <div class="actions contact-modal-actions">
+            <button class="btn primary" type="button" data-action="close-pwa-install-help">${escapeHtml(closeLabel)}</button>
+          </div>
+        </article>
+      </div>
+    `;
+    }
     function renderPwaInstallBanner() {
         if (isFlashKanjiOnboardingActive())
+            return "";
+        if (state.pwaInstallHelpVisible)
             return "";
         if (!canShowPwaInstallPrompt())
             return "";
@@ -18032,7 +18096,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             return "";
         if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible"))
             return "";
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || canShowPwaInstallPrompt())
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || canShowPwaInstallPrompt())
             return "";
         const copy = notificationPromptCopy();
         return `
@@ -21648,9 +21712,11 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
                 console.warn("Cannot save PWA cache reset marker.", error);
             }
         });
-        window.addEventListener("load", async () => {
+        const startRegistration = async () => {
             try {
-                const registration = await navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(BUILD_VERSION)}`);
+                const serviceWorkerUrl = new URL("../service-worker.js", document.baseURI);
+                serviceWorkerUrl.searchParams.set("v", BUILD_VERSION);
+                const registration = await navigator.serviceWorker.register(serviceWorkerUrl.href);
                 watchServiceWorkerUpdate(registration);
                 await registration.update().catch(console.warn);
                 requestServiceWorkerCacheReset(registration);
@@ -21658,7 +21724,13 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             catch (error) {
                 console.warn(error);
             }
-        });
+        };
+        if (document.readyState === "loading")
+            window.addEventListener("load", () => {
+                void startRegistration();
+            }, { once: true });
+        else
+            void startRegistration();
     }
     function watchServiceWorkerUpdate(registration) {
         if (!registration)
@@ -21734,13 +21806,8 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             return;
         }
         if (!deferredPwaInstallPrompt) {
-            if (isIosSafari()) {
-                toast(pwaInstallCopy().iosInstruction);
-                return;
-            }
-            toast(lang() === "ru"
-                ? "Установка появится в меню браузера или после предложения PWA."
-                : "Install from the browser menu or once the PWA prompt appears.");
+            state.pwaInstallHelpVisible = true;
+            render();
             return;
         }
         const promptEvent = deferredPwaInstallPrompt;
@@ -21791,6 +21858,7 @@ const BUILD_VERSION = "2026-06-25-loading-fix-v44";
             neverShow: true,
             nextShowAt: 0
         };
+        state.pwaInstallHelpVisible = false;
         savePwaInstallPromptState();
         reachMetricGoal("pwa_installed", { platform: isIosSafari() ? "ios" : "browser" });
         scheduleNotificationPromptCheck();
