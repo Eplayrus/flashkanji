@@ -8,7 +8,7 @@
     const CUSTOMIZATION_STORAGE_KEY = "flashkanji_customization";
     const EVA_STATE_STORAGE_KEY = "flashkanji_eva_state_v2";
     const APP_VERSION = 3;
-    const BUILD_VERSION = "2026-06-23-readings-audit-v31";
+    const BUILD_VERSION = "2026-06-25-loading-fix-v44";
     const MASCOT_SPEECH_AUTO_HIDE_MS = 7000;
     const MASCOT_SPEECH_STORAGE_KEY = `flashKanji.hiddenMascotSpeeches:${BUILD_VERSION}`;
     const MOON_CHEAT_CODE = "moonfarm";
@@ -138,9 +138,37 @@
     const ONBOARDING_DIALOG_WIDTH = 392;
     const ONBOARDING_DIALOG_MAX_WIDTH = 420;
     const ONBOARDING_GAP = 14;
-    const routes = ["home", "learn", "review", "dictionary", "kanji", "writing", "stats", "achievements", "eva-room", "jlpt-lesson", "textbooks"];
+    const routes = ["home", "learn", "review", "dictionary", "kanji", "stats", "achievements", "eva-room", "jlpt-lesson", "textbooks"];
     const DICTIONARY_INITIAL_LIMIT = 72;
     const DICTIONARY_INCREMENT = 96;
+    const LEARNING_PATH_VERSION = 1;
+    const LEARNING_PATH_LEVEL = "N5";
+    const LEARNING_PATH_MAP_VIEW = "map";
+    const LEARNING_PATH_LESSON_VIEW = "lesson";
+    const LEARNING_PATH_LEGACY_VIEW = "legacy";
+    const LEARNING_PATH_INTRO_ID = "intro-kanji";
+    const LEARNING_PATH_REVIEW_NODE_ID = "review-due";
+    const LEARNING_PATH_CHECKPOINT_NODE_ID = "n5-checkpoint";
+    const LEARNING_PATH_DEFAULT_NODE_IDS = [
+        LEARNING_PATH_INTRO_ID,
+        "n5-lesson-1",
+        "n5-lesson-2",
+        "n5-lesson-3",
+        "n5-lesson-4",
+        "n5-lesson-5",
+        "n5-lesson-6",
+        "n5-lesson-7",
+        "n5-lesson-8",
+        "n5-lesson-9",
+        "n5-lesson-10",
+        LEARNING_PATH_CHECKPOINT_NODE_ID
+    ];
+    const LEARNING_PATH_LESSON_PAYLOADS = {
+        "n5-lesson-1": "data/textbooks/n5/lesson-1.json"
+    };
+    const STARTUP_LESSON_IDS = new Set(["lesson-1", "lesson-2", "bulk-n5-01"]);
+    const DEFERRED_DATA_START_DELAY_MS = 2200;
+    const DEFERRED_DATA_ROUTES = new Set(["review", "dictionary", "kanji", "stats", "jlpt-lesson", "textbooks"]);
     const state = {
         route: readRouteHash(),
         lessons: [],
@@ -207,6 +235,10 @@
         activeJlptLesson: readJlptLessonRouteLevel() || null,
         activeTextbookLevel: readTextbookRouteLevel() || null,
         activeTextbookSubroute: readTextbookRouteSubroute() || null,
+        activeLearnView: readLearnRouteView(),
+        activeLearnNodeId: readLearnRouteNodeId() || null,
+        activeLearnLegacyLessonId: readLearnLegacyLessonId() || null,
+        learningPathLessonPayloads: {},
         activeCardId: null,
         kanjiPageId: readKanjiRouteId(),
         revealed: false,
@@ -228,7 +260,9 @@
         pendingFocus: null,
         pwaInstallPrompt: loadPwaInstallPromptState(),
         notificationPrompt: loadNotificationPromptState(),
-        notificationPromptVisible: false
+        notificationPromptVisible: false,
+        deferredDataLoaded: false,
+        deferredDataLoading: false
     };
     let audioContext = null;
     let activeKanjiAudio = null;
@@ -254,6 +288,10 @@
     let chartLibraryPromise = null;
     let soundManagerScriptPromise = null;
     let cyberHudScriptPromise = null;
+    let deferredDataPromise = null;
+    let learningPathMapPromise = null;
+    let learningPathMetaPromise = null;
+    const learningPathLessonPromises = new Map();
     let evaAutonomyTimer = 0;
     let evaSpriteRotationTimer = 0;
     let evaSpriteRotationTick = Math.floor(Date.now() / 60000);
@@ -307,16 +345,25 @@
         const textbookLevel = route === "textbooks" ? readTextbookRouteLevel() : null;
         const textbookSubroute = route === "textbooks" ? readTextbookRouteSubroute() : null;
         const jlptLessonLevel = route === "jlpt-lesson" ? readJlptLessonRouteLevel() : null;
+        const learnView = route === "learn" ? readLearnRouteView() : LEARNING_PATH_MAP_VIEW;
+        const learnNodeId = route === "learn" ? readLearnRouteNodeId() : null;
+        const learnLegacyLessonId = route === "learn" ? readLearnLegacyLessonId() : null;
         if (route !== state.route
             || (route === "kanji" && kanjiPageId !== state.kanjiPageId)
             || (route === "textbooks" && textbookLevel !== state.activeTextbookLevel)
             || (route === "textbooks" && textbookSubroute !== state.activeTextbookSubroute)
-            || (route === "jlpt-lesson" && jlptLessonLevel !== state.activeJlptLesson)) {
+            || (route === "jlpt-lesson" && jlptLessonLevel !== state.activeJlptLesson)
+            || (route === "learn" && learnView !== state.activeLearnView)
+            || (route === "learn" && learnNodeId !== state.activeLearnNodeId)
+            || (route === "learn" && learnLegacyLessonId !== state.activeLearnLegacyLessonId)) {
             state.route = route;
             state.kanjiPageId = route === "kanji" ? kanjiPageId : null;
             state.activeTextbookLevel = route === "textbooks" ? textbookLevel : null;
             state.activeTextbookSubroute = route === "textbooks" ? textbookSubroute : null;
             state.activeJlptLesson = route === "jlpt-lesson" ? jlptLessonLevel : state.activeJlptLesson;
+            state.activeLearnView = route === "learn" ? learnView : LEARNING_PATH_MAP_VIEW;
+            state.activeLearnNodeId = route === "learn" ? learnNodeId : null;
+            state.activeLearnLegacyLessonId = route === "learn" ? learnLegacyLessonId : null;
             state.detailCardId = null;
             state.revealed = false;
             state.navMenu = null;
@@ -326,6 +373,8 @@
             resetReadingCheck();
             scrollPageToTop();
             render();
+            if (routeNeedsDeferredData(route))
+                scheduleDeferredDataLoad();
             if (route === "eva-room")
                 dispatchEvaEvent("room_opened");
         }
@@ -347,53 +396,14 @@
         syncHeaderSocialToggleButton();
         applyTheme();
         try {
-            const [course, i18n, dialogues, rewards, kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, achievements, jlptCatalog, jlptLessons, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, monetization, customizationShop, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaExpandedDialogues, evaFisPersonality, evaPresence] = await Promise.all([
-                loadCourse(),
+            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, customizationShop, evaBackgrounds, evaSprites, evaRoomDialogues, evaAutonomyLines, evaExpandedDialogues, evaFisPersonality, evaPresence] = await Promise.all([
+                loadCourse({ initialOnly: true }),
                 fetchJson(DATA_URLS.i18n),
                 fetchJson(DATA_URLS.dialogues),
                 fetchJson(DATA_URLS.rewards),
-                fetchJson(DATA_URLS.kanjiMeta),
-                fetchJson(DATA_URLS.kanjiHints),
-                fetchJson(DATA_URLS.kanjiTranslations),
-                fetchJson(DATA_URLS.kanjiStrokes),
-                fetchJson(DATA_URLS.kanjiPageSources),
-                fetchJson(DATA_URLS.lessonTranslations),
-                fetchJson(DATA_URLS.vocabulary),
-                fetchJson(DATA_URLS.sentences),
                 fetchJson(DATA_URLS.achievements),
                 fetchJson(DATA_URLS.jlptCatalog),
                 fetchJson(DATA_URLS.jlptLessons),
-                fetchJson(DATA_URLS.jlptPracticeLessons),
-                fetchJson(DATA_URLS.n5Meta),
-                fetchJson(DATA_URLS.n5Lessons),
-                fetchJson(DATA_URLS.n5Kanji),
-                fetchJson(DATA_URLS.n5Exercises),
-                fetchJson(DATA_URLS.n5FinalTest),
-                fetchJson(DATA_URLS.n4Meta),
-                fetchJson(DATA_URLS.n4Lessons),
-                fetchJson(DATA_URLS.n4Kanji),
-                fetchJson(DATA_URLS.n4Grammar),
-                fetchJson(DATA_URLS.n4Exercises),
-                fetchJson(DATA_URLS.n4Reading),
-                fetchJson(DATA_URLS.n4Listening),
-                fetchJson(DATA_URLS.n4FinalTest),
-                fetchJson(DATA_URLS.n3Meta),
-                fetchJson(DATA_URLS.n3Lessons),
-                fetchJson(DATA_URLS.n3Kanji),
-                fetchJson(DATA_URLS.n3Grammar),
-                fetchJson(DATA_URLS.n3Exercises),
-                fetchJson(DATA_URLS.n3Reading),
-                fetchJson(DATA_URLS.n3Listening),
-                fetchJson(DATA_URLS.n3FinalTest),
-                fetchJson(DATA_URLS.n2Meta),
-                fetchJson(DATA_URLS.n2Lessons),
-                fetchJson(DATA_URLS.n2Kanji),
-                fetchJson(DATA_URLS.n2Grammar),
-                fetchJson(DATA_URLS.n2Exercises),
-                fetchJson(DATA_URLS.n2Reading),
-                fetchJson(DATA_URLS.n2Listening),
-                fetchJson(DATA_URLS.n2FinalTest),
-                fetchJson(DATA_URLS.monetization),
                 fetchJson(DATA_URLS.customizationShop),
                 fetchJson(DATA_URLS.evaBackgrounds),
                 fetchJson(DATA_URLS.evaSprites),
@@ -413,51 +423,8 @@
             state.achievementCategories = achievementBundle.categories;
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
-            state.jlptPracticeLessons = normalizeJlptPracticeLessons(jlptPracticeLessons);
-            state.n5Meta = normalizeN5Meta(n5Meta);
-            state.n5Textbook = normalizeN5Textbook(n5Lessons);
-            state.n5KanjiCatalog = normalizeN5KanjiCatalog(n5Kanji);
-            applyN5CatalogToCards();
-            state.n5Exercises = normalizeN5ExerciseConfig(n5Exercises);
-            state.n5FinalTest = normalizeN5FinalTest(n5FinalTest);
-            state.n4Meta = normalizeN4Meta(n4Meta);
-            state.n4Textbook = normalizeN4Textbook(n4Lessons);
-            state.n4KanjiCatalog = normalizeN4KanjiCatalog(n4Kanji);
-            state.n4Grammar = normalizeN4Grammar(n4Grammar);
-            state.n4Exercises = normalizeN4ExerciseConfig(n4Exercises);
-            state.n4Reading = normalizeN4Collection(n4Reading);
-            state.n4Listening = normalizeN4Collection(n4Listening);
-            state.n4FinalTest = normalizeN4FinalTest(n4FinalTest);
-            applyN4CatalogToCards();
-            state.n3Meta = normalizeN3Meta(n3Meta);
-            state.n3Textbook = normalizeN3Textbook(n3Lessons);
-            state.n3KanjiCatalog = normalizeN3KanjiCatalog(n3Kanji);
-            state.n3Grammar = normalizeN3Grammar(n3Grammar);
-            state.n3Exercises = normalizeN3ExerciseConfig(n3Exercises);
-            state.n3Reading = normalizeN3Collection(n3Reading);
-            state.n3Listening = normalizeN3Collection(n3Listening);
-            state.n3FinalTest = normalizeN3FinalTest(n3FinalTest);
-            applyN3CatalogToCards();
-            state.n2Meta = normalizeN2Meta(n2Meta);
-            state.n2Textbook = normalizeN2Textbook(n2Lessons);
-            state.n2KanjiCatalog = normalizeN2KanjiCatalog(n2Kanji);
-            state.n2Grammar = normalizeN2Grammar(n2Grammar);
-            state.n2Exercises = normalizeN2ExerciseConfig(n2Exercises);
-            state.n2Reading = normalizeN2Collection(n2Reading);
-            state.n2Listening = normalizeN2Collection(n2Listening);
-            state.n2FinalTest = normalizeN2FinalTest(n2FinalTest);
-            applyN2CatalogToCards();
             state.rewards.achievements = state.achievements;
             state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
-            state.kanjiMeta = kanjiMeta.items || {};
-            state.kanjiHints = kanjiHints.items || {};
-            state.kanjiTranslations = kanjiTranslations.items || {};
-            state.kanjiStrokes = normalizeKanjiStrokeData(kanjiStrokes);
-            state.kanjiPageSources = kanjiPageSources.items || {};
-            state.lessonTranslations = lessonTranslations.items || {};
-            state.vocabulary = vocabulary.items || [];
-            state.sentenceExercises = sentences.items || [];
-            state.monetization = monetization;
             const evaRoomData = normalizeEvaRoomDialogueData(evaRoomDialogues);
             const evaFisRoomData = normalizeEvaRoomDialogueData(evaFisPersonality || {});
             const evaPresenceData = normalizeEvaPresenceData(evaPresence || {});
@@ -473,6 +440,9 @@
                 ...normalizeEvaAutonomyLines(evaFisPersonality?.autonomyLines || []),
                 ...evaPresenceData.autonomyLines
             ];
+            if (routeNeedsDeferredData()) {
+                await loadDeferredAppData({ renderAfter: false });
+            }
             hydrateProgress();
             clearLegacyFlashKanjiOnboardingState();
             hydrateCustomization();
@@ -488,6 +458,7 @@
             render();
             setAppBooting(false);
             loadDeferredEnhancements();
+            scheduleDeferredDataLoad();
             registerServiceWorker();
             scheduleFlashKanjiOnboarding();
             startEvaAutonomyLoop();
@@ -556,6 +527,133 @@
             cyberHudScriptPromise ||= loadDeferredScript(versionedAsset("src/effects/cyberHudEffect.js"), "flash-kanji-cyber-hud")
                 .catch((error) => console.warn("Cyber HUD module failed to load.", error));
         }, 450);
+    }
+    function routeNeedsDeferredData(route = state.route) {
+        return DEFERRED_DATA_ROUTES.has(route);
+    }
+    function scheduleDeferredDataLoad() {
+        const run = () => {
+            loadDeferredAppData().catch((error) => console.warn("Deferred app data failed to load.", error));
+        };
+        window.setTimeout(() => {
+            if ("requestIdleCallback" in window) {
+                window.requestIdleCallback(run, { timeout: 1800 });
+            }
+            else {
+                run();
+            }
+        }, DEFERRED_DATA_START_DELAY_MS);
+    }
+    async function loadDeferredAppData({ renderAfter = true } = {}) {
+        if (state.deferredDataLoaded)
+            return;
+        if (deferredDataPromise)
+            return deferredDataPromise;
+        state.deferredDataLoading = true;
+        deferredDataPromise = (async () => {
+            const [course, deferredPayloads] = await Promise.all([
+                loadCourse(),
+                fetchJsonEntriesInBatches([
+                    ["kanjiMeta", DATA_URLS.kanjiMeta],
+                    ["kanjiHints", DATA_URLS.kanjiHints],
+                    ["kanjiTranslations", DATA_URLS.kanjiTranslations],
+                    ["kanjiStrokes", DATA_URLS.kanjiStrokes],
+                    ["kanjiPageSources", DATA_URLS.kanjiPageSources],
+                    ["lessonTranslations", DATA_URLS.lessonTranslations],
+                    ["vocabulary", DATA_URLS.vocabulary],
+                    ["sentences", DATA_URLS.sentences],
+                    ["jlptPracticeLessons", DATA_URLS.jlptPracticeLessons],
+                    ["n5Meta", DATA_URLS.n5Meta],
+                    ["n5Lessons", DATA_URLS.n5Lessons],
+                    ["n5Kanji", DATA_URLS.n5Kanji],
+                    ["n5Exercises", DATA_URLS.n5Exercises],
+                    ["n5FinalTest", DATA_URLS.n5FinalTest],
+                    ["n4Meta", DATA_URLS.n4Meta],
+                    ["n4Lessons", DATA_URLS.n4Lessons],
+                    ["n4Kanji", DATA_URLS.n4Kanji],
+                    ["n4Grammar", DATA_URLS.n4Grammar],
+                    ["n4Exercises", DATA_URLS.n4Exercises],
+                    ["n4Reading", DATA_URLS.n4Reading],
+                    ["n4Listening", DATA_URLS.n4Listening],
+                    ["n4FinalTest", DATA_URLS.n4FinalTest],
+                    ["n3Meta", DATA_URLS.n3Meta],
+                    ["n3Lessons", DATA_URLS.n3Lessons],
+                    ["n3Kanji", DATA_URLS.n3Kanji],
+                    ["n3Grammar", DATA_URLS.n3Grammar],
+                    ["n3Exercises", DATA_URLS.n3Exercises],
+                    ["n3Reading", DATA_URLS.n3Reading],
+                    ["n3Listening", DATA_URLS.n3Listening],
+                    ["n3FinalTest", DATA_URLS.n3FinalTest],
+                    ["n2Meta", DATA_URLS.n2Meta],
+                    ["n2Lessons", DATA_URLS.n2Lessons],
+                    ["n2Kanji", DATA_URLS.n2Kanji],
+                    ["n2Grammar", DATA_URLS.n2Grammar],
+                    ["n2Exercises", DATA_URLS.n2Exercises],
+                    ["n2Reading", DATA_URLS.n2Reading],
+                    ["n2Listening", DATA_URLS.n2Listening],
+                    ["n2FinalTest", DATA_URLS.n2FinalTest],
+                    ["monetization", DATA_URLS.monetization]
+                ])
+            ]);
+            const { kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, monetization } = deferredPayloads;
+            state.lessons = course.lessons;
+            state.cards = course.cards;
+            state.jlptPracticeLessons = normalizeJlptPracticeLessons(jlptPracticeLessons);
+            state.n5Meta = normalizeN5Meta(n5Meta);
+            state.n5Textbook = normalizeN5Textbook(n5Lessons);
+            state.n5KanjiCatalog = normalizeN5KanjiCatalog(n5Kanji);
+            applyN5CatalogToCards();
+            state.n5Exercises = normalizeN5ExerciseConfig(n5Exercises);
+            state.n5FinalTest = normalizeN5FinalTest(n5FinalTest);
+            state.n4Meta = normalizeN4Meta(n4Meta);
+            state.n4Textbook = normalizeN4Textbook(n4Lessons);
+            state.n4KanjiCatalog = normalizeN4KanjiCatalog(n4Kanji);
+            state.n4Grammar = normalizeN4Grammar(n4Grammar);
+            state.n4Exercises = normalizeN4ExerciseConfig(n4Exercises);
+            state.n4Reading = normalizeN4Collection(n4Reading);
+            state.n4Listening = normalizeN4Collection(n4Listening);
+            state.n4FinalTest = normalizeN4FinalTest(n4FinalTest);
+            applyN4CatalogToCards();
+            state.n3Meta = normalizeN3Meta(n3Meta);
+            state.n3Textbook = normalizeN3Textbook(n3Lessons);
+            state.n3KanjiCatalog = normalizeN3KanjiCatalog(n3Kanji);
+            state.n3Grammar = normalizeN3Grammar(n3Grammar);
+            state.n3Exercises = normalizeN3ExerciseConfig(n3Exercises);
+            state.n3Reading = normalizeN3Collection(n3Reading);
+            state.n3Listening = normalizeN3Collection(n3Listening);
+            state.n3FinalTest = normalizeN3FinalTest(n3FinalTest);
+            applyN3CatalogToCards();
+            state.n2Meta = normalizeN2Meta(n2Meta);
+            state.n2Textbook = normalizeN2Textbook(n2Lessons);
+            state.n2KanjiCatalog = normalizeN2KanjiCatalog(n2Kanji);
+            state.n2Grammar = normalizeN2Grammar(n2Grammar);
+            state.n2Exercises = normalizeN2ExerciseConfig(n2Exercises);
+            state.n2Reading = normalizeN2Collection(n2Reading);
+            state.n2Listening = normalizeN2Collection(n2Listening);
+            state.n2FinalTest = normalizeN2FinalTest(n2FinalTest);
+            applyN2CatalogToCards();
+            state.kanjiMeta = kanjiMeta.items || {};
+            state.kanjiHints = kanjiHints.items || {};
+            state.kanjiTranslations = kanjiTranslations.items || {};
+            state.kanjiStrokes = normalizeKanjiStrokeData(kanjiStrokes);
+            state.kanjiPageSources = kanjiPageSources.items || {};
+            state.lessonTranslations = lessonTranslations.items || {};
+            state.vocabulary = vocabulary.items || [];
+            state.sentenceExercises = sentences.items || [];
+            state.monetization = monetization;
+            state.deferredDataLoaded = true;
+            state.deferredDataLoading = false;
+            if (state.progress) {
+                hydrateProgress();
+                evaluateAchievements();
+                saveProgress();
+            }
+            if (renderAfter)
+                render();
+        })().finally(() => {
+            state.deferredDataLoading = false;
+        });
+        return deferredDataPromise;
     }
     async function refreshStaleAppCache() {
         try {
@@ -633,10 +731,11 @@
             return true;
         }
     }
-    async function loadCourse() {
+    async function loadCourse({ initialOnly = false } = {}) {
         const manifest = await fetchJson(DATA_URLS.lessons);
         const lessonsSource = Array.isArray(manifest?.lessons) ? manifest.lessons : [];
-        const payloads = await Promise.all(lessonsSource.map(async (lesson) => {
+        const lessonsToLoad = initialOnly ? startupLessons(lessonsSource) : lessonsSource;
+        const payloads = await mapInBatches(lessonsToLoad, async (lesson) => {
             try {
                 return {
                     manifestLesson: lesson,
@@ -647,19 +746,47 @@
                 console.warn(`Skipping lesson data: ${lesson?.file || "unknown lesson file"}`, error);
                 return null;
             }
-        }));
-        const lessons = payloads.filter(Boolean).map(({ manifestLesson, payload }) => ({
-            ...manifestLesson,
-            ...payload.lesson,
-            file: manifestLesson.file,
-            items: Array.isArray(payload.items) ? payload.items.map((item) => normalizeCard(item, payload.lesson.id)) : []
-        }));
+        }, initialOnly ? lessonsToLoad.length : 6);
+        const payloadByLessonId = new Map(payloads.filter(Boolean).map((entry) => [entry.manifestLesson.id, entry]));
+        const lessons = lessonsSource.map((manifestLesson) => {
+            const entry = payloadByLessonId.get(manifestLesson.id);
+            if (!entry) {
+                return {
+                    ...manifestLesson,
+                    file: manifestLesson.file,
+                    items: []
+                };
+            }
+            const { payload } = entry;
+            return {
+                ...manifestLesson,
+                ...payload.lesson,
+                file: manifestLesson.file,
+                items: Array.isArray(payload.items) ? payload.items.map((item) => normalizeCard(item, payload.lesson.id)) : []
+            };
+        });
         const cards = lessons.flatMap((lesson) => lesson.items.map((item) => ({
             ...item,
             lessonTitle: lesson.title,
             lessonOrder: lesson.order
         })));
         return { lessons, cards };
+    }
+    function startupLessons(lessonsSource) {
+        return lessonsSource.filter((lesson, index) => STARTUP_LESSON_IDS.has(lesson.id) || index < 2);
+    }
+    async function fetchJsonEntriesInBatches(entries, batchSize = 6) {
+        const pairs = await mapInBatches(entries, async ([key, url]) => [key, await fetchJson(url)], batchSize);
+        return Object.fromEntries(pairs);
+    }
+    async function mapInBatches(items, mapper, batchSize = 6) {
+        const result = [];
+        const size = Math.max(1, Number(batchSize) || 1);
+        for (let index = 0; index < items.length; index += size) {
+            const batch = items.slice(index, index + size);
+            result.push(...await Promise.all(batch.map(mapper)));
+        }
+        return result;
     }
     async function fetchJson(url) {
         const candidates = buildJsonUrlCandidates(url);
@@ -749,12 +876,12 @@
             version: Number(payload?.version || 1),
             currency: payload?.currency || "Moon Fragments",
             categories: categories.length ? categories : [
-                { id: "all", title_ru: "Все", title_en: "All" },
-                { id: "background", title_ru: "Фоны", title_en: "Backgrounds" },
-                { id: "outfit", title_ru: "Образы", title_en: "Outfits" },
-                { id: "decoration", title_ru: "Декор", title_en: "Decorations" },
-                { id: "theme", title_ru: "Темы", title_en: "Themes" },
-                { id: "effect", title_ru: "Эффекты", title_en: "Effects" }
+                { id: "all", title_ru: "\u0412\u0441\u0435", title_en: "All" },
+                { id: "background", title_ru: "\u0424\u043E\u043D\u044B", title_en: "Backgrounds" },
+                { id: "outfit", title_ru: "\u041E\u0431\u0440\u0430\u0437\u044B", title_en: "Outfits" },
+                { id: "decoration", title_ru: "\u0414\u0435\u043A\u043E\u0440", title_en: "Decorations" },
+                { id: "theme", title_ru: "\u0422\u0435\u043C\u044B", title_en: "Themes" },
+                { id: "effect", title_ru: "\u042D\u0444\u0444\u0435\u043A\u0442\u044B", title_en: "Effects" }
             ],
             items: items.map((item) => ({
                 ...item,
@@ -1032,7 +1159,7 @@
                 ...item,
                 id: String(item.id || `n5-lesson-${index + 1}`),
                 order: Number(item.order || index + 1),
-                title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+                title: item.title || { ru: `\u0423\u0440\u043E\u043A ${index + 1}`, en: `Lesson ${index + 1}` },
                 theme: item.theme || item.title || { ru: "", en: "" },
                 kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
                 goal: item.goal || { ru: "", en: "" },
@@ -1130,7 +1257,7 @@
         return {
             version: Number(payload?.version || 1),
             level: "N5",
-            title: payload?.title || { ru: "Финальный тест JLPT N5", en: "JLPT N5 Final Test" },
+            title: payload?.title || { ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442 JLPT N5", en: "JLPT N5 Final Test" },
             description: payload?.description || { ru: "", en: "" },
             questionCount: Number(payload?.questionCount || 24),
             passingPercent: Number(payload?.passingPercent || 80),
@@ -1190,7 +1317,7 @@
                 ...item,
                 id: String(item.id || `n4-lesson-${index + 1}`),
                 order: Number(item.order || index + 1),
-                title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+                title: item.title || { ru: `\u0423\u0440\u043E\u043A ${index + 1}`, en: `Lesson ${index + 1}` },
                 theme: item.theme || item.title || { ru: "", en: "" },
                 kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
                 goal: item.goal || { ru: "", en: "" },
@@ -1322,7 +1449,7 @@
         return {
             version: Number(payload?.version || 1),
             level: "N4",
-            title: payload?.title || { ru: "Финальный тест JLPT N4", en: "JLPT N4 Final Test" },
+            title: payload?.title || { ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442 JLPT N4", en: "JLPT N4 Final Test" },
             description: payload?.description || { ru: "", en: "" },
             questionCount: Number(payload?.questionCount || 32),
             passingPercent: Number(payload?.passingPercent || 80),
@@ -1384,7 +1511,7 @@
                 ...item,
                 id: String(item.id || `n3-lesson-${index + 1}`),
                 order: Number(item.order || index + 1),
-                title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+                title: item.title || { ru: `\u0423\u0440\u043E\u043A ${index + 1}`, en: `Lesson ${index + 1}` },
                 theme: item.theme || item.title || { ru: "", en: "" },
                 kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
                 goal: item.goal || { ru: "", en: "" },
@@ -1516,7 +1643,7 @@
         return {
             version: Number(payload?.version || 1),
             level: "N3",
-            title: payload?.title || { ru: "Финальный тест JLPT N3", en: "JLPT N3 Final Test" },
+            title: payload?.title || { ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442 JLPT N3", en: "JLPT N3 Final Test" },
             description: payload?.description || { ru: "", en: "" },
             questionCount: Number(payload?.questionCount || 40),
             passingPercent: Number(payload?.passingPercent || 80),
@@ -1619,7 +1746,7 @@
                 ...item,
                 id: String(item.id || `n2-lesson-${index + 1}`),
                 order: Number(item.order || index + 1),
-                title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+                title: item.title || { ru: `\u0423\u0440\u043E\u043A ${index + 1}`, en: `Lesson ${index + 1}` },
                 theme: item.theme || item.title || { ru: "", en: "" },
                 kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
                 goal: item.goal || { ru: "", en: "" },
@@ -1751,7 +1878,7 @@
         return {
             version: Number(payload?.version || 1),
             level: "N2",
-            title: payload?.title || { ru: "Финальный тест JLPT N2", en: "JLPT N2 Final Test" },
+            title: payload?.title || { ru: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442 JLPT N2", en: "JLPT N2 Final Test" },
             description: payload?.description || { ru: "", en: "" },
             questionCount: Number(payload?.questionCount || 40),
             passingPercent: Number(payload?.passingPercent || 80),
@@ -1839,6 +1966,8 @@
             dailyBonusPending: null,
             writingPractice: { completed: 0, cards: {} },
             secrets: { evaClicks: 0, nightVisit: false },
+            learningPath: defaultLearningPathProgress(),
+            jlptLessonStudy: defaultJlptLessonStudyProgress(),
             sentencePractice: {
                 activeId: null,
                 selected: [],
@@ -1910,6 +2039,8 @@
             totalMoonFragmentsEarned: Number(saved.totalMoonFragmentsEarned || base.totalMoonFragmentsEarned),
             writingPractice: { ...base.writingPractice, ...(saved.writingPractice || {}) },
             secrets: { ...base.secrets, ...(saved.secrets || {}) },
+            learningPath: mergeLearningPathProgress(base.learningPath, saved.learningPath || {}),
+            jlptLessonStudy: mergeJlptLessonStudyProgress(base.jlptLessonStudy, saved.jlptLessonStudy || {}),
             sentencePractice: mergeSentencePractice(base.sentencePractice, saved.sentencePractice || {}),
             jlptLessonPractice: mergeJlptLessonPractice(base.jlptLessonPractice, saved.jlptLessonPractice || {}),
             n5Course: mergeN5CourseProgress(base.n5Course, saved.n5Course || {}),
@@ -2003,6 +2134,112 @@
     function normalizeNumber(value, fallback = 0) {
         const number = Number(value);
         return Number.isFinite(number) ? number : fallback;
+    }
+    function defaultLearningPathProgress() {
+        return {
+            version: LEARNING_PATH_VERSION,
+            currentLevel: LEARNING_PATH_LEVEL,
+            currentNodeId: LEARNING_PATH_INTRO_ID,
+            completedNodes: {},
+            unlockedNodes: { [LEARNING_PATH_INTRO_ID]: true },
+            activeSession: null,
+            resultHistory: {},
+            lastUpdatedAt: null
+        };
+    }
+    function defaultJlptLessonStudyProgress() {
+        return {
+            activeSessionKey: null,
+            sessions: {},
+            lastUpdatedAt: null
+        };
+    }
+    function defaultJlptLessonStudySession() {
+        return {
+            level: "",
+            lessonId: "",
+            currentIndex: 0,
+            answers: {},
+            phase: "study",
+            startedAt: null,
+            updatedAt: null,
+            completedAt: null,
+            testOpenedAt: null
+        };
+    }
+    function normalizeJlptLessonStudyPhase(value) {
+        const phase = String(value || "").toLowerCase();
+        return ["study", "test", "done"].includes(phase) ? phase : "study";
+    }
+    function mergeJlptLessonStudySession(base, saved) {
+        const fallback = defaultJlptLessonStudySession();
+        const source = saved && typeof saved === "object" ? saved : {};
+        const mergedAnswers = { ...(base?.answers || fallback.answers), ...(source.answers || {}) };
+        return {
+            ...fallback,
+            ...(base || {}),
+            ...source,
+            level: String(source.level || base?.level || fallback.level || "").toUpperCase(),
+            lessonId: String(source.lessonId || base?.lessonId || fallback.lessonId || ""),
+            currentIndex: Math.max(0, Number(source.currentIndex ?? base?.currentIndex ?? fallback.currentIndex ?? 0)),
+            answers: mergedAnswers,
+            phase: normalizeJlptLessonStudyPhase(source.phase || base?.phase || fallback.phase),
+            startedAt: source.startedAt || base?.startedAt || fallback.startedAt || null,
+            updatedAt: source.updatedAt || base?.updatedAt || fallback.updatedAt || null,
+            completedAt: source.completedAt || base?.completedAt || fallback.completedAt || null,
+            testOpenedAt: source.testOpenedAt || base?.testOpenedAt || fallback.testOpenedAt || null
+        };
+    }
+    function mergeJlptLessonStudyProgress(base, saved) {
+        const fallback = defaultJlptLessonStudyProgress();
+        const source = saved && typeof saved === "object" ? saved : {};
+        const sessions = {};
+        const baseSessions = base?.sessions || {};
+        const savedSessions = source.sessions || {};
+        Object.keys(baseSessions).forEach((key) => {
+            sessions[key] = mergeJlptLessonStudySession(baseSessions[key], savedSessions[key]);
+        });
+        Object.keys(savedSessions).forEach((key) => {
+            if (!sessions[key])
+                sessions[key] = mergeJlptLessonStudySession(null, savedSessions[key]);
+        });
+        return {
+            ...fallback,
+            ...(base || {}),
+            ...(source || {}),
+            sessions,
+            activeSessionKey: source.activeSessionKey || base?.activeSessionKey || fallback.activeSessionKey || null,
+            lastUpdatedAt: source.lastUpdatedAt || base?.lastUpdatedAt || fallback.lastUpdatedAt || null
+        };
+    }
+    function mergeLearningPathProgress(base, saved) {
+        return {
+            ...base,
+            ...(saved || {}),
+            version: LEARNING_PATH_VERSION,
+            currentLevel: String(saved?.currentLevel || base.currentLevel || LEARNING_PATH_LEVEL).toUpperCase(),
+            currentNodeId: String(saved?.currentNodeId || base.currentNodeId || LEARNING_PATH_INTRO_ID),
+            completedNodes: { ...base.completedNodes, ...(saved?.completedNodes || {}) },
+            unlockedNodes: { ...base.unlockedNodes, ...(saved?.unlockedNodes || {}) },
+            activeSession: mergeLearningPathSession(saved?.activeSession || base.activeSession || null),
+            resultHistory: { ...base.resultHistory, ...(saved?.resultHistory || {}) },
+            lastUpdatedAt: saved?.lastUpdatedAt || base.lastUpdatedAt || null
+        };
+    }
+    function mergeLearningPathSession(session) {
+        if (!session || typeof session !== "object")
+            return null;
+        return {
+            nodeId: String(session.nodeId || ""),
+            mode: String(session.mode || LEARNING_PATH_LESSON_VIEW),
+            stepIndex: Math.max(0, Number(session.stepIndex || 0)),
+            answers: { ...(session.answers || {}) },
+            mistakes: Array.isArray(session.mistakes) ? session.mistakes.slice(0, 80) : [],
+            reviewStepIds: Array.isArray(session.reviewStepIds) ? session.reviewStepIds.map(String).filter(Boolean).slice(0, 80) : [],
+            score: Number(session.score || 0),
+            startedAt: session.startedAt || new Date().toISOString(),
+            updatedAt: session.updatedAt || new Date().toISOString()
+        };
     }
     function defaultN5CourseProgress() {
         return {
@@ -2728,6 +2965,7 @@
         if (typeof ensureN1CourseProgress === "function")
             ensureN1CourseProgress();
         [n5Course(), n4Course(), n3Course(), n2Course(), typeof n1Course === "function" ? n1Course() : null].filter(Boolean).forEach((course) => normalizeJlptCourseStudyMaps(course));
+        ensureLearningPathProgress();
         const firstUnlocked = state.lessons.find((lesson) => isLessonUnlocked(lesson));
         if (!state.activeLessonId)
             state.activeLessonId = firstUnlocked?.id || state.lessons[0]?.id || null;
@@ -2757,6 +2995,425 @@
         course.studiedKanji[kanji] = stamp;
         course.srsKanji[kanji] = existingSrs || stamp;
         return stamp;
+    }
+    function ensureLearningPathProgress() {
+        state.progress.learningPath = mergeLearningPathProgress(defaultLearningPathProgress(), state.progress.learningPath || {});
+        const learningPath = state.progress.learningPath;
+        const completedNodes = learningPath.completedNodes;
+        const unlockedNodes = learningPath.unlockedNodes;
+        unlockedNodes[LEARNING_PATH_INTRO_ID] = true;
+        const hasReturningSignals = Object.keys(state.progress.seenKanji || {}).length > 0
+            || Object.keys(n5Course().studiedKanji || {}).length > 0
+            || Object.keys(n5Course().completedLessons || {}).length > 0
+            || Object.keys(state.progress.lessonCompletions || {}).length > 0;
+        if (hasReturningSignals && !completedNodes[LEARNING_PATH_INTRO_ID]) {
+            completedNodes[LEARNING_PATH_INTRO_ID] = state.progress.visits?.firstVisitDate || new Date().toISOString();
+        }
+        n5LessonNodeIds().forEach((lessonId, index) => {
+            if (n5Course().completedLessons?.[lessonId] && !completedNodes[lessonId]) {
+                completedNodes[lessonId] = n5Course().completedLessons[lessonId];
+            }
+            unlockedNodes[lessonId] = true;
+        });
+        const currentNodeId = firstIncompleteLearningPathNodeId();
+        learningPath.currentNodeId = currentNodeId;
+        unlockedNodes[currentNodeId] = true;
+        if (learningPath.activeSession?.nodeId && completedNodes[learningPath.activeSession.nodeId]) {
+            learningPath.activeSession = null;
+        }
+        learningPath.lastUpdatedAt = new Date().toISOString();
+    }
+    function n5LessonNodeIds() {
+        const loadedIds = (state.n5Textbook?.items || []).map((lesson) => String(lesson.id || "")).filter(Boolean);
+        if (loadedIds.length)
+            return loadedIds;
+        return LEARNING_PATH_DEFAULT_NODE_IDS.filter((id) => /^n5-lesson-\d+$/i.test(id));
+    }
+    function firstIncompleteLearningPathNodeId() {
+        const learningPath = state.progress?.learningPath || defaultLearningPathProgress();
+        const ordered = [LEARNING_PATH_INTRO_ID, ...n5LessonNodeIds(), LEARNING_PATH_CHECKPOINT_NODE_ID];
+        return ordered.find((id) => !learningPath.completedNodes?.[id]) || ordered[ordered.length - 1] || LEARNING_PATH_INTRO_ID;
+    }
+    function ensureLearningPathMapData() {
+        if (state.n5Textbook?.items?.length)
+            return Promise.resolve(state.n5Textbook);
+        if (learningPathMapPromise)
+            return learningPathMapPromise;
+        learningPathMapPromise = fetchJson(DATA_URLS.n5Lessons)
+            .then((payload) => {
+            state.n5Textbook = normalizeN5Textbook(payload);
+            ensureLearningPathProgress();
+            if (state.route === "learn" || state.route === "home")
+                render();
+            return state.n5Textbook;
+        })
+            .catch((error) => {
+            learningPathMapPromise = null;
+            throw error;
+        });
+        return learningPathMapPromise;
+    }
+    function ensureLearningPathLessonPayload(nodeId) {
+        const key = String(nodeId || "");
+        if (!key)
+            return Promise.resolve(null);
+        if (state.learningPathLessonPayloads[key])
+            return Promise.resolve(state.learningPathLessonPayloads[key]);
+        const url = LEARNING_PATH_LESSON_PAYLOADS[key];
+        if (!url) {
+            const fallback = buildLearningPathLessonPayload(key);
+            if (fallback)
+                state.learningPathLessonPayloads[key] = fallback;
+            return Promise.resolve(fallback);
+        }
+        if (learningPathLessonPromises.has(key))
+            return learningPathLessonPromises.get(key);
+        const promise = fetchJson(url)
+            .then((payload) => {
+            state.learningPathLessonPayloads[key] = payload || buildLearningPathLessonPayload(key);
+            if (state.route === "learn" && state.activeLearnNodeId === key)
+                render();
+            return state.learningPathLessonPayloads[key];
+        })
+            .catch((error) => {
+            const fallback = buildLearningPathLessonPayload(key);
+            if (fallback) {
+                state.learningPathLessonPayloads[key] = fallback;
+                if (state.route === "learn" && state.activeLearnNodeId === key)
+                    render();
+                return fallback;
+            }
+            throw error;
+        })
+            .finally(() => {
+            learningPathLessonPromises.delete(key);
+        });
+        learningPathLessonPromises.set(key, promise);
+        return promise;
+    }
+    function learningPathProgress() {
+        ensureLearningPathProgress();
+        return state.progress.learningPath;
+    }
+    function activeLearningPathSession() {
+        const session = learningPathProgress().activeSession;
+        if (!session?.nodeId)
+            return null;
+        if (learningPathProgress().completedNodes?.[session.nodeId])
+            return null;
+        return session;
+    }
+    function currentLearningPathNodeId() {
+        const session = activeLearningPathSession();
+        if (session?.nodeId)
+            return session.nodeId;
+        const currentNodeId = learningPathProgress().currentNodeId || firstIncompleteLearningPathNodeId();
+        return currentNodeId || LEARNING_PATH_INTRO_ID;
+    }
+    function learningPathNodeTitle(nodeId) {
+        const node = learningPathNodeById(nodeId);
+        return node ? localized(node.title) : lessonTitleFromNodeId(nodeId);
+    }
+    function lessonTitleFromNodeId(nodeId) {
+        const raw = String(nodeId || "");
+        if (raw === LEARNING_PATH_INTRO_ID)
+            return lang() === "ru" ? "\u0412\u0432\u0435\u0434\u0435\u043D\u0438\u0435 \u0432 \u043C\u0430\u0440\u0448\u0440\u0443\u0442" : "Route introduction";
+        if (raw === LEARNING_PATH_CHECKPOINT_NODE_ID)
+            return lang() === "ru" ? "\u041A\u043E\u043D\u0442\u0440\u043E\u043B\u044C\u043D\u0430\u044F \u0442\u043E\u0447\u043A\u0430 N5" : "N5 checkpoint";
+        const lesson = n5LessonById(raw);
+        if (lesson)
+            return localized(lesson.title);
+        const match = raw.match(/n5-lesson-(\d+)/i);
+        if (match)
+            return lang() === "ru" ? `N5 \u00B7 \u0423\u0440\u043E\u043A ${match[1]}` : `N5 · Lesson ${match[1]}`;
+        return raw;
+    }
+    function learningPathNodeSummary(nodeId) {
+        const node = learningPathNodeById(nodeId);
+        return node ? localized(node.summary) : "";
+    }
+    function learningPathLabels() {
+        return lang() === "ru"
+            ? {
+                route: "\u041C\u0430\u0440\u0448\u0440\u0443\u0442 \u043E\u0431\u0443\u0447\u0435\u043D\u0438\u044F",
+                intro: "\u0412\u0432\u0435\u0434\u0435\u043D\u0438\u0435",
+                checkpoint: "\u041A\u043E\u043D\u0442\u0440\u043E\u043B\u044C\u043D\u0430\u044F \u0442\u043E\u0447\u043A\u0430",
+                review: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                available: "\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E",
+                current: "\u0441\u0435\u0439\u0447\u0430\u0441",
+                completed: "\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u043E",
+                locked: "\u0437\u0430\u043A\u0440\u044B\u0442\u043E",
+                due: "\u043D\u0443\u0436\u043D\u043E \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+                minutes: "мин",
+                lessons: "\u0443\u0440\u043E\u043A\u0438",
+                start: "\u041D\u0430\u0447\u0430\u0442\u044C \u0443\u0447\u0438\u0442\u044C\u0441\u044F",
+                resume: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u0443\u0440\u043E\u043A",
+                next: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0443\u0440\u043E\u043A",
+                reviewAction: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+                reviewOld: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0441\u0442\u0430\u0440\u043E\u0435",
+                continue: "\u0414\u0430\u043B\u044C\u0448\u0435",
+                finish: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C",
+                backToMap: "\u041A \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0443",
+                openTextbook: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0443\u0447\u0435\u0431\u043D\u0438\u043A",
+                openCheckpoint: "\u041A \u0442\u0435\u0441\u0442\u0443",
+                score: "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442",
+                mistakes: "Ошибки",
+                retryMistakes: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438",
+                continuePath: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u043F\u0443\u0442\u044C",
+                ready: "\u0413\u043E\u0442\u043E\u0432\u043E",
+                introTitle: "\u041A\u0430\u043A \u0442\u0443\u0442 \u0443\u0447\u0438\u0442\u044C\u0441\u044F",
+                introSummary: "\u041A\u0430\u043D\u0434\u0437\u0438 \u0438\u0434\u0443\u0442 \u043F\u043E \u0446\u0435\u043F\u043E\u0447\u043A\u0435: \u0437\u043D\u0430\u043A -> \u0441\u043C\u044B\u0441\u043B -> \u0447\u0442\u0435\u043D\u0438\u0435 -> \u043F\u0440\u0438\u043C\u0435\u0440 -> \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                introBody: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0431\u0435\u0440\u0451\u043C \u043E\u0434\u0438\u043D \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u0438\u0439 \u0431\u043B\u043E\u043A, \u043F\u043E\u0442\u043E\u043C \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u043C \u0435\u0433\u043E \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435. \u041D\u0435 \u043D\u0443\u0436\u043D\u043E \u0434\u0435\u0440\u0436\u0430\u0442\u044C \u0432\u0441\u0451 \u0432 \u0433\u043E\u043B\u043E\u0432\u0435 \u0437\u0430 \u0440\u0430\u0437.",
+                introBridge: "\u0415\u0441\u043B\u0438 \u0447\u0442\u043E-\u0442\u043E \u0442\u044F\u0436\u0435\u043B\u043E, \u044D\u0442\u043E \u043D\u0435 \u043F\u0440\u043E\u0432\u0430\u043B. \u0417\u043D\u0430\u0447\u0438\u0442, \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0430 \u043F\u0440\u043E\u0441\u0442\u043E \u0440\u0430\u043D\u044C\u0448\u0435 \u0432\u0435\u0440\u043D\u0451\u0442\u0441\u044F \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                introQuestion: "\u041A\u0443\u0434\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u044E\u0442\u0441\u044F \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043F\u043E\u0441\u043B\u0435 \u0443\u0440\u043E\u043A\u0430?",
+                introQuestionHint: "\u0412\u044B\u0431\u0435\u0440\u0438 \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0442\u044C.",
+                loading: "\u041F\u043E\u0434\u0433\u0440\u0443\u0436\u0430\u044E \u043C\u0430\u0440\u0448\u0440\u0443\u0442...",
+                empty: "\u041C\u0430\u0440\u0448\u0440\u0443\u0442 \u0441\u043A\u043E\u0440\u043E \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F.",
+                nextLesson: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0448\u0430\u0433",
+                lessonTrack: "\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C",
+                reviewQueue: "\u041A \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044E",
+                streak: "\u0421\u0442\u0440\u0438\u043A",
+                level: "\u0423\u0440\u043E\u0432\u0435\u043D\u044C",
+                xp: "XP",
+                mapHint: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0438\u0434\u0451\u043C \u043F\u043E \u0442\u0435\u043A\u0443\u0449\u0435\u043C\u0443 \u0443\u0440\u043E\u0432\u043D\u044E. \u041E\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0435 \u0443\u0440\u043E\u0432\u043D\u0438 \u043E\u0441\u0442\u0430\u044E\u0442\u0441\u044F \u0432 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430\u0445.",
+                step: "Шаг",
+                finishHint: "\u041F\u043E\u0441\u043B\u0435 \u0443\u0440\u043E\u043A\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043F\u043E\u043F\u0430\u0434\u0443\u0442 \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                scoreHint: "\u0412\u0435\u0440\u043D\u0451\u043C\u0441\u044F \u043A \u043E\u0448\u0438\u0431\u043A\u0430\u043C \u0438\u043B\u0438 \u0434\u0432\u0438\u043D\u0435\u043C\u0441\u044F \u0434\u0430\u043B\u044C\u0448\u0435."
+            }
+            : {
+                route: "Learning path",
+                intro: "Intro",
+                checkpoint: "Checkpoint",
+                review: "Review",
+                available: "available",
+                current: "current",
+                completed: "done",
+                locked: "locked",
+                due: "review due",
+                minutes: "min",
+                lessons: "lessons",
+                start: "Start learning",
+                resume: "Resume lesson",
+                next: "Next lesson",
+                reviewAction: "Review",
+                reviewOld: "Review old material",
+                continue: "Next",
+                finish: "Finish",
+                backToMap: "Back to path",
+                openTextbook: "Open textbook",
+                openCheckpoint: "Open test",
+                score: "Score",
+                mistakes: "Mistakes",
+                retryMistakes: "Retry mistakes",
+                continuePath: "Continue path",
+                ready: "Done",
+                introTitle: "How this route works",
+                introSummary: "Kanji move through a chain: sign -> meaning -> reading -> example -> review.",
+                introBody: "Take one small block first, then send it into review. You do not need to hold everything at once.",
+                introBridge: "If something feels hard, that is not failure. It only means the card should return sooner.",
+                introQuestion: "Where do cards go after the lesson?",
+                introQuestionHint: "Choose the correct path.",
+                loading: "Loading the path...",
+                empty: "The path will appear soon.",
+                nextLesson: "Next step",
+                lessonTrack: "Current level",
+                reviewQueue: "Due now",
+                streak: "Streak",
+                level: "Level",
+                xp: "XP",
+                mapHint: "Stay on the current level here. The rest remains in textbooks.",
+                step: "Step",
+                finishHint: "After the lesson the cards move to review.",
+                scoreHint: "Retry mistakes or keep moving."
+            };
+    }
+    function learningPathIntroNode() {
+        const labels = learningPathLabels();
+        return {
+            id: LEARNING_PATH_INTRO_ID,
+            type: "lesson",
+            level: "INTRO",
+            title: { ru: labels.introTitle, en: labels.introTitle },
+            summary: { ru: labels.introSummary, en: labels.introSummary },
+            durationMinutes: 3
+        };
+    }
+    function learningPathReviewNode() {
+        const count = getDueNowCards().length;
+        const labels = learningPathLabels();
+        return {
+            id: LEARNING_PATH_REVIEW_NODE_ID,
+            type: "review",
+            level: "SRS",
+            title: { ru: `\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435: ${count}`, en: `Review: ${count}` },
+            summary: {
+                ru: count > 0 ? "\u041A\u0430\u0440\u0442\u043E\u0447\u043A\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0443\u0436\u0435 \u043D\u0443\u0436\u043D\u043E \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432 \u043F\u0430\u043C\u044F\u0442\u044C." : "\u041E\u0447\u0435\u0440\u0435\u0434\u044C \u043F\u0443\u0441\u0442\u0430, \u043C\u043E\u0436\u043D\u043E \u0438\u0434\u0442\u0438 \u0434\u0430\u043B\u044C\u0448\u0435.",
+                en: count > 0 ? "Cards that should return now." : "Queue is empty, move on."
+            },
+            durationMinutes: Math.max(2, Math.min(12, count))
+        };
+    }
+    function learningPathCheckpointNode() {
+        return {
+            id: LEARNING_PATH_CHECKPOINT_NODE_ID,
+            type: "checkpoint",
+            level: "N5",
+            title: { ru: "\u041A\u043E\u043D\u0442\u0440\u043E\u043B\u044C\u043D\u0430\u044F \u0442\u043E\u0447\u043A\u0430 N5", en: "N5 checkpoint" },
+            summary: {
+                ru: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 \u0431\u043B\u043E\u043A\u0430 \u0438 \u043F\u0435\u0440\u0435\u0445\u043E\u0434 \u043A \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u043C\u0443 \u0442\u0435\u0441\u0442\u0443 \u0443\u0440\u043E\u0432\u043D\u044F.",
+                en: "Review the block and move into the level final test."
+            },
+            durationMinutes: 12
+        };
+    }
+    function fallbackN5PathNodes() {
+        return n5LessonNodeIds().map((id, index) => ({
+            id,
+            type: "lesson",
+            level: "N5",
+            title: { ru: `N5 \u00B7 \u0423\u0440\u043E\u043A ${index + 1}`, en: `N5 · Lesson ${index + 1}` },
+            summary: index === 0
+                ? {
+                    ru: "\u041F\u0435\u0440\u0432\u044B\u0439 \u0438\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0443\u0440\u043E\u043A: 4 \u0437\u043D\u0430\u043A\u0430, \u0447\u0442\u0435\u043D\u0438\u044F, \u043F\u0440\u0438\u043C\u0435\u0440\u044B \u0438 \u043C\u0438\u043D\u0438-\u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0430.",
+                    en: "First interactive lesson: 4 signs, readings, examples, and mini practice."
+                }
+                : {
+                    ru: "\u041E\u0442\u043A\u0440\u043E\u0435\u043C \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0443\u0440\u043E\u043A\u0430 \u043F\u0440\u044F\u043C\u043E \u0438\u0437 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430.",
+                    en: "Open this lesson directly from the textbook."
+                },
+            durationMinutes: index === 0 ? 12 : 10
+        }));
+    }
+    function learningPathNodes() {
+        const intro = learningPathIntroNode();
+        const reviewNode = learningPathReviewNode();
+        const checkpoint = learningPathCheckpointNode();
+        const lessonNodes = state.n5Textbook?.items?.length
+            ? state.n5Textbook.items.map((lesson, index) => ({
+                id: lesson.id,
+                type: "lesson",
+                level: "N5",
+                title: lesson.title,
+                summary: lesson.goal || lesson.theme || { ru: "", en: "" },
+                durationMinutes: Number(lesson.durationMinutes || lesson.estimatedMinutes || 10)
+            }))
+            : fallbackN5PathNodes();
+        const nodes = [intro];
+        if (getDueNowCards().length > 0)
+            nodes.push(reviewNode);
+        return [...nodes, ...lessonNodes, checkpoint];
+    }
+    function learningPathNodeById(nodeId) {
+        const key = String(nodeId || "");
+        if (!key)
+            return null;
+        return learningPathNodes().find((node) => node.id === key) || null;
+    }
+    function learningPathNodeStatus(node) {
+        if (!node)
+            return "locked";
+        if (node.id === LEARNING_PATH_REVIEW_NODE_ID)
+            return getDueNowCards().length > 0 ? "review" : "available";
+        const learningPath = learningPathProgress();
+        if (learningPath.completedNodes?.[node.id])
+            return "completed";
+        if (currentLearningPathNodeId() === node.id)
+            return "current";
+        if (learningPath.unlockedNodes?.[node.id])
+            return node.type === "checkpoint" ? "checkpoint" : "available";
+        return "locked";
+    }
+    function learningPathStatusLabel(status) {
+        const labels = learningPathLabels();
+        if (status === "completed")
+            return labels.completed;
+        if (status === "current")
+            return labels.current;
+        if (status === "available")
+            return labels.available;
+        if (status === "review")
+            return labels.due;
+        if (status === "checkpoint")
+            return labels.checkpoint;
+        return labels.locked;
+    }
+    function learningPathPrimaryAction() {
+        const learningPath = learningPathProgress();
+        const reviewQueue = getDueNowCards().length;
+        const session = activeLearningPathSession();
+        const nextNodeId = currentLearningPathNodeId();
+        const nextNode = learningPathNodeById(nextNodeId);
+        const dailyDone = Number(todayStats().reviews || 0) >= Number(state.progress.settings.dailyGoal || 0);
+        if (!learningPath.completedNodes?.[LEARNING_PATH_INTRO_ID] && !session) {
+            return { kind: "node", label: learningPathLabels().start, nodeId: LEARNING_PATH_INTRO_ID };
+        }
+        if (session?.nodeId) {
+            return { kind: "node", label: learningPathLabels().resume, nodeId: session.nodeId };
+        }
+        if (reviewQueue > 0) {
+            return { kind: "review", label: `${learningPathLabels().reviewAction}: ${reviewQueue}`, nodeId: LEARNING_PATH_REVIEW_NODE_ID };
+        }
+        if (dailyDone && nextNode) {
+            return { kind: "node", label: learningPathLabels().next, nodeId: nextNode.id };
+        }
+        if (nextNode) {
+            return { kind: "node", label: learningPath.completedNodes?.[LEARNING_PATH_INTRO_ID] ? learningPathLabels().resume : learningPathLabels().start, nodeId: nextNode.id };
+        }
+        return { kind: "review", label: learningPathLabels().reviewOld, nodeId: LEARNING_PATH_REVIEW_NODE_ID };
+    }
+    function homeLessonAction() {
+        const labels = learningPathLabels();
+        const level = currentLearnTextbookLevel() || defaultJlptLessonLevel();
+        const lesson = currentLearnLesson();
+        const status = lessonProgressStatus(lesson);
+        return {
+            label: status === "started" || status === "completed" ? labels.resume : labels.start,
+            level
+        };
+    }
+    function learningPathSummaryStats() {
+        const levelInfo = getLevelInfo();
+        const reviewQueue = getDueNowCards().length;
+        const labels = learningPathLabels();
+        return [
+            { label: labels.streak, value: state.progress.streak.current },
+            { label: labels.level, value: state.progress.level },
+            { label: labels.xp, value: `${levelInfo.current}/${levelInfo.next}` },
+            { label: labels.reviewQueue, value: reviewQueue }
+        ];
+    }
+    function renderHomeSummaryStat(item) {
+        return `
+      <article class="home-summary-card">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${escapeHtml(item.value)}</strong>
+      </article>
+    `;
+    }
+    function renderHomeEvaCompact(scene) {
+        const line = scene.line || { text: { ru: "\u042F \u0440\u044F\u0434\u043E\u043C.", en: "I'm here." }, id: "home_eva_compact" };
+        return `
+      <section class="home-eva-compact" data-eva-mood="${escapeAttr(scene.mood)}" data-eva-emotion="${escapeAttr(scene.emotion)}">
+        <div class="home-eva-compact-copy">
+          <div class="home-eva-meta">
+            <span class="pill">${escapeHtml(scene.speaker)}</span>
+            <strong>${escapeHtml(lang() === "ru" ? "\u0415\u0432\u0430" : "Eva")}</strong>
+          </div>
+          ${renderEvaDialogueText(localized(line.text || { ru: "\u042F \u0440\u044F\u0434\u043E\u043C.", en: "I'm here." }), line.id || "home_eva_compact")}
+          <button class="btn ghost" type="button" data-action="eva-autonomy-next">${escapeHtml(lang() === "ru" ? "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0430\u044F \u0440\u0435\u043F\u043B\u0438\u043A\u0430" : "Next line")}</button>
+        </div>
+        <button class="home-eva-avatar home-eva-compact-avatar" type="button" data-action="eva-click" data-character="eva" aria-label="${escapeAttr(scene.speaker)}">
+          <img class="${escapeAttr(evaSpriteMotionClass({ line: scene.line, isAutonomy: true, mood: scene.mood, emotion: scene.emotion }))}" src="${escapeAttr(scene.sprite)}" alt="${escapeAttr(scene.speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.webp'" />
+        </button>
+      </section>
+    `;
+    }
+    function learningPathHomePreview() {
+        const currentNodeId = currentLearningPathNodeId();
+        return {
+            title: learningPathNodeTitle(currentNodeId),
+            summary: learningPathNodeSummary(currentNodeId)
+        };
     }
     function getCardProgress(cardId) {
         const id = String(cardId);
@@ -2954,7 +3611,7 @@
             if (sessionCompletedLessons.has(key)) {
                 if (target) {
                     target.disabled = true;
-                    target.textContent = (lang() === "ru" ? "Урок завершён" : "Lesson completed");
+                    target.textContent = (lang() === "ru" ? "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Lesson completed");
                 }
                 return; // block the call entirely
             }
@@ -2980,7 +3637,7 @@
             setRoute(route, target.dataset.focus || null, target.dataset.subroute || null);
         }
         if (action === "share-page")
-            shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed"));
+            shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F" : "Share failed"));
         if (action === "toggle-header-socials")
             setHeaderSocialOpen(!isHeaderSocialOpen());
         if (action === "notification-center") {
@@ -3024,7 +3681,7 @@
         }
         if (action === "copy-contact-email") {
             copyShareText(SUPPORT_EMAIL).then((copied) => {
-                toast(copied ? (lang() === "ru" ? "Email скопирован" : "Email copied") : (lang() === "ru" ? "Не удалось скопировать email" : "Could not copy email"));
+                toast(copied ? (lang() === "ru" ? "Email \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D" : "Email copied") : (lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C email" : "Could not copy email"));
             });
         }
         if (action === "close-contact-modal") {
@@ -3224,12 +3881,14 @@
             answerN5Exercise(target);
         if (action === "n5-check-input")
             checkN5InputExercise(id);
-            if (action === "n5-srs")
-                handleN5SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
+        if (action === "n5-srs")
+            handleN5SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
         if (action === "n5-writing-done")
             markN5Writing(id);
         if (action === "n5-complete-lesson")
             completeN5Lesson(id);
+        if (action === "jlpt-lesson-answer")
+            handleJlptLessonAnswer(target.dataset.level || "", target.dataset.lesson || target.dataset.lessonId || "", target.dataset.card || id, String(target.dataset.value || "") === "remember");
         if (action === "n5-final-answer")
             answerN5FinalQuestion(target);
         if (action === "n5-final-submit")
@@ -3256,8 +3915,8 @@
             answerN4Exercise(target);
         if (action === "n4-check-input")
             checkN4InputExercise(id);
-            if (action === "n4-srs")
-                handleN4SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
+        if (action === "n4-srs")
+            handleN4SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
         if (action === "n4-writing-done")
             markN4Writing(id);
         if (action === "n4-complete-lesson")
@@ -3294,8 +3953,8 @@
             answerN3Exercise(target);
         if (action === "n3-check-input")
             checkN3InputExercise(id);
-            if (action === "n3-srs")
-                handleN3SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
+        if (action === "n3-srs")
+            handleN3SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
         if (action === "n3-writing-done")
             markN3Writing(id);
         if (action === "n3-complete-lesson")
@@ -3332,8 +3991,8 @@
             answerN2Exercise(target);
         if (action === "n2-check-input")
             checkN2InputExercise(id);
-            if (action === "n2-srs")
-                handleN2SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
+        if (action === "n2-srs")
+            handleN2SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
         if (action === "n2-writing-done")
             markN2Writing(id);
         if (action === "n2-complete-lesson")
@@ -3395,6 +4054,81 @@
             if (!getDueNowCards().length)
                 toast(dialogueText("eva", "welcome"));
         }
+        if (action === "home-lesson") {
+            openJlptLessonStart(currentLearnTextbookLevel() || defaultJlptLessonLevel());
+        }
+        if (action === "home-review") {
+            if (getDueNowCards().length) {
+                setRoute("review");
+            }
+            else {
+                toast(lang() === "ru" ? "\u041F\u043E\u043A\u0430 \u043D\u0435\u0442 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0439." : "No reviews are due right now.");
+            }
+        }
+        if (action === "home-primary") {
+            openLearningPathPrimaryAction();
+        }
+        if (action === "learning-path-node") {
+            openLearningPathNode(target.dataset.node || id);
+        }
+        if (action === "learning-path-back") {
+            setLearnRoute();
+        }
+        if (action === "learning-path-choice") {
+            const nodeId = String(target.dataset.node || "");
+            const stepId = String(target.dataset.step || "");
+            const value = String(target.dataset.value || "");
+            const player = learningPathPlayerState(nodeId);
+            const step = player.steps.find((item) => item.id === stepId);
+            if (!step || step.kind !== "quiz" || player.session.answers?.[stepId])
+                return;
+            player.session.answers[stepId] = { selected: value, correct: value === step.answer, at: new Date().toISOString() };
+            if (value === step.answer)
+                player.session.score = Number(player.session.score || 0) + 1;
+            else
+                player.session.mistakes = [...new Set([...(player.session.mistakes || []), stepId])];
+            player.session.updatedAt = new Date().toISOString();
+            saveProgress();
+            render();
+        }
+        if (action === "learning-path-step-next") {
+            const nodeId = String(target.dataset.node || state.activeLearnNodeId || "");
+            const player = learningPathPlayerState(nodeId);
+            if (!player.steps.length)
+                return;
+            const step = player.steps[player.session.stepIndex];
+            if (step?.kind === "quiz" && !player.session.answers?.[step.id])
+                return;
+            player.session.stepIndex = Math.min(player.session.stepIndex + 1, player.steps.length);
+            player.session.updatedAt = new Date().toISOString();
+            saveProgress();
+            render();
+        }
+        if (action === "learning-path-retry") {
+            const nodeId = String(target.dataset.node || state.activeLearnNodeId || "");
+            const current = learningPathPlayerState(nodeId);
+            const retryIds = (current.session.mistakes || []).slice();
+            learningPathProgress().activeSession = mergeLearningPathSession({
+                nodeId,
+                mode: "mistakes",
+                stepIndex: 0,
+                answers: {},
+                mistakes: [],
+                reviewStepIds: retryIds,
+                score: 0,
+                startedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            saveProgress();
+            render();
+        }
+        if (action === "learning-path-continue") {
+            const nodeId = String(target.dataset.node || state.activeLearnNodeId || "");
+            const player = learningPathPlayerState(nodeId);
+            finalizeLearningPathNode(nodeId, player.session, player.steps);
+            setLearnRoute();
+            return;
+        }
         if (action === "start-lesson" || action === "select-lesson") {
             const lesson = state.lessons.find((item) => item.id === id);
             if (!lesson || !isLessonUnlocked(lesson)) {
@@ -3407,7 +4141,16 @@
             resetReadingCheck();
             if (action === "start-lesson") {
                 dispatchEvaEvent("lesson_start", { lessonId: id, jlpt: lesson.jlpt });
-                setRoute("learn");
+                const jlptLevel = String(lesson.jlpt || "").toUpperCase();
+                if (/^n[2-5]-lesson-\d+$/i.test(lesson.id) && ["N5", "N4", "N3", "N2"].includes(jlptLevel)) {
+                    setRoute("textbooks", null, jlptLevel);
+                    state.activeTextbookSubroute = lesson.id;
+                    history.replaceState(null, "", `#textbooks/${encodeURIComponent(jlptLevel)}/${encodeURIComponent(lesson.id)}`);
+                    render();
+                }
+                else {
+                    setLearnRoute(LEARNING_PATH_LEGACY_VIEW, lesson.id);
+                }
             }
             else {
                 render();
@@ -3450,17 +4193,7 @@
             state.revealed = false;
             resetReadingCheck(card.id);
             state.detailCardId = null;
-            setRoute("learn");
-        }
-        if (action === "write-card") {
-            const card = findCard(id);
-            if (!card)
-                return;
-            markKanjiSeenAndSave(card, "writing_card");
-            state.activeLessonId = card.lessonId;
-            state.activeCardId = card.id;
-            state.detailCardId = null;
-            setRoute("writing");
+            setLearnRoute(LEARNING_PATH_LEGACY_VIEW, card.lessonId);
         }
     }
     function handleEvaDirectPointer(event) {
@@ -3549,7 +4282,7 @@
             playUxSound("page_turn");
             return;
         }
-        if (["n5-answer", "n5-check-input", "n5-srs", "n5-writing-done", "n5-complete-lesson", "n5-final-answer", "n5-final-submit", "n4-answer", "n4-check-input", "n4-srs", "n4-writing-done", "n4-complete-lesson", "n4-grammar-complete", "n4-reading-complete", "n4-listening-complete", "n4-final-answer", "n4-final-submit", "n3-answer", "n3-check-input", "n3-srs", "n3-writing-done", "n3-complete-lesson", "n3-grammar-complete", "n3-reading-complete", "n3-listening-complete", "n3-final-answer", "n3-final-submit", "n2-answer", "n2-check-input", "n2-srs", "n2-writing-done", "n2-complete-lesson", "n2-grammar-complete", "n2-reading-complete", "n2-listening-complete", "n2-final-answer", "n2-final-submit", "n1-answer", "n1-check-input", "n1-srs", "n1-writing-done", "n1-complete-lesson", "n1-grammar-complete", "n1-reading-complete", "n1-listening-complete", "n1-final-answer", "n1-final-submit"].includes(action)) {
+        if (["n5-answer", "n5-check-input", "n5-srs", "n5-writing-done", "n5-complete-lesson", "n5-final-answer", "n5-final-submit", "n4-answer", "n4-check-input", "n4-srs", "n4-writing-done", "n4-complete-lesson", "n4-grammar-complete", "n4-reading-complete", "n4-listening-complete", "n4-final-answer", "n4-final-submit", "n3-answer", "n3-check-input", "n3-srs", "n3-writing-done", "n3-complete-lesson", "n3-grammar-complete", "n3-reading-complete", "n3-listening-complete", "n3-final-answer", "n3-final-submit", "n2-answer", "n2-check-input", "n2-srs", "n2-writing-done", "n2-complete-lesson", "n2-grammar-complete", "n2-reading-complete", "n2-listening-complete", "n2-final-answer", "n2-final-submit", "n1-answer", "n1-check-input", "n1-srs", "n1-writing-done", "n1-complete-lesson", "n1-grammar-complete", "n1-reading-complete", "n1-listening-complete", "n1-final-answer", "n1-final-submit", "jlpt-lesson-answer"].includes(action)) {
             playUxSound("button_click");
             return;
         }
@@ -3670,11 +4403,42 @@
         evaluateAchievements();
         saveProgress();
         playUxSound("moon_fragment_gain");
-        toast(lang() === "ru" ? `Чит активирован: +${value} Moon` : `Cheat activated: +${value} Moon`);
+        toast(lang() === "ru" ? `\u0427\u0438\u0442 \u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D: +${value} Moon` : `Cheat activated: +${value} Moon`);
         render();
         return state.progress.moonFragments;
     }
+    function setLearnRoute(view = LEARNING_PATH_MAP_VIEW, targetId = null, focus = null) {
+        state.route = "learn";
+        state.activeLearnView = view;
+        state.activeLearnNodeId = view === LEARNING_PATH_LESSON_VIEW ? String(targetId || "") || null : null;
+        state.activeLearnLegacyLessonId = view === LEARNING_PATH_LEGACY_VIEW ? String(targetId || "") || null : null;
+        const nextHash = view === LEARNING_PATH_LESSON_VIEW && targetId
+            ? `#learn/lesson/${encodeURIComponent(String(targetId))}`
+            : view === LEARNING_PATH_LEGACY_VIEW && targetId
+                ? `#learn/legacy/${encodeURIComponent(String(targetId))}`
+                : "#learn";
+        if (location.hash !== nextHash)
+            history.replaceState(null, "", nextHash);
+        state.activeTextbookLevel = null;
+        state.activeTextbookSubroute = null;
+        state.kanjiPageId = null;
+        state.detailCardId = null;
+        state.revealed = false;
+        state.navMenu = null;
+        state.finalTestModal = null;
+        state.finalTestBusy = false;
+        state.contactModal = false;
+        state.pendingFocus = focus;
+        state.evaRoomShopOpen = false;
+        resetReadingCheck();
+        scrollPageToTop();
+        render();
+    }
     function setRoute(route, focus = null, subroute = null) {
+        if (route === "learn") {
+            setLearnRoute(LEARNING_PATH_MAP_VIEW, null, focus);
+            return;
+        }
         state.route = routes.includes(route) ? route : "home";
         if (state.route === "textbooks") {
             state.activeTextbookLevel = subroute ? String(subroute).toUpperCase() : state.activeTextbookLevel;
@@ -3687,11 +4451,13 @@
             state.activeTextbookLevel = null;
             state.activeTextbookSubroute = null;
         }
-        const nextHash = state.route === "textbooks" && state.activeTextbookLevel
-            ? `#textbooks/${encodeURIComponent(state.activeTextbookLevel)}`
-            : state.route === "jlpt-lesson" && state.activeJlptLesson
-                ? `#jlpt-lesson/${encodeURIComponent(state.activeJlptLesson)}`
-                : `#${state.route}`;
+        const nextHash = state.route === "learn"
+            ? "#learn"
+            : state.route === "textbooks" && state.activeTextbookLevel
+                ? `#textbooks/${encodeURIComponent(state.activeTextbookLevel)}`
+                : state.route === "jlpt-lesson" && state.activeJlptLesson
+                    ? `#jlpt-lesson/${encodeURIComponent(state.activeJlptLesson)}`
+                    : `#${state.route}`;
         if (location.hash !== nextHash)
             history.replaceState(null, "", nextHash);
         if (state.route !== "kanji")
@@ -3799,42 +4565,37 @@
     const FLASH_KANJI_ONBOARDING_STEPS = [
         {
             target: null,
-            title: { ru: "Добро пожаловать", en: "Welcome" },
-            text: { ru: "Привет! Я Ева. Быстро покажу, где что находится и как пользоваться Flash Kanji.", en: "Hi! I am Eva. I will quickly show you where everything is and how Flash Kanji works." }
+            title: { ru: "\u0414\u043E\u0431\u0440\u043E \u043F\u043E\u0436\u0430\u043B\u043E\u0432\u0430\u0442\u044C", en: "Welcome" },
+            text: { ru: "\u041F\u0440\u0438\u0432\u0435\u0442! \u042F \u0415\u0432\u0430. \u0411\u044B\u0441\u0442\u0440\u043E \u043F\u043E\u043A\u0430\u0436\u0443, \u0433\u0434\u0435 \u0447\u0442\u043E \u043D\u0430\u0445\u043E\u0434\u0438\u0442\u0441\u044F \u0438 \u043A\u0430\u043A \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C\u0441\u044F Flash Kanji.", en: "Hi! I am Eva. I will quickly show you where everything is and how Flash Kanji works." }
         },
         {
-            target: "[data-route='textbooks']",
-            title: { ru: "Учебники", en: "Textbooks" },
-            text: { ru: "Это главный вход в Flash Kanji. Здесь открываются учебники N5-N1 и путь к урокам каждого уровня.", en: "This is the main entrance to Flash Kanji. Open N5-N1 textbooks here and continue into each level's lessons." }
+            target: "[data-tour='home-lesson']",
+            title: { ru: "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438", en: "Textbooks" },
+            text: { ru: "\u042D\u0442\u043E \u0433\u043B\u0430\u0432\u043D\u044B\u0439 \u0432\u0445\u043E\u0434 \u0432 Flash Kanji. \u0417\u0434\u0435\u0441\u044C \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438 N5-N1 \u0438 \u043F\u0443\u0442\u044C \u043A \u0443\u0440\u043E\u043A\u0430\u043C \u043A\u0430\u0436\u0434\u043E\u0433\u043E \u0443\u0440\u043E\u0432\u043D\u044F.", en: "This is the main entrance to Flash Kanji. Open N5-N1 textbooks here and continue into each level's lessons." }
         },
         {
             target: "[data-tour='srs-review']",
-            title: { ru: "Повторение", en: "Review" },
-            text: { ru: "Изученные карточки возвращаются в повторение, чтобы закрепляться в памяти.", en: "Learned cards come back here for spaced repetition so they stay in memory." }
+            title: { ru: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435", en: "Review" },
+            text: { ru: "\u0418\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u044E\u0442\u0441\u044F \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435, \u0447\u0442\u043E\u0431\u044B \u0437\u0430\u043A\u0440\u0435\u043F\u043B\u044F\u0442\u044C\u0441\u044F \u0432 \u043F\u0430\u043C\u044F\u0442\u0438.", en: "Learned cards come back here for spaced repetition so they stay in memory." }
         },
         {
             target: "[data-tour='dictionary']",
-            title: { ru: "Словарь", en: "Dictionary" },
-            text: { ru: "В словаре можно посмотреть значения, чтения, примеры и подробности по каждому кандзи.", en: "The dictionary lets you check meanings, readings, examples, and kanji details." }
-        },
-        {
-            target: "[data-tour='writing-practice']",
-            title: { ru: "Практика письма", en: "Writing practice" },
-            text: { ru: "Здесь можно тренировать написание кандзи по чертам прямо на экране.", en: "Here you can practice writing kanji stroke by stroke right on the screen." }
+            title: { ru: "\u0421\u043B\u043E\u0432\u0430\u0440\u044C", en: "Dictionary" },
+            text: { ru: "\u0412 \u0441\u043B\u043E\u0432\u0430\u0440\u0435 \u043C\u043E\u0436\u043D\u043E \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F, \u0447\u0442\u0435\u043D\u0438\u044F, \u043F\u0440\u0438\u043C\u0435\u0440\u044B \u0438 \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u043E\u0441\u0442\u0438 \u043F\u043E \u043A\u0430\u0436\u0434\u043E\u043C\u0443 \u043A\u0430\u043D\u0434\u0437\u0438.", en: "The dictionary lets you check meanings, readings, examples, and kanji details." }
         },
         {
             target: ["[data-tour='eva-room']", "[data-tour='profile-progress']", "[data-tour='profile-progress-nav']"],
-            title: { ru: "Комната Евы", en: "Eva room" },
+            title: { ru: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u0415\u0432\u044B", en: "Eva room" },
             text: (target) => (target?.dataset?.tour === "eva-room"
-                ? { ru: "Это моя комната. Здесь можно поговорить со мной, менять облик и тратить Moon Fragments.", en: "This is my room. You can talk to me here, change the look, and spend Moon Fragments." }
-                : { ru: "Если комнаты Евы на этой странице нет, посмотри на стрик и статистику.", en: "If Eva Room is not on this page, check the streak and progress stats instead." })
+                ? { ru: "\u042D\u0442\u043E \u043C\u043E\u044F \u043A\u043E\u043C\u043D\u0430\u0442\u0430. \u0417\u0434\u0435\u0441\u044C \u043C\u043E\u0436\u043D\u043E \u043F\u043E\u0433\u043E\u0432\u043E\u0440\u0438\u0442\u044C \u0441\u043E \u043C\u043D\u043E\u0439, \u043C\u0435\u043D\u044F\u0442\u044C \u043E\u0431\u043B\u0438\u043A \u0438 \u0442\u0440\u0430\u0442\u0438\u0442\u044C Moon Fragments.", en: "This is my room. You can talk to me here, change the look, and spend Moon Fragments." }
+                : { ru: "\u0415\u0441\u043B\u0438 \u043A\u043E\u043C\u043D\u0430\u0442\u044B \u0415\u0432\u044B \u043D\u0430 \u044D\u0442\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u043D\u0435\u0442, \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u0438 \u043D\u0430 \u0441\u0442\u0440\u0438\u043A \u0438 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0443.", en: "If Eva Room is not on this page, check the streak and progress stats instead." })
         }
     ];
     const FLASH_KANJI_ONBOARDING_FINAL_COPY = {
-        title: { ru: "Готово!", en: "All set!" },
-        text: { ru: "Открой учебники и начни с N5. Я рядом.", en: "Open the textbooks and start with N5. I will be right here." },
-        start: { ru: "Открыть учебники", en: "Open textbooks" },
-        close: { ru: "Закрыть", en: "Close" }
+        title: { ru: "\u0413\u043E\u0442\u043E\u0432\u043E!", en: "All set!" },
+        text: { ru: "\u041E\u0442\u043A\u0440\u043E\u0439 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438 \u0438 \u043D\u0430\u0447\u043D\u0438 \u0441 N5. \u042F \u0440\u044F\u0434\u043E\u043C.", en: "Open the textbooks and start with N5. I will be right here." },
+        start: { ru: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438", en: "Open textbooks" },
+        close: { ru: "\u0417\u0430\u043A\u0440\u044B\u0442\u044C", en: "Close" }
     };
     function isFlashKanjiOnboardingCompleted() {
         try {
@@ -3921,8 +4682,22 @@
             return [];
         return Array.isArray(step.target) ? step.target : [step.target];
     }
+    function isFlashKanjiOnboardingTargetVisible(target) {
+        if (!(target instanceof HTMLElement))
+            return false;
+        const style = window.getComputedStyle(target);
+        if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity || "1") <= 0)
+            return false;
+        return target.getClientRects().length > 0;
+    }
     function flashKanjiOnboardingTarget(step = flashKanjiOnboardingCurrentStep()) {
-        return flashKanjiOnboardingTargetSelectors(step).map((selector) => document.querySelector(selector)).find(Boolean) || null;
+        for (const selector of flashKanjiOnboardingTargetSelectors(step)) {
+            const matches = Array.from(document.querySelectorAll(selector));
+            const visible = matches.find((item) => isFlashKanjiOnboardingTargetVisible(item));
+            if (visible)
+                return visible;
+        }
+        return null;
     }
     function flashKanjiOnboardingText(copy, target = null) {
         if (typeof copy === "function")
@@ -4052,14 +4827,13 @@
     function renderFlashKanjiOnboarding() {
         if (!ensureFlashKanjiOnboardingRoot())
             return;
-        onboardingRoot.style.visibility = "hidden";
         const step = onboardingView === "final" ? null : flashKanjiOnboardingCurrentStep();
         const target = onboardingView === "final" ? null : flashKanjiOnboardingTarget(step);
         const titleCopy = onboardingView === "final" ? FLASH_KANJI_ONBOARDING_FINAL_COPY.title : step.title;
         const textCopy = onboardingView === "final" ? FLASH_KANJI_ONBOARDING_FINAL_COPY.text : flashKanjiOnboardingText(step.text, target);
         const indicator = onboardingView === "final"
-            ? (lang() === "ru" ? "Готово" : "Done")
-            : `${onboardingStepIndex + 1} ${lang() === "ru" ? "из" : "of"} ${flashKanjiOnboardingStepCount()}`;
+            ? (lang() === "ru" ? "\u0413\u043E\u0442\u043E\u0432\u043E" : "Done")
+            : `${onboardingStepIndex + 1} ${lang() === "ru" ? "\u0438\u0437" : "of"} ${flashKanjiOnboardingStepCount()}`;
         const title = localized(titleCopy);
         const text = localized(textCopy);
         const avatar = mascotImageSrc("eva", "calm", "welcome");
@@ -4074,13 +4848,13 @@
       `
             : onboardingStepIndex === 0
                 ? `
-          <button class="btn primary" type="button" data-action="onboarding-next">${escapeHtml(lang() === "ru" ? "Начать" : "Start")}</button>
-          <button class="btn ghost" type="button" data-action="onboarding-skip">${escapeHtml(lang() === "ru" ? "Пропустить" : "Skip")}</button>
+          <button class="btn primary" type="button" data-action="onboarding-next">${escapeHtml(lang() === "ru" ? "\u041D\u0430\u0447\u0430\u0442\u044C" : "Start")}</button>
+          <button class="btn ghost" type="button" data-action="onboarding-skip">${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C" : "Skip")}</button>
         `
                 : `
-          <button class="btn ghost" type="button" data-action="onboarding-prev">${escapeHtml(lang() === "ru" ? "Назад" : "Back")}</button>
+          <button class="btn ghost" type="button" data-action="onboarding-prev">${escapeHtml(lang() === "ru" ? "\u041D\u0430\u0437\u0430\u0434" : "Back")}</button>
           <button class="btn primary" type="button" data-action="onboarding-next">${escapeHtml(lang() === "ru" ? "Далее" : "Next")}</button>
-          <button class="btn ghost" type="button" data-action="onboarding-skip">${escapeHtml(lang() === "ru" ? "Пропустить" : "Skip")}</button>
+          <button class="btn ghost" type="button" data-action="onboarding-skip">${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C" : "Skip")}</button>
         `;
         onboardingRoot.innerHTML = `
       ${onboardingView === "final" ? "" : `<div class="flash-kanji-onboarding-scrim" aria-hidden="true"></div>`}
@@ -4092,7 +4866,7 @@
           <span class="pill">${escapeHtml(title)}</span>
         </div>
         <div class="flash-kanji-onboarding-body">
-          <img class="flash-kanji-onboarding-eva" src="${escapeAttr(avatar)}" alt="${escapeAttr(lang() === "ru" ? "Ева" : "Eva")}" loading="eager" decoding="async" />
+          <img class="flash-kanji-onboarding-eva" src="${escapeAttr(avatar)}" alt="${escapeAttr(lang() === "ru" ? "\u0415\u0432\u0430" : "Eva")}" loading="eager" decoding="async" />
           <div class="flash-kanji-onboarding-copy">
             <h2 id="flashKanjiOnboardingTitle">${escapeHtml(title)}</h2>
             <p id="flashKanjiOnboardingDesc">${escapeHtml(text)}</p>
@@ -4129,72 +4903,20 @@
         const reduced = prefersReducedMotion();
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        const compact = viewportWidth < 1024 || viewportHeight < 720;
-        const dialogRect = onboardingDialog.getBoundingClientRect();
-        const dialogWidth = Math.min(Math.max(dialogRect.width || ONBOARDING_DIALOG_WIDTH, 320), Math.min(ONBOARDING_DIALOG_MAX_WIDTH, viewportWidth - 20));
-        const dialogHeight = Math.min(Math.max(dialogRect.height || 220, 180), Math.max(180, viewportHeight - 24));
-        onboardingDialog.style.maxWidth = `${Math.min(ONBOARDING_DIALOG_MAX_WIDTH, Math.max(320, viewportWidth - 24))}px`;
+        onboardingDialog.style.maxWidth = `${Math.min(ONBOARDING_DIALOG_MAX_WIDTH, Math.max(280, viewportWidth - 16))}px`;
         onboardingDialog.style.maxHeight = `${Math.max(180, viewportHeight - 24)}px`;
+        onboardingDialog.style.left = "50%";
+        onboardingDialog.style.top = "50%";
+        onboardingDialog.style.transform = "translate(-50%, -50%)";
+        onboardingDialog.dataset.placement = "center";
         if (target) {
-            if (!target.isConnected) {
-                renderFlashKanjiOnboarding();
-                return;
-            }
-            const targetRect = target.getBoundingClientRect();
-            if (targetRect.top < 8 || targetRect.bottom > viewportHeight - 8 || targetRect.left < 8 || targetRect.right > viewportWidth - 8) {
-                target.scrollIntoView({ block: "center", inline: "nearest", behavior: reduced ? "auto" : "smooth" });
-                window.setTimeout(scheduleFlashKanjiOnboardingLayout, reduced ? 0 : 280);
-                onboardingRoot.style.visibility = "hidden";
-                return;
-            }
-            const gap = ONBOARDING_GAP;
-            const spaces = {
-                top: targetRect.top - gap,
-                bottom: viewportHeight - targetRect.bottom - gap,
-                left: targetRect.left - gap,
-                right: viewportWidth - targetRect.right - gap
-            };
-            const fits = {
-                top: spaces.top >= dialogHeight,
-                bottom: spaces.bottom >= dialogHeight,
-                left: spaces.left >= dialogWidth,
-                right: spaces.right >= dialogWidth
-            };
-            let placement = "bottom";
-            if (compact) {
-                placement = "center";
-            }
-            else {
-                placement = fits.top ? "top" : fits.bottom ? "bottom" : fits.right ? "right" : fits.left ? "left" : "center";
-            }
-            const clampLeft = (value) => clamp(Math.round(value), 12, Math.max(12, viewportWidth - dialogWidth - 12));
-            const clampTop = (value) => clamp(Math.round(value), 12, Math.max(12, viewportHeight - dialogHeight - 12));
-            let left = Math.round((viewportWidth - dialogWidth) / 2);
-            let top = Math.round((viewportHeight - dialogHeight) / 2);
-            if (compact) {
-                left = Math.round((viewportWidth - dialogWidth) / 2);
-                top = clampTop(Math.min(viewportHeight - dialogHeight - 12, Math.max(12, viewportHeight * 0.14)));
-            }
-            else if (placement === "top") {
-                left = clampLeft(targetRect.left + (targetRect.width - dialogWidth) / 2);
-                top = clampTop(targetRect.top - dialogHeight - gap);
-            }
-            else if (placement === "bottom") {
-                left = clampLeft(targetRect.left + (targetRect.width - dialogWidth) / 2);
-                top = clampTop(targetRect.bottom + gap);
-            }
-            else if (placement === "left") {
-                left = clampLeft(targetRect.left - dialogWidth - gap);
-                top = clampTop(targetRect.top + (targetRect.height - dialogHeight) / 2);
-            }
-            else if (placement === "right") {
-                left = clampLeft(targetRect.right + gap);
-                top = clampTop(targetRect.top + (targetRect.height - dialogHeight) / 2);
-            }
-            onboardingDialog.style.left = `${left}px`;
-            onboardingDialog.style.top = `${top}px`;
-            onboardingDialog.dataset.placement = placement;
-            if (onboardingSpotlight) {
+            const targetRect = target.isConnected ? target.getBoundingClientRect() : null;
+            const targetVisible = Boolean(targetRect)
+                && targetRect.top >= 8
+                && targetRect.bottom <= viewportHeight - 8
+                && targetRect.left >= 8
+                && targetRect.right <= viewportWidth - 8;
+            if (targetVisible && onboardingSpotlight) {
                 const padding = 12;
                 onboardingSpotlight.hidden = false;
                 onboardingSpotlight.style.left = `${Math.round(targetRect.left - padding)}px`;
@@ -4203,11 +4925,11 @@
                 onboardingSpotlight.style.height = `${Math.round(targetRect.height + padding * 2)}px`;
                 onboardingSpotlight.style.borderRadius = `${Math.max(6, Math.round(parseFloat(getComputedStyle(target).borderRadius || "8") || 8))}px`;
             }
+            else if (onboardingSpotlight) {
+                onboardingSpotlight.hidden = true;
+            }
         }
         else {
-            onboardingDialog.style.left = `${Math.round((viewportWidth - dialogWidth) / 2)}px`;
-            onboardingDialog.style.top = `${Math.round(Math.min(viewportHeight - dialogHeight - 12, Math.max(12, viewportHeight * 0.18)))}px`;
-            onboardingDialog.dataset.placement = "center";
             if (onboardingSpotlight)
                 onboardingSpotlight.hidden = true;
         }
@@ -4331,9 +5053,9 @@
         const hidden = canPageScroll() ? "" : " hidden";
         const ru = lang() === "ru";
         const label = direction === "up"
-            ? ru ? "Наверх" : "Scroll to top"
-            : ru ? "Вниз" : "Scroll to bottom";
-        const icon = direction === "up" ? "↑" : "↓";
+            ? ru ? "\u041D\u0430\u0432\u0435\u0440\u0445" : "Scroll to top"
+            : ru ? "\u0412\u043D\u0438\u0437" : "Scroll to bottom";
+        const icon = direction === "up" ? "\u2191" : "\u2193";
         return `
       <button class="scroll-position-toggle scroll-position-toggle-${direction}" type="button" data-action="scroll-page-edge" data-direction="${direction}" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}"${hidden}>
         <span class="scroll-position-toggle-icon" aria-hidden="true">${escapeHtml(icon)}</span>
@@ -4356,14 +5078,14 @@
         button.classList.toggle("scroll-position-toggle-down", direction === "down");
         const icon = button.querySelector(".scroll-position-toggle-icon");
         if (icon)
-            icon.textContent = direction === "up" ? "↑" : "↓";
+            icon.textContent = direction === "up" ? "\u2191" : "\u2193";
         const label = button.querySelector(".scroll-position-toggle-label");
         if (label)
             label.textContent = lang() === "ru"
-                ? (direction === "up" ? "Наверх" : "Вниз")
+                ? (direction === "up" ? "\u041D\u0430\u0432\u0435\u0440\u0445" : "\u0412\u043D\u0438\u0437")
                 : (direction === "up" ? "Top" : "Bottom");
         const aria = lang() === "ru"
-            ? (direction === "up" ? "Подняться вверх" : "Опуститься вниз")
+            ? (direction === "up" ? "\u041F\u043E\u0434\u043D\u044F\u0442\u044C\u0441\u044F \u0432\u0432\u0435\u0440\u0445" : "\u041E\u043F\u0443\u0441\u0442\u0438\u0442\u044C\u0441\u044F \u0432\u043D\u0438\u0437")
             : (direction === "up" ? "Scroll to top" : "Scroll to bottom");
         button.setAttribute("aria-label", aria);
         button.setAttribute("title", aria);
@@ -4383,25 +5105,26 @@
         const ru = lang() === "ru";
         const items = {
             learn: [
-                { action: "open-jlpt-lesson-start", jlpt: currentLearnTextbookLevel(), icon: "文", title: ru ? "Текущий урок" : "Current lesson", text: ru ? "Открыть последний урок учебника." : "Open the latest lesson in the textbook." },
-                { route: "review", focus: "review-card", icon: "↻", title: "SRS", text: ru ? "Перейти к повторениям." : "Go to review." },
-                { route: "textbooks", focus: "textbook-grid", icon: "冊", title: ru ? "Учебники" : "Textbooks", text: ru ? "Открыть страницы учебников JLPT." : "Open JLPT textbook pages." }
+                { action: "open-jlpt-lesson-start", jlpt: currentLearnTextbookLevel() || "N5", icon: "\u6587", title: ru ? "\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u0443\u0440\u043E\u043A" : "Current lesson", text: ru ? "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0443\u0440\u043E\u043A \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430." : "Open the latest lesson in the textbook." },
+                { route: "review", focus: "review-card", icon: "↻", title: "SRS", text: ru ? "\u041F\u0435\u0440\u0435\u0439\u0442\u0438 \u043A \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F\u043C." : "Go to review." },
+                { route: "textbooks", focus: "textbook-grid", icon: "\u518A", title: ru ? "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438" : "Textbooks", text: ru ? "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u043E\u0432 JLPT." : "Open JLPT textbook pages." }
             ],
             review: [
-                { route: "review", focus: "review-card", icon: "↻", title: ru ? "Повторение" : "Review cards", text: ru ? "Карточки повторения на сегодня." : "Today's review queue." },
-                { route: "review", focus: "sentence-practice", icon: "文", title: ru ? "Практика предложений" : "Sentence practice", text: ru ? "Вставь кандзи в пропуск." : "Fill kanji into blanks." }
-            ],
-            writing: [
-                { route: "writing", focus: "writing-demo", icon: "筆", title: ru ? "Порядок черт" : "Stroke order", text: ru ? "Пошаговый пример письма." : "Step-by-step guide." },
-                { route: "writing", focus: "writing-canvas", icon: "線", title: ru ? "Проверка письма" : "Writing check", text: ru ? "Напиши кандзи на canvas." : "Write kanji on canvas." }
+                { route: "review", focus: "review-card", icon: "↻", title: ru ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435" : "Review cards", text: ru ? "\u041A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u043D\u0430 \u0441\u0435\u0433\u043E\u0434\u043D\u044F." : "Today's review queue." },
+                { route: "review", focus: "sentence-practice", icon: "\u6587", title: ru ? "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439" : "Sentence practice", text: ru ? "\u0412\u0441\u0442\u0430\u0432\u044C \u043A\u0430\u043D\u0434\u0437\u0438 \u0432 \u043F\u0440\u043E\u043F\u0443\u0441\u043A." : "Fill kanji into blanks." }
             ],
             stats: [
-                { route: "stats", focus: "stats-top", icon: "▥", title: ru ? "Статистика" : "Statistics", text: ru ? "Графики, XP и серия." : "Charts, XP, and streak." },
-                { route: "achievements", focus: "achievements-top", icon: "月", title: ru ? "Достижения" : "Achievements", text: ru ? "Галерея наград." : "Reward gallery." },
-                { route: "stats", focus: "shop-panel", icon: "◈", title: ru ? "Магазин" : "Shop", text: ru ? "Moon Fragments и предметы." : "Moon Fragments and items." }
+                { route: "stats", focus: "stats-top", icon: "▥", title: ru ? "\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430" : "Statistics", text: ru ? "\u0413\u0440\u0430\u0444\u0438\u043A\u0438, XP \u0438 \u0441\u0435\u0440\u0438\u044F." : "Charts, XP, and streak." },
+                { route: "achievements", focus: "achievements-top", icon: "\u6708", title: ru ? "\u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F" : "Achievements", text: ru ? "\u0413\u0430\u043B\u0435\u0440\u0435\u044F \u043D\u0430\u0433\u0440\u0430\u0434." : "Reward gallery." },
+                { route: "stats", focus: "shop-panel", icon: "в—€", title: ru ? "\u041C\u0430\u0433\u0430\u0437\u0438\u043D" : "Shop", text: ru ? "Moon Fragments \u0438 \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u044B." : "Moon Fragments and items." }
             ]
         };
         return items[route] || [];
+    }
+    function navRouteLabel(route) {
+        if (route === "stats")
+            return lang() === "ru" ? "\u041F\u0440\u043E\u0444\u0438\u043B\u044C" : "Profile";
+        return t(route);
     }
     function renderBottomNavMenu() {
         const items = navMenuItems(state.navMenu);
@@ -4413,7 +5136,7 @@
       <aside class="nav-popover" role="menu" aria-label="${escapeAttr(title)}">
         <div class="nav-popover-head">
           <strong>${escapeHtml(title)}</strong>
-          <button class="icon-btn nav-popover-close" type="button" data-action="close-nav-menu" aria-label="${escapeAttr(lang() === "ru" ? "Закрыть меню" : "Close menu")}">×</button>
+          <button class="icon-btn nav-popover-close" type="button" data-action="close-nav-menu" aria-label="${escapeAttr(lang() === "ru" ? "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043C\u0435\u043D\u044E" : "Close menu")}">×</button>
         </div>
         <div class="nav-popover-list">
           ${items.map((item) => `
@@ -4462,7 +5185,7 @@
             button.setAttribute("aria-expanded", state.navMenu === route ? "true" : "false");
             const label = button.querySelector("small");
             if (label && route)
-                label.textContent = t(route);
+                label.textContent = navRouteLabel(route);
         });
         const languageButton = $('[data-action="language"]');
         if (languageButton)
@@ -4472,71 +5195,54 @@
         syncHeaderSocialToggleButton();
     }
     function renderHome() {
-        const summary = getSummary();
-        const featured = getTodayCards()[0] || state.cards[0];
-        const dailyPercent = progressWidth(todayStats().reviews || 0, state.progress.settings.dailyGoal);
-        const levelInfo = getLevelInfo();
-        const daily = getDailyLesson();
-        const reviewQueue = getDueNowCards().length;
-        const newAvailable = getUnlockedNewCards().length;
+        if (!state.n5Textbook?.items?.length)
+            void ensureLearningPathMapData();
         const homeScene = homeEvaScene();
+        const lessonAction = homeLessonAction();
+        const reviewQueue = getDueNowCards().length;
+        const preview = learningPathHomePreview();
+        const summaryStats = learningPathSummaryStats();
+        const labels = learningPathLabels();
         return `
-      <section class="page">
-        <div class="hero-grid">
-          <section class="hero-panel">
-            <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
+      <section class="page home-shell">
+        <article class="home-primary-card">
+          <div class="home-primary-copy">
+            <p class="eyebrow">JLPT N5-N1 \u2022 \u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438 \u2022 \u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</p>
             <h1 class="hero-title">Flash Kanji</h1>
             <p class="hero-subtitle">${escapeHtml(t("tagline"))}</p>
-            <div class="hero-actions">
-              <button class="btn primary" type="button" data-action="route" data-route="textbooks">冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
-              <button class="btn" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
-              <button class="btn ghost" type="button" data-action="route" data-route="review">↻ ${escapeHtml(lang() === "ru" ? "Повторение" : "Review")}</button>
+            <div class="home-next-lesson">
+              <span class="pill">${escapeHtml(labels.nextLesson)}</span>
+              <strong>${escapeHtml(preview.title)}</strong>
+              <p>${escapeHtml(preview.summary || labels.mapHint)}</p>
             </div>
-            ${renderHomeEvaPanel(homeScene)}
-            ${renderHeroDecoration()}
-          </section>
-
-          <section class="metric-grid" aria-label="summary">
-            ${renderMetric(t("level"), `${state.progress.level}`, `${levelInfo.current}/${levelInfo.next} XP`, levelInfo.percent)}
-            ${renderMetric(t("xp"), state.progress.xp, `${levelInfo.toNext} XP`, levelInfo.percent)}
-            ${renderMetric(t("coins"), state.progress.moonFragments, t("dailyBonus"), progressWidth(state.progress.moonFragments, 200))}
-            ${renderMetric(t("dailyGoal"), `${todayStats().reviews || 0}/${state.progress.settings.dailyGoal}`, t("cardsToday"), dailyPercent)}
-            ${renderMetric(t("reviewQueue"), reviewQueue, t("review"), progressWidth(reviewQueue, Math.max(summary.total, 1)))}
-            ${renderMetric(t("newCards"), newAvailable, t("learn"), progressWidth(newAvailable, Math.max(summary.total, 1)))}
-            ${renderStreakCard()}
-            ${renderMascotPanel("leya", "calm", "welcome")}
-          </section>
-        </div>
-
-        <article class="daily-lesson-card">
-          <div>
-            <span class="pill">${escapeHtml(t("todayLesson"))}</span>
-            <h2>${escapeHtml(daily ? lessonTitle(daily) : "-")}</h2>
-            <p>${escapeHtml(daily ? lessonSummary(daily) : "")}</p>
+            <div class="home-summary-strip" aria-label="${escapeAttr(labels.route)}">
+              ${summaryStats.map(renderHomeSummaryStat).join("")}
+            </div>
+            <div class="home-primary-actions">
+              <button class="btn primary home-primary-cta" type="button" data-action="home-lesson" data-tour="home-lesson">${escapeHtml(lessonAction.label)}</button>
+              ${reviewQueue > 0 ? `<button class="btn ghost home-primary-cta" type="button" data-action="home-review" data-tour="home-review">${escapeHtml(`${labels.reviewAction}: ${reviewQueue}`)}</button>` : ""}
+            </div>
           </div>
-          <button class="btn primary" type="button" data-action="route" data-route="textbooks">▶ ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
+          <div class="home-eva-stage">
+            ${renderHomeEvaCompact(homeScene)}
+          </div>
         </article>
-
-        ${renderEvaRoomEntry()}
-
-        <div class="goal-strip">
-          ${state.rewards.dailyGoals.map((goal) => `
-            <button class="btn ${goal === state.progress.settings.dailyGoal ? "primary" : "ghost"}" type="button" data-action="set-goal" data-goal="${goal}">
-              ${goal} ${escapeHtml(t("cardsToday"))}
-            </button>
-          `).join("")}
-        </div>
-
-        <div class="section-head">
-          <div>
-            <h2>${escapeHtml(lang() === "ru" ? "JLPT-модули" : "JLPT modules")}</h2>
-            <p>${escapeHtml(lang() === "ru" ? "Открой учебники и переходи к уровню." : "Open textbooks and jump into each level.")}</p>
+        <article class="eva-room-entry" data-tour="eva-room">
+          <div class="eva-room-entry-bg">
+            <img src="${escapeAttr((currentEvaRoomBackground() || {}).file || "assets/bg/bg_study_hub.webp")}" alt="" loading="lazy" onerror="this.hidden=true" />
           </div>
-        </div>
-        <div class="lesson-grid">${state.lessons.map(renderLessonTile).join("")}</div>
-
-        ${featured ? renderFeaturedCard(featured) : ""}
-        ${renderAchievementsPreview()}
+          <div>
+            <span class="pill">Eva Room</span>
+            <h2>${escapeHtml(lang() === "ru" ? "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u0415\u0432\u044B" : "Eva Room")}</h2>
+            <p>${escapeHtml(lang() === "ru" ? "\u041C\u0438\u043D\u0438-\u043D\u043E\u0432\u0435\u043B\u043B\u0430, \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440\u044B \u0438 \u0443\u044E\u0442\u043D\u044B\u0435 \u0444\u043E\u043D\u044B \u0437\u0430 Moon Fragments." : "A cozy mini visual novel with backgrounds and Moon Fragments.")}</p>
+            <div class="tag-row">
+              <span class="pill">Moon ${state.progress.moonFragments}</span>
+              <span class="pill">${escapeHtml(localized((currentEvaRoomBackground() || {}).title || { ru: "", en: "" }))}</span>
+              <span class="pill">${escapeHtml(localized((currentEvaRoomNode() || {}).speaker || { ru: "\u0415\u0432\u0430", en: "Eva" }))}</span>
+            </div>
+          </div>
+          <button class="btn primary" type="button" data-action="route" data-route="eva-room">Eva · ${escapeHtml(lang() === "ru" ? "\u0412\u043E\u0439\u0442\u0438" : "Enter")}</button>
+        </article>
       </section>
     `;
     }
@@ -4545,7 +5251,7 @@
         const autonomy = evaAutonomy();
         const line = autonomy.currentLine || state.evaRuntime?.currentPhrase || null;
         const question = activeEvaQuestion();
-        const speaker = localized(getMascot("eva").name || { ru: "Ева", en: "Eva" });
+        const speaker = localized(getMascot("eva").name || { ru: "\u0415\u0432\u0430", en: "Eva" });
         const mood = state.evaRuntime?.mood || autonomy.mood || evaRelationship().mood;
         const emotion = state.evaRuntime?.emotion || autonomy.emotion || line?.emotion || "calm";
         const presenceState = line?.state || state.evaRuntime?.presenceState || (question ? "wait_choice" : "speak");
@@ -4572,18 +5278,18 @@
         const labels = evaRoomLabels();
         const live = evaLiveLabels();
         const modeLabel = scene.question
-            ? (lang() === "ru" ? "Вопрос" : "Question")
-            : (lang() === "ru" ? "Диалог" : "Dialogue");
-        const line = scene.line || { text: { ru: "Я здесь.", en: "I'm here." } };
+            ? (lang() === "ru" ? "\u0412\u043E\u043F\u0440\u043E\u0441" : "Question")
+            : (lang() === "ru" ? "\u0414\u0438\u0430\u043B\u043E\u0433" : "Dialogue");
+        const line = scene.line || { text: { ru: "\u042F \u0437\u0434\u0435\u0441\u044C.", en: "I'm here." } };
         const lineId = line.id || "home_eva_line";
         return `
-      <section class="home-eva-vn" role="region" aria-label="${escapeAttr(lang() === "ru" ? "Диалог Евы" : "Eva dialogue")}" data-home-eva-mode="${escapeAttr(scene.question ? "question" : "dialogue")}" data-eva-state="${escapeAttr(scene.presenceState)}" data-eva-mood="${escapeAttr(scene.mood)}" data-eva-emotion="${escapeAttr(scene.emotion)}">
+      <section class="home-eva-vn" role="region" aria-label="${escapeAttr(lang() === "ru" ? "\u0414\u0438\u0430\u043B\u043E\u0433 \u0415\u0432\u044B" : "Eva dialogue")}" data-home-eva-mode="${escapeAttr(scene.question ? "question" : "dialogue")}" data-eva-state="${escapeAttr(scene.presenceState)}" data-eva-mood="${escapeAttr(scene.mood)}" data-eva-emotion="${escapeAttr(scene.emotion)}">
         <div class="home-eva-copy">
           <div class="home-eva-meta">
             <strong>${escapeHtml(scene.speaker)}</strong>
             <span class="pill">${escapeHtml(modeLabel)}</span>
           </div>
-          ${renderEvaDialogueText(localized(line.text || { ru: "Я здесь.", en: "I'm here." }), lineId)}
+          ${renderEvaDialogueText(localized(line.text || { ru: "\u042F \u0437\u0434\u0435\u0441\u044C.", en: "I'm here." }), lineId)}
           ${scene.question ? `
             <div class="eva-question-box home-eva-question">
               <span class="pill">${escapeHtml(live.question)}</span>
@@ -4603,7 +5309,7 @@
           `}
         </div>
         <button class="home-eva-avatar" type="button" data-action="eva-click" data-character="eva" aria-label="${escapeAttr(scene.speaker)}">
-          <img class="${escapeAttr(evaSpriteMotionClass({ line: scene.line, isAutonomy: true, mood: scene.mood, emotion: scene.emotion }))}" src="${escapeAttr(scene.sprite)}" alt="${escapeAttr(scene.speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.png'" />
+          <img class="${escapeAttr(evaSpriteMotionClass({ line: scene.line, isAutonomy: true, mood: scene.mood, emotion: scene.emotion }))}" src="${escapeAttr(scene.sprite)}" alt="${escapeAttr(scene.speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.webp'" />
         </button>
       </section>
     `;
@@ -4624,7 +5330,7 @@
         const bg = currentEvaRoomBackground();
         const node = currentEvaRoomNode();
         const label = lang() === "ru"
-            ? { title: "Комната Евы", text: "Мини-новелла, разговоры и уютные фоны за Moon Fragments.", action: "Войти" }
+            ? { title: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u0415\u0432\u044B", text: "\u041C\u0438\u043D\u0438-\u043D\u043E\u0432\u0435\u043B\u043B\u0430, \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440\u044B \u0438 \u0443\u044E\u0442\u043D\u044B\u0435 \u0444\u043E\u043D\u044B \u0437\u0430 Moon Fragments.", action: "\u0412\u043E\u0439\u0442\u0438" }
             : { title: "Eva Room", text: "A cozy mini visual novel with backgrounds and Moon Fragments.", action: "Enter" };
         return `
       <article class="eva-room-entry" data-tour="eva-room">
@@ -4638,7 +5344,7 @@
           <div class="tag-row">
             <span class="pill">Moon ${state.progress.moonFragments}</span>
             <span class="pill">${escapeHtml(localized(bg.title))}</span>
-            <span class="pill">${escapeHtml(localized(node.speaker || { ru: "Ева", en: "Eva" }))}</span>
+            <span class="pill">${escapeHtml(localized(node.speaker || { ru: "\u0415\u0432\u0430", en: "Eva" }))}</span>
           </div>
         </div>
         <button class="btn primary" type="button" data-action="route" data-route="eva-room">Eva · ${escapeHtml(label.action)}</button>
@@ -4710,13 +5416,13 @@
         ${renderEvaAutonomyPanel(scene)}
         <article class="eva-vn-scene ${scene.isAutonomy ? "is-autonomous" : ""} is-${escapeAttr(presenceState)}" data-eva-state="${escapeAttr(presenceState)}" data-eva-mood="${escapeAttr(scene.mood || evaRelationship().mood)}" data-eva-emotion="${escapeAttr(scene.emotion || "calm")}" style="--eva-bg:url('${escapeAttr(bg.file)}')">
           <div class="eva-vn-bg" aria-hidden="true"></div>
-          <button class="eva-sprite-button" type="button" data-action="eva-click" aria-label="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}">
-            <img class="${escapeAttr(evaSpriteMotionClass(scene))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.png'" />
+          <button class="eva-sprite-button" type="button" data-action="eva-click" aria-label="${escapeAttr(localized(node.speaker || { ru: "\u0415\u0432\u0430", en: "Eva" }))}">
+            <img class="${escapeAttr(evaSpriteMotionClass(scene))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "\u0415\u0432\u0430", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.webp'" />
           </button>
           ${renderEvaRoomDecoration(scene)}
           <div class="eva-dialogue-box">
             <div class="eva-dialogue-meta">
-              <strong>${escapeHtml(localized(node.speaker || { ru: "Ева", en: "Eva" }))}</strong>
+              <strong>${escapeHtml(localized(node.speaker || { ru: "\u0415\u0432\u0430", en: "Eva" }))}</strong>
               <span>${scene.isAutonomy ? `${escapeHtml(liveLabels.badge)} · ` : ""}${escapeHtml(localized(bg.title || {}))}</span>
             </div>
             ${renderEvaDialogueText(localized(node.text || {}), lineId)}
@@ -4830,29 +5536,29 @@
         return state.customizationCatalog?.categories?.length
             ? state.customizationCatalog.categories
             : [
-                { id: "all", title_ru: "Все", title_en: "All" },
-                { id: "background", title_ru: "Фоны", title_en: "Backgrounds" },
-                { id: "outfit", title_ru: "Образы", title_en: "Outfits" },
-                { id: "decoration", title_ru: "Декор", title_en: "Decorations" },
-                { id: "theme", title_ru: "Темы", title_en: "Themes" },
-                { id: "effect", title_ru: "Эффекты", title_en: "Effects" }
+                { id: "all", title_ru: "\u0412\u0441\u0435", title_en: "All" },
+                { id: "background", title_ru: "\u0424\u043E\u043D\u044B", title_en: "Backgrounds" },
+                { id: "outfit", title_ru: "\u041E\u0431\u0440\u0430\u0437\u044B", title_en: "Outfits" },
+                { id: "decoration", title_ru: "\u0414\u0435\u043A\u043E\u0440", title_en: "Decorations" },
+                { id: "theme", title_ru: "\u0422\u0435\u043C\u044B", title_en: "Themes" },
+                { id: "effect", title_ru: "\u042D\u0444\u0444\u0435\u043A\u0442\u044B", title_en: "Effects" }
             ];
     }
     function shopViewFilters() {
         const ru = lang() === "ru";
         return [
-            { id: "all", title: ru ? "Все" : "All" },
-            { id: "available", title: ru ? "Доступные" : "Available" },
-            { id: "owned", title: ru ? "Купленные" : "Owned" },
-            { id: "new", title: ru ? "Новые" : "New" }
+            { id: "all", title: ru ? "\u0412\u0441\u0435" : "All" },
+            { id: "available", title: ru ? "\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0435" : "Available" },
+            { id: "owned", title: ru ? "\u041A\u0443\u043F\u043B\u0435\u043D\u043D\u044B\u0435" : "Owned" },
+            { id: "new", title: ru ? "\u041D\u043E\u0432\u044B\u0435" : "New" }
         ];
     }
     function shopSortFilters() {
         const ru = lang() === "ru";
         return [
-            { id: "featured", title: ru ? "Рекомендовано" : "Featured" },
-            { id: "price", title: ru ? "По цене" : "By price" },
-            { id: "rarity", title: ru ? "По редкости" : "By rarity" }
+            { id: "featured", title: ru ? "\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u043E\u0432\u0430\u043D\u043E" : "Featured" },
+            { id: "price", title: ru ? "\u041F\u043E \u0446\u0435\u043D\u0435" : "By price" },
+            { id: "rarity", title: ru ? "\u041F\u043E \u0440\u0435\u0434\u043A\u043E\u0441\u0442\u0438" : "By rarity" }
         ];
     }
     function filteredCustomizationItems() {
@@ -4912,23 +5618,23 @@
         const ru = lang() === "ru";
         return ru
             ? {
-                title: "Магазин кастомизации",
+                title: "\u041C\u0430\u0433\u0430\u0437\u0438\u043D \u043A\u0430\u0441\u0442\u043E\u043C\u0438\u0437\u0430\u0446\u0438\u0438",
                 subtitle: "Flash Kanji Custom",
-                hint: "Фоны, образы Евы, декор, темы и эффекты за Moon Fragments.",
-                categories: "Категории магазина",
-                ownedShort: "куплено",
-                buy: "Купить",
-                select: "Выбрать",
-                remove: "Убрать",
-                selected: "Выбран",
-                unavailable: "Недоступно",
-                free: "Бесплатно",
-                locked: "Предмет пока недоступен.",
-                notEnough: "Не хватает Moon Fragments.",
-                bought: "Куплено: {item}",
-                selectedToast: "Выбрано: {item}",
-                empty: "Нет предметов по этому фильтру.",
-                status: { selected: "Выбран", owned: "Куплено", available: "Доступно", locked: "Закрыто" }
+                hint: "\u0424\u043E\u043D\u044B, \u043E\u0431\u0440\u0430\u0437\u044B \u0415\u0432\u044B, \u0434\u0435\u043A\u043E\u0440, \u0442\u0435\u043C\u044B \u0438 \u044D\u0444\u0444\u0435\u043A\u0442\u044B \u0437\u0430 Moon Fragments.",
+                categories: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0430",
+                ownedShort: "\u043A\u0443\u043F\u043B\u0435\u043D\u043E",
+                buy: "\u041A\u0443\u043F\u0438\u0442\u044C",
+                select: "\u0412\u044B\u0431\u0440\u0430\u0442\u044C",
+                remove: "\u0423\u0431\u0440\u0430\u0442\u044C",
+                selected: "\u0412\u044B\u0431\u0440\u0430\u043D",
+                unavailable: "\u041D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E",
+                free: "\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E",
+                locked: "\u041F\u0440\u0435\u0434\u043C\u0435\u0442 \u043F\u043E\u043A\u0430 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D.",
+                notEnough: "\u041D\u0435 \u0445\u0432\u0430\u0442\u0430\u0435\u0442 Moon Fragments.",
+                bought: "\u041A\u0443\u043F\u043B\u0435\u043D\u043E: {item}",
+                selectedToast: "\u0412\u044B\u0431\u0440\u0430\u043D\u043E: {item}",
+                empty: "\u041D\u0435\u0442 \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u043E\u0432 \u043F\u043E \u044D\u0442\u043E\u043C\u0443 \u0444\u0438\u043B\u044C\u0442\u0440\u0443.",
+                status: { selected: "\u0412\u044B\u0431\u0440\u0430\u043D", owned: "\u041A\u0443\u043F\u043B\u0435\u043D\u043E", available: "\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E", locked: "\u0417\u0430\u043A\u0440\u044B\u0442\u043E" }
             }
             : {
                 title: "Customization Shop",
@@ -4972,11 +5678,11 @@
     function typeLabel(type) {
         const ru = lang() === "ru";
         return {
-            background: ru ? "Фон" : "Background",
-            outfit: ru ? "Образ" : "Outfit",
-            decoration: ru ? "Декор" : "Decoration",
-            theme: ru ? "Тема" : "Theme",
-            effect: ru ? "Эффект" : "Effect"
+            background: ru ? "\u0424\u043E\u043D" : "Background",
+            outfit: ru ? "\u041E\u0431\u0440\u0430\u0437" : "Outfit",
+            decoration: ru ? "\u0414\u0435\u043A\u043E\u0440" : "Decoration",
+            theme: ru ? "\u0422\u0435\u043C\u0430" : "Theme",
+            effect: ru ? "\u042D\u0444\u0444\u0435\u043A\u0442" : "Effect"
         }[type] || type;
     }
     function renderEvaAutonomyPanel(scene) {
@@ -5001,9 +5707,9 @@
           <span>${escapeHtml(live.quiz)}: ${escapeHtml(quiz.correct || 0)}/${escapeHtml(quiz.answered || 0)}</span>
           ${quiz.streak ? `<span>${escapeHtml(live.quizStreak)}: ${escapeHtml(quiz.streak)}</span>` : ""}
           <span>${escapeHtml(localized(bg.title || {}))}</span>
-          <span>${escapeHtml(localized(spriteItem?.title || { ru: "Ева", en: "Eva" }))}</span>
+          <span>${escapeHtml(localized(spriteItem?.title || { ru: "\u0415\u0432\u0430", en: "Eva" }))}</span>
           ${decorationItem ? `<span>${escapeHtml(customizationItemTitle(decorationItem))}</span>` : ""}
-          ${effectItem ? `<span class="eva-active-effect-chip">${escapeHtml(customizationItemTitle(effectItem))}<button type="button" class="eva-active-effect-clear" data-action="shop-clear-effect" data-id="${escapeAttr(effectItem.id)}" aria-label="${escapeAttr(lang() === "ru" ? "Убрать эффект" : "Remove effect")}">×</button></span>` : ""}
+          ${effectItem ? `<span class="eva-active-effect-chip">${escapeHtml(customizationItemTitle(effectItem))}<button type="button" class="eva-active-effect-clear" data-action="shop-clear-effect" data-id="${escapeAttr(effectItem.id)}" aria-label="${escapeAttr(lang() === "ru" ? "\u0423\u0431\u0440\u0430\u0442\u044C \u044D\u0444\u0444\u0435\u043A\u0442" : "Remove effect")}">×</button></span>` : ""}
         </div>
       </aside>
     `;
@@ -5037,13 +5743,13 @@
     function evaLiveLabels() {
         return lang() === "ru"
             ? {
-                badge: "Ева рядом",
-                status: "Ева держит присутствие в комнате",
-                hint: "Она помнит паузы, выбирает тон по контексту и реагирует открытыми образами без лишнего шума.",
-                mood: "Настроение",
-                quiz: "Вопросы",
-                quizStreak: "Серия",
-                question: "Вопрос Евы"
+                badge: "\u0415\u0432\u0430 \u0440\u044F\u0434\u043E\u043C",
+                status: "\u0415\u0432\u0430 \u0434\u0435\u0440\u0436\u0438\u0442 \u043F\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0435 \u0432 \u043A\u043E\u043C\u043D\u0430\u0442\u0435",
+                hint: "\u041E\u043D\u0430 \u043F\u043E\u043C\u043D\u0438\u0442 \u043F\u0430\u0443\u0437\u044B, \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0442 \u0442\u043E\u043D \u043F\u043E \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0443 \u0438 \u0440\u0435\u0430\u0433\u0438\u0440\u0443\u0435\u0442 \u043E\u0442\u043A\u0440\u044B\u0442\u044B\u043C\u0438 \u043E\u0431\u0440\u0430\u0437\u0430\u043C\u0438 \u0431\u0435\u0437 \u043B\u0438\u0448\u043D\u0435\u0433\u043E \u0448\u0443\u043C\u0430.",
+                mood: "\u041D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435",
+                quiz: "\u0412\u043E\u043F\u0440\u043E\u0441\u044B",
+                quizStreak: "\u0421\u0435\u0440\u0438\u044F",
+                question: "\u0412\u043E\u043F\u0440\u043E\u0441 \u0415\u0432\u044B"
             }
             : {
                 badge: "Eva nearby",
@@ -5059,22 +5765,22 @@
         const ru = lang() === "ru";
         const labels = ru
             ? {
-                neutral: "Ровное настроение",
-                focused: "Собрана",
-                soft: "Мягче обычного",
-                strict: "Строгая",
-                tired: "Немного устала",
-                happy: "Довольна прогрессом",
-                serious: "Серьёзна",
-                mystic: "Лунное настроение",
-                cyber: "Анализирует",
-                travel: "Вспоминает дороги",
-                quiet: "Молчит рядом",
-                curious: "Заинтересована",
-                close: "Близость",
-                proud: "Гордится тобой",
-                worried: "Беспокоится",
-                reserved: "Держит дистанцию"
+                neutral: "\u0420\u043E\u0432\u043D\u043E\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435",
+                focused: "\u0421\u043E\u0431\u0440\u0430\u043D\u0430",
+                soft: "\u041C\u044F\u0433\u0447\u0435 \u043E\u0431\u044B\u0447\u043D\u043E\u0433\u043E",
+                strict: "\u0421\u0442\u0440\u043E\u0433\u0430\u044F",
+                tired: "\u041D\u0435\u043C\u043D\u043E\u0433\u043E \u0443\u0441\u0442\u0430\u043B\u0430",
+                happy: "\u0414\u043E\u0432\u043E\u043B\u044C\u043D\u0430 \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441\u043E\u043C",
+                serious: "\u0421\u0435\u0440\u044C\u0451\u0437\u043D\u0430",
+                mystic: "\u041B\u0443\u043D\u043D\u043E\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435",
+                cyber: "\u0410\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0435\u0442",
+                travel: "\u0412\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u0435\u0442 \u0434\u043E\u0440\u043E\u0433\u0438",
+                quiet: "\u041C\u043E\u043B\u0447\u0438\u0442 \u0440\u044F\u0434\u043E\u043C",
+                curious: "\u0417\u0430\u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043E\u0432\u0430\u043D\u0430",
+                close: "\u0411\u043B\u0438\u0437\u043E\u0441\u0442\u044C",
+                proud: "\u0413\u043E\u0440\u0434\u0438\u0442\u0441\u044F \u0442\u043E\u0431\u043E\u0439",
+                worried: "\u0411\u0435\u0441\u043F\u043E\u043A\u043E\u0438\u0442\u0441\u044F",
+                reserved: "\u0414\u0435\u0440\u0436\u0438\u0442 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0438\u044E"
             }
             : {
                 neutral: "Steady mood",
@@ -5126,59 +5832,59 @@
     function evaRoomLabels() {
         return lang() === "ru"
             ? {
-                back: "На главную",
-                shop: "Магазин Евы",
-                close: "Закрыть",
-                shopHint: "Покупай комнаты и образы Евы за Moon Fragments.",
-                buy: "Купить",
-                select: "Выбрать",
-                selected: "Выбран",
-                free: "Открыто",
-                restart: "Начать диалог заново",
-                study: "К уроку",
-                review: "К повтору",
-                notEnough: "Не хватает Moon Fragments.",
-                bought: "Фон открыт.",
-                selectedToast: "Фон выбран.",
-                reward: "Ева дала Moon Fragments.",
-                roomShopTitle: "Комнаты",
-                spriteShopTitle: "Образы Евы",
-                spriteBought: "Образ Евы открыт.",
-                spriteSelected: "Образ Евы выбран.",
-                autonomyBadge: "Ева рядом",
-                autonomyShortOn: "Ева · авто",
-                autonomyShortOff: "Ева · тихо",
-                autonomyOn: "Ева рядом",
-                autonomyOff: "Ева рядом",
-                autonomyHint: "Ева сама выбирает реплики, настроение, комнату и образ без спойлеров FIS.",
-                autonomySettingsHint: "Самостоятельные реплики Евы в комнате, без раскрытия сюжета.",
-                enableAutonomy: "Ева рядом",
-                disableAutonomy: "Ева рядом",
-                changeFrequency: "Статус Евы",
-                frequency: "Частота",
-                frequencies: { quiet: "тихо", normal: "нормально", active: "часто" },
-                roomMode: "Комната",
-                outfitMode: "Образ",
-                roomModeButton: "Комната Евы",
-                outfitModeButton: "Образ Евы",
-                auto: "авто",
-                manual: "ручной",
-                nextAutonomyLine: "Ещё мысль.",
-                storyDialogue: "Вернуться к диалогу.",
-                relationship: "Отношения с Евой",
-                warmth: "Тепло",
-                trust: "Доверие",
-                discipline: "Дисциплина",
+                back: "\u041D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E",
+                shop: "\u041C\u0430\u0433\u0430\u0437\u0438\u043D \u0415\u0432\u044B",
+                close: "\u0417\u0430\u043A\u0440\u044B\u0442\u044C",
+                shopHint: "\u041F\u043E\u043A\u0443\u043F\u0430\u0439 \u043A\u043E\u043C\u043D\u0430\u0442\u044B \u0438 \u043E\u0431\u0440\u0430\u0437\u044B \u0415\u0432\u044B \u0437\u0430 Moon Fragments.",
+                buy: "\u041A\u0443\u043F\u0438\u0442\u044C",
+                select: "\u0412\u044B\u0431\u0440\u0430\u0442\u044C",
+                selected: "\u0412\u044B\u0431\u0440\u0430\u043D",
+                free: "\u041E\u0442\u043A\u0440\u044B\u0442\u043E",
+                restart: "\u041D\u0430\u0447\u0430\u0442\u044C \u0434\u0438\u0430\u043B\u043E\u0433 \u0437\u0430\u043D\u043E\u0432\u043E",
+                study: "\u041A \u0443\u0440\u043E\u043A\u0443",
+                review: "\u041A \u043F\u043E\u0432\u0442\u043E\u0440\u0443",
+                notEnough: "\u041D\u0435 \u0445\u0432\u0430\u0442\u0430\u0435\u0442 Moon Fragments.",
+                bought: "\u0424\u043E\u043D \u043E\u0442\u043A\u0440\u044B\u0442.",
+                selectedToast: "\u0424\u043E\u043D \u0432\u044B\u0431\u0440\u0430\u043D.",
+                reward: "\u0415\u0432\u0430 \u0434\u0430\u043B\u0430 Moon Fragments.",
+                roomShopTitle: "\u041A\u043E\u043C\u043D\u0430\u0442\u044B",
+                spriteShopTitle: "\u041E\u0431\u0440\u0430\u0437\u044B \u0415\u0432\u044B",
+                spriteBought: "\u041E\u0431\u0440\u0430\u0437 \u0415\u0432\u044B \u043E\u0442\u043A\u0440\u044B\u0442.",
+                spriteSelected: "\u041E\u0431\u0440\u0430\u0437 \u0415\u0432\u044B \u0432\u044B\u0431\u0440\u0430\u043D.",
+                autonomyBadge: "\u0415\u0432\u0430 \u0440\u044F\u0434\u043E\u043C",
+                autonomyShortOn: "\u0415\u0432\u0430 \u00B7 \u0430\u0432\u0442\u043E",
+                autonomyShortOff: "\u0415\u0432\u0430 \u00B7 \u0442\u0438\u0445\u043E",
+                autonomyOn: "\u0415\u0432\u0430 \u0440\u044F\u0434\u043E\u043C",
+                autonomyOff: "\u0415\u0432\u0430 \u0440\u044F\u0434\u043E\u043C",
+                autonomyHint: "\u0415\u0432\u0430 \u0441\u0430\u043C\u0430 \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0442 \u0440\u0435\u043F\u043B\u0438\u043A\u0438, \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435, \u043A\u043E\u043C\u043D\u0430\u0442\u0443 \u0438 \u043E\u0431\u0440\u0430\u0437 \u0431\u0435\u0437 \u0441\u043F\u043E\u0439\u043B\u0435\u0440\u043E\u0432 FIS.",
+                autonomySettingsHint: "\u0421\u0430\u043C\u043E\u0441\u0442\u043E\u044F\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0440\u0435\u043F\u043B\u0438\u043A\u0438 \u0415\u0432\u044B \u0432 \u043A\u043E\u043C\u043D\u0430\u0442\u0435, \u0431\u0435\u0437 \u0440\u0430\u0441\u043A\u0440\u044B\u0442\u0438\u044F \u0441\u044E\u0436\u0435\u0442\u0430.",
+                enableAutonomy: "\u0415\u0432\u0430 \u0440\u044F\u0434\u043E\u043C",
+                disableAutonomy: "\u0415\u0432\u0430 \u0440\u044F\u0434\u043E\u043C",
+                changeFrequency: "\u0421\u0442\u0430\u0442\u0443\u0441 \u0415\u0432\u044B",
+                frequency: "\u0427\u0430\u0441\u0442\u043E\u0442\u0430",
+                frequencies: { quiet: "\u0442\u0438\u0445\u043E", normal: "\u043D\u043E\u0440\u043C\u0430\u043B\u044C\u043D\u043E", active: "\u0447\u0430\u0441\u0442\u043E" },
+                roomMode: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430",
+                outfitMode: "\u041E\u0431\u0440\u0430\u0437",
+                roomModeButton: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u0415\u0432\u044B",
+                outfitModeButton: "\u041E\u0431\u0440\u0430\u0437 \u0415\u0432\u044B",
+                auto: "\u0430\u0432\u0442\u043E",
+                manual: "\u0440\u0443\u0447\u043D\u043E\u0439",
+                nextAutonomyLine: "\u0415\u0449\u0451 \u043C\u044B\u0441\u043B\u044C.",
+                storyDialogue: "\u0412\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F \u043A \u0434\u0438\u0430\u043B\u043E\u0433\u0443.",
+                relationship: "\u041E\u0442\u043D\u043E\u0448\u0435\u043D\u0438\u044F \u0441 \u0415\u0432\u043E\u0439",
+                warmth: "\u0422\u0435\u043F\u043B\u043E",
+                trust: "\u0414\u043E\u0432\u0435\u0440\u0438\u0435",
+                discipline: "\u0414\u0438\u0441\u0446\u0438\u043F\u043B\u0438\u043D\u0430",
                 curiosity: "Интерес",
-                moreTalk: "Ещё реплика",
-                anotherTalk: "Другая тема",
+                moreTalk: "\u0415\u0449\u0451 \u0440\u0435\u043F\u043B\u0438\u043A\u0430",
+                anotherTalk: "\u0414\u0440\u0443\u0433\u0430\u044F \u0442\u0435\u043C\u0430",
                 moods: {
-                    neutral: "Ровное настроение",
-                    close: "Близость",
-                    proud: "Гордится тобой",
-                    curious: "Заинтересована",
-                    worried: "Беспокоится",
-                    reserved: "Держит дистанцию"
+                    neutral: "\u0420\u043E\u0432\u043D\u043E\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u0438\u0435",
+                    close: "\u0411\u043B\u0438\u0437\u043E\u0441\u0442\u044C",
+                    proud: "\u0413\u043E\u0440\u0434\u0438\u0442\u0441\u044F \u0442\u043E\u0431\u043E\u0439",
+                    curious: "\u0417\u0430\u0438\u043D\u0442\u0435\u0440\u0435\u0441\u043E\u0432\u0430\u043D\u0430",
+                    worried: "\u0411\u0435\u0441\u043F\u043E\u043A\u043E\u0438\u0442\u0441\u044F",
+                    reserved: "\u0414\u0435\u0440\u0436\u0438\u0442 \u0434\u0438\u0441\u0442\u0430\u043D\u0446\u0438\u044E"
                 }
             }
             : {
@@ -5544,8 +6250,8 @@
     function evaRoomBackgrounds() {
         const base = state.evaBackgrounds?.length ? state.evaBackgrounds : [{
                 id: "bg_study_hub",
-                title: { ru: "Учебная комната", en: "Study Hub" },
-                file: "assets/bg/bg_study_hub.png",
+                title: { ru: "\u0423\u0447\u0435\u0431\u043D\u0430\u044F \u043A\u043E\u043C\u043D\u0430\u0442\u0430", en: "Study Hub" },
+                file: "assets/bg/bg_study_hub.webp",
                 price: 0,
                 defaultUnlocked: true
             }];
@@ -5586,18 +6292,18 @@
             defaultUnlocked: item.defaultOwned
         }));
         const legacy = [
-            { id: "idle", title: { ru: "Ева: спокойная", en: "Eva: Calm" }, price: 0, defaultUnlocked: true },
-            { id: "default", title: { ru: "Ева: классика", en: "Eva: Classic" }, price: 0, defaultUnlocked: true },
-            { id: "think", title: { ru: "Ева: размышление", en: "Eva: Thinking" }, price: 25 },
-            { id: "happy", title: { ru: "Ева: тепло", en: "Eva: Warm" }, price: 35 },
-            { id: "approve", title: { ru: "Ева: наставник", en: "Eva: Mentor" }, price: 35 },
-            { id: "review", title: { ru: "Ева: повторение", en: "Eva: Review" }, price: 40 },
-            { id: "proud", title: { ru: "Ева: гордость", en: "Eva: Proud" }, price: 45 },
+            { id: "idle", title: { ru: "\u0415\u0432\u0430: \u0441\u043F\u043E\u043A\u043E\u0439\u043D\u0430\u044F", en: "Eva: Calm" }, price: 0, defaultUnlocked: true },
+            { id: "default", title: { ru: "\u0415\u0432\u0430: \u043A\u043B\u0430\u0441\u0441\u0438\u043A\u0430", en: "Eva: Classic" }, price: 0, defaultUnlocked: true },
+            { id: "think", title: { ru: "\u0415\u0432\u0430: \u0440\u0430\u0437\u043C\u044B\u0448\u043B\u0435\u043D\u0438\u0435", en: "Eva: Thinking" }, price: 25 },
+            { id: "happy", title: { ru: "\u0415\u0432\u0430: \u0442\u0435\u043F\u043B\u043E", en: "Eva: Warm" }, price: 35 },
+            { id: "approve", title: { ru: "\u0415\u0432\u0430: \u043D\u0430\u0441\u0442\u0430\u0432\u043D\u0438\u043A", en: "Eva: Mentor" }, price: 35 },
+            { id: "review", title: { ru: "\u0415\u0432\u0430: \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435", en: "Eva: Review" }, price: 40 },
+            { id: "proud", title: { ru: "\u0415\u0432\u0430: \u0433\u043E\u0440\u0434\u043E\u0441\u0442\u044C", en: "Eva: Proud" }, price: 45 },
             { id: "shy", title: { ru: "Ева: ближе", en: "Eva: Closer" }, price: 55 },
-            { id: "sad", title: { ru: "Ева: тревога", en: "Eva: Concerned" }, price: 30 },
-            { id: "reward", title: { ru: "Ева: награда", en: "Eva: Reward" }, price: 50 },
-            { id: "achievement", title: { ru: "Ева: достижение", en: "Eva: Achievement" }, price: 60 },
-            { id: "levelup", title: { ru: "Ева: уровень", en: "Eva: Level Up" }, price: 65 }
+            { id: "sad", title: { ru: "\u0415\u0432\u0430: \u0442\u0440\u0435\u0432\u043E\u0433\u0430", en: "Eva: Concerned" }, price: 30 },
+            { id: "reward", title: { ru: "\u0415\u0432\u0430: \u043D\u0430\u0433\u0440\u0430\u0434\u0430", en: "Eva: Reward" }, price: 50 },
+            { id: "achievement", title: { ru: "\u0415\u0432\u0430: \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0435", en: "Eva: Achievement" }, price: 60 },
+            { id: "levelup", title: { ru: "\u0415\u0432\u0430: \u0443\u0440\u043E\u0432\u0435\u043D\u044C", en: "Eva: Level Up" }, price: 65 }
         ].filter((item) => state.evaSprites?.[item.id] && !catalogOutfits.some((outfit) => outfit.id === item.id));
         return [...catalogOutfits, ...legacy];
     }
@@ -5667,8 +6373,8 @@
             id: "intro",
             background: "bg_study_hub",
             sprite: "relationship",
-            speaker: { ru: "Ева", en: "Eva" },
-            text: { ru: "С возвращением.", en: "Welcome back." },
+            speaker: { ru: "\u0415\u0432\u0430", en: "Eva" },
+            text: { ru: "\u0421 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u0438\u0435\u043C.", en: "Welcome back." },
             choices: []
         };
     }
@@ -5681,7 +6387,7 @@
             id: "generated_line",
             background: generated.background || currentEvaRoomBackground().id || "bg_study_hub",
             sprite: generated.sprite || "relationship",
-            speaker: { ru: "Ева", en: "Eva" },
+            speaker: { ru: "\u0415\u0432\u0430", en: "Eva" },
             text: generated.text,
             choices: [
                 { text: { ru: labels.moreTalk, en: labels.moreTalk }, randomLine: generated.category || "adaptive", relationshipDelta: { warmth: 0.6, curiosity: 0.4 } },
@@ -6061,54 +6767,54 @@
             return presenceLine;
         const pools = {
             answer_correct: [
-                { ru: "Верно.", en: "Correct." },
-                { ru: "Хорошо.", en: "Good." },
+                { ru: "\u0412\u0435\u0440\u043D\u043E.", en: "Correct." },
+                { ru: "\u0425\u043E\u0440\u043E\u0448\u043E.", en: "Good." },
                 { ru: "Да. Именно так.", en: "Yes. Exactly." },
-                { ru: "Ты начинаешь видеть структуру.", en: "You are starting to see the structure." },
-                { ru: "Неплохо. Продолжай.", en: "Not bad. Continue." }
+                { ru: "\u0422\u044B \u043D\u0430\u0447\u0438\u043D\u0430\u0435\u0448\u044C \u0432\u0438\u0434\u0435\u0442\u044C \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0443.", en: "You are starting to see the structure." },
+                { ru: "\u041D\u0435\u043F\u043B\u043E\u0445\u043E. \u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u0439.", en: "Not bad. Continue." }
             ],
             answer_wrong: [
-                { ru: "Не совсем.", en: "Not quite." },
-                { ru: "Посмотри ещё раз.", en: "Look again." },
-                { ru: "Не угадывай. Разбери.", en: "Do not guess. Break it down." },
-                { ru: "Запомни не ответ, а причину.", en: "Remember the reason, not just the answer." },
-                { ru: "Это место стоит повторить.", en: "This part is worth repeating." }
+                { ru: "\u041D\u0435 \u0441\u043E\u0432\u0441\u0435\u043C.", en: "Not quite." },
+                { ru: "\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0438 \u0435\u0449\u0451 \u0440\u0430\u0437.", en: "Look again." },
+                { ru: "\u041D\u0435 \u0443\u0433\u0430\u0434\u044B\u0432\u0430\u0439. \u0420\u0430\u0437\u0431\u0435\u0440\u0438.", en: "Do not guess. Break it down." },
+                { ru: "\u0417\u0430\u043F\u043E\u043C\u043D\u0438 \u043D\u0435 \u043E\u0442\u0432\u0435\u0442, \u0430 \u043F\u0440\u0438\u0447\u0438\u043D\u0443.", en: "Remember the reason, not just the answer." },
+                { ru: "\u042D\u0442\u043E \u043C\u0435\u0441\u0442\u043E \u0441\u0442\u043E\u0438\u0442 \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C.", en: "This part is worth repeating." }
             ],
             user_clicked_eva: [
                 { ru: "Да?", en: "Yes?" },
-                { ru: "Что-то нужно?", en: "Need something?" },
-                { ru: "Я слушаю.", en: "I'm listening." },
-                { ru: "Не отвлекайся слишком часто.", en: "Don't distract yourself too often." },
-                { ru: "Если нужен совет — спроси.", en: "If you need advice, ask." }
+                { ru: "\u0427\u0442\u043E-\u0442\u043E \u043D\u0443\u0436\u043D\u043E?", en: "Need something?" },
+                { ru: "\u042F \u0441\u043B\u0443\u0448\u0430\u044E.", en: "I'm listening." },
+                { ru: "\u041D\u0435 \u043E\u0442\u0432\u043B\u0435\u043A\u0430\u0439\u0441\u044F \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0447\u0430\u0441\u0442\u043E.", en: "Don't distract yourself too often." },
+                { ru: "\u0415\u0441\u043B\u0438 \u043D\u0443\u0436\u0435\u043D \u0441\u043E\u0432\u0435\u0442 \u2014 \u0441\u043F\u0440\u043E\u0441\u0438.", en: "If you need advice, ask." }
             ],
             idle_timeout: [
-                { ru: "Ты всё ещё здесь?", en: "Still here?" },
-                { ru: "Сделаем короткий шаг?", en: "One short step?" },
-                { ru: "Я подожду.", en: "I'll wait." },
-                { ru: "Не исчезай надолго.", en: "Don't vanish for too long." }
+                { ru: "\u0422\u044B \u0432\u0441\u0451 \u0435\u0449\u0451 \u0437\u0434\u0435\u0441\u044C?", en: "Still here?" },
+                { ru: "\u0421\u0434\u0435\u043B\u0430\u0435\u043C \u043A\u043E\u0440\u043E\u0442\u043A\u0438\u0439 \u0448\u0430\u0433?", en: "One short step?" },
+                { ru: "\u042F \u043F\u043E\u0434\u043E\u0436\u0434\u0443.", en: "I'll wait." },
+                { ru: "\u041D\u0435 \u0438\u0441\u0447\u0435\u0437\u0430\u0439 \u043D\u0430\u0434\u043E\u043B\u0433\u043E.", en: "Don't vanish for too long." }
             ],
             manual: [
-                { ru: "Один шаг всё ещё шаг.", en: "One step is still a step." },
-                { ru: "Я рядом. Продолжай.", en: "I'm nearby. Continue." },
-                { ru: "Кандзи не убегут. Но лучше не заставлять их ждать.", en: "The kanji won't run. Better not keep them waiting." },
-                { ru: "Сначала форма. Потом смысл.", en: "Shape first. Meaning after." }
+                { ru: "\u041E\u0434\u0438\u043D \u0448\u0430\u0433 \u0432\u0441\u0451 \u0435\u0449\u0451 \u0448\u0430\u0433.", en: "One step is still a step." },
+                { ru: "\u042F \u0440\u044F\u0434\u043E\u043C. \u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u0439.", en: "I'm nearby. Continue." },
+                { ru: "\u041A\u0430\u043D\u0434\u0437\u0438 \u043D\u0435 \u0443\u0431\u0435\u0433\u0443\u0442. \u041D\u043E \u043B\u0443\u0447\u0448\u0435 \u043D\u0435 \u0437\u0430\u0441\u0442\u0430\u0432\u043B\u044F\u0442\u044C \u0438\u0445 \u0436\u0434\u0430\u0442\u044C.", en: "The kanji won't run. Better not keep them waiting." },
+                { ru: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0444\u043E\u0440\u043C\u0430. \u041F\u043E\u0442\u043E\u043C \u0441\u043C\u044B\u0441\u043B.", en: "Shape first. Meaning after." }
             ],
             lesson_complete: [
-                { ru: "Урок закрыт. След оставлен.", en: "Lesson complete. A mark is left." },
-                { ru: "Хорошая работа. Теперь закрепи.", en: "Good work. Now reinforce it." }
+                { ru: "\u0423\u0440\u043E\u043A \u0437\u0430\u043A\u0440\u044B\u0442. \u0421\u043B\u0435\u0434 \u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D.", en: "Lesson complete. A mark is left." },
+                { ru: "\u0425\u043E\u0440\u043E\u0448\u0430\u044F \u0440\u0430\u0431\u043E\u0442\u0430. \u0422\u0435\u043F\u0435\u0440\u044C \u0437\u0430\u043A\u0440\u0435\u043F\u0438.", en: "Good work. Now reinforce it." }
             ],
             level_up: [
-                { ru: "Уровень выше. Дорога стала длиннее, не легче.", en: "Level up. The road is longer, not easier." },
-                { ru: "Ты стал крепче. Это заметно.", en: "You got steadier. It shows." }
+                { ru: "\u0423\u0440\u043E\u0432\u0435\u043D\u044C \u0432\u044B\u0448\u0435. \u0414\u043E\u0440\u043E\u0433\u0430 \u0441\u0442\u0430\u043B\u0430 \u0434\u043B\u0438\u043D\u043D\u0435\u0435, \u043D\u0435 \u043B\u0435\u0433\u0447\u0435.", en: "Level up. The road is longer, not easier." },
+                { ru: "\u0422\u044B \u0441\u0442\u0430\u043B \u043A\u0440\u0435\u043F\u0447\u0435. \u042D\u0442\u043E \u0437\u0430\u043C\u0435\u0442\u043D\u043E.", en: "You got steadier. It shows." }
             ],
             item_bought: [
-                { ru: "Новая вещь. Посмотрим, приживётся ли.", en: "A new item. We'll see if it settles in." },
-                { ru: "Комната меняется. Ты тоже.", en: "The room changes. So do you." }
+                { ru: "\u041D\u043E\u0432\u0430\u044F \u0432\u0435\u0449\u044C. \u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0438\u043C, \u043F\u0440\u0438\u0436\u0438\u0432\u0451\u0442\u0441\u044F \u043B\u0438.", en: "A new item. We'll see if it settles in." },
+                { ru: "\u041A\u043E\u043C\u043D\u0430\u0442\u0430 \u043C\u0435\u043D\u044F\u0435\u0442\u0441\u044F. \u0422\u044B \u0442\u043E\u0436\u0435.", en: "The room changes. So do you." }
             ],
             room_opened: [
-                { ru: "Я здесь.", en: "I'm here." },
-                { ru: "Ты снова здесь. Это говорит больше, чем обещание.", en: "You're here again. That says more than a promise." },
-                { ru: "Продолжай. Я посмотрю.", en: "Continue. I'll watch." }
+                { ru: "\u042F \u0437\u0434\u0435\u0441\u044C.", en: "I'm here." },
+                { ru: "\u0422\u044B \u0441\u043D\u043E\u0432\u0430 \u0437\u0434\u0435\u0441\u044C. \u042D\u0442\u043E \u0433\u043E\u0432\u043E\u0440\u0438\u0442 \u0431\u043E\u043B\u044C\u0448\u0435, \u0447\u0435\u043C \u043E\u0431\u0435\u0449\u0430\u043D\u0438\u0435.", en: "You're here again. That says more than a promise." },
+                { ru: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u0439. \u042F \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u044E.", en: "Continue. I'll watch." }
             ]
         };
         const pool = pools[reason] || [];
@@ -6410,7 +7116,7 @@
         if (!distractors.length)
             return null;
         const level = String(card.jlpt || "").toUpperCase();
-        const scope = level || (lang() === "ru" ? "твоих карточек" : "your cards");
+        const scope = level || (lang() === "ru" ? "\u0442\u0432\u043E\u0438\u0445 \u043A\u0430\u0440\u0442\u043E\u0447\u0435\u043A" : "your cards");
         const correctOption = evaKanjiMeaningOption(card, card, true);
         const options = [correctOption, ...distractors.map((item) => evaKanjiMeaningOption(item, card, false))]
             .sort((a, b) => stableHash(`${reason}:${card.id}:${a.id}`) - stableHash(`${reason}:${card.id}:${b.id}`));
@@ -6423,7 +7129,7 @@
             answerId: correctOption.id,
             answerText: { ru: correctRu, en: correctEn },
             text: {
-                ru: `Что значит кандзи ${card.kanji} из ${scope}?`,
+                ru: `\u0427\u0442\u043E \u0437\u043D\u0430\u0447\u0438\u0442 \u043A\u0430\u043D\u0434\u0437\u0438 ${card.kanji} из ${scope}?`,
                 en: `What does the ${scope} kanji ${card.kanji} mean?`
             },
             options,
@@ -6463,11 +7169,11 @@
             delta: correct ? { trust: 0.7, discipline: 0.35, curiosity: 0.2 } : { discipline: -0.35, curiosity: 0.15 },
             reply: correct
                 ? {
-                    ru: `Верно. ${questionCard.kanji}: ${answerRu}.`,
+                    ru: `\u0412\u0435\u0440\u043D\u043E. ${questionCard.kanji}: ${answerRu}.`,
                     en: `Correct. ${questionCard.kanji}: ${answerEn}.`
                 }
                 : {
-                    ru: `Не совсем. ${questionCard.kanji}: ${answerRu}.`,
+                    ru: `\u041D\u0435 \u0441\u043E\u0432\u0441\u0435\u043C. ${questionCard.kanji}: ${answerRu}.`,
                     en: `Not quite. ${questionCard.kanji}: ${answerEn}.`
                 }
         };
@@ -6559,15 +7265,15 @@
         if (question.kind === "kanji_meaning" && question.kanji && question.answerText) {
             return correct
                 ? {
-                    ru: `Верно. ${question.kanji}: ${question.answerText.ru || localized(question.answerText)}.`,
+                    ru: `\u0412\u0435\u0440\u043D\u043E. ${question.kanji}: ${question.answerText.ru || localized(question.answerText)}.`,
                     en: `Correct. ${question.kanji}: ${question.answerText.en || localized(question.answerText)}.`
                 }
                 : {
-                    ru: `Не совсем. ${question.kanji}: ${question.answerText.ru || localized(question.answerText)}.`,
+                    ru: `\u041D\u0435 \u0441\u043E\u0432\u0441\u0435\u043C. ${question.kanji}: ${question.answerText.ru || localized(question.answerText)}.`,
                     en: `Not quite. ${question.kanji}: ${question.answerText.en || localized(question.answerText)}.`
                 };
         }
-        return { ru: "Принято.", en: "Noted." };
+        return { ru: "\u041F\u0440\u0438\u043D\u044F\u0442\u043E.", en: "Noted." };
     }
     function recordEvaKanjiQuizAnswer(question, option, correct) {
         const quiz = evaRoomQuizProgress();
@@ -6722,7 +7428,7 @@
                     id: "eva_autonomy_line",
                     background: bg.id,
                     sprite: auto.sprite || "relationship",
-                    speaker: { ru: "Ева", en: "Eva" },
+                    speaker: { ru: "\u0415\u0432\u0430", en: "Eva" },
                     text: auto.text,
                     choices: []
                 }
@@ -6762,7 +7468,7 @@
         const line = sample(pool) || {
             id: "fallback",
             category: "adaptive",
-            text: { ru: "Я рядом. Давай сделаем хотя бы один честный шаг.", en: "I'm here. Let's make one honest step." },
+            text: { ru: "\u042F \u0440\u044F\u0434\u043E\u043C. \u0414\u0430\u0432\u0430\u0439 \u0441\u0434\u0435\u043B\u0430\u0435\u043C \u0445\u043E\u0442\u044F \u0431\u044B \u043E\u0434\u0438\u043D \u0447\u0435\u0441\u0442\u043D\u044B\u0439 \u0448\u0430\u0433.", en: "I'm here. Let's make one honest step." },
             sprite: "relationship",
             background: currentEvaRoomBackground().id
         };
@@ -6797,7 +7503,7 @@
         return node;
     }
     function evaSpritePath(sprite) {
-        return state.evaSprites?.[sprite] || state.evaSprites?.default || "assets/mascots/eva_normal.png";
+        return state.evaSprites?.[sprite] || state.evaSprites?.default || "assets/mascots/eva_normal.webp";
     }
     function preloadEvaVisuals(spriteId, backgroundSrc = "") {
         [evaSpritePath(spriteId), backgroundSrc].filter(Boolean).forEach((src) => {
@@ -6858,7 +7564,7 @@
         state.evaRuntime.memory = mergeEvaMemory(defaultEvaMemory(), state.evaRuntime.memory || {});
         const memory = state.evaRuntime.memory;
         const isTalk = Boolean(choice.randomLine && !choice.route);
-        const isStudyRoute = ["learn", "review", "writing"].includes(choice.route);
+        const isStudyRoute = ["learn", "review"].includes(choice.route);
         if (isTalk)
             memory.timesUserChoseTalkOverStudy = Number(memory.timesUserChoseTalkOverStudy || 0) + 1;
         if (isStudyRoute)
@@ -6970,7 +7676,7 @@
         saveProgress();
         applyTheme();
         playUxSound("menu_close");
-        toast(lang() === "ru" ? "Эффект убран." : "Effect removed.");
+        toast(lang() === "ru" ? "\u042D\u0444\u0444\u0435\u043A\u0442 \u0443\u0431\u0440\u0430\u043D." : "Effect removed.");
         render();
         return true;
     }
@@ -7011,7 +7717,7 @@
         saveProgress();
         applyTheme();
         playUxSound("menu_close");
-        toast(lang() === "ru" ? "Выбор сброшен." : "Selection cleared.");
+        toast(lang() === "ru" ? "\u0412\u044B\u0431\u043E\u0440 \u0441\u0431\u0440\u043E\u0448\u0435\u043D." : "Selection cleared.");
         render();
         return true;
     }
@@ -7023,13 +7729,13 @@
         if (condition.type === "achievement") {
             const achievement = achievementList().find((entry) => entry.id === condition.id);
             const title = achievement ? achievementTitle(achievement) : condition.id;
-            return ru ? `Открывается за достижение: ${title}` : `Unlocks after achievement: ${title}`;
+            return ru ? `\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u0437\u0430 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0435: ${title}` : `Unlocks after achievement: ${title}`;
         }
         if (condition.type === "level") {
-            return ru ? `Открывается на уровне ${condition.value}` : `Unlocks at level ${condition.value}`;
+            return ru ? `\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043D\u0430 \u0443\u0440\u043E\u0432\u043D\u0435 ${condition.value}` : `Unlocks at level ${condition.value}`;
         }
         if (condition.type === "streak") {
-            return ru ? `Открывается за серию ${condition.value} дн.` : `Unlocks at a ${condition.value}-day streak`;
+            return ru ? `\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u0437\u0430 \u0441\u0435\u0440\u0438\u044E ${condition.value} \u0434\u043D.` : `Unlocks at a ${condition.value}-day streak`;
         }
         return "";
     }
@@ -7251,7 +7957,7 @@
         const mastered = lessonCards.filter((card) => getCardProgress(card.id).state === "Mastered").length;
         const locked = !isLessonUnlocked(lesson);
         const status = lessonProgressStatus(lesson);
-        const glyph = locked ? "鎖" : lessonCards[0]?.kanji || "文";
+        const glyph = locked ? "\u9396" : lessonCards[0]?.kanji || "\u6587";
         const width = progressWidth(mastered, lessonCards.length);
         return `
       <button class="lesson-tile ${locked ? "is-locked" : ""} ${lessonStatusClass(status)}" type="button" id="textbook-lesson-${escapeAttr(lesson.id)}" data-action="start-lesson" data-id="${escapeAttr(lesson.id)}">
@@ -7336,10 +8042,10 @@
         const unlocked = lessons.filter((lesson) => isLessonUnlocked(lesson)).length;
         const levels = ["all", ...LEVEL_ORDER];
         return `
-      <div class="jlpt-filter-bar" role="tablist" aria-label="${escapeAttr(lang() === "ru" ? "Фильтр уровней JLPT" : "JLPT level filter")}">
+      <div class="jlpt-filter-bar" role="tablist" aria-label="${escapeAttr(lang() === "ru" ? "\u0424\u0438\u043B\u044C\u0442\u0440 \u0443\u0440\u043E\u0432\u043D\u0435\u0439 JLPT" : "JLPT level filter")}">
         ${levels.map((level) => {
             const active = String(state.activeLearnJlpt || "all").toLowerCase() === String(level).toLowerCase();
-            const label = level === "all" ? (lang() === "ru" ? "Все" : "All") : level;
+            const label = level === "all" ? (lang() === "ru" ? "\u0412\u0441\u0435" : "All") : level;
             const count = level === "all" ? total : state.lessons.filter((lesson) => lesson.jlpt === level).length;
             return `
             <button class="btn jlpt-filter-chip ${active ? "primary" : "ghost"}" type="button" role="tab" aria-selected="${active ? "true" : "false"}" data-action="set-learn-jlpt" data-jlpt="${escapeAttr(level)}">
@@ -7350,9 +8056,9 @@
         }).join("")}
       </div>
       <div class="learn-level-strip">
-        <span class="pill">${escapeHtml(lang() === "ru" ? "Уроки" : "Lessons")}: ${total}</span>
-        <span class="pill">${escapeHtml(lang() === "ru" ? "Открыто" : "Unlocked")}: ${unlocked}</span>
-        <button class="btn ghost learn-textbook-link" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Учебники Flash Kanji" : "Flash Kanji textbooks")}</button>
+        <span class="pill">${escapeHtml(lang() === "ru" ? "\u0423\u0440\u043E\u043A\u0438" : "Lessons")}: ${total}</span>
+        <span class="pill">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u043A\u0440\u044B\u0442\u043E" : "Unlocked")}: ${unlocked}</span>
+        <button class="btn ghost learn-textbook-link" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438 Flash Kanji" : "Flash Kanji textbooks")}</button>
       </div>
     `;
     }
@@ -7363,20 +8069,20 @@
         return `
       <article class="learn-level-panel">
         <div class="learn-level-cover">
-          <img src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <img src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
           <span class="pill">${escapeHtml(textbook.jlpt || "")}</span>
         </div>
         <div class="learn-level-copy">
           <h3>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h3>
           <p>${escapeHtml(localized(textbook.description || {}))}</p>
           <div class="tag-row">
-            <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+            <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "\u0443\u0440\u043E\u043A\u043E\u0432" : "lessons")}</span>
             <span class="pill">${escapeHtml(textbook.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
             <span class="pill">${escapeHtml(localized(textbook.recommendedCycle || {}))}</span>
           </div>
           <div class="actions">
-            <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "Скачать PDF" : "Download PDF")}</a>
-            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Все учебники" : "All textbooks")}</button>
+            <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "\u0421\u043A\u0430\u0447\u0430\u0442\u044C PDF" : "Download PDF")}</a>
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438" : "All textbooks")}</button>
           </div>
         </div>
       </article>
@@ -7386,22 +8092,545 @@
         const textbook = jlptCatalogByLevel(lesson?.jlpt);
         return `
       <article class="lesson-locked-panel">
-        <span class="pill danger-pill">${escapeHtml(lang() === "ru" ? "Закрытый уровень" : "Level locked")}</span>
+        <span class="pill danger-pill">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u043A\u0440\u044B\u0442\u044B\u0439 \u0443\u0440\u043E\u0432\u0435\u043D\u044C" : "Level locked")}</span>
         <h2>${escapeHtml(lesson ? lessonTitle(lesson) : "")}</h2>
-        <p>${escapeHtml(lang() === "ru" ? `Откроется на уровне ${unlockLevel(lesson)}.` : `Unlocks at level ${unlockLevel(lesson)}.`)}</p>
+        <p>${escapeHtml(lang() === "ru" ? `\u041E\u0442\u043A\u0440\u043E\u0435\u0442\u0441\u044F \u043D\u0430 \u0443\u0440\u043E\u0432\u043D\u0435 ${unlockLevel(lesson)}.` : `Unlocks at level ${unlockLevel(lesson)}.`)}</p>
         <div class="learn-level-lock-meta">
           <span class="pill">${escapeHtml(lesson?.jlpt || "")}</span>
-          <span class="pill">${escapeHtml(lang() === "ru" ? "Закрыт" : "Locked")}</span>
-          <span class="pill">${escapeHtml(textbook?.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков в учебнике" : "lessons in textbook")}</span>
+          <span class="pill">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u043A\u0440\u044B\u0442" : "Locked")}</span>
+          <span class="pill">${escapeHtml(textbook?.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "\u0443\u0440\u043E\u043A\u043E\u0432 \u0432 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0435" : "lessons in textbook")}</span>
         </div>
         <div class="actions">
-          <button class="btn primary" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Просмотреть учебник" : "View textbook")}</button>
-          <button class="btn ghost" type="button" data-action="route" data-route="home">${escapeHtml(lang() === "ru" ? "Домой" : "Home")}</button>
+          <button class="btn primary" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u0443\u0447\u0435\u0431\u043D\u0438\u043A" : "View textbook")}</button>
+          <button class="btn ghost" type="button" data-action="route" data-route="home">${escapeHtml(lang() === "ru" ? "\u0414\u043E\u043C\u043E\u0439" : "Home")}</button>
         </div>
       </article>
     `;
     }
     function renderLearn() {
+        if (state.activeLearnView === LEARNING_PATH_LEGACY_VIEW)
+            return renderLearnLegacy();
+        if (state.activeLearnView === LEARNING_PATH_LESSON_VIEW)
+            return renderLearningPathPlayer();
+        return renderLearningPathMap();
+    }
+    function openLearningPathPrimaryAction() {
+        const action = learningPathPrimaryAction();
+        if (action.kind === "review") {
+            setRoute("review");
+            return;
+        }
+        if (state.route === "home") {
+            openJlptLessonStart(currentLearnTextbookLevel() || "N5");
+            return;
+        }
+        openLearningPathNode(action.nodeId);
+    }
+    function openLearningPathNode(nodeId) {
+        const node = learningPathNodeById(nodeId);
+        if (!node) {
+            setLearnRoute();
+            return;
+        }
+        const status = learningPathNodeStatus(node);
+        if (status === "locked") {
+            toast(lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u043A\u043E\u043D\u0447\u0438 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0438\u0439 \u0448\u0430\u0433." : "Finish the previous step first.");
+            return;
+        }
+        if (node.id === LEARNING_PATH_REVIEW_NODE_ID) {
+            setRoute("review");
+            return;
+        }
+        if (node.id === LEARNING_PATH_CHECKPOINT_NODE_ID) {
+            setN5Hash("final-test");
+            return;
+        }
+        if (node.type === "textbook") {
+            setN5Hash(node.id);
+            return;
+        }
+        setLearnRoute(LEARNING_PATH_LESSON_VIEW, node.id);
+    }
+    function learningPathCardById(cardId) {
+        const key = String(cardId || "");
+        if (!key)
+            return null;
+        return findCard(key) || state.cards.find((card) => String(card.id) === key) || null;
+    }
+    function buildLearningPathIntroSteps() {
+        const labels = learningPathLabels();
+        return [
+            {
+                id: "intro-1",
+                kind: "info",
+                eyebrow: labels.intro,
+                title: labels.introTitle,
+                text: labels.introBody,
+                note: labels.finishHint
+            },
+            {
+                id: "intro-2",
+                kind: "info",
+                eyebrow: labels.route,
+                title: labels.nextLesson,
+                text: labels.introBridge,
+                note: labels.mapHint
+            },
+            {
+                id: "intro-3",
+                kind: "quiz",
+                eyebrow: labels.ready,
+                title: labels.introQuestion,
+                text: labels.introQuestionHint,
+                answer: "review",
+                options: [
+                    { value: "review", label: { ru: "\u0412 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435", en: "Into review" } },
+                    { value: "memory", label: { ru: "\u0412 \u0430\u0440\u0445\u0438\u0432 \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430", en: "Into permanent archive" } },
+                    { value: "skip", label: { ru: "\u041D\u0438\u043A\u0443\u0434\u0430, \u043F\u043E\u043A\u0430 \u043D\u0435 \u0437\u0430\u0431\u0443\u0434\u0435\u0448\u044C", en: "Nowhere, until you forget" } }
+                ]
+            }
+        ];
+    }
+    function buildLearningPathLessonPayload(nodeId) {
+        const lesson = n5LessonById(nodeId);
+        if (!lesson)
+            return null;
+        const cards = n5CardsForLesson(lesson);
+        if (!cards.length)
+            return null;
+        const lessonSentences = Array.isArray(lesson.sentences) ? lesson.sentences : [];
+        const kanjiBlocks = cards.map((card, index) => {
+            const example = n5CardExamples(card)[0] || null;
+            const lessonSentence = lessonSentences[index % Math.max(lessonSentences.length, 1)] || lessonSentences[0] || null;
+            const sentence = example
+                ? {
+                    jp: example.word || card.kanji,
+                    hiragana: example.reading || card.hiragana || "",
+                    translation: example.translation || (lessonSentence ? { ru: lessonSentence.ru || "", en: lessonSentence.en || "" } : "")
+                }
+                : lessonSentence
+                    ? {
+                        jp: lessonSentence.jp || card.kanji,
+                        hiragana: displayHiragana(lessonSentence.reading || lessonSentence.hiragana || card.hiragana || ""),
+                        translation: { ru: lessonSentence.ru || "", en: lessonSentence.en || "" }
+                    }
+                    : {
+                        jp: card.kanji,
+                        hiragana: card.hiragana || "",
+                        translation: { ru: cardMeaning(card), en: cardMeaning(card) }
+                    };
+            return { cardId: card.id, sentence };
+        });
+        return {
+            id: lesson.id,
+            title: lesson.title,
+            summary: lesson.goal || lesson.theme || lesson.title,
+            objectives: [lesson.goal, lesson.theme].filter(Boolean),
+            kanjiIds: cards.map((card) => card.id),
+            kanjiBlocks,
+            exercises: buildN5LessonExercises(lesson),
+            source: "learning_path"
+        };
+    }
+    function buildLearningPathLessonSteps(nodeId) {
+        if (nodeId === LEARNING_PATH_INTRO_ID)
+            return buildLearningPathIntroSteps();
+        const payload = state.learningPathLessonPayloads[nodeId] || buildLearningPathLessonPayload(nodeId);
+        if (!payload)
+            return [];
+        const labels = learningPathLabels();
+        const steps = [];
+        const objectiveLine = (payload.objectives || []).map(localized).filter(Boolean).slice(0, 3).join(" • ");
+        steps.push({
+            id: `${nodeId}-overview`,
+            kind: "info",
+            eyebrow: "N5",
+            title: localized(payload.title),
+            text: localized(payload.summary),
+            note: objectiveLine || labels.finishHint
+        });
+        (payload.kanjiBlocks || []).forEach((block, index) => {
+            const card = learningPathCardById(block.cardId);
+            if (!card)
+                return;
+            const example = block.sentence || null;
+            steps.push({
+                id: `${nodeId}-kanji-${index + 1}`,
+                kind: "kanji",
+                eyebrow: card.jlpt || "N5",
+                title: `${card.kanji} · ${cardMeaning(card)}`,
+                text: n5CardHint(card, { word: example?.jp || card.kanji, reading: example?.hiragana || card.hiragana || "" }),
+                note: example?.translation ? localized(example.translation) : "",
+                cardId: card.id,
+                card,
+                sentence: example
+            });
+        });
+        (payload.exercises || []).forEach((exercise) => {
+            const options = (exercise.options || []).map((option) => ({
+                value: String(option.value ?? option.id ?? option.label ?? option),
+                label: localized(option.label || option.text || option)
+            }));
+            steps.push({
+                id: String(exercise.id || `${nodeId}-quiz-${steps.length}`),
+                kind: "quiz",
+                eyebrow: "N5",
+                title: localized(exercise.prompt),
+                text: localized(exercise.promptHint || { ru: "", en: "" }),
+                answer: String(exercise.answer ?? ""),
+                options
+            });
+        });
+        return steps;
+    }
+    function buildLearningPathSteps(nodeId, session = null) {
+        const steps = buildLearningPathLessonSteps(nodeId);
+        if (!session || session.mode !== "mistakes" || !session.reviewStepIds?.length)
+            return steps;
+        const selected = new Set(session.reviewStepIds);
+        const mistakesOnly = steps.filter((step) => step.kind === "quiz" && selected.has(step.id));
+        return mistakesOnly.length ? mistakesOnly : steps.filter((step) => step.kind === "quiz");
+    }
+    function ensureLearningPathSession(nodeId, mode = LEARNING_PATH_LESSON_VIEW, reviewStepIds = []) {
+        const learningPath = learningPathProgress();
+        const current = learningPath.activeSession;
+        const expectedIds = reviewStepIds.map(String).filter(Boolean);
+        if (current?.nodeId === nodeId
+            && current.mode === mode
+            && JSON.stringify(current.reviewStepIds || []) === JSON.stringify(expectedIds)) {
+            return current;
+        }
+        learningPath.activeSession = mergeLearningPathSession({
+            nodeId,
+            mode,
+            stepIndex: 0,
+            answers: {},
+            mistakes: [],
+            reviewStepIds: expectedIds,
+            score: 0,
+            startedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+        learningPath.lastUpdatedAt = learningPath.activeSession.updatedAt;
+        saveProgress();
+        return learningPath.activeSession;
+    }
+    function learningPathPlayerState(nodeId) {
+        const current = activeLearningPathSession();
+        const session = current?.nodeId === nodeId ? current : ensureLearningPathSession(nodeId);
+        const steps = buildLearningPathSteps(nodeId, session);
+        const quizSteps = steps.filter((step) => step.kind === "quiz");
+        const answeredCount = Object.keys(session.answers || {}).length;
+        const stepIndex = Math.max(0, Number(session.stepIndex || 0));
+        return {
+            session,
+            steps,
+            quizSteps,
+            answeredCount,
+            stepIndex,
+            currentStep: steps[stepIndex] || null,
+            isResult: stepIndex >= steps.length && steps.length > 0
+        };
+    }
+    function finalizeLearningPathNode(nodeId, session, steps) {
+        const learningPath = learningPathProgress();
+        const now = new Date().toISOString();
+        const quizSteps = steps.filter((step) => step.kind === "quiz");
+        const hasMistakes = Array.isArray(session.mistakes) && session.mistakes.length > 0;
+        learningPath.completedNodes[nodeId] ||= now;
+        learningPath.resultHistory[nodeId] = {
+            completedAt: now,
+            score: Number(session.score || 0),
+            totalQuestions: quizSteps.length,
+            mistakes: (session.mistakes || []).slice(0, 24)
+        };
+        learningPath.activeSession = null;
+        if (nodeId === LEARNING_PATH_INTRO_ID) {
+            addReward(12, 0, "learning_path:intro");
+        }
+        if (/^n5-lesson-\d+$/i.test(nodeId)) {
+            const lesson = n5LessonById(nodeId);
+            const payload = state.learningPathLessonPayloads[nodeId] || buildLearningPathLessonPayload(nodeId);
+            const lessonCardIds = [...new Set([
+                    ...(payload?.kanjiIds || []),
+                    ...((payload?.kanjiBlocks || []).map((item) => item.cardId)),
+                    ...(n5CardsForLesson(lesson).map((card) => card.id))
+                ].map(String).filter(Boolean))];
+            const course = n5Course();
+            lessonCardIds.forEach((cardId) => {
+                const card = learningPathCardById(cardId);
+                if (!card)
+                    return;
+                markKanjiSeen(card, "learning_path");
+                syncJlptCourseStudyState(course, card.kanji);
+                const before = cloneProgress(getCardProgress(card.id));
+                if (before.state === "New")
+                    state.progress.cards[card.id] = calculateNextProgress(before, hasMistakes ? "hard" : "good");
+            });
+            if (lesson) {
+                sessionCompletedLessons.add(`n5:${lesson.id}`);
+                course.completedLessons[lesson.id] = now;
+                course.currentLessonId = n5Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+                try {
+                    const key = STORAGE_KEY;
+                    const raw = localStorage.getItem(key);
+                    const p = raw ? JSON.parse(raw) : {};
+                    if (!p.n5Course)
+                        p.n5Course = {};
+                    if (!p.n5Course.completedLessons)
+                        p.n5Course.completedLessons = {};
+                    p.n5Course.completedLessons[lesson.id] = now;
+                    localStorage.setItem(key, JSON.stringify(p));
+                    state.progress.n5Course = state.progress.n5Course || {};
+                    state.progress.n5Course.completedLessons = state.progress.n5Course.completedLessons || {};
+                    state.progress.n5Course.completedLessons[lesson.id] = now;
+                }
+                catch (error) {
+                    console.warn("N5 learning path persist failed", error);
+                }
+                if (getN5CompletedLessonsCount() >= 10) {
+                    const studied = Object.keys(course.studiedKanji || {}).length;
+                    if (studied >= 80) {
+                        state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
+                        if (!state.progress.unlockedJlptLevels.includes("N5"))
+                            state.progress.unlockedJlptLevels.push("N5");
+                        if (!state.progress.unlockedJlptLevels.includes("N4"))
+                            state.progress.unlockedJlptLevels.push("N4");
+                    }
+                }
+                const xp = state.n5Meta?.rewards?.lessonCompleteXp || 45;
+                const coins = state.n5Meta?.rewards?.lessonCompleteMoon || 6;
+                addReward(xp, coins, `learning_path:${nodeId}`);
+                queueReward({
+                    title: `${n5Labels().lessonComplete}: ${localized(lesson.title)}`,
+                    message: n5Labels().lessonCompleteText,
+                    xp,
+                    coins,
+                    mascot: "eva",
+                    mood: "happy",
+                    dialog: "lessonComplete"
+                });
+                playUxSound("lesson_complete");
+                dispatchEvaEvent("lesson_complete", { lessonId: nodeId, jlpt: "N5" });
+            }
+        }
+        ensureLearningPathProgress();
+        updateStreak();
+        evaluateAchievements();
+        saveProgress();
+    }
+    function renderLearningPathMap() {
+        if (!state.n5Textbook?.items?.length)
+            void ensureLearningPathMapData();
+        const labels = learningPathLabels();
+        const nodes = learningPathNodes();
+        const primary = learningPathPrimaryAction();
+        const currentNode = learningPathNodeById(currentLearningPathNodeId());
+        const levelInfo = getLevelInfo();
+        return `
+      <section class="page learning-path-page">
+        <div class="section-head">
+          <div>
+            <h1>${escapeHtml(labels.route)}</h1>
+            <p>${escapeHtml(currentNode ? localized(currentNode.summary) || labels.mapHint : labels.loading)}</p>
+          </div>
+          <button class="btn primary" type="button" data-action="home-primary">${escapeHtml(primary.label)}</button>
+        </div>
+
+        <article class="learning-path-hero">
+          <div>
+            <span class="pill">${escapeHtml(labels.lessonTrack)}</span>
+            <h2>${escapeHtml(learningPathNodeTitle(currentLearningPathNodeId()))}</h2>
+            <p>${escapeHtml(labels.mapHint)}</p>
+          </div>
+          <div class="tag-row">
+            <span class="pill">${escapeHtml(learningPathLabels().reviewQueue)} · ${escapeHtml(getDueNowCards().length)}</span>
+            <span class="pill">${escapeHtml(learningPathLabels().streak)} · ${escapeHtml(state.progress.streak.current)}</span>
+            <span class="pill">${escapeHtml(learningPathLabels().xp)} · ${escapeHtml(levelInfo.current)}</span>
+          </div>
+        </article>
+
+        <div class="learning-path-timeline">
+          ${nodes.length ? nodes.map((node, index) => {
+            const status = learningPathNodeStatus(node);
+            const locked = status === "locked";
+            const subtitle = localized(node.summary) || "";
+            const actionLabel = node.id === LEARNING_PATH_REVIEW_NODE_ID
+                ? labels.reviewAction
+                : node.id === LEARNING_PATH_CHECKPOINT_NODE_ID
+                    ? labels.openCheckpoint
+                    : node.type === "textbook"
+                        ? labels.openTextbook
+                        : status === "current"
+                            ? labels.resume
+                            : labels.continue;
+            return `
+              <button class="learning-path-node is-${escapeAttr(status)} is-${escapeAttr(node.type || "lesson")}" type="button" data-action="learning-path-node" data-node="${escapeAttr(node.id)}" ${locked ? "disabled aria-disabled=\"true\"" : ""}>
+                <span class="learning-path-node-index">${index + 1}</span>
+                <div class="learning-path-node-copy">
+                  <div class="learning-path-node-meta">
+                    <span class="pill">${escapeHtml(node.level || "N5")}</span>
+                    <span class="pill">${escapeHtml(learningPathStatusLabel(status))}</span>
+                  </div>
+                  <h2>${escapeHtml(localized(node.title))}</h2>
+                  <p>${escapeHtml(subtitle)}</p>
+                  <div class="learning-path-node-foot">
+                    <small>${escapeHtml(node.durationMinutes || 0)} ${escapeHtml(labels.minutes)}</small>
+                    <strong>${escapeHtml(actionLabel)}</strong>
+                  </div>
+                </div>
+              </button>
+            `;
+        }).join("") : `<article class="empty-state"><h2>${escapeHtml(labels.empty)}</h2></article>`}
+        </div>
+      </section>
+    `;
+    }
+    function renderLearningPathPlayer() {
+        const nodeId = state.activeLearnNodeId || currentLearningPathNodeId();
+        const node = learningPathNodeById(nodeId);
+        const labels = learningPathLabels();
+        if (!node)
+            return renderLearningPathMap();
+        if (node.id !== LEARNING_PATH_INTRO_ID && node.type === "lesson" && !state.n5Textbook?.items?.length) {
+            void ensureLearningPathMapData();
+            return `
+        <section class="page learning-path-page">
+          <article class="study-card lesson-player">
+            <div class="section-head">
+              <div>
+                <h1>${escapeHtml(localized(node.title))}</h1>
+                <p>${escapeHtml(labels.loading)}</p>
+              </div>
+              <button class="btn ghost" type="button" data-action="learning-path-back">${escapeHtml(labels.backToMap)}</button>
+            </div>
+          </article>
+        </section>
+      `;
+        }
+        if (node.type === "lesson")
+            void ensureLearningPathLessonPayload(nodeId);
+        const player = learningPathPlayerState(nodeId);
+        const { session, steps, quizSteps, currentStep, isResult } = player;
+        if (!steps.length) {
+            return `
+        <section class="page learning-path-page">
+          <article class="study-card lesson-player">
+            <div class="section-head">
+              <div>
+                <h1>${escapeHtml(localized(node.title))}</h1>
+                <p>${escapeHtml(localized(node.summary) || labels.mapHint)}</p>
+              </div>
+              <button class="btn ghost" type="button" data-action="learning-path-node" data-node="${escapeAttr(node.id)}">${escapeHtml(node.type === "textbook" ? labels.openTextbook : labels.backToMap)}</button>
+            </div>
+          </article>
+        </section>
+      `;
+        }
+        const totalSteps = steps.length;
+        const progress = totalSteps ? progressWidth(Math.min(session.stepIndex, totalSteps), totalSteps) : 0;
+        const answered = session.answers?.[currentStep?.id || ""] || null;
+        const answerValue = answered?.selected || "";
+        const answerCorrect = Boolean(answered?.correct);
+        const percent = quizSteps.length ? Math.round((Number(session.score || 0) / Math.max(quizSteps.length, 1)) * 100) : 100;
+        if (isResult) {
+            return `
+        <section class="page learning-path-page">
+          <article class="study-card lesson-player">
+            <div class="section-head">
+              <div>
+                <h1>${escapeHtml(localized(node.title))}</h1>
+                <p>${escapeHtml(labels.scoreHint)}</p>
+              </div>
+              <button class="btn ghost" type="button" data-action="learning-path-back">${escapeHtml(labels.backToMap)}</button>
+            </div>
+            <div class="lesson-player-progress">
+              <span>${escapeHtml(labels.score)}</span>
+              <strong>${escapeHtml(percent)}%</strong>
+              <div class="meter"><i style="width:${percent}%"></i></div>
+            </div>
+            <div class="lesson-result-panel">
+              <article class="home-summary-card">
+                <span>${escapeHtml(labels.score)}</span>
+                <strong>${escapeHtml(`${session.score}/${Math.max(quizSteps.length, 1)}`)}</strong>
+              </article>
+              <article class="home-summary-card">
+                <span>${escapeHtml(labels.mistakes)}</span>
+                <strong>${escapeHtml(session.mistakes.length)}</strong>
+              </article>
+            </div>
+            <div class="lesson-player-actions">
+              ${session.mistakes.length ? `<button class="btn ghost" type="button" data-action="learning-path-retry" data-node="${escapeAttr(nodeId)}">${escapeHtml(labels.retryMistakes)}</button>` : ""}
+              <button class="btn primary" type="button" data-action="learning-path-continue" data-node="${escapeAttr(nodeId)}">${escapeHtml(labels.continuePath)}</button>
+            </div>
+          </article>
+        </section>
+      `;
+        }
+        return `
+      <section class="page learning-path-page">
+        <article class="study-card lesson-player">
+          <div class="section-head">
+            <div>
+              <h1>${escapeHtml(localized(node.title))}</h1>
+              <p>${escapeHtml(localized(node.summary) || labels.mapHint)}</p>
+            </div>
+            <button class="btn ghost" type="button" data-action="learning-path-back">${escapeHtml(labels.backToMap)}</button>
+          </div>
+          <div class="lesson-player-progress">
+            <span>${escapeHtml(labels.step)} ${escapeHtml(Math.min(session.stepIndex + 1, totalSteps))}/${escapeHtml(totalSteps)}</span>
+            <strong>${escapeHtml(currentStep.eyebrow || node.level || "N5")}</strong>
+            <div class="meter"><i style="width:${progress}%"></i></div>
+          </div>
+          <div class="lesson-player-card">
+            <span class="pill">${escapeHtml(currentStep.eyebrow || node.level || "N5")}</span>
+            <h2>${escapeHtml(currentStep.title || "")}</h2>
+            ${currentStep.kind === "kanji" && currentStep.card ? `
+              <div class="lesson-player-kanji">
+                <div class="lesson-player-glyph">${escapeHtml(currentStep.card.kanji)}</div>
+                <div class="lesson-player-kanji-copy">
+                  <p>${escapeHtml(currentStep.text || "")}</p>
+                  <div class="tag-row">
+                    <span class="pill">${escapeHtml(cardMeaning(currentStep.card))}</span>
+                    ${currentStep.card.hiragana ? `<span class="pill">${escapeHtml(displayHiragana(currentStep.card.hiragana))}</span>` : ""}
+                    ${currentStep.card.onyomi ? `<span class="pill">${escapeHtml(displayHiragana(currentStep.card.onyomi))}</span>` : ""}
+                  </div>
+                  ${currentStep.sentence ? `
+                    <div class="lesson-player-sentence">
+                      <strong>${escapeHtml(currentStep.sentence.jp || "")}</strong>
+                      <p>${escapeHtml(currentStep.sentence.hiragana || "")}</p>
+                      <small>${escapeHtml(localized(currentStep.sentence.translation || {}))}</small>
+                    </div>
+                  ` : ""}
+                </div>
+              </div>
+            ` : currentStep.kind === "quiz" ? `
+              <p>${escapeHtml(currentStep.text || "")}</p>
+              <div class="lesson-choice-grid">
+                ${(currentStep.options || []).map((option) => {
+            const selected = answerValue === option.value;
+            const isCorrect = option.value === currentStep.answer;
+            const className = selected
+                ? (answerCorrect ? "success" : "danger")
+                : (answered && isCorrect ? "ghost is-correct" : "ghost");
+            return `<button class="btn ${className}" type="button" data-action="learning-path-choice" data-node="${escapeAttr(nodeId)}" data-step="${escapeAttr(currentStep.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+        }).join("")}
+              </div>
+              ${answered ? `<p class="lesson-player-feedback ${answerCorrect ? "is-good" : "is-warning"}">${escapeHtml(answerCorrect ? (lang() === "ru" ? "\u0412\u0435\u0440\u043D\u043E." : "Correct.") : `${lang() === "ru" ? "\u041F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u043E" : "Correct"}: ${(currentStep.options || []).find((option) => option.value === currentStep.answer)?.label || currentStep.answer}`)}</p>` : ""}
+            ` : `
+              <p>${escapeHtml(currentStep.text || "")}</p>
+              ${currentStep.note ? `<small>${escapeHtml(currentStep.note)}</small>` : ""}
+            `}
+          </div>
+          <div class="lesson-player-actions">
+            <button class="btn ghost" type="button" data-action="learning-path-back">${escapeHtml(labels.backToMap)}</button>
+            <button class="btn primary" type="button" data-action="learning-path-step-next" data-node="${escapeAttr(nodeId)}" ${currentStep.kind === "quiz" && !answered ? "disabled aria-disabled=\"true\"" : ""}>${escapeHtml(session.stepIndex + 1 >= totalSteps ? labels.finish : labels.continue)}</button>
+          </div>
+        </article>
+      </section>
+    `;
+    }
+    function renderLearnLegacy() {
         const lessons = learnLessonsForFilter();
         const lesson = ensureActiveLearnLesson(lessons);
         const lessonUnlocked = Boolean(lesson && isLessonUnlocked(lesson));
@@ -7418,7 +8647,7 @@
             <h1>${escapeHtml(t("learn"))}</h1>
             <p>${escapeHtml(lesson ? lessonTitle(lesson) : "")}</p>
           </div>
-          ${selectedCatalog ? `<button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>` : ""}
+          ${selectedCatalog ? `<button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438" : "Textbooks")}</button>` : ""}
         </div>
         ${renderLearnJlptFilter(lessons)}
         ${selectedCatalog ? renderLearnLevelPanel(selectedCatalog) : ""}
@@ -7441,7 +8670,7 @@
         <section class="page">
           <article class="empty-state">
             <span class="kanji-char">JLPT</span>
-            <h2>${escapeHtml(lang() === "ru" ? "JLPT-уроки ещё не загружены" : "JLPT lessons are not loaded yet")}</h2>
+            <h2>${escapeHtml(lang() === "ru" ? "JLPT-\u0443\u0440\u043E\u043A\u0438 \u0435\u0449\u0451 \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B" : "JLPT lessons are not loaded yet")}</h2>
             <button class="btn primary" type="button" data-action="route" data-route="learn">${escapeHtml(t("learn"))}</button>
           </article>
         </section>
@@ -7464,8 +8693,8 @@
             <p>${escapeHtml(localized(lesson.summary))}</p>
           </div>
           <div class="actions">
-            <a class="btn ghost" href="#textbooks/${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "Страница учебника" : "Textbook page")}</a>
-            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "Все учебники" : "All textbooks")}</button>
+            <a class="btn ghost" href="#textbooks/${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430" : "Textbook page")}</a>
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(lang() === "ru" ? "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438" : "All textbooks")}</button>
             ${renderShareButton("lesson", { level: lesson.jlpt, lessonId: lesson.id })}
             <button class="btn ghost" type="button" data-action="route" data-route="textbooks" data-subroute="${escapeAttr(lesson.jlpt)}">${escapeHtml(labels.back)}</button>
           </div>
@@ -7477,25 +8706,25 @@
             const lockTitle = escapeAttr(textbookUnlockText(item.jlpt));
             return unlocked
                 ? `<button class="btn ${active ? "primary" : "ghost"}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(item.jlpt)}">${escapeHtml(item.jlpt)}</button>`
-                : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${lockTitle}">🔒 ${escapeHtml(item.jlpt)}</button>`;
+                : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${lockTitle}">\uD83D\uDD12 ${escapeHtml(item.jlpt)}</button>`;
         }).join("")}
         </div>
         ${textbook ? `
           <article class="jlpt-textbook-hero">
-            <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+            <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
             <div class="jlpt-textbook-body">
               <span class="pill">${escapeHtml(textbook.jlpt)}</span>
               <h2>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h2>
               <p>${escapeHtml(localized(textbook.description || {}))}</p>
               <div class="tag-row">
-                <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+                <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "\u0443\u0440\u043E\u043A\u043E\u0432" : "lessons")}</span>
                 <span class="pill">${escapeHtml(textbook.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
                 <span class="pill">${escapeHtml(localized(textbook.goal || {}))}</span>
                 <span class="pill">${escapeHtml(localized(textbook.recommendedCycle || {}))}</span>
               </div>
               <div class="actions">
-                <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "Скачать PDF" : "Download PDF")}</a>
-                <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "К уроку" : "Go to lesson")}</button>
+                <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "\u0421\u043A\u0430\u0447\u0430\u0442\u044C PDF" : "Download PDF")}</a>
+                <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(lesson.jlpt)}">${escapeHtml(lang() === "ru" ? "\u041A \u0443\u0440\u043E\u043A\u0443" : "Go to lesson")}</button>
               </div>
             </div>
           </article>
@@ -7553,11 +8782,11 @@
         }
         const labels = lang() === "ru"
             ? {
-                title: "Учебники Flash Kanji",
-                description: "Функциональные страницы учебников JLPT N5–N1 с переходом к урокам, повторению и материалам внутри уровня.",
-                open: "Открыть страницу",
-                pdf: "Скачать PDF",
-                study: "К урокам"
+                title: "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438 Flash Kanji",
+                description: "\u0424\u0443\u043D\u043A\u0446\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u043E\u0432 JLPT N5\u2013N1 \u0441 \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u043E\u043C \u043A \u0443\u0440\u043E\u043A\u0430\u043C, \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044E \u0438 \u043C\u0430\u0442\u0435\u0440\u0438\u0430\u043B\u0430\u043C \u0432\u043D\u0443\u0442\u0440\u0438 \u0443\u0440\u043E\u0432\u043D\u044F.",
+                open: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443",
+                pdf: "\u0421\u043A\u0430\u0447\u0430\u0442\u044C PDF",
+                study: "\u041A \u0443\u0440\u043E\u043A\u0430\u043C"
             }
             : {
                 title: "Flash Kanji Textbooks",
@@ -7582,7 +8811,7 @@
           ${items.map((item) => `
             <article class="textbook-card ${isTextbookUnlocked(item.jlpt) ? "is-unlocked" : "is-locked"}" id="textbook-${escapeAttr(item.jlpt)}">
               <div class="textbook-cover-wrap">
-                <img class="textbook-cover" src="${escapeAttr(item.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+                <img class="textbook-cover" src="${escapeAttr(item.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
                 <span class="pill textbook-level">${escapeHtml(item.jlpt)}</span>
               </div>
               <div class="textbook-body">
@@ -7590,7 +8819,7 @@
                 <p>${escapeHtml(localized(item.description || {}))}</p>
                 ${isTextbookUnlocked(item.jlpt) ? "" : `<p class="textbook-lock-note">${escapeHtml(textbookUnlockText(item.jlpt))}</p>`}
                 <div class="textbook-meta">
-                  <span class="pill">${escapeHtml(item.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+                  <span class="pill">${escapeHtml(item.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "\u0443\u0440\u043E\u043A\u043E\u0432" : "lessons")}</span>
                   <span class="pill">${escapeHtml(item.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
                   <span class="pill">${escapeHtml(localized(item.goal || {}))}</span>
                 </div>
@@ -7598,10 +8827,10 @@
                   <a class="btn primary" href="#textbooks/${escapeAttr(item.jlpt)}">${escapeHtml(labels.open)}</a>
                   ${isTextbookUnlocked(item.jlpt)
             ? `<a class="btn ghost" href="${escapeAttr(item.pdfUrl || item.pdfFile || "")}" download="${escapeAttr((item.pdfFile || item.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>`
-            : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(item.jlpt))}">${escapeHtml(lang() === "ru" ? "PDF закрыт" : "PDF locked")}</button>`}
+            : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(item.jlpt))}">${escapeHtml(lang() === "ru" ? "PDF \u0437\u0430\u043A\u0440\u044B\u0442" : "PDF locked")}</button>`}
                   ${isTextbookUnlocked(item.jlpt)
             ? `<button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(item.jlpt)}">${escapeHtml(labels.study)}</button>`
-            : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(item.jlpt))}">${escapeHtml(lang() === "ru" ? "Закрыто" : "Locked")}</button>`}
+            : `<button class="btn ghost is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(item.jlpt))}">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u043A\u0440\u044B\u0442\u043E" : "Locked")}</button>`}
                 </div>
               </div>
             </article>
@@ -7616,10 +8845,10 @@
         const previousLinks = requirements.map((item) => `<a class="pill" href="#textbooks/${escapeAttr(item)}">${escapeHtml(item)}</a>`).join("");
         const labels = lang() === "ru"
             ? {
-                title: "Учебник закрыт",
-                back: "Все учебники",
-                home: "Домой",
-                hint: "Сначала заверши предыдущие уровни, чтобы открыть этот учебник."
+                title: "\u0423\u0447\u0435\u0431\u043D\u0438\u043A \u0437\u0430\u043A\u0440\u044B\u0442",
+                back: "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438",
+                home: "\u0414\u043E\u043C\u043E\u0439",
+                hint: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0438 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0438\u0435 \u0443\u0440\u043E\u0432\u043D\u0438, \u0447\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u044D\u0442\u043E\u0442 \u0443\u0447\u0435\u0431\u043D\u0438\u043A."
             }
             : {
                 title: "Textbook locked",
@@ -7641,7 +8870,7 @@
           </div>
         </div>
         <article class="lesson-locked-panel textbook-locked-panel">
-          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook?.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook?.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
           <div class="jlpt-textbook-body">
             <span class="pill danger-pill">${escapeHtml(level || "JLPT")}</span>
             <h2>${escapeHtml(localized(textbook?.displayTitle || textbook?.title || { ru: labels.title, en: labels.title }))}</h2>
@@ -7675,28 +8904,28 @@
         }
         state.activeTextbookLevel = textbook.jlpt;
         state.activeJlptLesson = textbook.jlpt;
-        const lesson = state.activeTextbookSubroute
-            ? orderedLessons.find((item) => item.id === state.activeTextbookSubroute)
-                || jlptLessonByLevel(textbook.jlpt)
-                || state.jlptLessons[0]
-            : jlptLessonByLevel(textbook.jlpt) || state.jlptLessons[0];
         const textbookLessons = (textbook.lessonIds || [])
             .map((lessonId) => state.lessons.find((item) => item.id === lessonId))
             .filter(Boolean);
         const extraLessons = state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === String(textbook.jlpt || "").toUpperCase() && !textbookLessons.includes(item));
         const orderedLessons = [...textbookLessons, ...extraLessons].slice(0, Math.max(textbook.lessonCount || textbookLessons.length, textbookLessons.length));
+        const lesson = state.activeTextbookSubroute
+            ? orderedLessons.find((item) => item.id === state.activeTextbookSubroute)
+                || jlptLessonByLevel(textbook.jlpt)
+                || state.jlptLessons[0]
+            : jlptLessonByLevel(textbook.jlpt) || state.jlptLessons[0];
         const labels = lang() === "ru"
             ? {
-                title: "Страница учебника",
-                back: "Все учебники",
-                pdf: "Скачать PDF",
-                lessonPage: "Страница урока",
-                openLesson: "Открыть урок",
-                outline: "Что внутри",
-                practice: "Практика",
-                lessons: "Уроки учебника",
-                previous: "Предыдущие уровни",
-                next: "Следующие уровни"
+                title: "\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430",
+                back: "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438",
+                pdf: "\u0421\u043A\u0430\u0447\u0430\u0442\u044C PDF",
+                lessonPage: "\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u0443\u0440\u043E\u043A\u0430",
+                openLesson: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0443\u0440\u043E\u043A",
+                outline: "\u0427\u0442\u043E \u0432\u043D\u0443\u0442\u0440\u0438",
+                practice: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430",
+                lessons: "\u0423\u0440\u043E\u043A\u0438 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430",
+                previous: "\u041F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0438\u0435 \u0443\u0440\u043E\u0432\u043D\u0438",
+                next: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0435 \u0443\u0440\u043E\u0432\u043D\u0438"
             }
             : {
                 title: "Textbook page",
@@ -7726,19 +8955,19 @@
           <div class="actions">
             <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.back)}</button>
             <a class="btn primary" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile || "")}" download="${escapeAttr((textbook.pdfFile || textbook.pdfUrl || "flashkanji-textbook.pdf").split("/").pop() || "flashkanji-textbook.pdf")}" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
-                <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.lessonPage)}</button>
+            <button class="btn ghost" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.lessonPage)}</button>
             ${renderShareButton("textbook", { level: textbook.jlpt })}
           </div>
         </div>
 
         <article class="jlpt-textbook-hero">
-          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
           <div class="jlpt-textbook-body">
             <span class="pill">${escapeHtml(textbook.jlpt)}</span>
             <h2>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h2>
             <p>${escapeHtml(localized(textbook.description || {}))}</p>
             <div class="tag-row">
-              <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+              <span class="pill">${escapeHtml(textbook.lessonCount || 0)} ${escapeHtml(lang() === "ru" ? "\u0443\u0440\u043E\u043A\u043E\u0432" : "lessons")}</span>
               <span class="pill">${escapeHtml(textbook.kanjiCount || 0)} ${escapeHtml(t("cardsToday"))}</span>
               <span class="pill">${escapeHtml(goal)}</span>
               <span class="pill">${escapeHtml(cycle)}</span>
@@ -7752,9 +8981,9 @@
 
         <div class="metric-grid">
           ${renderMetric(textbook.jlpt, textbook.lessonCount || 0, goal, progressWidth(textbook.lessonCount || 0, Math.max(1, state.jlptLessons.length)))}
-          ${renderMetric(lang() === "ru" ? "Кандзи" : "Kanji", textbook.kanjiCount || 0, lang() === "ru" ? "в учебнике" : "in textbook", progressWidth(textbook.kanjiCount || 0, Math.max(1, state.cards.length)))}
-          ${renderMetric(lang() === "ru" ? "Уроки" : "Lessons", orderedLessons.length, labels.practice, progressWidth(orderedLessons.length, Math.max(1, state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === String(textbook.jlpt || "").toUpperCase()).length)))}
-          ${renderMetric(lang() === "ru" ? "Переход" : "Jump", state.activeTextbookLevel === textbook.jlpt ? 1 : 0, labels.lessonPage, state.activeTextbookLevel === textbook.jlpt ? 100 : 0)}
+          ${renderMetric(lang() === "ru" ? "\u041A\u0430\u043D\u0434\u0437\u0438" : "Kanji", textbook.kanjiCount || 0, lang() === "ru" ? "\u0432 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0435" : "in textbook", progressWidth(textbook.kanjiCount || 0, Math.max(1, state.cards.length)))}
+          ${renderMetric(lang() === "ru" ? "\u0423\u0440\u043E\u043A\u0438" : "Lessons", orderedLessons.length, labels.practice, progressWidth(orderedLessons.length, Math.max(1, state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === String(textbook.jlpt || "").toUpperCase()).length)))}
+          ${renderMetric(lang() === "ru" ? "\u041F\u0435\u0440\u0435\u0445\u043E\u0434" : "Jump", state.activeTextbookLevel === textbook.jlpt ? 1 : 0, labels.lessonPage, state.activeTextbookLevel === textbook.jlpt ? 100 : 0)}
         </div>
 
         ${lesson ? `
@@ -7765,15 +8994,15 @@
               <p>${escapeHtml(localized(lesson.summary || {}))}</p>
             </div>
             <div class="mini-stat-row">
-              ${renderMetric(lang() === "ru" ? "Грамматика" : "Grammar", lesson.sections?.length || 0, labels.outline, progressWidth(lesson.sections?.length || 0, 4))}
-              ${renderMetric(lang() === "ru" ? "Практика" : "Practice", lesson.practice?.length || 0, labels.practice, progressWidth(lesson.practice?.length || 0, 4))}
+              ${renderMetric(lang() === "ru" ? "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430" : "Grammar", lesson.sections?.length || 0, labels.outline, progressWidth(lesson.sections?.length || 0, 4))}
+              ${renderMetric(lang() === "ru" ? "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430" : "Practice", lesson.practice?.length || 0, labels.practice, progressWidth(lesson.practice?.length || 0, 4))}
             </div>
           </article>
           ${renderJlptPracticeModule(lesson)}
           <div class="jlpt-section-grid">
             ${lesson.goals?.length ? `
               <article class="jlpt-section-card">
-                <h3>${escapeHtml(lang() === "ru" ? "Цели уровня" : "Level goals")}</h3>
+                <h3>${escapeHtml(lang() === "ru" ? "\u0426\u0435\u043B\u0438 \u0443\u0440\u043E\u0432\u043D\u044F" : "Level goals")}</h3>
                 <ul>${lesson.goals.map((goalItem) => `<li>${escapeHtml(localized(goalItem))}</li>`).join("")}</ul>
               </article>
             ` : ""}
@@ -7792,7 +9021,7 @@
             ` : ""}
             ${lesson.checkpoint?.length ? `
               <article class="jlpt-section-card">
-                <h3>${escapeHtml(lang() === "ru" ? "Чекпоинт" : "Checkpoint")}</h3>
+                <h3>${escapeHtml(lang() === "ru" ? "\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442" : "Checkpoint")}</h3>
                 <ul>${lesson.checkpoint.map((point) => `<li>${escapeHtml(localized(point))}</li>`).join("")}</ul>
               </article>
             ` : ""}
@@ -7802,12 +9031,12 @@
         <div class="section-head">
           <div>
             <h2>${escapeHtml(labels.lessons)}</h2>
-            <p>${escapeHtml(lang() === "ru" ? "Карточки, входящие в этот учебник, и быстрые переходы в урок." : "Cards included in this textbook, with quick jumps into lessons.")}</p>
+            <p>${escapeHtml(lang() === "ru" ? "\u041A\u0430\u0440\u0442\u043E\u0447\u043A\u0438, \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0435 \u0432 \u044D\u0442\u043E\u0442 \u0443\u0447\u0435\u0431\u043D\u0438\u043A, \u0438 \u0431\u044B\u0441\u0442\u0440\u044B\u0435 \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u044B \u0432 \u0443\u0440\u043E\u043A." : "Cards included in this textbook, with quick jumps into lessons.")}</p>
           </div>
           ${openLessonId ? `<button class="btn primary" type="button" data-action="open-jlpt-lesson-start" data-jlpt="${escapeAttr(textbook.jlpt)}">${escapeHtml(labels.openLesson)}</button>` : ""}
         </div>
         <div class="lesson-grid">
-          ${orderedLessons.map((item) => renderLessonTile(item)).join("") || `<article class="empty-state"><h3>${escapeHtml(lang() === "ru" ? "Уроки скоро появятся" : "Lessons will appear soon")}</h3></article>`}
+          ${orderedLessons.map((item) => renderLessonTile(item)).join("") || `<article class="empty-state"><h3>${escapeHtml(lang() === "ru" ? "\u0423\u0440\u043E\u043A\u0438 \u0441\u043A\u043E\u0440\u043E \u043F\u043E\u044F\u0432\u044F\u0442\u0441\u044F" : "Lessons will appear soon")}</h3></article>`}
         </div>
       </section>
     `;
@@ -7912,11 +9141,184 @@
       </a>
     `;
     }
+    function jlptLessonStudyProgress() {
+        state.progress.jlptLessonStudy = mergeJlptLessonStudyProgress(defaultJlptLessonStudyProgress(), state.progress.jlptLessonStudy || {});
+        return state.progress.jlptLessonStudy;
+    }
+    function jlptLessonStudyKey(level, lessonId) {
+        return `${String(level || "").toUpperCase()}:${String(lessonId || "")}`;
+    }
+    function jlptLessonStudySectionId(level, lessonId, kind = "player") {
+        return `jlpt-${String(level || "").toLowerCase()}-${kind}-${String(lessonId || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+    }
+    function jlptLessonStudySession(level, lesson, cards) {
+        const progress = jlptLessonStudyProgress();
+        const key = jlptLessonStudyKey(level, lesson?.id);
+        const fallback = defaultJlptLessonStudySession();
+        let session = progress.sessions[key];
+        if (!session) {
+            session = {
+                ...fallback,
+                level: String(level || "").toUpperCase(),
+                lessonId: String(lesson?.id || ""),
+                startedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            progress.sessions[key] = session;
+        }
+        session.level = String(level || session.level || "").toUpperCase();
+        session.lessonId = String(lesson?.id || session.lessonId || "");
+        session.answers ||= {};
+        session.phase = normalizeJlptLessonStudyPhase(session.phase);
+        session.startedAt ||= new Date().toISOString();
+        session.updatedAt ||= new Date().toISOString();
+        const total = Array.isArray(cards) ? cards.length : 0;
+        const pendingIndex = total
+            ? cards.findIndex((card) => !session.answers[card.id])
+            : -1;
+        const answeredCount = Object.keys(session.answers || {}).length;
+        if (session.completedAt) {
+            session.phase = "done";
+            session.currentIndex = total;
+        }
+        else if (pendingIndex < 0) {
+            session.currentIndex = total;
+            session.phase = "test";
+            session.testOpenedAt ||= session.updatedAt || new Date().toISOString();
+        }
+        else {
+            session.currentIndex = pendingIndex;
+            if (session.phase !== "test")
+                session.phase = "study";
+        }
+        progress.activeSessionKey = key;
+        progress.lastUpdatedAt = new Date().toISOString();
+        return { session, key, answeredCount, currentIndex: session.currentIndex, total };
+    }
+    function jlptLessonStudyCurrentCard(sessionInfo, cards) {
+        if (!sessionInfo || !Array.isArray(cards) || !cards.length)
+            return null;
+        if (sessionInfo.session?.phase !== "study")
+            return null;
+        return cards[Math.min(Math.max(Number(sessionInfo.currentIndex || 0), 0), cards.length - 1)] || null;
+    }
+    function renderJlptLessonStudyExampleList(examples) {
+        const items = Array.isArray(examples) ? examples : [];
+        if (!items.length)
+            return "";
+        return `
+      <ul class="example-list lesson-study-example-list">
+        ${items.slice(0, 2).map(renderExampleItem).join("")}
+      </ul>
+    `;
+    }
+    function renderJlptLessonStudyDetails(card) {
+        const strokeDescriptions = normalizeStrokeDescriptions(card);
+        const hasStrokeOrder = strokeDescriptions.length > 0;
+        return `
+      <details class="lesson-study-details">
+        <summary>${escapeHtml(lang() === "ru" ? "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435" : "Show details")}</summary>
+        <div class="lesson-study-details-body">
+          ${renderAudioPlayer(card)}
+          ${hasStrokeOrder ? `
+            <div>
+              <h3>${escapeHtml(t("strokeOrder"))}</h3>
+              <ol class="stroke-list lesson-study-strokes">${strokeDescriptions.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
+            </div>
+          ` : ""}
+        </div>
+      </details>
+    `;
+    }
+    function renderJlptLessonStudyCard(level, lesson, card, index, totalCards, labels, options = {}) {
+        if (!card)
+            return "";
+        const examples = typeof options.examples === "function" ? (options.examples(card, lesson) || []) : [];
+        const sentence = typeof options.sentence === "function" ? options.sentence(card, lesson) : "";
+        const extra = typeof options.extra === "function" ? options.extra(card, lesson) : "";
+        const answerAction = options.answerAction || "jlpt-lesson-answer";
+        const playerLevel = String(level || card.jlpt || "").toUpperCase();
+        const playerIndex = Number(index || 0);
+        const progress = getCardProgress(card.id);
+        const lessonId = lesson?.id || "";
+        return `
+      <article class="lesson-player-card lesson-study-card">
+        <div class="lesson-player-kanji">
+          <div class="lesson-player-glyph">${escapeHtml(card.kanji)}</div>
+          <div class="lesson-player-kanji-copy">
+            <div class="tag-row compact-tags">
+              <span class="pill">${escapeHtml(labels.step)} ${escapeHtml(playerIndex + 1)}</span>
+              <span class="pill">${escapeHtml(progress.state)}</span>
+              ${card.jlpt ? `<span class="pill">${escapeHtml(card.jlpt)}</span>` : ""}
+              ${card.strokes ? `<span class="pill">${escapeHtml(card.strokes)} ${escapeHtml(t("strokes"))}</span>` : ""}
+              ${renderKanjiAudioButton(card)}
+            </div>
+            <h2>${escapeHtml(cardMeaning(card))}</h2>
+            <p class="label lesson-study-progress-label">${escapeHtml(level || card.jlpt || "")} · ${escapeHtml(lang() === "ru" ? `\u041A\u0430\u043D\u0434\u0437\u0438 ${Math.min(playerIndex + 1, totalCards)} из ${totalCards}` : `Kanji ${Math.min(playerIndex + 1, totalCards)} of ${totalCards}`)}</p>
+            <dl class="n5-readings lesson-study-readings">
+              <div><dt>${escapeHtml(labels.onyomi)}</dt><dd>${escapeHtml(displayHiragana(card.onyomi || "—"))}</dd></div>
+              <div><dt>${escapeHtml(labels.kunyomi)}</dt><dd>${escapeHtml(displayHiragana(card.kunyomi || card.hiragana || "—"))}</dd></div>
+            </dl>
+            ${renderJlptLessonStudyExampleList(examples)}
+            ${sentence}
+            ${extra ? `<div class="lesson-study-extra">${extra}</div>` : ""}
+            ${renderJlptLessonStudyDetails(card)}
+          </div>
+        </div>
+        <div class="lesson-choice-grid lesson-study-actions">
+          <button class="btn success" type="button" data-action="${escapeAttr(answerAction)}" data-level="${escapeAttr(playerLevel)}" data-lesson="${escapeAttr(lessonId)}" data-card="${escapeAttr(card.id)}" data-value="remember">${escapeHtml(labels.remember)}</button>
+          <button class="btn danger" type="button" data-action="${escapeAttr(answerAction)}" data-level="${escapeAttr(playerLevel)}" data-lesson="${escapeAttr(lessonId)}" data-card="${escapeAttr(card.id)}" data-value="forget">${escapeHtml(labels.notRemember)}</button>
+        </div>
+      </article>
+    `;
+    }
+    function renderJlptLessonStudyComplete(level, lesson, labels, totalCards, answeredCount) {
+        return `
+      <article class="lesson-player-card lesson-study-complete">
+        <div class="lesson-study-complete-copy">
+          <span class="pill">${escapeHtml(lang() === "ru" ? "\u041A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043F\u0440\u043E\u0439\u0434\u0435\u043D\u044B" : "Cards completed")}</span>
+          <h2>${escapeHtml(labels.lessonComplete)}</h2>
+          <p>${escapeHtml(lang() === "ru" ? "\u0412\u0441\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0443\u0440\u043E\u043A\u0430 \u0443\u0436\u0435 \u043E\u0442\u0432\u0435\u0447\u0435\u043D\u044B. \u0422\u0435\u0441\u0442 \u043E\u0442\u043A\u0440\u044B\u0442 \u043D\u0438\u0436\u0435." : "All lesson cards are answered. The test is open below.")}</p>
+          <div class="tag-row">
+            <span class="pill">${escapeHtml(lang() === "ru" ? `\u041A\u0430\u043D\u0434\u0437\u0438 ${answeredCount}/${totalCards}` : `Kanji ${answeredCount}/${totalCards}`)}</span>
+            <span class="pill">${escapeHtml(labels.completed)}</span>
+          </div>
+        </div>
+      </article>
+    `;
+    }
+    function renderJlptLessonStudyPlayer(level, lesson, cards, labels, options = {}) {
+        const study = jlptLessonStudySession(level, lesson, cards);
+        const currentCard = jlptLessonStudyCurrentCard(study, cards);
+        const answeredCount = Number(study.answeredCount || 0);
+        const totalCards = Number(study.total || 0);
+        const playerId = options.playerId || jlptLessonStudySectionId(level, lesson?.id, "player");
+        const progressValue = totalCards ? progressWidth(answeredCount, totalCards) : 0;
+        const currentLabel = currentCard
+            ? `${lang() === "ru" ? "\u041A\u0430\u043D\u0434\u0437\u0438" : "Kanji"} ${Math.min(answeredCount + 1, totalCards)}/${totalCards}`
+            : (study.session?.phase === "done"
+                ? (lang() === "ru" ? "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Lesson complete")
+                : (lang() === "ru" ? "\u0422\u0435\u0441\u0442 \u043E\u0442\u043A\u0440\u044B\u0442" : "Test open"));
+        const title = currentCard ? cardMeaning(currentCard) : labels.lessonComplete;
+        return `
+      <article class="study-card lesson-player lesson-study-player" id="${escapeAttr(playerId)}">
+        <div class="lesson-player-progress">
+          <span>${escapeHtml(currentLabel)}</span>
+          <strong>${escapeHtml(title)}</strong>
+          <div class="meter"><i style="width:${progressValue}%"></i></div>
+        </div>
+        ${currentCard
+            ? renderJlptLessonStudyCard(level, lesson, currentCard, study.currentIndex, totalCards, labels, options)
+            : renderJlptLessonStudyComplete(level, lesson, labels, totalCards, answeredCount)}
+      </article>
+    `;
+    }
     function renderN5LessonPage(textbook, lesson) {
         const labels = n5Labels();
         const cards = n5CardsForLesson(lesson);
         const exercises = buildN5LessonExercises(lesson);
         const status = n5LessonStatus(lesson.id);
+        const study = jlptLessonStudySession("N5", lesson, cards);
         let complete = status === "completed";
         // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
         const n5SessKey = `n5:${lesson.id}`;
@@ -7931,6 +9333,8 @@
         const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
         const difficult = lesson.kanji.filter((kanji) => n5Course().difficultKanji[kanji]).join(" · ");
         const nextLesson = n5Lessons().find((item) => item.order === lesson.order + 1);
+        const playerId = jlptLessonStudySectionId("N5", lesson.id, "player");
+        const testId = jlptLessonStudySectionId("N5", lesson.id, "test");
         return `
       <section class="page textbooks-page n5-course-page n5-lesson-page">
         <div class="section-head">
@@ -7953,14 +9357,17 @@
             <p>${escapeHtml(labels.lessonChainText)}</p>
           </div>
           <div class="mini-stat-row">
-            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n5Course().studiedKanji[card.kanji]).length}/8`, labels.kanji, progressWidth(cards.filter((card) => n5Course().studiedKanji[card.kanji]).length, 8))}
+            ${renderMetric(labels.studiedKanji, `${Math.min(study.answeredCount, totalKanji)}/${totalKanji}`, labels.kanji, progressWidth(study.answeredCount, totalKanji))}
             ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
           </div>
         </article>
 
-        <div class="n5-kanji-grid">
-          ${cards.map((card, index) => renderN5KanjiStudyCard(card, lesson, index)).join("")}
-        </div>
+        ${renderJlptLessonStudyPlayer("N5", lesson, cards, labels, {
+            playerId,
+            answerAction: "jlpt-lesson-answer",
+            examples: (card) => n5CardExamples(card),
+            sentence: (card) => renderN5CardSentence(card, lesson)
+        })}
 
         <section class="n5-panel">
           <div>
@@ -7971,14 +9378,14 @@
             ${lesson.sentences.map((sentence) => `
               <article>
                 <strong>${escapeHtml(sentence.jp)}</strong>
-                <span>${escapeHtml(sentence.reading)}</span>
+                <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
                 <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
               </article>
             `).join("")}
           </div>
         </section>
 
-        <section class="n5-panel">
+        <section class="n5-panel" id="${escapeAttr(testId)}">
           <div>
             <h2>${escapeHtml(labels.exercises)}</h2>
             <p>${escapeHtml(labels.exercisesText)}</p>
@@ -7997,10 +9404,10 @@
               <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
-            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи (8/8) и упражнения урока." : "Complete all kanji (8/8) and exercises in the lesson.")}</p>` : ""}
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 (8/8) \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0443\u0440\u043E\u043A\u0430." : "Complete all kanji (8/8) and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n5-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n5-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n5-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#textbooks/N5/${escapeAttr(nextLesson.id)}" data-action="n5-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<a class="btn ghost" href="#textbooks/N5/final-test">${escapeHtml(labels.finalTest)}</a>`}
           </div>
@@ -8029,16 +9436,15 @@
         </dl>
         <div class="n5-word-list">
           ${examples.map((example) => `
-            <p><b>${escapeHtml(example.word)}</b><span>${escapeHtml(example.reading)} · ${escapeHtml(exampleTranslation(example))}</span></p>
+            <p><b>${escapeHtml(example.word)}</b><span>${escapeHtml(displayHiragana(example.reading || ""))} · ${escapeHtml(exampleTranslation(example))}</span></p>
           `).join("")}
         </div>
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN5CardSentence(card, lesson)}
         <div class="textbook-actions">
-            <button class="btn primary" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
-            <button class="btn success" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-            <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
-          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn primary" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn ghost" type="button" data-action="n5-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
       </article>
@@ -8051,7 +9457,7 @@
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
-        <span>${escapeHtml(sentence.reading)}</span>
+        <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
         <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
       </div>
     `;
@@ -8106,7 +9512,7 @@
       <section class="page textbooks-page n5-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N5 · Повторение</p>
+            <p class="eyebrow">JLPT N5 \u00B7 \u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -8141,7 +9547,6 @@
         <div class="textbook-actions">
           <button class="btn success" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
           <button class="btn warning" type="button" data-action="n5-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
-          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
         </div>
       </article>
     `;
@@ -8206,9 +9611,9 @@
         <div class="n5-exercise-list">
           ${questions.map((question, index) => renderN5FinalQuestion(question, index)).join("")}
         </div>
-        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
-          <button class="btn primary" type="button" data-action="n5-final-submit" ${(submitting || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "Тест завершён" : "Test completed") : labels.submitFinal)}</button>
+          <button class="btn primary" type="button" data-action="n5-final-submit" ${(submitting || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "\u0422\u0435\u0441\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Test completed") : labels.submitFinal)}</button>
           <button class="btn ghost" type="button" data-action="n5-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -8240,68 +9645,72 @@
         return lang() === "ru"
             ? {
                 title: "JLPT N5",
-                allTextbooks: "Все учебники",
-                pdf: "PDF-учебник",
-                kanji: "кандзи",
-                courseMap: "Полноценный интерактивный учебник N5",
-                continue: "Продолжить",
-                review: "Повторять N5",
-                finalTest: "Финальный тест",
+                allTextbooks: "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438",
+                pdf: "PDF-\u0443\u0447\u0435\u0431\u043D\u0438\u043A",
+                kanji: "\u043A\u0430\u043D\u0434\u0437\u0438",
+                courseMap: "\u041F\u043E\u043B\u043D\u043E\u0446\u0435\u043D\u043D\u044B\u0439 \u0438\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0443\u0447\u0435\u0431\u043D\u0438\u043A N5",
+                continue: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C",
+                review: "\u041F\u043E\u0432\u0442\u043E\u0440\u044F\u0442\u044C N5",
+                finalTest: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442",
                 studiedKanji: "Изучено",
-                completedLessons: "Уроки",
-                reviews: "Повторения",
-                difficult: "Сложные",
-                filterDifficult: "фильтр",
-        srs: "Повторение",
-        lessons: "уроков",
-                lessonsTitle: "10 уроков по 8 кандзи",
-                lessonsDescription: "Каждый урок ведёт от знака к слову, предложению, упражнению, письму и повторению.",
-                reviewPlan: "План повторения на 30 дней",
-                day: "день",
-                lesson: "Урок",
+                completedLessons: "\u0423\u0440\u043E\u043A\u0438",
+                reviews: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F",
+                difficult: "\u0421\u043B\u043E\u0436\u043D\u044B\u0435",
+                filterDifficult: "\u0444\u0438\u043B\u044C\u0442\u0440",
+                srs: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessons: "\u0443\u0440\u043E\u043A\u043E\u0432",
+                lessonsTitle: "10 \u0443\u0440\u043E\u043A\u043E\u0432 \u043F\u043E 8 \u043A\u0430\u043D\u0434\u0437\u0438",
+                lessonsDescription: "\u041A\u0430\u0436\u0434\u044B\u0439 \u0443\u0440\u043E\u043A \u0432\u0435\u0434\u0451\u0442 \u043E\u0442 \u0437\u043D\u0430\u043A\u0430 \u043A \u0441\u043B\u043E\u0432\u0443, \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044E, \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044E, \u043F\u0438\u0441\u044C\u043C\u0443 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044E.",
+                reviewPlan: "\u041F\u043B\u0430\u043D \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u043D\u0430 30 \u0434\u043D\u0435\u0439",
+                day: "\u0434\u0435\u043D\u044C",
+                lesson: "\u0423\u0440\u043E\u043A",
                 backToN5: "К N5",
-                lessonChain: "Кандзи -> слово -> предложение -> практика",
-                lessonChainText: "Сначала узнаёшь знак, затем видишь чтение в слове, читаешь предложение, отвечаешь и отправляешь карточку в повторение.",
-                exercises: "Упражнения",
-                correct: "верно",
-                sentences: "Примеры предложений",
-                sentencesText: "Читай вслух: так чтение перестаёт быть отдельной таблицей.",
-                exercisesText: "Смешанная практика работает внутри урока и повторения.",
-                lessonComplete: "Урок завершён",
-                lessonCompleteText: "Кандзи урока доступны в повторении.",
+                lessonChain: "\u041A\u0430\u043D\u0434\u0437\u0438 -> \u0441\u043B\u043E\u0432\u043E -> \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 -> \u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0430",
+                lessonChainText: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0443\u0437\u043D\u0430\u0451\u0448\u044C \u0437\u043D\u0430\u043A, \u0437\u0430\u0442\u0435\u043C \u0432\u0438\u0434\u0438\u0448\u044C \u0447\u0442\u0435\u043D\u0438\u0435 \u0432 \u0441\u043B\u043E\u0432\u0435, \u0447\u0438\u0442\u0430\u0435\u0448\u044C \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435, \u043E\u0442\u0432\u0435\u0447\u0430\u0435\u0448\u044C \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0448\u044C \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443 \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                exercises: "\u0423\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F",
+                correct: "\u0432\u0435\u0440\u043D\u043E",
+                sentences: "\u041F\u0440\u0438\u043C\u0435\u0440\u044B \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439",
+                sentencesText: "\u0427\u0438\u0442\u0430\u0439 \u0432\u0441\u043B\u0443\u0445: \u0442\u0430\u043A \u0447\u0442\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u0451\u0442 \u0431\u044B\u0442\u044C \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E\u0439 \u0442\u0430\u0431\u043B\u0438\u0446\u0435\u0439.",
+                exercisesText: "\u0421\u043C\u0435\u0448\u0430\u043D\u043D\u0430\u044F \u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u0432\u043D\u0443\u0442\u0440\u0438 \u0443\u0440\u043E\u043A\u0430 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F.",
+                lessonComplete: "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D",
+                lessonCompleteText: "\u041A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0438.",
                 lessonResult: "Итог урока",
-                lessonResultText: "Заверши урок, когда все 8 кандзи добавлены в повторение.",
-                completeLesson: "Завершить урок",
-                refreshLesson: "Обновить итог",
-                repeatMistakes: "Повторить ошибки",
-                nextLesson: "Следующий урок",
-                none: "нет",
-                step: "шаг",
-                onyomi: "онъёми",
-                kunyomi: "кунъёми",
-                addToSrs: "В повторение",
-                know: "Знаю",
-                hard: "Сложно",
-                writingPractice: "Практика письма",
-                markWritten: "Написано",
-                written: "Письмо засчитано",
-                check: "Проверить",
-                showAnswer: "Сложно: показать ответ",
-                correctAnswer: "Верно. XP и Moon Fragment начислены.",
-                wrongAnswer: "Пока нет",
-                reviewTitle: "N5-повторение",
-                reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N5.",
-                noReviewCards: "Сейчас нет карточек в этом фильтре.",
-                questions: "Вопросы",
-                score: "Результат",
+                lessonResultText: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438 \u0443\u0440\u043E\u043A, \u043A\u043E\u0433\u0434\u0430 \u0432\u0441\u0435 8 \u043A\u0430\u043D\u0434\u0437\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                completeLesson: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0443\u0440\u043E\u043A",
+                refreshLesson: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0438\u0442\u043E\u0433",
+                repeatMistakes: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438",
+                nextLesson: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0443\u0440\u043E\u043A",
+                none: "\u043D\u0435\u0442",
+                step: "\u0448\u0430\u0433",
+                onyomi: "\u043E\u043D\u044A\u0451\u043C\u0438",
+                kunyomi: "\u043A\u0443\u043D\u044A\u0451\u043C\u0438",
+                remember: "\u041F\u043E\u043C\u043D\u044E",
+                notRemember: "\u041D\u0435 \u043F\u043E\u043C\u043D\u044E",
+                details: "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435",
+                completed: "\u041F\u0440\u043E\u0439\u0434\u0435\u043D\u043E",
+                addToSrs: "\u0412 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                know: "\u0417\u043D\u0430\u044E",
+                hard: "\u0421\u043B\u043E\u0436\u043D\u043E",
+                writingPractice: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+                markWritten: "\u041D\u0430\u043F\u0438\u0441\u0430\u043D\u043E",
+                written: "\u041F\u0438\u0441\u044C\u043C\u043E \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D\u043E",
+                check: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+                showAnswer: "\u0421\u043B\u043E\u0436\u043D\u043E: \u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043E\u0442\u0432\u0435\u0442",
+                correctAnswer: "\u0412\u0435\u0440\u043D\u043E. XP \u0438 Moon Fragment \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u044B.",
+                wrongAnswer: "\u041F\u043E\u043A\u0430 \u043D\u0435\u0442",
+                reviewTitle: "N5-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                reviewDescription: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438 due-\u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438, \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438\u043B\u0438 \u0432\u0435\u0441\u044C \u043D\u0430\u0431\u043E\u0440 N5.",
+                noReviewCards: "\u0421\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u043A\u0430\u0440\u0442\u043E\u0447\u0435\u043A \u0432 \u044D\u0442\u043E\u043C \u0444\u0438\u043B\u044C\u0442\u0440\u0435.",
+                questions: "\u0412\u043E\u043F\u0440\u043E\u0441\u044B",
+                score: "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442",
                 mistakes: "Ошибки",
-                resetTest: "Сбросить тест",
-                submitFinal: "Завершить тест",
-                reviewAll: "Повторить весь N5",
-                finalPassed: "N5 пройден",
-                finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
-                finalNeedsReview: "Нужно повторить",
-                finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
+                resetTest: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                submitFinal: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                reviewAll: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0432\u0435\u0441\u044C N5",
+                finalPassed: "N5 \u043F\u0440\u043E\u0439\u0434\u0435\u043D",
+                finalPassedText: "\u041E\u0442\u043B\u0438\u0447\u043D\u043E. \u041E\u0448\u0438\u0431\u043A\u0438 \u043C\u043E\u0436\u043D\u043E \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                finalNeedsReview: "\u041D\u0443\u0436\u043D\u043E \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+                finalNeedsReviewText: "\u041E\u0448\u0438\u0431\u043A\u0438 \u043F\u043E\u043C\u0435\u0447\u0435\u043D\u044B \u043A\u0430\u043A \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u0438 \u043F\u043E\u0434\u043D\u044F\u0442\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435."
             }
             : {
                 title: "JLPT N5",
@@ -8317,8 +9726,8 @@
                 reviews: "Reviews",
                 difficult: "Difficult",
                 filterDifficult: "filter",
-        srs: "Review",
-        lessons: "lessons",
+                srs: "Review",
+                lessons: "lessons",
                 lessonsTitle: "10 lessons, 8 kanji each",
                 lessonsDescription: "Each lesson moves from sign to word, sentence, exercise, writing, and SRS.",
                 reviewPlan: "30-day review plan",
@@ -8344,6 +9753,9 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
+                remember: "Remember",
+                notRemember: "Don't remember",
+                details: "Show more",
                 addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
@@ -8446,7 +9858,7 @@
         const word = example?.word || card.kanji;
         const reading = displayHiragana(example?.reading || card.hiragana || "");
         return lang() === "ru"
-            ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}» и сразу проговори слово: ${word}${reading ? ` (${reading})` : ""}.`
+            ? `\u0421\u0432\u044F\u0436\u0438 ${card.kanji} \u0441\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435\u043C \u00AB${cardMeaning(card)}\u00BB \u0438 \u0441\u0440\u0430\u0437\u0443 \u043F\u0440\u043E\u0433\u043E\u0432\u043E\u0440\u0438 \u0441\u043B\u043E\u0432\u043E: ${word}${reading ? ` (${reading})` : ""}.`
             : `Connect ${card.kanji} with "${cardMeaning(card)}" and say the word right away: ${word}${reading ? ` (${reading})` : ""}.`;
     }
     function n5ProgressSummary() {
@@ -8480,10 +9892,10 @@
     }
     function n5LessonStatusLabel(status) {
         if (status === "completed")
-            return lang() === "ru" ? "завершён" : "completed";
+            return lang() === "ru" ? "\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "completed";
         if (status === "started")
-            return lang() === "ru" ? "начат" : "started";
-        return lang() === "ru" ? "не начат" : "new";
+            return lang() === "ru" ? "\u043D\u0430\u0447\u0430\u0442" : "started";
+        return lang() === "ru" ? "\u043D\u0435 \u043D\u0430\u0447\u0430\u0442" : "new";
     }
     // HARD BINDING: this is THE source of truth for "how many N5 lessons completed".
     // Used by lesson tiles/cards on N5 overview (via n5LessonStatus per lesson),
@@ -8508,7 +9920,7 @@
         exercises.push({
             id: `${lesson.id}-meaning-0`,
             type: "meaning",
-            title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+            title: exerciseTitles.meaning || { ru: "\u0423\u0437\u043D\u0430\u0432\u0430\u043D\u0438\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F", en: "Meaning recognition" },
             prompt: meaningCard.kanji,
             answer: meaningCard.id,
             answerLabel: cardMeaning(meaningCard),
@@ -8521,7 +9933,7 @@
         exercises.push({
             id: `${lesson.id}-kanji-1`,
             type: "kanji",
-            title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+            title: exerciseTitles.kanji || { ru: "\u041A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E", en: "Kanji from meaning" },
             prompt: cardMeaning(kanjiCard),
             answer: kanjiCard.kanji,
             answerLabel: kanjiCard.kanji,
@@ -8535,7 +9947,7 @@
         exercises.push({
             id: `${lesson.id}-reading-2`,
             type: "reading",
-            title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+            title: exerciseTitles.reading || { ru: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0441\u043B\u043E\u0432\u0430", en: "Word reading" },
             prompt: readingExample.word,
             answer: readingExample.reading,
             answerLabel: readingExample.reading,
@@ -8549,7 +9961,7 @@
             exercises.push({
                 id: `${lesson.id}-sentence-3`,
                 type: "sentence",
-                title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+                title: exerciseTitles.sentence || { ru: "\u041F\u0435\u0440\u0435\u0432\u043E\u0434 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F", en: "Sentence translation" },
                 prompt: sentence.jp,
                 answer: localized({ ru: sentence.ru, en: sentence.en }),
                 answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
@@ -8564,8 +9976,8 @@
         exercises.push({
             id: `${lesson.id}-word-4`,
             type: "missing-word",
-            title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Insert the word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            title: exerciseTitles["missing-word"] || { ru: "\u0412\u0441\u0442\u0430\u0432\u044C \u0441\u043B\u043E\u0432\u043E", en: "Insert the word" },
+            prompt: lang() === "ru" ? `\u041A\u0430\u043A\u043E\u0435 \u0441\u043B\u043E\u0432\u043E \u043F\u043E\u0434\u0445\u043E\u0434\u0438\u0442 \u043A \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E \u00AB${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
             answer: wordExample.word,
             answerLabel: wordExample.word,
             kanji: wordCard.kanji,
@@ -8577,8 +9989,8 @@
         exercises.push({
             id: `${lesson.id}-active-5`,
             type: "active-recall",
-            title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
-            prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+            title: exerciseTitles["active-recall"] || { ru: "\u0410\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435", en: "Active recall" },
+            prompt: lang() === "ru" ? `\u0412\u0432\u0435\u0434\u0438 \u043A\u0430\u043D\u0434\u0437\u0438 \u0434\u043B\u044F \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
             answer: recallCard.kanji,
             answerLabel: recallCard.kanji,
             kanji: recallCard.kanji,
@@ -8669,6 +10081,59 @@
         saveProgress();
         render();
     }
+    function handleJlptLessonAnswer(level, lessonId, cardId, remembered) {
+        const canonical = canonicalJlptLevel(level) || String(level || "").toUpperCase();
+        const lesson = canonical === "N5"
+            ? n5LessonById(lessonId)
+            : canonical === "N4"
+                ? n4LessonById(lessonId)
+                : canonical === "N3"
+                    ? n3LessonById(lessonId)
+                    : canonical === "N2"
+                        ? n2LessonById(lessonId)
+                        : null;
+        if (!lesson)
+            return;
+        const cards = jlptCardsForLesson(canonical, lesson);
+        const card = cards.find((item) => String(item.id) === String(cardId)) || findCard(cardId);
+        if (!card)
+            return;
+        const study = jlptLessonStudySession(canonical, lesson, cards);
+        if (study.session.answers?.[card.id])
+            return;
+        const now = new Date().toISOString();
+        study.session.answers[card.id] = {
+            remembered: Boolean(remembered),
+            rating: remembered ? "good" : "again",
+            answeredAt: now
+        };
+        const cardIndex = cards.findIndex((item) => String(item.id) === String(card.id));
+        study.session.currentIndex = cardIndex >= 0 ? cardIndex + 1 : Math.min(Number(study.session.currentIndex || 0) + 1, cards.length);
+        study.session.phase = study.session.currentIndex >= cards.length ? "test" : "study";
+        study.session.updatedAt = now;
+        if (study.session.phase === "test") {
+            study.session.testOpenedAt ||= now;
+            state.pendingFocus = jlptLessonStudySectionId(canonical, lesson.id, "test");
+        }
+        else {
+            state.pendingFocus = jlptLessonStudySectionId(canonical, lesson.id, "player");
+        }
+        if (canonical === "N5") {
+            handleN5SrsAction(card.id, remembered ? "good" : "again", "review");
+            return;
+        }
+        if (canonical === "N4") {
+            handleN4SrsAction(card.id, remembered ? "good" : "again", "review");
+            return;
+        }
+        if (canonical === "N3") {
+            handleN3SrsAction(card.id, remembered ? "good" : "again", "review");
+            return;
+        }
+        if (canonical === "N2") {
+            handleN2SrsAction(card.id, remembered ? "good" : "again", "review");
+        }
+    }
     function handleN5SrsAction(cardId, rating, source = "review") {
         const card = findCard(cardId);
         if (!card)
@@ -8737,7 +10202,7 @@
         const lessonCards = n5CardsForLesson(lesson);
         const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
         if (studiedCount < lesson.kanji.length) {
-            const msg = lang() === "ru" ? "Сначала изучите все кандзи урока (8/8)." : "Study all kanji in the lesson first (8/8).";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0438\u0437\u0443\u0447\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430 (8/8)." : "Study all kanji in the lesson first (8/8).";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -8745,7 +10210,7 @@
         const exercises = buildN5LessonExercises(lesson);
         const allCorrect = exercises.length > 0 && exercises.every((ex) => n5ExerciseResult(ex.id)?.correct);
         if (!allCorrect) {
-            const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u0432\u0441\u0435 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u043E." : "Complete all exercises correctly first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -8763,6 +10228,17 @@
         });
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n5Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+        const n5StudyProgress = jlptLessonStudyProgress();
+        const n5StudySession = n5StudyProgress.sessions[n5SessKey];
+        if (n5StudySession) {
+            const doneAt = new Date().toISOString();
+            n5StudySession.phase = "done";
+            n5StudySession.completedAt = doneAt;
+            n5StudySession.updatedAt = doneAt;
+            n5StudySession.currentIndex = lessonCards.length;
+            n5StudyProgress.activeSessionKey = n5SessKey;
+            n5StudyProgress.lastUpdatedAt = doneAt;
+        }
         // Radical: force re-ensure to produce a clean merged course object carrying the just-set completedLessons + studiedKanji.
         // This guarantees that any subsequent n5Course()/status/tile/summary reads (including in render and on overview navigation) see the update immediately.
         n5Course();
@@ -8948,13 +10424,13 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `\u041C\u0438\u043D\u0438-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435: ${card.kanji} — ${cardMeaning(card)}. \u0427\u0442\u043E \u043D\u0430\u0436\u043C\u0451\u0448\u044C, \u0435\u0441\u043B\u0438 \u043F\u043E\u043C\u043D\u0438\u0448\u044C?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
-                answerLabel: lang() === "ru" ? "Помню" : "Remember",
+                answerLabel: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember",
                 options: [
-                    { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
-                    { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
-                    { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+                    { value: "again", label: lang() === "ru" ? "\u0421\u043B\u043E\u0436\u043D\u043E" : "Hard" },
+                    { value: "remember", label: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember" },
+                    { value: "skip", label: lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C" : "Skip" }
                 ]
             };
         }
@@ -9002,18 +10478,18 @@
                 state.finalTestModal = {
                     kind: "warning",
                     level: "N5",
-                    title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+                    title: lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B" : "Answer all questions",
                     message: lang() === "ru"
-                        ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+                        ? `\u0412\u044B \u043E\u0442\u0432\u0435\u0442\u0438\u043B\u0438 \u043D\u0435 \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B. \u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043E\u0432: ${stats.missingCount}.`
                         : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
                     answered: stats.answered,
                     missingCount: stats.missingCount,
                     totalQuestions: stats.totalQuestions,
                     threshold,
                     focusSelector,
-                    focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
-                    closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
-                    forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+                    focusLabel: lang() === "ru" ? "\u041A \u043F\u0435\u0440\u0432\u043E\u043C\u0443 \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0443" : "Jump to first missing",
+                    closeLabel: lang() === "ru" ? "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C" : "Continue",
+                    forceLabel: lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u043E\u0442\u0432\u0435\u0442\u043E\u0432" : "Finish anyway",
                     allowIncomplete
                 };
                 state.pendingFocus = focusSelector;
@@ -9136,7 +10612,7 @@
         }
         catch (error) {
             console.error(error);
-            toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+            toast(lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442." : "Could not finish the test.");
         }
         finally {
             state.finalTestBusy = false;
@@ -9286,6 +10762,7 @@
         const cards = n4CardsForLesson(lesson);
         const exercises = buildN4LessonExercises(lesson);
         const status = n4LessonStatus(lesson.id);
+        const study = jlptLessonStudySession("N4", lesson, cards);
         let complete = status === "completed";
         // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
         const n4SessKey = `n4:${lesson.id}`;
@@ -9300,6 +10777,8 @@
         const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
         const difficult = lesson.kanji.filter((kanji) => n4Course().difficultKanji[kanji]).join(" · ");
         const nextLesson = n4Lessons().find((item) => item.order === lesson.order + 1);
+        const playerId = jlptLessonStudySectionId("N4", lesson.id, "player");
+        const testId = jlptLessonStudySectionId("N4", lesson.id, "test");
         return `
       <section class="page textbooks-page n5-course-page n4-course-page n5-lesson-page">
         <div class="section-head">
@@ -9326,14 +10805,17 @@
             </div>
           </div>
           <div class="mini-stat-row">
-            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n4Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}`, labels.kanji, progressWidth(cards.filter((card) => n4Course().studiedKanji[card.kanji]).length, lesson.kanji.length))}
+            ${renderMetric(labels.studiedKanji, `${Math.min(study.answeredCount, lesson.kanji.length)}/${lesson.kanji.length}`, labels.kanji, progressWidth(study.answeredCount, lesson.kanji.length))}
             ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
           </div>
         </article>
 
-        <div class="n5-kanji-grid">
-          ${cards.map((card, index) => renderN4KanjiStudyCard(card, lesson, index)).join("")}
-        </div>
+        ${renderJlptLessonStudyPlayer("N4", lesson, cards, labels, {
+            playerId,
+            answerAction: "jlpt-lesson-answer",
+            examples: (card) => n4CardExamples(card),
+            sentence: (card) => renderN4CardSentence(card, lesson)
+        })}
 
         ${renderN4LessonGrammar(lesson)}
 
@@ -9346,14 +10828,14 @@
             ${lesson.sentences.map((sentence) => `
               <article>
                 <strong>${escapeHtml(sentence.jp)}</strong>
-                <span>${escapeHtml(sentence.reading || "")}</span>
+                <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
                 <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
               </article>
             `).join("")}
           </div>
         </section>
 
-        <section class="n5-panel">
+        <section class="n5-panel" id="${escapeAttr(testId)}">
           <div>
             <h2>${escapeHtml(labels.exercises)}</h2>
             <p>${escapeHtml(labels.exercisesText)}</p>
@@ -9372,10 +10854,10 @@
               <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
-            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0443\u0440\u043E\u043A\u0430." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n4-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n4-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#jlpt/n4/${escapeAttr(nextLesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
@@ -9404,16 +10886,15 @@
         </dl>
         <div class="n5-word-list">
           ${examples.map((example) => `
-            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(displayHiragana(example.reading || ""))} · ${escapeHtml(exampleTranslation(example))}</span></p>
           `).join("")}
         </div>
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN4CardSentence(card, lesson)}
         <div class="textbook-actions">
-            <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
-            <button class="btn success" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-            <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
-          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn ghost" type="button" data-action="n4-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
       </article>
@@ -9427,7 +10908,7 @@
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
-        <span>${escapeHtml(sentence.reading || "")}</span>
+        <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
         <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
         ${grammar ? `<small>${escapeHtml(n4Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
       </div>
@@ -9509,7 +10990,7 @@
       <section class="page textbooks-page n5-course-page n4-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N4 · Повторение</p>
+            <p class="eyebrow">JLPT N4 \u00B7 \u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -9544,7 +11025,6 @@
         <div class="textbook-actions">
           <button class="btn success" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
           <button class="btn warning" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
-          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
         </div>
       </article>
     `;
@@ -9574,7 +11054,6 @@
               <p>${escapeHtml(n4CardExamples(card)[0]?.word || "")} · ${escapeHtml(n4CardExamples(card)[0]?.reading || "")}</p>
               <div class="textbook-actions">
                 <button class="btn primary" type="button" data-action="n4-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
-                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
               </div>
             </article>
           `).join("")}
@@ -9610,7 +11089,7 @@
                 <h3>${escapeHtml(localized(item.title))}</h3>
                 <p>${escapeHtml(localized(item.explanation))}</p>
                 ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
-                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
                   ${(item.options.length ? item.options : [item.answer]).map((option) => `
@@ -9750,9 +11229,9 @@
         <div class="n5-exercise-list">
           ${questions.map((question, index) => renderN4FinalQuestion(question, index)).join("")}
         </div>
-        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
-          <button class="btn primary" type="button" data-action="n4-final-submit" ${(state.finalTestBusy || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "Тест завершён" : "Test completed") : labels.submitFinal)}</button>
+          <button class="btn primary" type="button" data-action="n4-final-submit" ${(state.finalTestBusy || completed) ? "disabled" : ""}>${escapeHtml(completed ? (lang() === "ru" ? "\u0422\u0435\u0441\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Test completed") : labels.submitFinal)}</button>
           <button class="btn ghost" type="button" data-action="n4-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
         </div>
       </section>
@@ -9780,90 +11259,90 @@
         return lang() === "ru"
             ? {
                 title: "JLPT N4",
-                allTextbooks: "Все учебники",
-                pdf: "PDF-учебник",
-                kanji: "кандзи",
-                grammar: "грамматика",
-                courseMap: "Интерактивный учебник N4 после N5",
-                continue: "Продолжить",
-                review: "Повторять N4",
-                openKanji: "Открыть список кандзи",
-                grammarN4: "Грамматика N4",
+                allTextbooks: "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438",
+                pdf: "PDF-\u0443\u0447\u0435\u0431\u043D\u0438\u043A",
+                kanji: "\u043A\u0430\u043D\u0434\u0437\u0438",
+                grammar: "\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430",
+                courseMap: "\uFFFD?\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0443\u0447\u0435\u0431\u043D\u0438\u043A N4 \u043F\u043E\u0441\u043B\u0435 N5",
+                continue: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C",
+                review: "\u041F\u043E\u0432\u0442\u043E\u0440\u044F\u0442\u044C N4",
+                openKanji: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u043A\u0430\u043D\u0434\u0437\u0438",
+                grammarN4: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 N4",
                 readingN4: "Чтение N4",
-                listeningN4: "Аудирование N4",
-                finalTest: "Финальный тест",
+                listeningN4: "\u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 N4",
+                finalTest: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442",
                 studiedKanji: "Изучено",
-                completedLessons: "Уроки",
-                completedGrammar: "Грамматика",
-                reviews: "Повторения",
-                difficult: "Сложные",
-                srs: "Повторение",
-                lessons: "уроков",
-                lessonsTitle: "17 уроков примерно по 10 кандзи",
-                lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, упражнение, письмо и повторение.",
-                reviewPlan: "План повторения на 45 дней",
-                day: "день",
-                lesson: "Урок",
+                completedLessons: "\u0423\u0440\u043E\u043A\u0438",
+                completedGrammar: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430",
+                reviews: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F",
+                difficult: "\u0421\u043B\u043E\u0436\u043D\u044B\u0435",
+                srs: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessons: "\u0443\u0440\u043E\u043A\u043E\u0432",
+                lessonsTitle: "17 \u0443\u0440\u043E\u043A\u043E\u0432 \u043F\u0440\u0438\u043C\u0435\u0440\u043D\u043E \u043F\u043E 10 \u043A\u0430\u043D\u0434\u0437\u0438",
+                lessonsDescription: "\u041A\u0430\u0436\u0434\u044B\u0439 \u0443\u0440\u043E\u043A \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u0435\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u043E, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443, \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435, \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0435, \u043F\u0438\u0441\u044C\u043C\u043E \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                reviewPlan: "\u041F\u043B\u0430\u043D \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u043D\u0430 45 \u0434\u043D\u0435\u0439",
+                day: "\u0434\u0435\u043D\u044C",
+                lesson: "\u0423\u0440\u043E\u043A",
                 backToN4: "К N4",
                 n5Bridge: "N5 bridge",
-                n5BridgeText: "Перед N4 полезно держать активной базу N5: она станет опорой для более длинных предложений.",
-                reviewN5Base: "Повторить базу N5 перед N4",
-                lessonChain: "Кандзи -> слово -> грамматика -> предложение -> текст -> упражнение -> письмо -> повторение",
-                lessonChainText: "N4 больше не живёт списком знаков: каждый знак сразу получает слово, грамматическую связку и контекст.",
-                duration: "Длительность",
+                n5BridgeText: "\u041F\u0435\u0440\u0435\u0434 N4 \u043F\u043E\u043B\u0435\u0437\u043D\u043E \u0434\u0435\u0440\u0436\u0430\u0442\u044C \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u0431\u0430\u0437\u0443 N5: \u043E\u043D\u0430 \u0441\u0442\u0430\u043D\u0435\u0442 \u043E\u043F\u043E\u0440\u043E\u0439 \u0434\u043B\u044F \u0431\u043E\u043B\u0435\u0435 \u0434\u043B\u0438\u043D\u043D\u044B\u0445 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439.",
+                reviewN5Base: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0431\u0430\u0437\u0443 N5 \u043F\u0435\u0440\u0435\u0434 N4",
+                lessonChain: "\u041A\u0430\u043D\u0434\u0437\u0438 -> \u0441\u043B\u043E\u0432\u043E -> \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 -> \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 -> \u0442\u0435\u043A\u0441\u0442 -> \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0435 -> \u043F\u0438\u0441\u044C\u043C\u043E -> \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessonChainText: "N4 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u0436\u0438\u0432\u0451\u0442 \u0441\u043F\u0438\u0441\u043A\u043E\u043C \u0437\u043D\u0430\u043A\u043E\u0432: \u043A\u0430\u0436\u0434\u044B\u0439 \u0437\u043D\u0430\u043A \u0441\u0440\u0430\u0437\u0443 \u043F\u043E\u043B\u0443\u0447\u0430\u0435\u0442 \u0441\u043B\u043E\u0432\u043E, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0443\u044E \u0441\u0432\u044F\u0437\u043A\u0443 \u0438 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442.",
+                duration: "\u0414\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C",
                 minutes: "мин",
-                exercises: "Упражнения",
-                correct: "верно",
-                sentences: "Примеры предложений",
-                sentencesText: "Прочитай вслух и отметь, где грамматика держит смысл предложения.",
-                exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику и активное вспоминание.",
-                lessonComplete: "Урок завершён",
-                lessonCompleteText: "Кандзи урока добавлены в повторение.",
+                exercises: "\u0423\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F",
+                correct: "\u0432\u0435\u0440\u043D\u043E",
+                sentences: "\u041F\u0440\u0438\u043C\u0435\u0440\u044B \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439",
+                sentencesText: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0439 \u0432\u0441\u043B\u0443\u0445 \u0438 \u043E\u0442\u043C\u0435\u0442\u044C, \u0433\u0434\u0435 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 \u0434\u0435\u0440\u0436\u0438\u0442 \u0441\u043C\u044B\u0441\u043B \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F.",
+                exercisesText: "\u0421\u043C\u0435\u0448\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u0434\u0430\u043D\u0438\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u0430, \u0447\u0442\u0435\u043D\u0438\u0435, \u043F\u0435\u0440\u0435\u0432\u043E\u0434, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443 \u0438 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435.",
+                lessonComplete: "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D",
+                lessonCompleteText: "\u041A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
                 lessonResult: "Итог урока",
-                lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
-                completeLesson: "Завершить урок",
-                refreshLesson: "Обновить итог",
-                repeatMistakes: "Повторить ошибки",
-                nextLesson: "Следующий урок",
-                none: "нет",
-                step: "шаг",
-                onyomi: "онъёми",
-                kunyomi: "кунъёми",
-                addToSrs: "В повторение",
-                know: "Знаю",
-                hard: "Сложно",
-                writingPractice: "Практика письма",
-                markWritten: "Написано",
-                written: "Письмо засчитано",
-                miniGrammar: "Мини-грамматика урока",
-                miniGrammarText: "1-3 конструкции из примеров урока, чтобы кандзи сразу работали в предложении.",
-                markGrammar: "Засчитать конструкцию",
-                completed: "Пройдено",
-                check: "Проверить",
-                showAnswer: "Сложно: показать ответ",
-                correctAnswer: "Верно. XP и Moon Fragment начислены.",
-                wrongAnswer: "Пока нет",
-                reviewTitle: "N4-повторение",
-                reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N4.",
-                noReviewCards: "Сейчас нет карточек в этом фильтре.",
-                kanjiListTitle: "170 кандзи N4",
-                kanjiListText: "Полный список из учебника: можно быстро добавить знаки в повторение или открыть письмо.",
-                grammarTitle: "48 грамматических конструкций N4",
-                grammarText: "Короткие рабочие карточки: функция, формула, пример и проверка понимания.",
-                readingTitle: "Тексты для чтения N4",
-                readingText: "Короткие тексты связывают кандзи, слова и грамматику в нормальный контекст.",
-                listeningTitle: "Скрипты для аудирования N4",
-                listeningText: "Диалоги можно читать вслух или использовать как основу для прослушивания.",
-                questions: "Вопросы",
-                score: "Результат",
+                lessonResultText: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438 \u0443\u0440\u043E\u043A, \u043A\u043E\u0433\u0434\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0433\u043E\u0442\u043E\u0432\u044B \u043A \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044E.",
+                completeLesson: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0443\u0440\u043E\u043A",
+                refreshLesson: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0438\u0442\u043E\u0433",
+                repeatMistakes: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438",
+                nextLesson: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0443\u0440\u043E\u043A",
+                none: "\u043D\u0435\u0442",
+                step: "\u0448\u0430\u0433",
+                onyomi: "\u043E\u043D\u044A\u0451\u043C\u0438",
+                kunyomi: "\u043A\u0443\u043D\u044A\u0451\u043C\u0438",
+                addToSrs: "\u0412 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                know: "\u0417\u043D\u0430\u044E",
+                hard: "\u0421\u043B\u043E\u0436\u043D\u043E",
+                writingPractice: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+                markWritten: "\u041D\u0430\u043F\u0438\u0441\u0430\u043D\u043E",
+                written: "\u041F\u0438\u0441\u044C\u043C\u043E \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D\u043E",
+                miniGrammar: "\u041C\u0438\u043D\u0438-\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 \u0443\u0440\u043E\u043A\u0430",
+                miniGrammarText: "1-3 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438 \u0438\u0437 \u043F\u0440\u0438\u043C\u0435\u0440\u043E\u0432 \u0443\u0440\u043E\u043A\u0430, \u0447\u0442\u043E\u0431\u044B \u043A\u0430\u043D\u0434\u0437\u0438 \u0441\u0440\u0430\u0437\u0443 \u0440\u0430\u0431\u043E\u0442\u0430\u043B\u0438 \u0432 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0438.",
+                markGrammar: "\u0417\u0430\u0441\u0447\u0438\u0442\u0430\u0442\u044C \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E",
+                completed: "\u041F\u0440\u043E\u0439\u0434\u0435\u043D\u043E",
+                check: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+                showAnswer: "\u0421\u043B\u043E\u0436\u043D\u043E: \u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043E\u0442\u0432\u0435\u0442",
+                correctAnswer: "\u0412\u0435\u0440\u043D\u043E. XP \u0438 Moon Fragment \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u044B.",
+                wrongAnswer: "\u041F\u043E\u043A\u0430 \u043D\u0435\u0442",
+                reviewTitle: "N4-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                reviewDescription: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438 due-\u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438, \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438\u043B\u0438 \u0432\u0435\u0441\u044C \u043D\u0430\u0431\u043E\u0440 N4.",
+                noReviewCards: "\u0421\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u043A\u0430\u0440\u0442\u043E\u0447\u0435\u043A \u0432 \u044D\u0442\u043E\u043C \u0444\u0438\u043B\u044C\u0442\u0440\u0435.",
+                kanjiListTitle: "170 \u043A\u0430\u043D\u0434\u0437\u0438 N4",
+                kanjiListText: "\u041F\u043E\u043B\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u0438\u0437 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430: \u043C\u043E\u0436\u043D\u043E \u0431\u044B\u0441\u0442\u0440\u043E \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0437\u043D\u0430\u043A\u0438 \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E.",
+                grammarTitle: "48 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0445 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0439 N4",
+                grammarText: "\u041A\u043E\u0440\u043E\u0442\u043A\u0438\u0435 \u0440\u0430\u0431\u043E\u0447\u0438\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438: \u0444\u0443\u043D\u043A\u0446\u0438\u044F, \u0444\u043E\u0440\u043C\u0443\u043B\u0430, \u043F\u0440\u0438\u043C\u0435\u0440 \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u044F.",
+                readingTitle: "\u0422\u0435\u043A\u0441\u0442\u044B \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F N4",
+                readingText: "\u041A\u043E\u0440\u043E\u0442\u043A\u0438\u0435 \u0442\u0435\u043A\u0441\u0442\u044B \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u0430 \u0438 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443 \u0432 \u043D\u043E\u0440\u043C\u0430\u043B\u044C\u043D\u044B\u0439 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442.",
+                listeningTitle: "\u0421\u043A\u0440\u0438\u043F\u0442\u044B \u0434\u043B\u044F \u0430\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F N4",
+                listeningText: "\u0414\u0438\u0430\u043B\u043E\u0433\u0438 \u043C\u043E\u0436\u043D\u043E \u0447\u0438\u0442\u0430\u0442\u044C \u0432\u0441\u043B\u0443\u0445 \u0438\u043B\u0438 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u043A\u0430\u043A \u043E\u0441\u043D\u043E\u0432\u0443 \u0434\u043B\u044F \u043F\u0440\u043E\u0441\u043B\u0443\u0448\u0438\u0432\u0430\u043D\u0438\u044F.",
+                questions: "\u0412\u043E\u043F\u0440\u043E\u0441\u044B",
+                score: "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442",
                 mistakes: "Ошибки",
-                resetTest: "Сбросить тест",
-                submitFinal: "Завершить тест",
-                reviewAll: "Повторить весь N4",
-                finalPassed: "N4 пройден",
-                finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
-                finalNeedsReview: "Нужно повторить",
-                finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
+                resetTest: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                submitFinal: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                reviewAll: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0432\u0435\u0441\u044C N4",
+                finalPassed: "N4 \u043F\u0440\u043E\u0439\u0434\u0435\u043D",
+                finalPassedText: "\u041E\u0442\u043B\u0438\u0447\u043D\u043E. \u041E\u0448\u0438\u0431\u043A\u0438 \u043C\u043E\u0436\u043D\u043E \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                finalNeedsReview: "\u041D\u0443\u0436\u043D\u043E \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+                finalNeedsReviewText: "\u041E\u0448\u0438\u0431\u043A\u0438 \u043F\u043E\u043C\u0435\u0447\u0435\u043D\u044B \u043A\u0430\u043A \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u0438 \u043F\u043E\u0434\u043D\u044F\u0442\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435."
             }
             : {
                 title: "JLPT N4",
@@ -9884,7 +11363,7 @@
                 completedGrammar: "Grammar",
                 reviews: "Reviews",
                 difficult: "Difficult",
-                srs: "Повторение",
+                srs: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
                 lessons: "lessons",
                 lessonsTitle: "17 lessons, about 10 kanji each",
                 lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, exercise, writing, and SRS.",
@@ -9916,6 +11395,9 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
+                remember: "Remember",
+                notRemember: "Don't remember",
+                details: "Show more",
                 addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
@@ -10026,7 +11508,7 @@
         const word = example?.word || card.kanji;
         const reading = displayHiragana(example?.reading || card.hiragana || "");
         return lang() === "ru"
-            ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+            ? `\u0421\u0432\u044F\u0436\u0438 ${card.kanji} \u0441\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435\u043C \u00AB${cardMeaning(card)}\u00BB, \u0437\u0430\u0442\u0435\u043C \u0441\u0440\u0430\u0437\u0443 \u043F\u0440\u043E\u0433\u043E\u0432\u043E\u0440\u0438 \u0441\u043B\u043E\u0432\u043E \u0438 \u043F\u0440\u0438\u043C\u0435\u0440: ${word}${reading ? ` (${reading})` : ""}.`
             : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
     }
     function n4ProgressSummary() {
@@ -10065,10 +11547,10 @@
     }
     function n4LessonStatusLabel(status) {
         if (status === "completed")
-            return lang() === "ru" ? "завершён" : "completed";
+            return lang() === "ru" ? "\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "completed";
         if (status === "started")
-            return lang() === "ru" ? "начат" : "started";
-        return lang() === "ru" ? "не начат" : "new";
+            return lang() === "ru" ? "\u043D\u0430\u0447\u0430\u0442" : "started";
+        return lang() === "ru" ? "\u043D\u0435 \u043D\u0430\u0447\u0430\u0442" : "new";
     }
     function buildN4LessonExercises(lesson) {
         const cards = n4CardsForLesson(lesson);
@@ -10083,7 +11565,7 @@
         exercises.push({
             id: `${lesson.id}-meaning-0`,
             type: "meaning",
-            title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+            title: exerciseTitles.meaning || { ru: "\u0423\u0437\u043D\u0430\u0432\u0430\u043D\u0438\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F", en: "Meaning recognition" },
             prompt: meaningCard.kanji,
             answer: meaningCard.id,
             answerLabel: cardMeaning(meaningCard),
@@ -10096,7 +11578,7 @@
         exercises.push({
             id: `${lesson.id}-kanji-1`,
             type: "kanji",
-            title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+            title: exerciseTitles.kanji || { ru: "\u041A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E", en: "Kanji from meaning" },
             prompt: cardMeaning(kanjiCard),
             answer: kanjiCard.kanji,
             answerLabel: kanjiCard.kanji,
@@ -10110,7 +11592,7 @@
         exercises.push({
             id: `${lesson.id}-reading-2`,
             type: "reading",
-            title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+            title: exerciseTitles.reading || { ru: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0441\u043B\u043E\u0432\u0430", en: "Word reading" },
             prompt: readingExample.word || readingCard.kanji,
             answer: readingExample.reading || readingCard.hiragana || "",
             answerLabel: readingExample.reading || readingCard.hiragana || "",
@@ -10124,7 +11606,7 @@
             exercises.push({
                 id: `${lesson.id}-sentence-3`,
                 type: "sentence",
-                title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+                title: exerciseTitles.sentence || { ru: "\u041F\u0435\u0440\u0435\u0432\u043E\u0434 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F", en: "Sentence translation" },
                 prompt: sentence.jp,
                 answer: localized({ ru: sentence.ru, en: sentence.en }),
                 answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
@@ -10139,8 +11621,8 @@
         exercises.push({
             id: `${lesson.id}-word-4`,
             type: "missing-word",
-            title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            title: exerciseTitles["missing-word"] || { ru: "\u0412\u0441\u0442\u0430\u0432\u044C \u0441\u043B\u043E\u0432\u043E", en: "Missing word" },
+            prompt: lang() === "ru" ? `\u041A\u0430\u043A\u043E\u0435 \u0441\u043B\u043E\u0432\u043E \u043F\u043E\u0434\u0445\u043E\u0434\u0438\u0442 \u043A \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E \u00AB${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -10152,8 +11634,8 @@
         exercises.push({
             id: `${lesson.id}-active-5`,
             type: "active-recall",
-            title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
-            prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+            title: exerciseTitles["active-recall"] || { ru: "\u0410\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435", en: "Active recall" },
+            prompt: lang() === "ru" ? `\u0412\u0432\u0435\u0434\u0438 \u043A\u0430\u043D\u0434\u0437\u0438 \u0434\u043B\u044F \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
             answer: recallCard.kanji,
             answerLabel: recallCard.kanji,
             kanji: recallCard.kanji,
@@ -10166,7 +11648,7 @@
             exercises.push({
                 id: `${lesson.id}-grammar-6`,
                 type: "grammar-link",
-                title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+                title: exerciseTitles["grammar-link"] || { ru: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0441\u0432\u044F\u0437\u043A\u0430", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
                 answer: grammar.answer,
                 answerLabel: grammar.answer,
@@ -10182,7 +11664,7 @@
             exercises.push({
                 id: `${lesson.id}-mini-reading-7`,
                 type: "mini-reading",
-                title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+                title: exerciseTitles["mini-reading"] || { ru: "\u041C\u0438\u043D\u0438-\u0447\u0442\u0435\u043D\u0438\u0435", en: "Mini reading" },
                 prompt: miniSentence.jp,
                 answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
                 answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
@@ -10345,7 +11827,7 @@
         const lessonCards = n4CardsForLesson(lesson);
         const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
         if (studiedCount < lesson.kanji.length) {
-            const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0438\u0437\u0443\u0447\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430." : "Study all kanji in the lesson first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -10353,7 +11835,7 @@
         const exercises = buildN4LessonExercises(lesson);
         const allCorrect = exercises.length > 0 && exercises.every((ex) => n4ExerciseResult(ex.id)?.correct);
         if (!allCorrect) {
-            const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u0432\u0441\u0435 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u043E." : "Complete all exercises correctly first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -10374,6 +11856,17 @@
         });
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n4Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+        const n4StudyProgress = jlptLessonStudyProgress();
+        const n4StudySession = n4StudyProgress.sessions[n4SessKey];
+        if (n4StudySession) {
+            const doneAt = new Date().toISOString();
+            n4StudySession.phase = "done";
+            n4StudySession.completedAt = doneAt;
+            n4StudySession.updatedAt = doneAt;
+            n4StudySession.currentIndex = lessonCards.length;
+            n4StudyProgress.activeSessionKey = n4SessKey;
+            n4StudyProgress.lastUpdatedAt = doneAt;
+        }
         // Radical: force re-ensure so subsequent reads (tiles, summary, status on overview) see completed + studied immediately.
         n4Course();
         // Жёсткая разблокировка следующего (N3) при полном завершении N4 уроков
@@ -10640,13 +12133,13 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `\u041C\u0438\u043D\u0438-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435: ${card.kanji} — ${cardMeaning(card)}. \u0427\u0442\u043E \u043D\u0430\u0436\u043C\u0451\u0448\u044C, \u0435\u0441\u043B\u0438 \u043F\u043E\u043C\u043D\u0438\u0448\u044C?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
-                answerLabel: lang() === "ru" ? "Помню" : "Remember",
+                answerLabel: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember",
                 options: [
-                    { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
-                    { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
-                    { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+                    { value: "again", label: lang() === "ru" ? "\u0421\u043B\u043E\u0436\u043D\u043E" : "Hard" },
+                    { value: "remember", label: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember" },
+                    { value: "skip", label: lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C" : "Skip" }
                 ]
             };
         }
@@ -10694,18 +12187,18 @@
                 state.finalTestModal = {
                     kind: "warning",
                     level: "N4",
-                    title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+                    title: lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B" : "Answer all questions",
                     message: lang() === "ru"
-                        ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+                        ? `\u0412\u044B \u043E\u0442\u0432\u0435\u0442\u0438\u043B\u0438 \u043D\u0435 \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B. \u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043E\u0432: ${stats.missingCount}.`
                         : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
                     answered: stats.answered,
                     missingCount: stats.missingCount,
                     totalQuestions: stats.totalQuestions,
                     threshold,
                     focusSelector,
-                    focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
-                    closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
-                    forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+                    focusLabel: lang() === "ru" ? "\u041A \u043F\u0435\u0440\u0432\u043E\u043C\u0443 \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0443" : "Jump to first missing",
+                    closeLabel: lang() === "ru" ? "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C" : "Continue",
+                    forceLabel: lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u043E\u0442\u0432\u0435\u0442\u043E\u0432" : "Finish anyway",
                     allowIncomplete
                 };
                 state.pendingFocus = focusSelector;
@@ -10805,7 +12298,7 @@
         }
         catch (error) {
             console.error(error);
-            toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+            toast(lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442." : "Could not finish the test.");
         }
         finally {
             state.finalTestBusy = false;
@@ -10958,6 +12451,7 @@
         const cards = n3CardsForLesson(lesson);
         const exercises = buildN3LessonExercises(lesson);
         const status = n3LessonStatus(lesson.id);
+        const study = jlptLessonStudySession("N3", lesson, cards);
         let complete = status === "completed";
         // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
         const n3SessKey = `n3:${lesson.id}`;
@@ -10974,6 +12468,8 @@
         const nextLesson = n3Lessons().find((item) => item.order === lesson.order + 1);
         const miniReadingItem = n3LessonReadingItem(lesson);
         const miniReadingComplete = miniReadingItem ? Boolean(n3Course().completedReading[miniReadingItem.id]) : false;
+        const playerId = jlptLessonStudySectionId("N3", lesson.id, "player");
+        const testId = jlptLessonStudySectionId("N3", lesson.id, "test");
         return `
       <section class="page textbooks-page n5-course-page n3-course-page n5-lesson-page">
         <div class="section-head">
@@ -11000,14 +12496,17 @@
             </div>
           </div>
           <div class="mini-stat-row">
-            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n3Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}`, labels.kanji, progressWidth(cards.filter((card) => n3Course().studiedKanji[card.kanji]).length, lesson.kanji.length))}
+            ${renderMetric(labels.studiedKanji, `${Math.min(study.answeredCount, lesson.kanji.length)}/${lesson.kanji.length}`, labels.kanji, progressWidth(study.answeredCount, lesson.kanji.length))}
             ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
           </div>
         </article>
 
-        <div class="n5-kanji-grid">
-          ${cards.map((card, index) => renderN3KanjiStudyCard(card, lesson, index)).join("")}
-        </div>
+        ${renderJlptLessonStudyPlayer("N3", lesson, cards, labels, {
+            playerId,
+            answerAction: "jlpt-lesson-answer",
+            examples: (card) => n3CardExamples(card),
+            sentence: (card) => renderN3CardSentence(card, lesson)
+        })}
 
         ${renderN3LessonGrammar(lesson)}
 
@@ -11022,14 +12521,14 @@
             ${lesson.sentences.map((sentence) => `
               <article>
                 <strong>${escapeHtml(sentence.jp)}</strong>
-                <span>${escapeHtml(sentence.reading || "")}</span>
+                <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
                 <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
               </article>
             `).join("")}
           </div>
         </section>
 
-        <section class="n5-panel">
+        <section class="n5-panel" id="${escapeAttr(testId)}">
           <div>
             <h2>${escapeHtml(labels.exercises)}</h2>
             <p>${escapeHtml(labels.exercisesText)}</p>
@@ -11049,10 +12548,10 @@
               ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
-            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0443\u0440\u043E\u043A\u0430." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n3-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n3-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n3-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#jlpt/n3/${escapeAttr(nextLesson.id)}" data-action="n3-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n3-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
@@ -11101,16 +12600,15 @@
         </dl>
         <div class="n5-word-list">
           ${examples.map((example) => `
-            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(displayHiragana(example.reading || ""))} · ${escapeHtml(exampleTranslation(example))}</span></p>
           `).join("")}
         </div>
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN3CardSentence(card, lesson)}
         <div class="textbook-actions">
-            <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
-            <button class="btn success" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-            <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
-          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn ghost" type="button" data-action="n3-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
       </article>
@@ -11124,7 +12622,7 @@
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
-        <span>${escapeHtml(sentence.reading || "")}</span>
+        <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
         <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
         ${grammar ? `<small>${escapeHtml(n3Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
       </div>
@@ -11206,7 +12704,7 @@
       <section class="page textbooks-page n5-course-page n3-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N3 · Повторение</p>
+            <p class="eyebrow">JLPT N3 \u00B7 \u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -11241,7 +12739,6 @@
         <div class="textbook-actions">
           <button class="btn success" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
           <button class="btn warning" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
-          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
         </div>
       </article>
     `;
@@ -11271,7 +12768,6 @@
               <p>${escapeHtml(n3CardExamples(card)[0]?.word || "")} · ${escapeHtml(n3CardExamples(card)[0]?.reading || "")}</p>
               <div class="textbook-actions">
                 <button class="btn primary" type="button" data-action="n3-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
-                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
               </div>
             </article>
           `).join("")}
@@ -11307,7 +12803,7 @@
                 <h3>${escapeHtml(localized(item.title))}</h3>
                 <p>${escapeHtml(localized(item.explanation))}</p>
                 ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
-                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
                   ${(item.options.length ? item.options : [item.answer]).map((option) => `
@@ -11445,7 +12941,7 @@
         <div class="n5-exercise-list">
           ${questions.map((question, index) => renderN3FinalQuestion(question, index)).join("")}
         </div>
-        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
           <button class="btn primary" type="button" data-action="n3-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
           <button class="btn ghost" type="button" data-action="n3-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
@@ -11475,94 +12971,94 @@
         return lang() === "ru"
             ? {
                 title: "JLPT N3",
-                allTextbooks: "Все учебники",
-                pdf: "PDF-учебник",
-                kanji: "кандзи",
-                grammar: "грамматика",
-                courseMap: "Интерактивный учебник N3 как мост к среднему уровню",
-                continue: "Продолжить",
-                review: "Повторять N3",
-                openKanji: "Открыть список кандзи",
-                grammarN3: "Грамматика N3",
+                allTextbooks: "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438",
+                pdf: "PDF-\u0443\u0447\u0435\u0431\u043D\u0438\u043A",
+                kanji: "\u043A\u0430\u043D\u0434\u0437\u0438",
+                grammar: "\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430",
+                courseMap: "\uFFFD?\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0443\u0447\u0435\u0431\u043D\u0438\u043A N3 \u043A\u0430\u043A \u043C\u043E\u0441\u0442 \u043A \u0441\u0440\u0435\u0434\u043D\u0435\u043C\u0443 \u0443\u0440\u043E\u0432\u043D\u044E",
+                continue: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C",
+                review: "\u041F\u043E\u0432\u0442\u043E\u0440\u044F\u0442\u044C N3",
+                openKanji: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u043A\u0430\u043D\u0434\u0437\u0438",
+                grammarN3: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 N3",
                 readingN3: "Чтение N3",
-                listeningN3: "Аудирование N3",
-                finalTest: "Финальный тест",
+                listeningN3: "\u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 N3",
+                finalTest: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442",
                 studiedKanji: "Изучено",
-                completedLessons: "Уроки",
-                completedGrammar: "Грамматика",
+                completedLessons: "\u0423\u0440\u043E\u043A\u0438",
+                completedGrammar: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430",
                 completedReading: "Reading",
                 completedListening: "Listening",
-                reviews: "Повторения",
-                difficult: "Сложные",
-                srs: "Повторение",
-                lessons: "уроков",
-                lessonsTitle: "37 уроков примерно по 10 кандзи",
-                lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, предложение, мини-текст, упражнения, письмо и повторение.",
-                reviewPlan: "План повторения на 60 дней",
-                day: "день",
-                lesson: "Урок",
+                reviews: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F",
+                difficult: "\u0421\u043B\u043E\u0436\u043D\u044B\u0435",
+                srs: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessons: "\u0443\u0440\u043E\u043A\u043E\u0432",
+                lessonsTitle: "37 \u0443\u0440\u043E\u043A\u043E\u0432 \u043F\u0440\u0438\u043C\u0435\u0440\u043D\u043E \u043F\u043E 10 \u043A\u0430\u043D\u0434\u0437\u0438",
+                lessonsDescription: "\u041A\u0430\u0436\u0434\u044B\u0439 \u0443\u0440\u043E\u043A \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u0435\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u043E, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443, \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435, \u043C\u0438\u043D\u0438-\u0442\u0435\u043A\u0441\u0442, \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F, \u043F\u0438\u0441\u044C\u043C\u043E \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                reviewPlan: "\u041F\u043B\u0430\u043D \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u043D\u0430 60 \u0434\u043D\u0435\u0439",
+                day: "\u0434\u0435\u043D\u044C",
+                lesson: "\u0423\u0440\u043E\u043A",
                 backToN3: "К N3",
                 n5Bridge: "N5/N4 bridge",
-                n5BridgeText: "Если база N5 и N4 дырявая, N3 будет ощущаться как стена. Сначала проверь частицы, базовые связки, условные формы и привычные повседневные конструкции.",
-                reviewN5Base: "Повторить N5/N4 перед N3",
-                lessonChain: "Кандзи -> слово -> грамматика -> предложение -> абзац -> чтение -> вывод -> повторение",
-                lessonChainText: "N3 больше не живёт списком знаков: каждый знак сразу входит в слово, грамматическую связку, мини-текст и повторение по смыслу.",
-                duration: "Длительность",
+                n5BridgeText: "\u0415\u0441\u043B\u0438 \u0431\u0430\u0437\u0430 N5 \u0438 N4 \u0434\u044B\u0440\u044F\u0432\u0430\u044F, N3 \u0431\u0443\u0434\u0435\u0442 \u043E\u0449\u0443\u0449\u0430\u0442\u044C\u0441\u044F \u043A\u0430\u043A \u0441\u0442\u0435\u043D\u0430. \u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u0440\u043E\u0432\u0435\u0440\u044C \u0447\u0430\u0441\u0442\u0438\u0446\u044B, \u0431\u0430\u0437\u043E\u0432\u044B\u0435 \u0441\u0432\u044F\u0437\u043A\u0438, \u0443\u0441\u043B\u043E\u0432\u043D\u044B\u0435 \u0444\u043E\u0440\u043C\u044B \u0438 \u043F\u0440\u0438\u0432\u044B\u0447\u043D\u044B\u0435 \u043F\u043E\u0432\u0441\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0435 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438.",
+                reviewN5Base: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C N5/N4 \u043F\u0435\u0440\u0435\u0434 N3",
+                lessonChain: "\u041A\u0430\u043D\u0434\u0437\u0438 -> \u0441\u043B\u043E\u0432\u043E -> \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 -> \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 -> \u0430\u0431\u0437\u0430\u0446 -> \u0447\u0442\u0435\u043D\u0438\u0435 -> \u0432\u044B\u0432\u043E\u0434 -> \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessonChainText: "N3 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u0436\u0438\u0432\u0451\u0442 \u0441\u043F\u0438\u0441\u043A\u043E\u043C \u0437\u043D\u0430\u043A\u043E\u0432: \u043A\u0430\u0436\u0434\u044B\u0439 \u0437\u043D\u0430\u043A \u0441\u0440\u0430\u0437\u0443 \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u0441\u043B\u043E\u0432\u043E, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0443\u044E \u0441\u0432\u044F\u0437\u043A\u0443, \u043C\u0438\u043D\u0438-\u0442\u0435\u043A\u0441\u0442 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 \u043F\u043E \u0441\u043C\u044B\u0441\u043B\u0443.",
+                duration: "\u0414\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C",
                 minutes: "мин",
-                exercises: "Упражнения",
-                correct: "верно",
-                sentences: "Примеры предложений",
-                sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
-                exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, мини-чтение и активное вспоминание.",
-                lessonComplete: "Урок завершён",
-                lessonCompleteText: "Кандзи урока добавлены в повторение.",
+                exercises: "\u0423\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F",
+                correct: "\u0432\u0435\u0440\u043D\u043E",
+                sentences: "\u041F\u0440\u0438\u043C\u0435\u0440\u044B \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439",
+                sentencesText: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0439 \u0432\u0441\u043B\u0443\u0445 \u0438 \u043E\u0442\u043C\u0435\u0442\u044C, \u0433\u0434\u0435 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 \u0443\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0441\u043C\u044B\u0441\u043B \u0438 \u0441\u0432\u044F\u0437\u044C \u043C\u0435\u0436\u0434\u0443 \u0441\u043B\u043E\u0432\u0430\u043C\u0438.",
+                exercisesText: "\u0421\u043C\u0435\u0448\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u0434\u0430\u043D\u0438\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u0430, \u0447\u0442\u0435\u043D\u0438\u0435, \u043F\u0435\u0440\u0435\u0432\u043E\u0434, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443, \u043C\u0438\u043D\u0438-\u0447\u0442\u0435\u043D\u0438\u0435 \u0438 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435.",
+                lessonComplete: "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D",
+                lessonCompleteText: "\u041A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
                 lessonResult: "Итог урока",
-                lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
-                completeLesson: "Завершить урок",
-                refreshLesson: "Обновить итог",
-                repeatMistakes: "Повторить ошибки",
-                nextLesson: "Следующий урок",
-                none: "нет",
-                step: "шаг",
-                onyomi: "онъёми",
-                kunyomi: "кунъёми",
-                addToSrs: "В повторение",
-                know: "Знаю",
-                hard: "Сложно",
-                writingPractice: "Практика письма",
-                markWritten: "Написано",
-                written: "Письмо засчитано",
-                miniGrammar: "Мини-грамматика урока",
-                miniGrammarText: "1-3 конструкции, которые сразу связывают кандзи с точкой зрения, причиной или выводом.",
-                miniReadingTitle: "Мини-reading урока",
-                miniReadingText: "Пойми, кто, что, почему и к какому выводу ведёт короткий N3-текст.",
-                markGrammar: "Засчитать конструкцию",
-                completed: "Пройдено",
-                check: "Проверить",
-                showAnswer: "Сложно: показать ответ",
-                correctAnswer: "Верно. XP и Moon Fragment начислены.",
-                wrongAnswer: "Пока нет",
-                reviewTitle: "N3-повторение",
-                reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N3.",
-                noReviewCards: "Сейчас нет карточек в этом фильтре.",
-                kanjiListTitle: "370 кандзи N3",
-                kanjiListText: "Полный список из учебника: можно быстро добавить знаки в повторение или открыть письмо.",
-                grammarTitle: "80 грамматических конструкций N3",
-                grammarText: "Рабочие карточки с функцией, формулой, примером и проверкой понимания в письменном и разговорном контексте.",
-                readingTitle: "Тексты для чтения N3",
-                readingText: "Короткие тексты и lesson mini-readings связывают кандзи, слова, грамматику и выводы в живой контекст.",
-                listeningTitle: "Скрипты для аудирования N3",
-                listeningText: "Скрипты можно читать вслух, озвучивать через TTS и использовать для shadowing и проверки понимания.",
-                questions: "Вопросы",
-                score: "Результат",
+                lessonResultText: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438 \u0443\u0440\u043E\u043A, \u043A\u043E\u0433\u0434\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0433\u043E\u0442\u043E\u0432\u044B \u043A \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044E.",
+                completeLesson: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0443\u0440\u043E\u043A",
+                refreshLesson: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0438\u0442\u043E\u0433",
+                repeatMistakes: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438",
+                nextLesson: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0443\u0440\u043E\u043A",
+                none: "\u043D\u0435\u0442",
+                step: "\u0448\u0430\u0433",
+                onyomi: "\u043E\u043D\u044A\u0451\u043C\u0438",
+                kunyomi: "\u043A\u0443\u043D\u044A\u0451\u043C\u0438",
+                addToSrs: "\u0412 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                know: "\u0417\u043D\u0430\u044E",
+                hard: "\u0421\u043B\u043E\u0436\u043D\u043E",
+                writingPractice: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+                markWritten: "\u041D\u0430\u043F\u0438\u0441\u0430\u043D\u043E",
+                written: "\u041F\u0438\u0441\u044C\u043C\u043E \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D\u043E",
+                miniGrammar: "\u041C\u0438\u043D\u0438-\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 \u0443\u0440\u043E\u043A\u0430",
+                miniGrammarText: "1-3 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0441\u0440\u0430\u0437\u0443 \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438 \u0441 \u0442\u043E\u0447\u043A\u043E\u0439 \u0437\u0440\u0435\u043D\u0438\u044F, \u043F\u0440\u0438\u0447\u0438\u043D\u043E\u0439 \u0438\u043B\u0438 \u0432\u044B\u0432\u043E\u0434\u043E\u043C.",
+                miniReadingTitle: "\u041C\u0438\u043D\u0438-reading \u0443\u0440\u043E\u043A\u0430",
+                miniReadingText: "\u041F\u043E\u0439\u043C\u0438, \u043A\u0442\u043E, \u0447\u0442\u043E, \u043F\u043E\u0447\u0435\u043C\u0443 \u0438 \u043A \u043A\u0430\u043A\u043E\u043C\u0443 \u0432\u044B\u0432\u043E\u0434\u0443 \u0432\u0435\u0434\u0451\u0442 \u043A\u043E\u0440\u043E\u0442\u043A\u0438\u0439 N3-\u0442\u0435\u043A\u0441\u0442.",
+                markGrammar: "\u0417\u0430\u0441\u0447\u0438\u0442\u0430\u0442\u044C \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E",
+                completed: "\u041F\u0440\u043E\u0439\u0434\u0435\u043D\u043E",
+                check: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+                showAnswer: "\u0421\u043B\u043E\u0436\u043D\u043E: \u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043E\u0442\u0432\u0435\u0442",
+                correctAnswer: "\u0412\u0435\u0440\u043D\u043E. XP \u0438 Moon Fragment \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u044B.",
+                wrongAnswer: "\u041F\u043E\u043A\u0430 \u043D\u0435\u0442",
+                reviewTitle: "N3-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                reviewDescription: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438 due-\u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438, \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438\u043B\u0438 \u0432\u0435\u0441\u044C \u043D\u0430\u0431\u043E\u0440 N3.",
+                noReviewCards: "\u0421\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u043A\u0430\u0440\u0442\u043E\u0447\u0435\u043A \u0432 \u044D\u0442\u043E\u043C \u0444\u0438\u043B\u044C\u0442\u0440\u0435.",
+                kanjiListTitle: "370 \u043A\u0430\u043D\u0434\u0437\u0438 N3",
+                kanjiListText: "\u041F\u043E\u043B\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u0438\u0437 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430: \u043C\u043E\u0436\u043D\u043E \u0431\u044B\u0441\u0442\u0440\u043E \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0437\u043D\u0430\u043A\u0438 \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E.",
+                grammarTitle: "80 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0445 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0439 N3",
+                grammarText: "\u0420\u0430\u0431\u043E\u0447\u0438\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0441 \u0444\u0443\u043D\u043A\u0446\u0438\u0435\u0439, \u0444\u043E\u0440\u043C\u0443\u043B\u043E\u0439, \u043F\u0440\u0438\u043C\u0435\u0440\u043E\u043C \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439 \u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u044F \u0432 \u043F\u0438\u0441\u044C\u043C\u0435\u043D\u043D\u043E\u043C \u0438 \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440\u043D\u043E\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0435.",
+                readingTitle: "\u0422\u0435\u043A\u0441\u0442\u044B \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F N3",
+                readingText: "\u041A\u043E\u0440\u043E\u0442\u043A\u0438\u0435 \u0442\u0435\u043A\u0441\u0442\u044B \u0438 lesson mini-readings \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u0430, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443 \u0438 \u0432\u044B\u0432\u043E\u0434\u044B \u0432 \u0436\u0438\u0432\u043E\u0439 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442.",
+                listeningTitle: "\u0421\u043A\u0440\u0438\u043F\u0442\u044B \u0434\u043B\u044F \u0430\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F N3",
+                listeningText: "\u0421\u043A\u0440\u0438\u043F\u0442\u044B \u043C\u043E\u0436\u043D\u043E \u0447\u0438\u0442\u0430\u0442\u044C \u0432\u0441\u043B\u0443\u0445, \u043E\u0437\u0432\u0443\u0447\u0438\u0432\u0430\u0442\u044C \u0447\u0435\u0440\u0435\u0437 TTS \u0438 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u0434\u043B\u044F shadowing \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u044F.",
+                questions: "\u0412\u043E\u043F\u0440\u043E\u0441\u044B",
+                score: "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442",
                 mistakes: "Ошибки",
-                resetTest: "Сбросить тест",
-                submitFinal: "Завершить тест",
-                reviewAll: "Повторить весь N3",
-                finalPassed: "N3 пройден",
-                finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
-                finalNeedsReview: "Нужно повторить",
-                finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
+                resetTest: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                submitFinal: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                reviewAll: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0432\u0435\u0441\u044C N3",
+                finalPassed: "N3 \u043F\u0440\u043E\u0439\u0434\u0435\u043D",
+                finalPassedText: "\u041E\u0442\u043B\u0438\u0447\u043D\u043E. \u041E\u0448\u0438\u0431\u043A\u0438 \u043C\u043E\u0436\u043D\u043E \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                finalNeedsReview: "\u041D\u0443\u0436\u043D\u043E \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+                finalNeedsReviewText: "\u041E\u0448\u0438\u0431\u043A\u0438 \u043F\u043E\u043C\u0435\u0447\u0435\u043D\u044B \u043A\u0430\u043A \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u0438 \u043F\u043E\u0434\u043D\u044F\u0442\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435."
             }
             : {
                 title: "JLPT N3",
@@ -11585,7 +13081,7 @@
                 completedListening: "Listening",
                 reviews: "Reviews",
                 difficult: "Difficult",
-        srs: "Повторение",
+                srs: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
                 lessons: "lessons",
                 lessonsTitle: "37 lessons, about 10 kanji each",
                 lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, mini reading, exercises, writing, and SRS.",
@@ -11617,6 +13113,9 @@
                 step: "step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
+                remember: "Remember",
+                notRemember: "Don't remember",
+                details: "Show more",
                 addToSrs: "Send to review",
                 know: "I know",
                 hard: "Hard",
@@ -11729,7 +13228,7 @@
         const word = example?.word || card.kanji;
         const reading = displayHiragana(example?.reading || card.hiragana || "");
         return lang() === "ru"
-            ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+            ? `\u0421\u0432\u044F\u0436\u0438 ${card.kanji} \u0441\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435\u043C \u00AB${cardMeaning(card)}\u00BB, \u0437\u0430\u0442\u0435\u043C \u0441\u0440\u0430\u0437\u0443 \u043F\u0440\u043E\u0433\u043E\u0432\u043E\u0440\u0438 \u0441\u043B\u043E\u0432\u043E \u0438 \u043F\u0440\u0438\u043C\u0435\u0440: ${word}${reading ? ` (${reading})` : ""}.`
             : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
     }
     function n3ProgressSummary() {
@@ -11770,10 +13269,10 @@
     }
     function n3LessonStatusLabel(status) {
         if (status === "completed")
-            return lang() === "ru" ? "завершён" : "completed";
+            return lang() === "ru" ? "\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "completed";
         if (status === "started")
-            return lang() === "ru" ? "начат" : "started";
-        return lang() === "ru" ? "не начат" : "new";
+            return lang() === "ru" ? "\u043D\u0430\u0447\u0430\u0442" : "started";
+        return lang() === "ru" ? "\u043D\u0435 \u043D\u0430\u0447\u0430\u0442" : "new";
     }
     function buildN3LessonExercises(lesson) {
         const cards = n3CardsForLesson(lesson);
@@ -11788,7 +13287,7 @@
         exercises.push({
             id: `${lesson.id}-meaning-0`,
             type: "meaning",
-            title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+            title: exerciseTitles.meaning || { ru: "\u0423\u0437\u043D\u0430\u0432\u0430\u043D\u0438\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F", en: "Meaning recognition" },
             prompt: meaningCard.kanji,
             answer: meaningCard.id,
             answerLabel: cardMeaning(meaningCard),
@@ -11801,7 +13300,7 @@
         exercises.push({
             id: `${lesson.id}-kanji-1`,
             type: "kanji",
-            title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+            title: exerciseTitles.kanji || { ru: "\u041A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E", en: "Kanji from meaning" },
             prompt: cardMeaning(kanjiCard),
             answer: kanjiCard.kanji,
             answerLabel: kanjiCard.kanji,
@@ -11815,7 +13314,7 @@
         exercises.push({
             id: `${lesson.id}-reading-2`,
             type: "reading",
-            title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+            title: exerciseTitles.reading || { ru: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0441\u043B\u043E\u0432\u0430", en: "Word reading" },
             prompt: readingExample.word || readingCard.kanji,
             answer: readingExample.reading || readingCard.hiragana || "",
             answerLabel: readingExample.reading || readingCard.hiragana || "",
@@ -11829,7 +13328,7 @@
             exercises.push({
                 id: `${lesson.id}-sentence-3`,
                 type: "sentence",
-                title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+                title: exerciseTitles.sentence || { ru: "\u041F\u0435\u0440\u0435\u0432\u043E\u0434 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F", en: "Sentence translation" },
                 prompt: sentence.jp,
                 answer: localized({ ru: sentence.ru, en: sentence.en }),
                 answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
@@ -11844,8 +13343,8 @@
         exercises.push({
             id: `${lesson.id}-word-4`,
             type: "missing-word",
-            title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            title: exerciseTitles["missing-word"] || { ru: "\u0412\u0441\u0442\u0430\u0432\u044C \u0441\u043B\u043E\u0432\u043E", en: "Missing word" },
+            prompt: lang() === "ru" ? `\u041A\u0430\u043A\u043E\u0435 \u0441\u043B\u043E\u0432\u043E \u043F\u043E\u0434\u0445\u043E\u0434\u0438\u0442 \u043A \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E \u00AB${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -11857,8 +13356,8 @@
         exercises.push({
             id: `${lesson.id}-active-5`,
             type: "active-recall",
-            title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
-            prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+            title: exerciseTitles["active-recall"] || { ru: "\u0410\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435", en: "Active recall" },
+            prompt: lang() === "ru" ? `\u0412\u0432\u0435\u0434\u0438 \u043A\u0430\u043D\u0434\u0437\u0438 \u0434\u043B\u044F \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
             answer: recallCard.kanji,
             answerLabel: recallCard.kanji,
             kanji: recallCard.kanji,
@@ -11871,7 +13370,7 @@
             exercises.push({
                 id: `${lesson.id}-grammar-6`,
                 type: "grammar-link",
-                title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+                title: exerciseTitles["grammar-link"] || { ru: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0441\u0432\u044F\u0437\u043A\u0430", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
                 answer: grammar.answer,
                 answerLabel: grammar.answer,
@@ -11887,7 +13386,7 @@
             exercises.push({
                 id: `${lesson.id}-mini-reading-7`,
                 type: "mini-reading",
-                title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+                title: exerciseTitles["mini-reading"] || { ru: "\u041C\u0438\u043D\u0438-\u0447\u0442\u0435\u043D\u0438\u0435", en: "Mini reading" },
                 prompt: miniSentence.jp,
                 answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
                 answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
@@ -12050,7 +13549,7 @@
         const lessonCards = n3CardsForLesson(lesson);
         const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
         if (studiedCount < lesson.kanji.length) {
-            const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0438\u0437\u0443\u0447\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430." : "Study all kanji in the lesson first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -12058,7 +13557,7 @@
         const exercises = buildN3LessonExercises(lesson);
         const allCorrect = exercises.length > 0 && exercises.every((ex) => n3ExerciseResult(ex.id)?.correct);
         if (!allCorrect) {
-            const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u0432\u0441\u0435 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u043E." : "Complete all exercises correctly first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -12079,13 +13578,26 @@
         });
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n3Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+        const n3StudyProgress = jlptLessonStudyProgress();
+        const n3StudySession = n3StudyProgress.sessions[n3SessKey];
+        if (n3StudySession) {
+            const doneAt = new Date().toISOString();
+            n3StudySession.phase = "done";
+            n3StudySession.completedAt = doneAt;
+            n3StudySession.updatedAt = doneAt;
+            n3StudySession.currentIndex = lessonCards.length;
+            n3StudyProgress.activeSessionKey = n3SessKey;
+            n3StudyProgress.lastUpdatedAt = doneAt;
+        }
         n3Course();
         // Force unlock N2 on N3 full complete
         const n3Count = Object.keys(course.completedLessons || {}).length;
         if (n3Count >= 37) {
             state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-            ["N3", "N2"].forEach(l => { if (!state.progress.unlockedJlptLevels.includes(l))
-                state.progress.unlockedJlptLevels.push(l); });
+            ["N3", "N2"].forEach(l => {
+                if (!state.progress.unlockedJlptLevels.includes(l))
+                    state.progress.unlockedJlptLevels.push(l);
+            });
         }
         const xp = state.n3Meta?.rewards?.lessonCompleteXp || 75;
         const coins = state.n3Meta?.rewards?.lessonCompleteMoon || 9;
@@ -12346,13 +13858,13 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `\u041C\u0438\u043D\u0438-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435: ${card.kanji} — ${cardMeaning(card)}. \u0427\u0442\u043E \u043D\u0430\u0436\u043C\u0451\u0448\u044C, \u0435\u0441\u043B\u0438 \u043F\u043E\u043C\u043D\u0438\u0448\u044C?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
-                answerLabel: lang() === "ru" ? "Помню" : "Remember",
+                answerLabel: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember",
                 options: [
-                    { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
-                    { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
-                    { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+                    { value: "again", label: lang() === "ru" ? "\u0421\u043B\u043E\u0436\u043D\u043E" : "Hard" },
+                    { value: "remember", label: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember" },
+                    { value: "skip", label: lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C" : "Skip" }
                 ]
             };
         }
@@ -12400,18 +13912,18 @@
                 state.finalTestModal = {
                     kind: "warning",
                     level: "N3",
-                    title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+                    title: lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B" : "Answer all questions",
                     message: lang() === "ru"
-                        ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+                        ? `\u0412\u044B \u043E\u0442\u0432\u0435\u0442\u0438\u043B\u0438 \u043D\u0435 \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B. \u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043E\u0432: ${stats.missingCount}.`
                         : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
                     answered: stats.answered,
                     missingCount: stats.missingCount,
                     totalQuestions: stats.totalQuestions,
                     threshold,
                     focusSelector,
-                    focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
-                    closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
-                    forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+                    focusLabel: lang() === "ru" ? "\u041A \u043F\u0435\u0440\u0432\u043E\u043C\u0443 \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0443" : "Jump to first missing",
+                    closeLabel: lang() === "ru" ? "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C" : "Continue",
+                    forceLabel: lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u043E\u0442\u0432\u0435\u0442\u043E\u0432" : "Finish anyway",
                     allowIncomplete
                 };
                 state.pendingFocus = focusSelector;
@@ -12511,7 +14023,7 @@
         }
         catch (error) {
             console.error(error);
-            toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+            toast(lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442." : "Could not finish the test.");
         }
         finally {
             state.finalTestBusy = false;
@@ -12664,6 +14176,7 @@
         const cards = n2CardsForLesson(lesson);
         const exercises = buildN2LessonExercises(lesson);
         const status = n2LessonStatus(lesson.id);
+        const study = jlptLessonStudySession("N2", lesson, cards);
         let complete = status === "completed";
         // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
         const n2SessKey = `n2:${lesson.id}`;
@@ -12680,6 +14193,8 @@
         const nextLesson = n2Lessons().find((item) => item.order === lesson.order + 1);
         const miniReadingItem = n2LessonReadingItem(lesson);
         const miniReadingComplete = miniReadingItem ? Boolean(n2Course().completedReading[miniReadingItem.id]) : false;
+        const playerId = jlptLessonStudySectionId("N2", lesson.id, "player");
+        const testId = jlptLessonStudySectionId("N2", lesson.id, "test");
         return `
       <section class="page textbooks-page n5-course-page n2-course-page n5-lesson-page">
         <div class="section-head">
@@ -12706,14 +14221,17 @@
             </div>
           </div>
           <div class="mini-stat-row">
-            ${renderMetric(labels.studiedKanji, `${cards.filter((card) => n2Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}`, labels.kanji, progressWidth(cards.filter((card) => n2Course().studiedKanji[card.kanji]).length, lesson.kanji.length))}
+            ${renderMetric(labels.studiedKanji, `${Math.min(study.answeredCount, lesson.kanji.length)}/${lesson.kanji.length}`, labels.kanji, progressWidth(study.answeredCount, lesson.kanji.length))}
             ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
           </div>
         </article>
 
-        <div class="n5-kanji-grid">
-          ${cards.map((card, index) => renderN2KanjiStudyCard(card, lesson, index)).join("")}
-        </div>
+        ${renderJlptLessonStudyPlayer("N2", lesson, cards, labels, {
+            playerId,
+            answerAction: "jlpt-lesson-answer",
+            examples: (card) => n2CardExamples(card),
+            sentence: (card) => renderN2CardSentence(card, lesson)
+        })}
 
         ${renderN2LessonGrammar(lesson)}
 
@@ -12728,14 +14246,14 @@
             ${lesson.sentences.map((sentence) => `
               <article>
                 <strong>${escapeHtml(sentence.jp)}</strong>
-                <span>${escapeHtml(sentence.reading || "")}</span>
+                <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
                 <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
               </article>
             `).join("")}
           </div>
         </section>
 
-        <section class="n5-panel">
+        <section class="n5-panel" id="${escapeAttr(testId)}">
           <div>
             <h2>${escapeHtml(labels.exercises)}</h2>
             <p>${escapeHtml(labels.exercisesText)}</p>
@@ -12755,10 +14273,10 @@
               ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
               <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
             </div>
-            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0443\u0440\u043E\u043A\u0430." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
           </div>
           <div class="actions">
-            <button class="btn primary" type="button" data-action="n2-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
+            <button class="btn primary" type="button" data-action="n2-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n2-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
             ${nextLesson ? `<a class="btn ghost" href="#jlpt/n2/${escapeAttr(nextLesson.id)}" data-action="n2-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n2-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
@@ -12807,16 +14325,15 @@
         </dl>
         <div class="n5-word-list">
           ${examples.map((example) => `
-            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(example.reading || "")} · ${escapeHtml(exampleTranslation(example))}</span></p>
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(displayHiragana(example.reading || ""))} · ${escapeHtml(exampleTranslation(example))}</span></p>
           `).join("")}
         </div>
         <p class="n5-hint">${escapeHtml(hint)}</p>
         ${renderN2CardSentence(card, lesson)}
         <div class="textbook-actions">
-            <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
-            <button class="btn success" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
-            <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
-          <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
+          <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
           <button class="btn ghost" type="button" data-action="n2-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
         </div>
       </article>
@@ -12830,7 +14347,7 @@
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
-        <span>${escapeHtml(sentence.reading || "")}</span>
+        <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
         <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
         ${grammar ? `<small>${escapeHtml(n2Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
       </div>
@@ -12912,7 +14429,7 @@
       <section class="page textbooks-page n5-course-page n2-course-page">
         <div class="section-head">
           <div>
-            <p class="eyebrow">JLPT N2 · Повторение</p>
+            <p class="eyebrow">JLPT N2 \u00B7 \u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</p>
             <h1>${escapeHtml(labels.reviewTitle)}</h1>
             <p>${escapeHtml(labels.reviewDescription)}</p>
           </div>
@@ -12947,7 +14464,6 @@
         <div class="textbook-actions">
           <button class="btn success" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
           <button class="btn warning" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
-          <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
         </div>
       </article>
     `;
@@ -12977,7 +14493,6 @@
               <p>${escapeHtml(n2CardExamples(card)[0]?.word || "")} · ${escapeHtml(n2CardExamples(card)[0]?.reading || "")}</p>
               <div class="textbook-actions">
                 <button class="btn primary" type="button" data-action="n2-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
-                <button class="btn ghost" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">${escapeHtml(labels.writingPractice)}</button>
               </div>
             </article>
           `).join("")}
@@ -13013,7 +14528,7 @@
                 <h3>${escapeHtml(localized(item.title))}</h3>
                 <p>${escapeHtml(localized(item.explanation))}</p>
                 ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
-                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(example.reading || "")}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
                   ${(item.options.length ? item.options : [item.answer]).map((option) => `
@@ -13151,7 +14666,7 @@
         <div class="n5-exercise-list">
           ${questions.map((question, index) => renderN2FinalQuestion(question, index)).join("")}
         </div>
-        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B \u043F\u0435\u0440\u0435\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435\u043C \u0442\u0435\u0441\u0442\u0430." : "Answer all questions before finishing the test.")}</p>`}
         <div class="n5-final-actions">
           <button class="btn primary" type="button" data-action="n2-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
           <button class="btn ghost" type="button" data-action="n2-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
@@ -13181,94 +14696,94 @@
         return lang() === "ru"
             ? {
                 title: "JLPT N2",
-                allTextbooks: "Все учебники",
-                pdf: "PDF-учебник",
-                kanji: "кандзи",
-                grammar: "грамматика",
-                courseMap: "Интерактивный учебник N2: абзацы, аргументы, выводы и позиция автора",
-                continue: "Продолжить",
-                review: "Повторять N2",
-                openKanji: "Открыть список кандзи",
-                grammarN2: "Грамматика N2",
+                allTextbooks: "\u0412\u0441\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438",
+                pdf: "PDF-\u0443\u0447\u0435\u0431\u043D\u0438\u043A",
+                kanji: "\u043A\u0430\u043D\u0434\u0437\u0438",
+                grammar: "\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430",
+                courseMap: "\uFFFD?\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u0439 \u0443\u0447\u0435\u0431\u043D\u0438\u043A N2: \u0430\u0431\u0437\u0430\u0446\u044B, \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u044B, \u0432\u044B\u0432\u043E\u0434\u044B \u0438 \u043F\u043E\u0437\u0438\u0446\u0438\u044F \u0430\u0432\u0442\u043E\u0440\u0430",
+                continue: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C",
+                review: "\u041F\u043E\u0432\u0442\u043E\u0440\u044F\u0442\u044C N2",
+                openKanji: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u043A\u0430\u043D\u0434\u0437\u0438",
+                grammarN2: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 N2",
                 readingN2: "Чтение N2",
-                listeningN2: "Аудирование N2",
-                finalTest: "Финальный тест",
+                listeningN2: "\u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 N2",
+                finalTest: "\u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0442\u0435\u0441\u0442",
                 studiedKanji: "Изучено",
-                completedLessons: "Уроки",
-                completedGrammar: "Грамматика",
+                completedLessons: "\u0423\u0440\u043E\u043A\u0438",
+                completedGrammar: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430",
                 completedReading: "Чтение",
-                completedListening: "Аудирование",
-                reviews: "Повторения",
-                difficult: "Сложные",
-        srs: "Повторение",
-        lessons: "уроков",
-                lessonsTitle: "38 уроков примерно по 10 кандзи",
-                lessonsDescription: "Каждый урок связывает кандзи, слово, грамматику, абзац, авторскую позицию, вывод, письмо и повторение.",
-                reviewPlan: "План повторения на 90 дней",
-                day: "день",
-                lesson: "Урок",
+                completedListening: "\u0410\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435",
+                reviews: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F",
+                difficult: "\u0421\u043B\u043E\u0436\u043D\u044B\u0435",
+                srs: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessons: "\u0443\u0440\u043E\u043A\u043E\u0432",
+                lessonsTitle: "38 \u0443\u0440\u043E\u043A\u043E\u0432 \u043F\u0440\u0438\u043C\u0435\u0440\u043D\u043E \u043F\u043E 10 \u043A\u0430\u043D\u0434\u0437\u0438",
+                lessonsDescription: "\u041A\u0430\u0436\u0434\u044B\u0439 \u0443\u0440\u043E\u043A \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u0435\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u043E, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443, \u0430\u0431\u0437\u0430\u0446, \u0430\u0432\u0442\u043E\u0440\u0441\u043A\u0443\u044E \u043F\u043E\u0437\u0438\u0446\u0438\u044E, \u0432\u044B\u0432\u043E\u0434, \u043F\u0438\u0441\u044C\u043C\u043E \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                reviewPlan: "\u041F\u043B\u0430\u043D \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u043D\u0430 90 \u0434\u043D\u0435\u0439",
+                day: "\u0434\u0435\u043D\u044C",
+                lesson: "\u0423\u0440\u043E\u043A",
                 backToN2: "К N2",
                 n5Bridge: "N5/N4/N3 bridge",
-                n5BridgeText: "Если база N5, N4 или N3 дырявая, N2 будет ощущаться как стена. Перед стартом проверь частицы, связки, условные формы, N3-грамматику и навык видеть причину, уступку и вывод в абзаце.",
-                reviewN5Base: "Повторить N5/N4/N3 перед N2",
-                lessonChain: "Кандзи -> слово -> грамматика -> абзац -> позиция автора -> вывод -> повторение",
-                lessonChainText: "N2 больше не живёт списком знаков: каждый знак сразу входит в слово, формальную связку, мини-абзац и логику аргумента.",
-                duration: "Длительность",
+                n5BridgeText: "\u0415\u0441\u043B\u0438 \u0431\u0430\u0437\u0430 N5, N4 \u0438\u043B\u0438 N3 \u0434\u044B\u0440\u044F\u0432\u0430\u044F, N2 \u0431\u0443\u0434\u0435\u0442 \u043E\u0449\u0443\u0449\u0430\u0442\u044C\u0441\u044F \u043A\u0430\u043A \u0441\u0442\u0435\u043D\u0430. \u041F\u0435\u0440\u0435\u0434 \u0441\u0442\u0430\u0440\u0442\u043E\u043C \u043F\u0440\u043E\u0432\u0435\u0440\u044C \u0447\u0430\u0441\u0442\u0438\u0446\u044B, \u0441\u0432\u044F\u0437\u043A\u0438, \u0443\u0441\u043B\u043E\u0432\u043D\u044B\u0435 \u0444\u043E\u0440\u043C\u044B, N3-\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443 \u0438 \u043D\u0430\u0432\u044B\u043A \u0432\u0438\u0434\u0435\u0442\u044C \u043F\u0440\u0438\u0447\u0438\u043D\u0443, \u0443\u0441\u0442\u0443\u043F\u043A\u0443 \u0438 \u0432\u044B\u0432\u043E\u0434 \u0432 \u0430\u0431\u0437\u0430\u0446\u0435.",
+                reviewN5Base: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C N5/N4/N3 \u043F\u0435\u0440\u0435\u0434 N2",
+                lessonChain: "\u041A\u0430\u043D\u0434\u0437\u0438 -> \u0441\u043B\u043E\u0432\u043E -> \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 -> \u0430\u0431\u0437\u0430\u0446 -> \u043F\u043E\u0437\u0438\u0446\u0438\u044F \u0430\u0432\u0442\u043E\u0440\u0430 -> \u0432\u044B\u0432\u043E\u0434 -> \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                lessonChainText: "N2 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u0436\u0438\u0432\u0451\u0442 \u0441\u043F\u0438\u0441\u043A\u043E\u043C \u0437\u043D\u0430\u043A\u043E\u0432: \u043A\u0430\u0436\u0434\u044B\u0439 \u0437\u043D\u0430\u043A \u0441\u0440\u0430\u0437\u0443 \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u0441\u043B\u043E\u0432\u043E, \u0444\u043E\u0440\u043C\u0430\u043B\u044C\u043D\u0443\u044E \u0441\u0432\u044F\u0437\u043A\u0443, \u043C\u0438\u043D\u0438-\u0430\u0431\u0437\u0430\u0446 \u0438 \u043B\u043E\u0433\u0438\u043A\u0443 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430.",
+                duration: "\u0414\u043B\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C",
                 minutes: "мин",
-                exercises: "Упражнения",
-                correct: "верно",
-                sentences: "Примеры предложений",
-                sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
-                exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, структуру абзаца, позицию автора и активное вспоминание.",
-                lessonComplete: "Урок завершён",
-                lessonCompleteText: "Кандзи урока добавлены в повторение.",
+                exercises: "\u0423\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F",
+                correct: "\u0432\u0435\u0440\u043D\u043E",
+                sentences: "\u041F\u0440\u0438\u043C\u0435\u0440\u044B \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439",
+                sentencesText: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0439 \u0432\u0441\u043B\u0443\u0445 \u0438 \u043E\u0442\u043C\u0435\u0442\u044C, \u0433\u0434\u0435 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 \u0443\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0441\u043C\u044B\u0441\u043B \u0438 \u0441\u0432\u044F\u0437\u044C \u043C\u0435\u0436\u0434\u0443 \u0441\u043B\u043E\u0432\u0430\u043C\u0438.",
+                exercisesText: "\u0421\u043C\u0435\u0448\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u0434\u0430\u043D\u0438\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u0430, \u0447\u0442\u0435\u043D\u0438\u0435, \u043F\u0435\u0440\u0435\u0432\u043E\u0434, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443, \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0443 \u0430\u0431\u0437\u0430\u0446\u0430, \u043F\u043E\u0437\u0438\u0446\u0438\u044E \u0430\u0432\u0442\u043E\u0440\u0430 \u0438 \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435.",
+                lessonComplete: "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D",
+                lessonCompleteText: "\u041A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
                 lessonResult: "Итог урока",
-                lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
-                completeLesson: "Завершить урок",
-                refreshLesson: "Обновить итог",
-                repeatMistakes: "Повторить ошибки",
-                nextLesson: "Следующий урок",
-                none: "нет",
-                step: "шаг",
-                onyomi: "онъёми",
-                kunyomi: "кунъёми",
-                addToSrs: "В повторение",
-                know: "Знаю",
-                hard: "Сложно",
-                writingPractice: "Практика письма",
-                markWritten: "Написано",
-                written: "Письмо засчитано",
-                miniGrammar: "Мини-грамматика урока",
-                miniGrammarText: "1-3 конструкции, которые сразу связывают кандзи с точкой зрения, причиной или выводом.",
-                miniReadingTitle: "Мини-reading урока",
-                miniReadingText: "Пойми, о чём текст, где причина, где уступка, что противопоставлено и к какому выводу ведёт короткий N2-абзац.",
-                markGrammar: "Засчитать конструкцию",
-                completed: "Пройдено",
-                check: "Проверить",
-                showAnswer: "Сложно: показать ответ",
-                correctAnswer: "Верно. XP и Moon Fragment начислены.",
-                wrongAnswer: "Пока нет",
-                reviewTitle: "N2-повторение",
-                reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N2.",
-                noReviewCards: "Сейчас нет карточек в этом фильтре.",
-                kanjiListTitle: "380 кандзи N2",
-                kanjiListText: "Полный список из учебника: можно быстро добавить знаки в повторение или открыть письмо.",
-                grammarTitle: "120 грамматических конструкций N2",
-                grammarText: "Рабочие карточки с функцией, формулой, примером и проверкой понимания в письменном аргументе и живом контексте.",
-                readingTitle: "Тексты для чтения N2",
-                readingText: "Короткие тексты и mini-readings уроков связывают кандзи, слова, грамматику, авторскую позицию и выводы в живой контекст.",
-                listeningTitle: "Скрипты для аудирования N2",
-                listeningText: "Скрипты можно читать вслух, озвучивать через TTS и использовать для shadowing и проверки понимания.",
-                questions: "Вопросы",
-                score: "Результат",
+                lessonResultText: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438 \u0443\u0440\u043E\u043A, \u043A\u043E\u0433\u0434\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0438 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u0433\u043E\u0442\u043E\u0432\u044B \u043A \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044E.",
+                completeLesson: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0443\u0440\u043E\u043A",
+                refreshLesson: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0438\u0442\u043E\u0433",
+                repeatMistakes: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438",
+                nextLesson: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0443\u0440\u043E\u043A",
+                none: "\u043D\u0435\u0442",
+                step: "\u0448\u0430\u0433",
+                onyomi: "\u043E\u043D\u044A\u0451\u043C\u0438",
+                kunyomi: "\u043A\u0443\u043D\u044A\u0451\u043C\u0438",
+                addToSrs: "\u0412 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                know: "\u0417\u043D\u0430\u044E",
+                hard: "\u0421\u043B\u043E\u0436\u043D\u043E",
+                writingPractice: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+                markWritten: "\u041D\u0430\u043F\u0438\u0441\u0430\u043D\u043E",
+                written: "\u041F\u0438\u0441\u044C\u043C\u043E \u0437\u0430\u0441\u0447\u0438\u0442\u0430\u043D\u043E",
+                miniGrammar: "\u041C\u0438\u043D\u0438-\u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0430 \u0443\u0440\u043E\u043A\u0430",
+                miniGrammarText: "1-3 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0441\u0440\u0430\u0437\u0443 \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438 \u0441 \u0442\u043E\u0447\u043A\u043E\u0439 \u0437\u0440\u0435\u043D\u0438\u044F, \u043F\u0440\u0438\u0447\u0438\u043D\u043E\u0439 \u0438\u043B\u0438 \u0432\u044B\u0432\u043E\u0434\u043E\u043C.",
+                miniReadingTitle: "\u041C\u0438\u043D\u0438-reading \u0443\u0440\u043E\u043A\u0430",
+                miniReadingText: "\u041F\u043E\u0439\u043C\u0438, \u043E \u0447\u0451\u043C \u0442\u0435\u043A\u0441\u0442, \u0433\u0434\u0435 \u043F\u0440\u0438\u0447\u0438\u043D\u0430, \u0433\u0434\u0435 \u0443\u0441\u0442\u0443\u043F\u043A\u0430, \u0447\u0442\u043E \u043F\u0440\u043E\u0442\u0438\u0432\u043E\u043F\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E \u0438 \u043A \u043A\u0430\u043A\u043E\u043C\u0443 \u0432\u044B\u0432\u043E\u0434\u0443 \u0432\u0435\u0434\u0451\u0442 \u043A\u043E\u0440\u043E\u0442\u043A\u0438\u0439 N2-\u0430\u0431\u0437\u0430\u0446.",
+                markGrammar: "\u0417\u0430\u0441\u0447\u0438\u0442\u0430\u0442\u044C \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u044E",
+                completed: "\u041F\u0440\u043E\u0439\u0434\u0435\u043D\u043E",
+                check: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+                showAnswer: "\u0421\u043B\u043E\u0436\u043D\u043E: \u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043E\u0442\u0432\u0435\u0442",
+                correctAnswer: "\u0412\u0435\u0440\u043D\u043E. XP \u0438 Moon Fragment \u043D\u0430\u0447\u0438\u0441\u043B\u0435\u043D\u044B.",
+                wrongAnswer: "\u041F\u043E\u043A\u0430 \u043D\u0435\u0442",
+                reviewTitle: "N2-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435",
+                reviewDescription: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438 due-\u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438, \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438\u043B\u0438 \u0432\u0435\u0441\u044C \u043D\u0430\u0431\u043E\u0440 N2.",
+                noReviewCards: "\u0421\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u043A\u0430\u0440\u0442\u043E\u0447\u0435\u043A \u0432 \u044D\u0442\u043E\u043C \u0444\u0438\u043B\u044C\u0442\u0440\u0435.",
+                kanjiListTitle: "380 \u043A\u0430\u043D\u0434\u0437\u0438 N2",
+                kanjiListText: "\u041F\u043E\u043B\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u0438\u0437 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430: \u043C\u043E\u0436\u043D\u043E \u0431\u044B\u0441\u0442\u0440\u043E \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0437\u043D\u0430\u043A\u0438 \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E.",
+                grammarTitle: "120 \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0445 \u043A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0439 N2",
+                grammarText: "\u0420\u0430\u0431\u043E\u0447\u0438\u0435 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u0441 \u0444\u0443\u043D\u043A\u0446\u0438\u0435\u0439, \u0444\u043E\u0440\u043C\u0443\u043B\u043E\u0439, \u043F\u0440\u0438\u043C\u0435\u0440\u043E\u043C \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439 \u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u044F \u0432 \u043F\u0438\u0441\u044C\u043C\u0435\u043D\u043D\u043E\u043C \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0435 \u0438 \u0436\u0438\u0432\u043E\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0435.",
+                readingTitle: "\u0422\u0435\u043A\u0441\u0442\u044B \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F N2",
+                readingText: "\u041A\u043E\u0440\u043E\u0442\u043A\u0438\u0435 \u0442\u0435\u043A\u0441\u0442\u044B \u0438 mini-readings \u0443\u0440\u043E\u043A\u043E\u0432 \u0441\u0432\u044F\u0437\u044B\u0432\u0430\u044E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438, \u0441\u043B\u043E\u0432\u0430, \u0433\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u043A\u0443, \u0430\u0432\u0442\u043E\u0440\u0441\u043A\u0443\u044E \u043F\u043E\u0437\u0438\u0446\u0438\u044E \u0438 \u0432\u044B\u0432\u043E\u0434\u044B \u0432 \u0436\u0438\u0432\u043E\u0439 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442.",
+                listeningTitle: "\u0421\u043A\u0440\u0438\u043F\u0442\u044B \u0434\u043B\u044F \u0430\u0443\u0434\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F N2",
+                listeningText: "\u0421\u043A\u0440\u0438\u043F\u0442\u044B \u043C\u043E\u0436\u043D\u043E \u0447\u0438\u0442\u0430\u0442\u044C \u0432\u0441\u043B\u0443\u0445, \u043E\u0437\u0432\u0443\u0447\u0438\u0432\u0430\u0442\u044C \u0447\u0435\u0440\u0435\u0437 TTS \u0438 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u0434\u043B\u044F shadowing \u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 \u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u044F.",
+                questions: "\u0412\u043E\u043F\u0440\u043E\u0441\u044B",
+                score: "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442",
                 mistakes: "Ошибки",
-                resetTest: "Сбросить тест",
-                submitFinal: "Завершить тест",
-                reviewAll: "Повторить весь N2",
-                finalPassed: "N2 пройден",
-                finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
-                finalNeedsReview: "Нужно повторить",
-                finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
+                resetTest: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                submitFinal: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442",
+                reviewAll: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0432\u0435\u0441\u044C N2",
+                finalPassed: "N2 \u043F\u0440\u043E\u0439\u0434\u0435\u043D",
+                finalPassedText: "\u041E\u0442\u043B\u0438\u0447\u043D\u043E. \u041E\u0448\u0438\u0431\u043A\u0438 \u043C\u043E\u0436\u043D\u043E \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435.",
+                finalNeedsReview: "\u041D\u0443\u0436\u043D\u043E \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+                finalNeedsReviewText: "\u041E\u0448\u0438\u0431\u043A\u0438 \u043F\u043E\u043C\u0435\u0447\u0435\u043D\u044B \u043A\u0430\u043A \u0441\u043B\u043E\u0436\u043D\u044B\u0435 \u0438 \u043F\u043E\u0434\u043D\u044F\u0442\u044B \u0432 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435."
             }
             : {
                 title: "JLPT N2",
@@ -13435,7 +14950,7 @@
         const word = example?.word || card.kanji;
         const reading = displayHiragana(example?.reading || card.hiragana || "");
         return lang() === "ru"
-            ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+            ? `\u0421\u0432\u044F\u0436\u0438 ${card.kanji} \u0441\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435\u043C \u00AB${cardMeaning(card)}\u00BB, \u0437\u0430\u0442\u0435\u043C \u0441\u0440\u0430\u0437\u0443 \u043F\u0440\u043E\u0433\u043E\u0432\u043E\u0440\u0438 \u0441\u043B\u043E\u0432\u043E \u0438 \u043F\u0440\u0438\u043C\u0435\u0440: ${word}${reading ? ` (${reading})` : ""}.`
             : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
     }
     function n2ProgressSummary() {
@@ -13476,10 +14991,10 @@
     }
     function n2LessonStatusLabel(status) {
         if (status === "completed")
-            return lang() === "ru" ? "завершён" : "completed";
+            return lang() === "ru" ? "\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D" : "completed";
         if (status === "started")
-            return lang() === "ru" ? "начат" : "started";
-        return lang() === "ru" ? "не начат" : "new";
+            return lang() === "ru" ? "\u043D\u0430\u0447\u0430\u0442" : "started";
+        return lang() === "ru" ? "\u043D\u0435 \u043D\u0430\u0447\u0430\u0442" : "new";
     }
     function buildN2LessonExercises(lesson) {
         const cards = n2CardsForLesson(lesson);
@@ -13494,7 +15009,7 @@
         exercises.push({
             id: `${lesson.id}-meaning-0`,
             type: "meaning",
-            title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+            title: exerciseTitles.meaning || { ru: "\u0423\u0437\u043D\u0430\u0432\u0430\u043D\u0438\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F", en: "Meaning recognition" },
             prompt: meaningCard.kanji,
             answer: meaningCard.id,
             answerLabel: cardMeaning(meaningCard),
@@ -13507,7 +15022,7 @@
         exercises.push({
             id: `${lesson.id}-kanji-1`,
             type: "kanji",
-            title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+            title: exerciseTitles.kanji || { ru: "\u041A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E", en: "Kanji from meaning" },
             prompt: cardMeaning(kanjiCard),
             answer: kanjiCard.kanji,
             answerLabel: kanjiCard.kanji,
@@ -13521,7 +15036,7 @@
         exercises.push({
             id: `${lesson.id}-reading-2`,
             type: "reading",
-            title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+            title: exerciseTitles.reading || { ru: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0441\u043B\u043E\u0432\u0430", en: "Word reading" },
             prompt: readingExample.word || readingCard.kanji,
             answer: readingExample.reading || readingCard.hiragana || "",
             answerLabel: readingExample.reading || readingCard.hiragana || "",
@@ -13535,7 +15050,7 @@
             exercises.push({
                 id: `${lesson.id}-sentence-3`,
                 type: "sentence",
-                title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+                title: exerciseTitles.sentence || { ru: "\u041F\u0435\u0440\u0435\u0432\u043E\u0434 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F", en: "Sentence translation" },
                 prompt: sentence.jp,
                 answer: localized({ ru: sentence.ru, en: sentence.en }),
                 answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
@@ -13550,8 +15065,8 @@
         exercises.push({
             id: `${lesson.id}-word-4`,
             type: "missing-word",
-            title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            title: exerciseTitles["missing-word"] || { ru: "\u0412\u0441\u0442\u0430\u0432\u044C \u0441\u043B\u043E\u0432\u043E", en: "Missing word" },
+            prompt: lang() === "ru" ? `\u041A\u0430\u043A\u043E\u0435 \u0441\u043B\u043E\u0432\u043E \u043F\u043E\u0434\u0445\u043E\u0434\u0438\u0442 \u043A \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044E \u00AB${exampleTranslation(wordExample)}»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -13563,8 +15078,8 @@
         exercises.push({
             id: `${lesson.id}-active-5`,
             type: "active-recall",
-            title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
-            prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+            title: exerciseTitles["active-recall"] || { ru: "\u0410\u043A\u0442\u0438\u0432\u043D\u043E\u0435 \u0432\u0441\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u0435", en: "Active recall" },
+            prompt: lang() === "ru" ? `\u0412\u0432\u0435\u0434\u0438 \u043A\u0430\u043D\u0434\u0437\u0438 \u0434\u043B\u044F \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
             answer: recallCard.kanji,
             answerLabel: recallCard.kanji,
             kanji: recallCard.kanji,
@@ -13577,7 +15092,7 @@
             exercises.push({
                 id: `${lesson.id}-grammar-6`,
                 type: "grammar-link",
-                title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+                title: exerciseTitles["grammar-link"] || { ru: "\u0413\u0440\u0430\u043C\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0441\u0432\u044F\u0437\u043A\u0430", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
                 answer: grammar.answer,
                 answerLabel: grammar.answer,
@@ -13593,7 +15108,7 @@
             exercises.push({
                 id: `${lesson.id}-mini-reading-7`,
                 type: "mini-reading",
-                title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+                title: exerciseTitles["mini-reading"] || { ru: "\u041C\u0438\u043D\u0438-\u0447\u0442\u0435\u043D\u0438\u0435", en: "Mini reading" },
                 prompt: miniSentence.jp,
                 answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
                 answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
@@ -13756,7 +15271,7 @@
         const lessonCards = n2CardsForLesson(lesson);
         const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
         if (studiedCount < lesson.kanji.length) {
-            const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0438\u0437\u0443\u0447\u0438\u0442\u0435 \u0432\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u043A\u0430." : "Study all kanji in the lesson first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -13764,7 +15279,7 @@
         const exercises = buildN2LessonExercises(lesson);
         const allCorrect = exercises.length > 0 && exercises.every((ex) => n2ExerciseResult(ex.id)?.correct);
         if (!allCorrect) {
-            const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+            const msg = lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u0432\u0441\u0435 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u043E." : "Complete all exercises correctly first.";
             if (typeof toast === "function")
                 toast(msg);
             return;
@@ -13785,13 +15300,26 @@
         });
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n2Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+        const n2StudyProgress = jlptLessonStudyProgress();
+        const n2StudySession = n2StudyProgress.sessions[n2SessKey];
+        if (n2StudySession) {
+            const doneAt = new Date().toISOString();
+            n2StudySession.phase = "done";
+            n2StudySession.completedAt = doneAt;
+            n2StudySession.updatedAt = doneAt;
+            n2StudySession.currentIndex = lessonCards.length;
+            n2StudyProgress.activeSessionKey = n2SessKey;
+            n2StudyProgress.lastUpdatedAt = doneAt;
+        }
         n2Course();
         // Force unlock N1 on N2 full complete
         const n2Count = Object.keys(course.completedLessons || {}).length;
         if (n2Count >= 38) {
             state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-            ["N2", "N1"].forEach(l => { if (!state.progress.unlockedJlptLevels.includes(l))
-                state.progress.unlockedJlptLevels.push(l); });
+            ["N2", "N1"].forEach(l => {
+                if (!state.progress.unlockedJlptLevels.includes(l))
+                    state.progress.unlockedJlptLevels.push(l);
+            });
         }
         const xp = state.n2Meta?.rewards?.lessonCompleteXp || 85;
         const coins = state.n2Meta?.rewards?.lessonCompleteMoon || 10;
@@ -14052,13 +15580,13 @@
                 type,
                 cardId: card.id,
                 kanji: card.kanji,
-                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                prompt: lang() === "ru" ? `\u041C\u0438\u043D\u0438-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435: ${card.kanji} — ${cardMeaning(card)}. \u0427\u0442\u043E \u043D\u0430\u0436\u043C\u0451\u0448\u044C, \u0435\u0441\u043B\u0438 \u043F\u043E\u043C\u043D\u0438\u0448\u044C?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
                 answer: "remember",
-                answerLabel: lang() === "ru" ? "Помню" : "Remember",
+                answerLabel: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember",
                 options: [
-                    { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
-                    { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
-                    { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+                    { value: "again", label: lang() === "ru" ? "\u0421\u043B\u043E\u0436\u043D\u043E" : "Hard" },
+                    { value: "remember", label: lang() === "ru" ? "\u041F\u043E\u043C\u043D\u044E" : "Remember" },
+                    { value: "skip", label: lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C" : "Skip" }
                 ]
             };
         }
@@ -14106,18 +15634,18 @@
                 state.finalTestModal = {
                     kind: "warning",
                     level: "N2",
-                    title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+                    title: lang() === "ru" ? "\u041E\u0442\u0432\u0435\u0442\u044C \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B" : "Answer all questions",
                     message: lang() === "ru"
-                        ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+                        ? `\u0412\u044B \u043E\u0442\u0432\u0435\u0442\u0438\u043B\u0438 \u043D\u0435 \u043D\u0430 \u0432\u0441\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B. \u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043E\u0432: ${stats.missingCount}.`
                         : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
                     answered: stats.answered,
                     missingCount: stats.missingCount,
                     totalQuestions: stats.totalQuestions,
                     threshold,
                     focusSelector,
-                    focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
-                    closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
-                    forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+                    focusLabel: lang() === "ru" ? "\u041A \u043F\u0435\u0440\u0432\u043E\u043C\u0443 \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0443" : "Jump to first missing",
+                    closeLabel: lang() === "ru" ? "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C" : "Continue",
+                    forceLabel: lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u043E\u0442\u0432\u0435\u0442\u043E\u0432" : "Finish anyway",
                     allowIncomplete
                 };
                 state.pendingFocus = focusSelector;
@@ -14217,7 +15745,7 @@
         }
         catch (error) {
             console.error(error);
-            toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+            toast(lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0442\u0435\u0441\u0442." : "Could not finish the test.");
         }
         finally {
             state.finalTestBusy = false;
@@ -14417,7 +15945,7 @@
         if (!learned.length) {
             return `
       <article class="sentence-practice empty-state" data-section="sentence-practice">
-          <span class="kanji-char">文</span>
+          <span class="kanji-char">\u6587</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.noLearned)}</p>
           ${builder}
@@ -14428,7 +15956,7 @@
         if (learned.length < 4) {
             return `
         <article class="sentence-practice empty-state" data-section="sentence-practice">
-          <span class="kanji-char">文</span>
+          <span class="kanji-char">\u6587</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.notEnough.replace("{count}", learned.length))}</p>
           ${builder}
@@ -14438,7 +15966,7 @@
         if (!available.length) {
             return `
         <article class="sentence-practice empty-state" data-section="sentence-practice">
-          <span class="kanji-char">文</span>
+          <span class="kanji-char">\u6587</span>
           <h2>${escapeHtml(labels.title)}</h2>
           <p>${escapeHtml(labels.noExercise)}</p>
           ${builder}
@@ -14577,24 +16105,24 @@
     function sentencePracticeLabels() {
         return lang() === "ru"
             ? {
-                title: "Практика предложений",
-                subtitle: "Только из изученных кандзи: {learned}/{total}",
-                progress: "{done}/{total} готово",
-                noLearned: "Сначала изучи несколько кандзи в уроках или повторении. После этого появятся предложения.",
-                notEnough: "Изучено {count} кандзи. Для упражнения нужно минимум 4 изученных кандзи, чтобы собрать варианты.",
-                noExercise: "Изученные кандзи пока не складываются в доступные предложения. Продолжай уроки, и блок откроется.",
-                tip: "Заполни {count} пропуск(а) плитками по порядку.",
-                check: "Проверить",
-                clear: "Очистить",
-                next: "Следующее",
-                undo: "Убрать",
-                completedBefore: "Награда за это предложение уже получена.",
-                fillAll: "Заполни все пропуски перед проверкой.",
-                correct: "Верно. Предложение собрано правильно.",
-                wrong: "Проверь красные места и попробуй ещё раз.",
-                full: "Все пропуски уже заполнены.",
-                inserted: "Плитка вставлена.",
-                removed: "Последняя плитка убрана."
+                title: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439",
+                subtitle: "\u0422\u043E\u043B\u044C\u043A\u043E \u0438\u0437 \u0438\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u043A\u0430\u043D\u0434\u0437\u0438: {learned}/{total}",
+                progress: "{done}/{total} \u0433\u043E\u0442\u043E\u0432\u043E",
+                noLearned: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0438\u0437\u0443\u0447\u0438 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u043A\u0430\u043D\u0434\u0437\u0438 \u0432 \u0443\u0440\u043E\u043A\u0430\u0445 \u0438\u043B\u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0438. \u041F\u043E\u0441\u043B\u0435 \u044D\u0442\u043E\u0433\u043E \u043F\u043E\u044F\u0432\u044F\u0442\u0441\u044F \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F.",
+                notEnough: "\uFFFD?\u0437\u0443\u0447\u0435\u043D\u043E {count} \u043A\u0430\u043D\u0434\u0437\u0438. \u0414\u043B\u044F \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u044F \u043D\u0443\u0436\u043D\u043E \u043C\u0438\u043D\u0438\u043C\u0443\u043C 4 \u0438\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u043A\u0430\u043D\u0434\u0437\u0438, \u0447\u0442\u043E\u0431\u044B \u0441\u043E\u0431\u0440\u0430\u0442\u044C \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u044B.",
+                noExercise: "\uFFFD?\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0435 \u043A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435 \u0441\u043A\u043B\u0430\u0434\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0432 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F. \u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u0439 \u0443\u0440\u043E\u043A\u0438, \u0438 \u0431\u043B\u043E\u043A \u043E\u0442\u043A\u0440\u043E\u0435\u0442\u0441\u044F.",
+                tip: "\u0417\u0430\u043F\u043E\u043B\u043D\u0438 {count} \u043F\u0440\u043E\u043F\u0443\u0441\u043A(\u0430) \u043F\u043B\u0438\u0442\u043A\u0430\u043C\u0438 \u043F\u043E \u043F\u043E\u0440\u044F\u0434\u043A\u0443.",
+                check: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+                clear: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C",
+                next: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0435",
+                undo: "\u0423\u0431\u0440\u0430\u0442\u044C",
+                completedBefore: "\u041D\u0430\u0433\u0440\u0430\u0434\u0430 \u0437\u0430 \u044D\u0442\u043E \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0443\u0436\u0435 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0430.",
+                fillAll: "\u0417\u0430\u043F\u043E\u043B\u043D\u0438 \u0432\u0441\u0435 \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0438 \u043F\u0435\u0440\u0435\u0434 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439.",
+                correct: "\u0412\u0435\u0440\u043D\u043E. \u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0441\u043E\u0431\u0440\u0430\u043D\u043E \u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u043E.",
+                wrong: "\u041F\u0440\u043E\u0432\u0435\u0440\u044C \u043A\u0440\u0430\u0441\u043D\u044B\u0435 \u043C\u0435\u0441\u0442\u0430 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0435\u0449\u0451 \u0440\u0430\u0437.",
+                full: "\u0412\u0441\u0435 \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0438 \u0443\u0436\u0435 \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u044B.",
+                inserted: "\u041F\u043B\u0438\u0442\u043A\u0430 \u0432\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u0430.",
+                removed: "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u044F\u044F \u043F\u043B\u0438\u0442\u043A\u0430 \u0443\u0431\u0440\u0430\u043D\u0430."
             }
             : {
                 title: "Sentence practice",
@@ -14620,33 +16148,33 @@
     function sentencePracticeCustomLabels() {
         return lang() === "ru"
             ? {
-                customTitle: "Своё предложение",
-                customCount: "Своих: {count}",
-                customSentence: "Японское предложение",
-                customSentencePlaceholder: "私は日本語を勉強します。",
-                customReading: "Чтение хираганой",
-                customReadingPlaceholder: "わたしは にほんごを べんきょうします。",
-                customTranslationRu: "Перевод RU",
-                customTranslationRuPlaceholder: "Я изучаю японский.",
+                customTitle: "\u0421\u0432\u043E\u0451 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
+                customCount: "\u0421\u0432\u043E\u0438\u0445: {count}",
+                customSentence: "\u042F\u043F\u043E\u043D\u0441\u043A\u043E\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
+                customSentencePlaceholder: "\u79C1\u306F\u65E5\u672C\u8A9E\u3092\u52C9\u5F37\u3057\u307E\u3059\u3002",
+                customReading: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0445\u0438\u0440\u0430\u0433\u0430\u043D\u043E\u0439",
+                customReadingPlaceholder: "\u308F\u305F\u3057\u306F \u306B\u307B\u3093\u3054\u3092 \u3079\u3093\u304D\u3087\u3046\u3057\u307E\u3059\u3002",
+                customTranslationRu: "\u041F\u0435\u0440\u0435\u0432\u043E\u0434 RU",
+                customTranslationRuPlaceholder: "\u042F \u0438\u0437\u0443\u0447\u0430\u044E \u044F\u043F\u043E\u043D\u0441\u043A\u0438\u0439.",
                 customTranslationEn: "Translation EN",
                 customTranslationEnPlaceholder: "I study Japanese.",
-                addCustom: "Добавить",
-                customHelp: "Вставь фразу. Приложение спрячет только изученные кандзи: {learned}.",
-                customAdded: "Предложение добавлено.",
-                customNoSentence: "Вставь японское предложение.",
-                customNoKnown: "В этом предложении нет изученных кандзи.",
-                customNoTiles: "Нужно минимум 4 изученных кандзи для вариантов.",
-                customDuplicate: "Такое предложение уже есть.",
-                customUpdated: "Предложение обновлено.",
-                customDeleted: "Предложение удалено.",
-                customEmpty: "Свои предложения появятся здесь.",
-                customReady: "Доступно",
-                customLocked: "Позже",
-                updateCustom: "Сохранить",
-                cancelEdit: "Отмена",
-                editCustom: "Редактировать",
-                deleteCustom: "Удалить",
-                customSource: "Своё",
+                addCustom: "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
+                customHelp: "\u0412\u0441\u0442\u0430\u0432\u044C \u0444\u0440\u0430\u0437\u0443. \u041F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0441\u043F\u0440\u044F\u0447\u0435\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u0438\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0435 \u043A\u0430\u043D\u0434\u0437\u0438: {learned}.",
+                customAdded: "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E.",
+                customNoSentence: "\u0412\u0441\u0442\u0430\u0432\u044C \u044F\u043F\u043E\u043D\u0441\u043A\u043E\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435.",
+                customNoKnown: "\u0412 \u044D\u0442\u043E\u043C \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0438 \u043D\u0435\u0442 \u0438\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u043A\u0430\u043D\u0434\u0437\u0438.",
+                customNoTiles: "\u041D\u0443\u0436\u043D\u043E \u043C\u0438\u043D\u0438\u043C\u0443\u043C 4 \u0438\u0437\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u043A\u0430\u043D\u0434\u0437\u0438 \u0434\u043B\u044F \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u043E\u0432.",
+                customDuplicate: "\u0422\u0430\u043A\u043E\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0443\u0436\u0435 \u0435\u0441\u0442\u044C.",
+                customUpdated: "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E.",
+                customDeleted: "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0443\u0434\u0430\u043B\u0435\u043D\u043E.",
+                customEmpty: "\u0421\u0432\u043E\u0438 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u044F\u0432\u044F\u0442\u0441\u044F \u0437\u0434\u0435\u0441\u044C.",
+                customReady: "\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E",
+                customLocked: "\u041F\u043E\u0437\u0436\u0435",
+                updateCustom: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C",
+                cancelEdit: "\u041E\u0442\u043C\u0435\u043D\u0430",
+                editCustom: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C",
+                deleteCustom: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C",
+                customSource: "\u0421\u0432\u043E\u0451",
                 userSource: "USER",
                 dynamicSource: "JSON"
             }
@@ -14654,11 +16182,11 @@
                 customTitle: "Custom sentence",
                 customCount: "Custom: {count}",
                 customSentence: "Japanese sentence",
-                customSentencePlaceholder: "私は日本語を勉強します。",
+                customSentencePlaceholder: "\u79C1\u306F\u65E5\u672C\u8A9E\u3092\u52C9\u5F37\u3057\u307E\u3059\u3002",
                 customReading: "Hiragana reading",
-                customReadingPlaceholder: "わたしは にほんごを べんきょうします。",
+                customReadingPlaceholder: "\u308F\u305F\u3057\u306F \u306B\u307B\u3093\u3054\u3092 \u3079\u3093\u304D\u3087\u3046\u3057\u307E\u3059\u3002",
                 customTranslationRu: "Translation RU",
-                customTranslationRuPlaceholder: "Я изучаю японский.",
+                customTranslationRuPlaceholder: "\u042F \u0438\u0437\u0443\u0447\u0430\u044E \u044F\u043F\u043E\u043D\u0441\u043A\u0438\u0439.",
                 customTranslationEn: "Translation EN",
                 customTranslationEnPlaceholder: "I study Japanese.",
                 addCustom: "Add",
@@ -14859,21 +16387,21 @@
             const translation = example.translation || word;
             const templates = [
                 {
-                    sentence: `今日は${word}をアプリで見ます。`,
-                    reading: `きょうは ${reading}を あぷりで みます。`,
-                    translationRu: `Сегодня я смотрю в приложении: ${translation}.`,
+                    sentence: `\u4ECA\u65E5\u306F${word}\u3092\u30A2\u30D7\u30EA\u3067\u898B\u307E\u3059\u3002`,
+                    reading: `\u304D\u3087\u3046\u306F ${reading}\u3092 \u3042\u3077\u308A\u3067 \u307F\u307E\u3059\u3002`,
+                    translationRu: `\u0421\u0435\u0433\u043E\u0434\u043D\u044F \u044F \u0441\u043C\u043E\u0442\u0440\u044E \u0432 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0438: ${translation}.`,
                     translationEn: `Today I check ${word} in an app.`
                 },
                 {
-                    sentence: `駅で${word}について話します。`,
-                    reading: `えきで ${reading}について はなします。`,
-                    translationRu: `На станции говорю про: ${translation}.`,
+                    sentence: `\u99C5\u3067${word}\u306B\u3064\u3044\u3066\u8A71\u3057\u307E\u3059\u3002`,
+                    reading: `\u3048\u304D\u3067 ${reading}\u306B\u3064\u3044\u3066 \u306F\u306A\u3057\u307E\u3059\u3002`,
+                    translationRu: `\u041D\u0430 \u0441\u0442\u0430\u043D\u0446\u0438\u0438 \u0433\u043E\u0432\u043E\u0440\u044E \u043F\u0440\u043E: ${translation}.`,
                     translationEn: `At the station, I talk about ${word}.`
                 },
                 {
-                    sentence: `メモに${word}を書きます。`,
-                    reading: `めもに ${reading}を かきます。`,
-                    translationRu: `Я записываю в заметку: ${translation}.`,
+                    sentence: `\u30E1\u30E2\u306B${word}\u3092\u66F8\u304D\u307E\u3059\u3002`,
+                    reading: `\u3081\u3082\u306B ${reading}\u3092 \u304B\u304D\u307E\u3059\u3002`,
+                    translationRu: `\u042F \u0437\u0430\u043F\u0438\u0441\u044B\u0432\u0430\u044E \u0432 \u0437\u0430\u043C\u0435\u0442\u043A\u0443: ${translation}.`,
                     translationEn: `I write ${word} in a memo.`
                 }
             ];
@@ -15172,7 +16700,7 @@
     }
     function sentenceReadingFromCard(kanji, card = state.cards.find((item) => item.kanji === kanji)) {
         const reading = card?.onyomi || card?.kunyomi || card?.hiragana || "";
-        return String(reading).split("/")[0].trim() || "かな";
+        return String(reading).split("/")[0].trim() || "\u304B\u306A";
     }
     function sentenceTileKey(tile) {
         return `${tile.kanji}\t${tile.reading || ""}`;
@@ -15369,15 +16897,15 @@
         }
         const values = isWarning
             ? [
-                `<span>${escapeHtml(lang() === "ru" ? "Вопросов" : "Questions")} ${modal.totalQuestions}</span>`,
-                `<span>${escapeHtml(lang() === "ru" ? "Пропусков" : "Missing")} ${modal.missingCount}</span>`,
-                `<span>${escapeHtml(lang() === "ru" ? "Порог" : "Pass")} ${modal.threshold}%</span>`
+                `<span>${escapeHtml(lang() === "ru" ? "\u0412\u043E\u043F\u0440\u043E\u0441\u043E\u0432" : "Questions")} ${modal.totalQuestions}</span>`,
+                `<span>${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u043A\u043E\u0432" : "Missing")} ${modal.missingCount}</span>`,
+                `<span>${escapeHtml(lang() === "ru" ? "\u041F\u043E\u0440\u043E\u0433" : "Pass")} ${modal.threshold}%</span>`
             ]
             : [
-                `<span>${escapeHtml(lang() === "ru" ? "Результат" : "Score")} ${modal.percent}%</span>`,
-                `<span>${escapeHtml(lang() === "ru" ? "Верно" : "Correct")} ${modal.correct}/${modal.totalQuestions}</span>`,
+                `<span>${escapeHtml(lang() === "ru" ? "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442" : "Score")} ${modal.percent}%</span>`,
+                `<span>${escapeHtml(lang() === "ru" ? "\u0412\u0435\u0440\u043D\u043E" : "Correct")} ${modal.correct}/${modal.totalQuestions}</span>`,
                 `<span>${escapeHtml(lang() === "ru" ? "Ошибки" : "Errors")} ${modal.incorrect}</span>`,
-                `<span>${escapeHtml(lang() === "ru" ? "Пропуски" : "Missing")} ${modal.unanswered}</span>`,
+                `<span>${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u043F\u0443\u0441\u043A\u0438" : "Missing")} ${modal.unanswered}</span>`,
                 `<span>+${modal.rewardXp} XP</span>`,
                 `<span>+${modal.rewardMoon} ${escapeHtml(t("coins"))}</span>`
             ];
@@ -15391,10 +16919,10 @@
             ${values.join("")}
           </div>
           <div class="actions final-test-modal-actions">
-            ${isWarning ? `<button class="btn primary" type="button" data-action="final-test-focus-missing" data-focus="${escapeAttr(modal.focusSelector || "")}">${escapeHtml(modal.focusLabel || (lang() === "ru" ? "К пропуску" : "Go to missing"))}</button>` : ""}
-            ${isWarning && modal.allowIncomplete ? `<button class="btn ghost" type="button" data-action="final-test-force-submit" data-level="${escapeAttr(modal.level || "N5")}">${escapeHtml(modal.forceLabel || (lang() === "ru" ? "Завершить без ответов" : "Finish anyway"))}</button>` : ""}
-            ${!isWarning && modal.reviewAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAction)}" data-mode="difficult">${escapeHtml(modal.repeatLabel || (lang() === "ru" ? "Повторить ошибки" : "Repeat mistakes"))}</button>` : ""}
-            ${!isWarning && modal.reviewAllAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAllAction)}" data-mode="all">${escapeHtml(modal.reviewAllLabel || (lang() === "ru" ? "Повторить весь тест" : "Review all"))}</button>` : ""}
+            ${isWarning ? `<button class="btn primary" type="button" data-action="final-test-focus-missing" data-focus="${escapeAttr(modal.focusSelector || "")}">${escapeHtml(modal.focusLabel || (lang() === "ru" ? "\u041A \u043F\u0440\u043E\u043F\u0443\u0441\u043A\u0443" : "Go to missing"))}</button>` : ""}
+            ${isWarning && modal.allowIncomplete ? `<button class="btn ghost" type="button" data-action="final-test-force-submit" data-level="${escapeAttr(modal.level || "N5")}">${escapeHtml(modal.forceLabel || (lang() === "ru" ? "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u043E\u0442\u0432\u0435\u0442\u043E\u0432" : "Finish anyway"))}</button>` : ""}
+            ${!isWarning && modal.reviewAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAction)}" data-mode="difficult">${escapeHtml(modal.repeatLabel || (lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0448\u0438\u0431\u043A\u0438" : "Repeat mistakes"))}</button>` : ""}
+            ${!isWarning && modal.reviewAllAction ? `<button class="btn ghost" type="button" data-action="${escapeAttr(modal.reviewAllAction)}" data-mode="all">${escapeHtml(modal.reviewAllLabel || (lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0432\u0435\u0441\u044C \u0442\u0435\u0441\u0442" : "Review all"))}</button>` : ""}
             <button class="btn primary" type="button" data-action="close-final-test-modal">${escapeHtml(modal.closeLabel || "OK")}</button>
           </div>
         </article>
@@ -15405,7 +16933,7 @@
         if (!canPlayKanjiAudio(card))
             return "";
         return `
-      <button class="audio-trigger" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}" aria-label="${escapeAttr(lang() === "ru" ? "Проиграть озвучку кандзи" : "Play kanji audio")}" title="${escapeAttr(lang() === "ru" ? "Озвучка" : "Audio")}">🔊</button>
+      <button class="audio-trigger" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}" aria-label="${escapeAttr(lang() === "ru" ? "\u041F\u0440\u043E\u0438\u0433\u0440\u0430\u0442\u044C \u043E\u0437\u0432\u0443\u0447\u043A\u0443 \u043A\u0430\u043D\u0434\u0437\u0438" : "Play kanji audio")}" title="${escapeAttr(lang() === "ru" ? "\u041E\u0437\u0432\u0443\u0447\u043A\u0430" : "Audio")}">\uD83D\uDD0A</button>
     `;
     }
     function renderReadingGrid(card) {
@@ -15431,9 +16959,9 @@
         if (!lesson)
             return "";
         const unlocked = isTextbookUnlocked(lesson.jlpt);
-        const label = lang() === "ru" ? "JLPT урок" : "JLPT lesson";
+        const label = lang() === "ru" ? "JLPT \u0443\u0440\u043E\u043A" : "JLPT lesson";
         if (!unlocked) {
-            return `<button class="${className} is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(lesson.jlpt))}">🔒 ${escapeHtml(lesson.jlpt)}</button>`;
+            return `<button class="${className} is-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(textbookUnlockText(lesson.jlpt))}">\uD83D\uDD12 ${escapeHtml(lesson.jlpt)}</button>`;
         }
         return `<button class="${className}" type="button" data-action="open-jlpt-lesson" data-jlpt="${escapeAttr(lesson.jlpt)}">${escapeHtml(lesson.jlpt)} · ${escapeHtml(label)}</button>`;
     }
@@ -15470,14 +16998,13 @@
         const check = state.readingCheck.cardId === card.id ? state.readingCheck : { value: "", status: null, message: "" };
         const statusClass = check.status ? ` is-${check.status}` : "";
         const helper = check.message || (lang() === "ru"
-            ? "Напиши любое чтение этого кандзи хираганой или катаканой."
-            : "Type any reading for this kanji in hiragana or katakana.");
+            ? "\u041D\u0430\u043F\u0438\u0448\u0438 \u043B\u044E\u0431\u043E\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u044D\u0442\u043E\u0433\u043E \u043A\u0430\u043D\u0434\u0437\u0438 \u0445\u0438\u0440\u0430\u0433\u0430\u043D\u043E\u0439 \u0438\u043B\u0438 \u043A\u0430\u0442\u0430\u043A\u0430\u043D\u043E\u0439." : "Type any reading for this kanji in hiragana or katakana.");
         return `
       <section class="reading-check${statusClass}" aria-live="polite">
-        <label class="label" for="readingCheck-${escapeAttr(card.id)}">${escapeHtml(lang() === "ru" ? "Проверка чтения" : "Reading check")}</label>
+        <label class="label" for="readingCheck-${escapeAttr(card.id)}">${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F" : "Reading check")}</label>
         <div class="reading-check-row">
-          <input id="readingCheck-${escapeAttr(card.id)}" data-reading-input data-id="${escapeAttr(card.id)}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${escapeAttr(check.value)}" placeholder="${escapeAttr(lang() === "ru" ? "Например: にち или ニチ" : "Example: にち or ニチ")}" />
-          <button class="btn ghost" type="button" data-action="check-reading" data-id="${escapeAttr(card.id)}">${escapeHtml(lang() === "ru" ? "Проверить" : "Check")}</button>
+          <input id="readingCheck-${escapeAttr(card.id)}" data-reading-input data-id="${escapeAttr(card.id)}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${escapeAttr(check.value)}" placeholder="${escapeAttr(lang() === "ru" ? "\u041D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: \u306B\u3061 \u0438\u043B\u0438 \u30CB\u30C1" : "Example: \u306B\u3061 or \u30CB\u30C1")}" />
+          <button class="btn ghost" type="button" data-action="check-reading" data-id="${escapeAttr(card.id)}">${escapeHtml(lang() === "ru" ? "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C" : "Check")}</button>
         </div>
         <p>${escapeHtml(helper)}</p>
       </section>
@@ -15539,7 +17066,7 @@
     function renderLessonDone(lesson) {
         return `
       <article class="empty-state">
-        <span class="kanji-char">済</span>
+        <span class="kanji-char">жё€</span>
         <h2>${escapeHtml(dialogueText("eva", "lessonComplete"))}</h2>
         <p>${escapeHtml(lesson ? lessonTitle(lesson) : "")}</p>
         <div class="actions" style="justify-content:center">
@@ -15552,8 +17079,8 @@
     function renderNoReview() {
         return `
       <article class="empty-state">
-        <span class="kanji-char">休</span>
-        <h2>${escapeHtml(lang() === "ru" ? "Повторов сейчас нет" : "No reviews right now")}</h2>
+        <span class="kanji-char">\u4F11</span>
+        <h2>${escapeHtml(lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u043E\u0432 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442" : "No reviews right now")}</h2>
         <p>${escapeHtml(dialogueText("leya", "welcome"))}</p>
         <button class="btn primary" type="button" data-action="route" data-route="learn">▶ ${escapeHtml(t("learn"))}</button>
       </article>
@@ -15568,9 +17095,9 @@
         const jlptOptions = ["all", ...new Set(state.cards.map((card) => card.jlpt))];
         const radicals = ["all", ...new Set(state.cards.map((card) => cardMeta(card.id).radical).filter(Boolean))];
         const renderedLabel = lang() === "ru"
-            ? `Показано ${visibleCards.length} из ${cards.length}`
+            ? `\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E ${visibleCards.length} из ${cards.length}`
             : `Showing ${visibleCards.length} of ${cards.length}`;
-        const moreLabel = lang() === "ru" ? "Показать ещё" : "Show more";
+        const moreLabel = lang() === "ru" ? "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0435\u0449\u0451" : "Show more";
         return `
       <section class="page">
         <div class="section-head">
@@ -15583,7 +17110,7 @@
         <div class="filters">
           <div class="field">
             <label for="dictionarySearch">${escapeHtml(t("search"))}</label>
-            <input id="dictionarySearch" data-filter="query" type="search" value="${escapeAttr(state.filters.query)}" placeholder="日, にち, sun" autocomplete="off" />
+            <input id="dictionarySearch" data-filter="query" type="search" value="${escapeAttr(state.filters.query)}" placeholder="\u65E5, \u306B\u3061, sun" autocomplete="off" />
           </div>
           <div class="field">
             <label for="jlptFilter">JLPT</label>
@@ -15623,7 +17150,7 @@
     }
     function renderDictionaryTabs(favoriteCount) {
         const favoritesActive = state.filters.favorites === "yes";
-        const allLabel = lang() === "ru" ? "Все кандзи" : "All kanji";
+        const allLabel = lang() === "ru" ? "\u0412\u0441\u0435 \u043A\u0430\u043D\u0434\u0437\u0438" : "All kanji";
         const favoritesLabel = lang() === "ru" ? "Избранные" : "Favorites";
         return `
       <div class="dictionary-tabs" role="tablist" aria-label="${escapeAttr(t("dictionary"))}">
@@ -15671,12 +17198,12 @@
     function renderDictionaryEmpty() {
         const favorites = state.filters.favorites === "yes";
         const title = favorites
-            ? (lang() === "ru" ? "В избранном пока пусто" : "No favorites yet")
-            : (lang() === "ru" ? "Ничего не найдено" : "Nothing found");
+            ? (lang() === "ru" ? "\u0412 \u0438\u0437\u0431\u0440\u0430\u043D\u043D\u043E\u043C \u043F\u043E\u043A\u0430 \u043F\u0443\u0441\u0442\u043E" : "No favorites yet")
+            : (lang() === "ru" ? "\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" : "Nothing found");
         const text = favorites
-            ? (lang() === "ru" ? "Открой кандзи и нажми звездочку, чтобы он появился здесь." : "Open a kanji and tap the star to keep it here.")
+            ? (lang() === "ru" ? "\u041E\u0442\u043A\u0440\u043E\u0439 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438 \u043D\u0430\u0436\u043C\u0438 \u0437\u0432\u0435\u0437\u0434\u043E\u0447\u043A\u0443, \u0447\u0442\u043E\u0431\u044B \u043E\u043D \u043F\u043E\u044F\u0432\u0438\u043B\u0441\u044F \u0437\u0434\u0435\u0441\u044C." : "Open a kanji and tap the star to keep it here.")
             : "";
-        return `<article class="empty-state"><span class="kanji-char">無</span><h2>${escapeHtml(title)}</h2>${text ? `<p>${escapeHtml(text)}</p>` : ""}</article>`;
+        return `<article class="empty-state"><span class="kanji-char">\u7121</span><h2>${escapeHtml(title)}</h2>${text ? `<p>${escapeHtml(text)}</p>` : ""}</article>`;
     }
     function renderKanjiPage() {
         const card = findCard(state.kanjiPageId || readKanjiRouteId());
@@ -15684,9 +17211,9 @@
             return `
         <section class="page">
           <article class="empty-state">
-            <span class="kanji-char">無</span>
-            <h1>${escapeHtml(lang() === "ru" ? "Кандзи не найден" : "Kanji not found")}</h1>
-            <p>${escapeHtml(lang() === "ru" ? "Открой словарь и выбери карточку заново." : "Open the dictionary and choose a card again.")}</p>
+            <span class="kanji-char">\u7121</span>
+            <h1>${escapeHtml(lang() === "ru" ? "\u041A\u0430\u043D\u0434\u0437\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D" : "Kanji not found")}</h1>
+            <p>${escapeHtml(lang() === "ru" ? "\u041E\u0442\u043A\u0440\u043E\u0439 \u0441\u043B\u043E\u0432\u0430\u0440\u044C \u0438 \u0432\u044B\u0431\u0435\u0440\u0438 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443 \u0437\u0430\u043D\u043E\u0432\u043E." : "Open the dictionary and choose a card again.")}</p>
             <button class="btn primary" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
           </article>
         </section>
@@ -15736,22 +17263,21 @@
           ${sourceItem ? renderSourceCommonWords(sourceItem) : ""}
           <article class="kanji-profile-card">
             <h2>${escapeHtml(t("examples"))}</h2>
-            <ul class="example-list">${card.examples.map(renderExampleItem).join("") || `<li>${escapeHtml(lang() === "ru" ? "Примеры пока не добавлены." : "No examples yet.")}</li>`}</ul>
+            <ul class="example-list">${card.examples.map(renderExampleItem).join("") || `<li>${escapeHtml(lang() === "ru" ? "\u041F\u0440\u0438\u043C\u0435\u0440\u044B \u043F\u043E\u043A\u0430 \u043D\u0435 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u044B." : "No examples yet.")}</li>`}</ul>
           </article>
 
           <article class="kanji-profile-card">
-            <h2>${escapeHtml(lang() === "ru" ? "Предложения" : "Sentences")}</h2>
+            <h2>${escapeHtml(lang() === "ru" ? "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F" : "Sentences")}</h2>
             ${sourceItem ? renderSourceSentences(sourceItem) : renderKanjiSentenceExamples(card)}
           </article>
 
           <article class="kanji-profile-card">
             <h2>${escapeHtml(t("strokeOrder"))}</h2>
             <p class="label">${escapeHtml(preciseStroke
-            ? (lang() === "ru" ? "Есть точные SVG-штрихи KanjiVG для практики." : "Precise KanjiVG SVG stroke data is available for practice.")
-            : (lang() === "ru" ? "Точного SVG-пути пока нет, доступен полупрозрачный шаблон." : "Precise SVG paths are not available yet; template mode is available."))}</p>
+            ? (lang() === "ru" ? "\u0415\u0441\u0442\u044C \u0442\u043E\u0447\u043D\u044B\u0435 SVG-\u0448\u0442\u0440\u0438\u0445\u0438 KanjiVG \u0434\u043B\u044F \u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0438." : "Precise KanjiVG SVG stroke data is available for practice.")
+            : (lang() === "ru" ? "\u0422\u043E\u0447\u043D\u043E\u0433\u043E SVG-\u043F\u0443\u0442\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442, \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u043F\u043E\u043B\u0443\u043F\u0440\u043E\u0437\u0440\u0430\u0447\u043D\u044B\u0439 \u0448\u0430\u0431\u043B\u043E\u043D." : "Precise SVG paths are not available yet; template mode is available."))}</p>
             <ol class="stroke-list">${normalizeStrokeDescriptions(card).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
             <div class="actions compact-actions">
-              <button class="btn primary" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">筆 ${escapeHtml(t("writing"))}</button>
               ${renderJlptLessonButton(card)}
             </div>
           </article>
@@ -15761,9 +17287,9 @@
             <p>${escapeHtml(cardInterface(card))}</p>
             <ul class="app-list">${card.apps.map((name) => `<li>${escapeHtml(name)}</li>`).join("")}</ul>
             ${sourceItem ? renderInterfaceMockups(sourceItem) : ""}
-            <h3>${escapeHtml(lang() === "ru" ? "SEO-страница" : "SEO page")}</h3>
-            <p class="label">${escapeHtml(lang() === "ru" ? "Статическая HTML-страница для поисковиков и превью." : "Static HTML page for search engines and link previews.")}</p>
-            <a class="btn primary" href="${escapeAttr(semanticPath)}" target="_blank" rel="noopener">↗ ${escapeHtml(lang() === "ru" ? "Публичная страница" : "Public page")}</a>
+            <h3>${escapeHtml(lang() === "ru" ? "SEO-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0430" : "SEO page")}</h3>
+            <p class="label">${escapeHtml(lang() === "ru" ? "\u0421\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0430\u044F HTML-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u0434\u043B\u044F \u043F\u043E\u0438\u0441\u043A\u043E\u0432\u0438\u043A\u043E\u0432 \u0438 \u043F\u0440\u0435\u0432\u044C\u044E." : "Static HTML page for search engines and link previews.")}</p>
+            <a class="btn primary" href="${escapeAttr(semanticPath)}" target="_blank" rel="noopener">↗ ${escapeHtml(lang() === "ru" ? "\u041F\u0443\u0431\u043B\u0438\u0447\u043D\u0430\u044F \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0430" : "Public page")}</a>
           </article>
           ${sourceItem ? renderSourceEditorial(sourceItem) : ""}
         </div>
@@ -15795,9 +17321,9 @@
         const unicode = facts.codepoints?.unicode || `U+${facts.codepoints?.ucs || ""}`;
         return `
       <article class="kanji-profile-card kanji-facts-card">
-        <h2>${escapeHtml(lang() === "ru" ? "Факты KANJIDIC2" : "KANJIDIC2 facts")}</h2>
+        <h2>${escapeHtml(lang() === "ru" ? "\u0424\u0430\u043A\u0442\u044B KANJIDIC2" : "KANJIDIC2 facts")}</h2>
         <dl class="kanji-fact-grid">
-          <div><dt>${escapeHtml(lang() === "ru" ? "Значения" : "Meanings")}</dt><dd>${escapeHtml(sourceLocalizedArray(item.meanings).join(", "))}</dd></div>
+          <div><dt>${escapeHtml(lang() === "ru" ? "\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u044F" : "Meanings")}</dt><dd>${escapeHtml(sourceLocalizedArray(item.meanings).join(", "))}</dd></div>
           <div><dt>Onyomi</dt><dd>${escapeHtml((item.readings?.onyomi || []).join(" / "))}</dd></div>
           <div><dt>Kunyomi</dt><dd>${escapeHtml((item.readings?.kunyomi || []).join(" / "))}</dd></div>
           <div><dt>JLPT</dt><dd>${escapeHtml(item.jlpt)} <small>${escapeHtml(sourceLocalized(item.modernJlptNote || {}))}</small></dd></div>
@@ -15806,7 +17332,7 @@
           <div><dt>Grade</dt><dd>${escapeHtml(facts.grade || "-")}</dd></div>
           <div><dt>Unicode</dt><dd>${escapeHtml(unicode)}</dd></div>
           <div><dt>Freq</dt><dd>${escapeHtml(facts.freq || "-")}</dd></div>
-          <div><dt>${escapeHtml(lang() === "ru" ? "Варианты" : "Variants")}</dt><dd>${escapeHtml((item.variants || []).join(" / ") || "-")}</dd></div>
+          <div><dt>${escapeHtml(lang() === "ru" ? "\u0412\u0430\u0440\u0438\u0430\u043D\u0442\u044B" : "Variants")}</dt><dd>${escapeHtml((item.variants || []).join(" / ") || "-")}</dd></div>
         </dl>
         <p class="source-note">${escapeHtml(facts.source || "KANJIDIC2 / EDRDG")}</p>
       </article>
@@ -15815,7 +17341,7 @@
     function renderSourceCommonWords(item) {
         return `
       <article class="kanji-profile-card">
-        <h2>${escapeHtml(lang() === "ru" ? "Полезные слова JMdict" : "Useful JMdict words")}</h2>
+        <h2>${escapeHtml(lang() === "ru" ? "\u041F\u043E\u043B\u0435\u0437\u043D\u044B\u0435 \u0441\u043B\u043E\u0432\u0430 JMdict" : "Useful JMdict words")}</h2>
         <ul class="kanji-word-list">
           ${(item.commonWords || []).slice(0, 10).map((word) => `
             <li>
@@ -15866,7 +17392,7 @@
     }
     function renderInterfaceMockups(item) {
         return `
-      <h3>${escapeHtml(lang() === "ru" ? "В интерфейсах" : "In interfaces")}</h3>
+      <h3>${escapeHtml(lang() === "ru" ? "\u0412 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430\u0445" : "In interfaces")}</h3>
       <div class="interface-mock-grid">
         ${(item.interfaceContexts || []).slice(0, 6).map((context) => `
           <article class="interface-mock-card ${escapeAttr(context.type || "card")}">
@@ -15881,12 +17407,12 @@
     function renderSourceEditorial(item) {
         const copy = item.editorial?.[lang()] || item.editorial?.ru || item.editorial?.en || {};
         const labels = lang() === "ru"
-            ? ["Почему этот кандзи важен", "Частая путаница", "Где встретишь раньше всего", "На что обратить внимание"]
+            ? ["\u041F\u043E\u0447\u0435\u043C\u0443 \u044D\u0442\u043E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438 \u0432\u0430\u0436\u0435\u043D", "\u0427\u0430\u0441\u0442\u0430\u044F \u043F\u0443\u0442\u0430\u043D\u0438\u0446\u0430", "\u0413\u0434\u0435 \u0432\u0441\u0442\u0440\u0435\u0442\u0438\u0448\u044C \u0440\u0430\u043D\u044C\u0448\u0435 \u0432\u0441\u0435\u0433\u043E", "\u041D\u0430 \u0447\u0442\u043E \u043E\u0431\u0440\u0430\u0442\u0438\u0442\u044C \u0432\u043D\u0438\u043C\u0430\u043D\u0438\u0435"]
             : ["Why this kanji matters", "Common confusion", "Where you will meet it first", "What to watch"];
         const values = [copy.why, copy.confusion, copy.firstSeen, copy.focus];
         return `
       <article class="kanji-profile-card editorial-card">
-        <h2>${escapeHtml(lang() === "ru" ? "Заметки Flash Kanji" : "Flash Kanji notes")}</h2>
+        <h2>${escapeHtml(lang() === "ru" ? "\u0417\u0430\u043C\u0435\u0442\u043A\u0438 Flash Kanji" : "Flash Kanji notes")}</h2>
         ${values.map((value, index) => value ? `<section><h3>${escapeHtml(labels[index])}</h3><p>${escapeHtml(value)}</p></section>` : "").join("")}
       </article>
     `;
@@ -15907,7 +17433,7 @@
     function renderKanjiSentenceExamples(card) {
         const sentences = kanjiSentenceExamples(card);
         if (!sentences.length) {
-            return `<p class="label">${escapeHtml(lang() === "ru" ? "Подходящие предложения появятся, когда база практики содержит этот кандзи." : "Matching sentences will appear when the practice database contains this kanji.")}</p>`;
+            return `<p class="label">${escapeHtml(lang() === "ru" ? "\u041F\u043E\u0434\u0445\u043E\u0434\u044F\u0449\u0438\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u044F\u0432\u044F\u0442\u0441\u044F, \u043A\u043E\u0433\u0434\u0430 \u0431\u0430\u0437\u0430 \u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0438 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 \u044D\u0442\u043E\u0442 \u043A\u0430\u043D\u0434\u0437\u0438." : "Matching sentences will appear when the practice database contains this kanji.")}</p>`;
         }
         return `
       <ul class="kanji-sentence-list">
@@ -15975,11 +17501,11 @@
         const preciseStrokeData = hasPreciseStrokeData(card);
         const stepCount = writingStepCount(card);
         const stepLabel = lang() === "ru" ? "Шаг" : "Step";
-        const practiceLabel = lang() === "ru" ? "Получилось" : "Got it";
-        const sampleLabel = lang() === "ru" ? "Показать образец" : "Show sample";
+        const practiceLabel = lang() === "ru" ? "\u041F\u043E\u043B\u0443\u0447\u0438\u043B\u043E\u0441\u044C" : "Got it";
+        const sampleLabel = lang() === "ru" ? "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043E\u0431\u0440\u0430\u0437\u0435\u0446" : "Show sample";
         const modeLabel = preciseStrokeData
-            ? (lang() === "ru" ? "Точные SVG-штрихи KanjiVG" : "Precise KanjiVG SVG strokes")
-            : (lang() === "ru" ? "Fallback: шаблон без фейковых штрихов" : "Fallback: template without fake strokes");
+            ? (lang() === "ru" ? "\u0422\u043E\u0447\u043D\u044B\u0435 SVG-\u0448\u0442\u0440\u0438\u0445\u0438 KanjiVG" : "Precise KanjiVG SVG strokes")
+            : (lang() === "ru" ? "Fallback: \u0448\u0430\u0431\u043B\u043E\u043D \u0431\u0435\u0437 \u0444\u0435\u0439\u043A\u043E\u0432\u044B\u0445 \u0448\u0442\u0440\u0438\u0445\u043E\u0432" : "Fallback: template without fake strokes");
         return `
       <section class="page">
         <div class="section-head">
@@ -15990,9 +17516,9 @@
         </div>
         <div class="writing-layout">
           <article class="writing-card" data-section="writing-demo">
-            <div class="kanji-focus writing-focus">${escapeHtml(card?.kanji || "文")}</div>
+            <div class="kanji-focus writing-focus">${escapeHtml(card?.kanji || "\u6587")}</div>
             ${card ? renderReadingGrid(card) : ""}
-            ${card ? `<div class="actions"><button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 ${escapeHtml(t("audio"))}</button></div>` : ""}
+            ${card ? `<div class="actions"><button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">\uD83D\uDD0A ${escapeHtml(t("audio"))}</button></div>` : ""}
             <div class="stroke-demo">
               <canvas id="strokeCanvas" width="520" height="280" aria-label="stroke order animation"></canvas>
             </div>
@@ -16021,7 +17547,7 @@
             <p>${escapeHtml(kanjiHint(card?.id).mnemonic)}</p>
           </article>
           <article class="writing-card writing-practice" data-section="writing-canvas">
-            <h3>${escapeHtml(lang() === "ru" ? "Поле письма" : "Writing area")}</h3>
+            <h3>${escapeHtml(lang() === "ru" ? "\u041F\u043E\u043B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430" : "Writing area")}</h3>
             <div class="writing-practice-head">
               <span class="pill" id="writingStrokeCounter">0/${stepCount}</span>
             </div>
@@ -16032,11 +17558,11 @@
             <canvas id="practiceCanvas" width="520" height="360" aria-label="writing canvas"></canvas>
             <div class="actions writing-practice-actions">
               <button class="btn primary" type="button" data-action="check-writing">${escapeHtml(practiceLabel)}</button>
-              <button class="btn" type="button" data-action="undo-writing">${escapeHtml(lang() === "ru" ? "Отменить черту" : "Undo stroke")}</button>
+              <button class="btn" type="button" data-action="undo-writing">${escapeHtml(lang() === "ru" ? "\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C \u0447\u0435\u0440\u0442\u0443" : "Undo stroke")}</button>
               <button class="btn" type="button" data-action="clear-writing">${escapeHtml(t("clear"))}</button>
               <button class="btn" type="button" data-action="replay-writing">${escapeHtml(t("replay"))}</button>
             </div>
-            <div class="writing-feedback" id="writingFeedback">${escapeHtml(lang() === "ru" ? "Напиши кандзи поверх образца и нажми «Получилось» для самопроверки." : "Write over the guide and tap “Got it” for self-check.")}</div>
+            <div class="writing-feedback" id="writingFeedback">${escapeHtml(lang() === "ru" ? "\u041D\u0430\u043F\u0438\u0448\u0438 \u043A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E\u0432\u0435\u0440\u0445 \u043E\u0431\u0440\u0430\u0437\u0446\u0430 \u0438 \u043D\u0430\u0436\u043C\u0438 \u00AB\u041F\u043E\u043B\u0443\u0447\u0438\u043B\u043E\u0441\u044C\u00BB \u0434\u043B\u044F \u0441\u0430\u043C\u043E\u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438." : "Write over the guide and tap “Got it” for self-check.")}</div>
           </article>
         </div>
       </section>
@@ -16089,9 +17615,8 @@
           <ul class="app-list">${card.apps.map((name) => `<li>${escapeHtml(name)}</li>`).join("")}</ul>
           <div class="actions" style="margin-top:14px">
             <button class="btn primary" type="button" data-action="study-card" data-id="${escapeAttr(card.id)}">▶ ${escapeHtml(t("study"))}</button>
-            <button class="btn" type="button" data-action="open-kanji-page" data-id="${escapeAttr(card.id)}">↗ ${escapeHtml(lang() === "ru" ? "Страница" : "Page")}</button>
+            <button class="btn" type="button" data-action="open-kanji-page" data-id="${escapeAttr(card.id)}">↗ ${escapeHtml(lang() === "ru" ? "\u0421\u0442\u0440\u0430\u043D\u0438\u0446\u0430" : "Page")}</button>
             <button class="btn" type="button" data-action="toggle-favorite" data-id="${escapeAttr(card.id)}">${favorite ? "★" : "☆"} ${escapeHtml(t("favorites"))}</button>
-            <button class="btn" type="button" data-action="write-card" data-id="${escapeAttr(card.id)}">筆 ${escapeHtml(t("writing"))}</button>
             ${renderJlptLessonButton(card)}
             <button class="btn" type="button" data-action="close-detail">OK</button>
           </div>
@@ -16107,8 +17632,8 @@
         <h3>${escapeHtml(t("audio"))}</h3>
         <div class="actions">
           ${audio || fallback
-            ? `<button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">🔊 Kanji${fallback ? " TTS" : ""}</button>`
-            : `<span class="label">${escapeHtml(lang() === "ru" ? "Озвучка для этой карточки пока не найдена." : "Audio for this card is not available yet.")}</span>`}
+            ? `<button class="btn ghost" type="button" data-action="play-kanji-audio" data-id="${escapeAttr(card.id)}">\uD83D\uDD0A Kanji${fallback ? " TTS" : ""}</button>`
+            : `<span class="label">${escapeHtml(lang() === "ru" ? "\u041E\u0437\u0432\u0443\u0447\u043A\u0430 \u0434\u043B\u044F \u044D\u0442\u043E\u0439 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430." : "Audio for this card is not available yet.")}</span>`}
         </div>
       </section>
     `;
@@ -16116,6 +17641,7 @@
     function renderStats() {
         const summary = getSummary();
         const today = todayStats();
+        const levelInfo = getLevelInfo();
         return `
       <section class="page">
         <div class="section-head">
@@ -16129,7 +17655,7 @@
           </div>
         </div>
         <div class="metric-grid">
-          ${renderMetric(t("xp"), state.progress.xp, `${t("level")} ${state.progress.level}`, getLevelInfo().percent)}
+          ${renderMetric(t("xp"), `${levelInfo.current}/${levelInfo.next}`, `${t("level")} ${state.progress.level}`, levelInfo.percent)}
           ${renderMetric(t("streak"), state.progress.streak.current, `${state.progress.streak.best} best`, progressWidth(state.progress.streak.current, 30))}
           ${renderMetric(t("mastered"), summary.mastered, `${summary.total}`, progressWidth(summary.mastered, summary.total))}
           ${renderMetric(t("successRate"), `${overallSuccessRate()}%`, `${totalReviews()} reviews`, overallSuccessRate())}
@@ -16139,7 +17665,7 @@
           <article class="chart-panel"><h3>${escapeHtml(t("activity"))}</h3><div class="chart-box"><canvas id="activityChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("streak"))}</h3><div class="chart-box"><canvas id="streakChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("jlptProgress"))}</h3><div class="chart-box"><canvas id="jlptChart"></canvas></div></article>
-          <article class="chart-panel"><h3>Повторение</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
+          <article class="chart-panel"><h3>\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("errors"))}</h3><div class="chart-box"><canvas id="mistakeChart"></canvas></div></article>
           <article class="tool-panel">${renderAchievementsList()}</article>
           <article class="tool-panel" data-section="shop-panel">${renderShop()}</article>
@@ -16156,22 +17682,22 @@
               </div>
               <div class="settings-row">
                 <span>
-                  <strong>${escapeHtml(lang() === "ru" ? "Звуки интерфейса" : "UX sounds")}</strong>
-                  <small>${escapeHtml(lang() === "ru" ? "Клики, ответы, награды и уведомления." : "Clicks, answers, rewards, and in-app notices.")}</small>
+                  <strong>${escapeHtml(lang() === "ru" ? "\u0417\u0432\u0443\u043A\u0438 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430" : "UX sounds")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "\u041A\u043B\u0438\u043A\u0438, \u043E\u0442\u0432\u0435\u0442\u044B, \u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0438 \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F." : "Clicks, answers, rewards, and in-app notices.")}</small>
                 </span>
                 <button class="btn ${isUxSoundEnabled() ? "success" : "ghost"}" type="button" data-action="toggle-ux-sound">${isUxSoundEnabled() ? "On" : "Off"}</button>
               </div>
               <div class="settings-row">
                 <span>
-                  <strong>${escapeHtml(lang() === "ru" ? "Р­РєСЃРєСѓСЂСЃРёСЏ" : "Onboarding")}</strong>
-                  <small>${escapeHtml(lang() === "ru" ? "РџРѕРІС‚РѕСЂРёС‚СЊ РїРµСЂРІРѕРµ Р·РЅР°РєРѕРјСЃС‚РІРѕ СЃ Flash Kanji." : "Replay the first-time tour.")}</small>
+                  <strong>${escapeHtml(lang() === "ru" ? "Экскурсия" : "Onboarding")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "Повторить первое знакомство с Flash Kanji." : "Replay the first-time tour.")}</small>
                 </span>
-                <button class="btn ghost" type="button" data-action="repeat-onboarding">${escapeHtml(lang() === "ru" ? "РџРѕРІС‚РѕСЂРёС‚СЊ" : "Repeat tour")}</button>
+                <button class="btn ghost" type="button" data-action="repeat-onboarding">${escapeHtml(lang() === "ru" ? "Повторить" : "Repeat tour")}</button>
               </div>
               <label class="settings-row settings-row-range">
                 <span>
-                  <strong>${escapeHtml(lang() === "ru" ? "Громкость UX" : "UX volume")}</strong>
-                  <small>${escapeHtml(lang() === "ru" ? "Не влияет на озвучку кандзи и музыку." : "Does not affect kanji voice or music.")}</small>
+                  <strong>${escapeHtml(lang() === "ru" ? "\u0413\u0440\u043E\u043C\u043A\u043E\u0441\u0442\u044C UX" : "UX volume")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "\u041D\u0435 \u0432\u043B\u0438\u044F\u0435\u0442 \u043D\u0430 \u043E\u0437\u0432\u0443\u0447\u043A\u0443 \u043A\u0430\u043D\u0434\u0437\u0438 \u0438 \u043C\u0443\u0437\u044B\u043A\u0443." : "Does not affect kanji voice or music.")}</small>
                 </span>
                 <input class="ux-volume-slider" type="range" min="0" max="100" step="5" value="${Math.round(getUxSoundVolume() * 100)}" data-ux-volume />
                 <strong class="volume-value" data-ux-volume-label>${Math.round(getUxSoundVolume() * 100)}%</strong>
@@ -16204,15 +17730,15 @@
     }
     function achievementIcon(icon) {
         const icons = {
-            moon: "月",
+            moon: "\u6708",
             book: "書",
             memory: "記",
             flame: "火",
             star: "星",
             brush: "筆",
-            text: "文",
+            text: "\u6587",
             lock: "鍵",
-            eye: "眼"
+            eye: "\u773C"
         };
         return icons[icon] || "◆";
     }
@@ -16221,7 +17747,7 @@
         return `
       <div class="section-head">
         <div><h2>${escapeHtml(t("achievements"))}</h2><p>${unlockedAchievementCount()}/${items.length}</p></div>
-        <button class="btn ghost" type="button" data-action="route" data-route="achievements">${escapeHtml(lang() === "ru" ? "Все" : "All")}</button>
+        <button class="btn ghost" type="button" data-action="route" data-route="achievements">${escapeHtml(lang() === "ru" ? "\u0412\u0441\u0435" : "All")}</button>
       </div>
       <div class="achievement-grid">${items.slice(0, 4).map(renderAchievement).join("")}</div>
     `;
@@ -16241,7 +17767,7 @@
         <div class="section-head">
           <div>
             <h1>${escapeHtml(t("achievements"))}</h1>
-            <p>${escapeHtml(lang() === "ru" ? "Лунные цели, секреты Евы и Леи, награды за прогресс." : "Moon goals, Eva and Leya secrets, and progress rewards.")}</p>
+            <p>${escapeHtml(lang() === "ru" ? "\u041B\u0443\u043D\u043D\u044B\u0435 \u0446\u0435\u043B\u0438, \u0441\u0435\u043A\u0440\u0435\u0442\u044B \u0415\u0432\u044B \u0438 \u041B\u0435\u0438, \u043D\u0430\u0433\u0440\u0430\u0434\u044B \u0437\u0430 \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441." : "Moon goals, Eva and Leya secrets, and progress rewards.")}</p>
           </div>
           <div class="actions">
             ${renderShareButton("achievements")}
@@ -16249,10 +17775,10 @@
           </div>
         </div>
         <div class="metric-grid">
-          ${renderMetric(t("achievements"), `${unlocked}/${items.length}`, lang() === "ru" ? "открыто" : "unlocked", progressWidth(unlocked, items.length))}
-          ${renderMetric("XP", totalRewards.xp, lang() === "ru" ? "в наградах" : "in rewards", progressWidth(unlocked, items.length))}
-          ${renderMetric(t("coins"), totalRewards.coins, lang() === "ru" ? "в наградах" : "in rewards", progressWidth(unlocked, items.length))}
-          ${renderMetric(lang() === "ru" ? "Секреты" : "Secrets", `${items.filter((item) => item.secret && isAchievementUnlocked(item.id)).length}/${items.filter((item) => item.secret).length}`, "Eva · Leya", progressWidth(items.filter((item) => item.secret && isAchievementUnlocked(item.id)).length, Math.max(1, items.filter((item) => item.secret).length)))}
+          ${renderMetric(t("achievements"), `${unlocked}/${items.length}`, lang() === "ru" ? "\u043E\u0442\u043A\u0440\u044B\u0442\u043E" : "unlocked", progressWidth(unlocked, items.length))}
+          ${renderMetric("XP", totalRewards.xp, lang() === "ru" ? "\u0432 \u043D\u0430\u0433\u0440\u0430\u0434\u0430\u0445" : "in rewards", progressWidth(unlocked, items.length))}
+          ${renderMetric(t("coins"), totalRewards.coins, lang() === "ru" ? "\u0432 \u043D\u0430\u0433\u0440\u0430\u0434\u0430\u0445" : "in rewards", progressWidth(unlocked, items.length))}
+          ${renderMetric(lang() === "ru" ? "\u0421\u0435\u043A\u0440\u0435\u0442\u044B" : "Secrets", `${items.filter((item) => item.secret && isAchievementUnlocked(item.id)).length}/${items.filter((item) => item.secret).length}`, "Eva · Leya", progressWidth(items.filter((item) => item.secret && isAchievementUnlocked(item.id)).length, Math.max(1, items.filter((item) => item.secret).length)))}
         </div>
         <div class="achievement-category-list">
           ${achievementCategoryList().map((category) => {
@@ -16284,10 +17810,10 @@
         const percent = progressWidth(current, target);
         const displayCurrent = Math.min(current, target);
         const title = item.secret && !unlocked && !detailed
-            ? (lang() === "ru" ? "Секретное достижение" : "Secret achievement")
+            ? (lang() === "ru" ? "\u0421\u0435\u043A\u0440\u0435\u0442\u043D\u043E\u0435 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0435" : "Secret achievement")
             : achievementTitle(item);
         const description = item.secret && !unlocked && !detailed
-            ? (lang() === "ru" ? "Откроется при необычном действии." : "Unlocked by an unusual action.")
+            ? (lang() === "ru" ? "\u041E\u0442\u043A\u0440\u043E\u0435\u0442\u0441\u044F \u043F\u0440\u0438 \u043D\u0435\u043E\u0431\u044B\u0447\u043D\u043E\u043C \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0438." : "Unlocked by an unusual action.")
             : achievementDescription(item);
         return `
       <div class="achievement ${unlocked ? "is-unlocked" : ""} ${item.secret ? "is-secret" : ""}">
@@ -16316,7 +17842,7 @@
             </div>
             <span>${Number(item.coins || 0) >= 0 ? "+" : ""}${Number(item.coins || 0)} Moon · ${Number(item.xp || 0) >= 0 ? "+" : ""}${Number(item.xp || 0)} XP</span>
           </div>
-        `).join("") || `<p>${escapeHtml(lang() === "ru" ? "Пока нет операций." : "No transactions yet.")}</p>`}
+        `).join("") || `<p>${escapeHtml(lang() === "ru" ? "\u041F\u043E\u043A\u0430 \u043D\u0435\u0442 \u043E\u043F\u0435\u0440\u0430\u0446\u0438\u0439." : "No transactions yet.")}</p>`}
       </div>
     `;
     }
@@ -16331,20 +17857,20 @@
                 return customizationItemTitle(shopItem);
         }
         if (reason.startsWith("achievement:"))
-            return lang() === "ru" ? "Достижение" : "Achievement";
+            return lang() === "ru" ? "\u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0435" : "Achievement";
         if (reason.startsWith("daily_bonus"))
-            return lang() === "ru" ? "Ежедневный бонус" : "Daily bonus";
+            return lang() === "ru" ? "\u0415\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0439 \u0431\u043E\u043D\u0443\u0441" : "Daily bonus";
         if (reason.startsWith("sentence"))
-            return lang() === "ru" ? "Практика предложений" : "Sentence practice";
+            return lang() === "ru" ? "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0439" : "Sentence practice";
         if (reason.startsWith("writing"))
-            return lang() === "ru" ? "Практика письма" : "Writing practice";
+            return lang() === "ru" ? "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430" : "Writing practice";
         if (reason.startsWith("lesson"))
-            return lang() === "ru" ? "Урок" : "Lesson";
+            return lang() === "ru" ? "\u0423\u0440\u043E\u043A" : "Lesson";
         if (reason.startsWith("review"))
-            return lang() === "ru" ? "Повторение" : "Review";
+            return lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435" : "Review";
         if (reason.startsWith("shop:"))
-            return lang() === "ru" ? "Магазин" : "Shop";
-        return lang() === "ru" ? "Операция" : "Transaction";
+            return lang() === "ru" ? "\u041C\u0430\u0433\u0430\u0437\u0438\u043D" : "Shop";
+        return lang() === "ru" ? "\u041E\u043F\u0435\u0440\u0430\u0446\u0438\u044F" : "Transaction";
     }
     function renderRewardModal() {
         if (!state.rewardModal)
@@ -16352,8 +17878,9 @@
         const reward = state.rewardModal;
         const isLevel = reward.type === "level";
         const isAchievement = reward.type === "achievement";
+        const levelInfo = getLevelInfo();
         const message = isLevel
-            ? `${t("level")} ${state.progress.level} - ${state.progress.xp} XP - ${state.progress.moonFragments} ${t("coins")}`
+            ? `${t("level")} ${state.progress.level} - ${levelInfo.current}/${levelInfo.next} XP - ${state.progress.moonFragments} ${t("coins")}`
             : reward.message;
         return `
       <div class="reward-backdrop ${isLevel ? "is-level" : ""}">
@@ -16370,7 +17897,7 @@
           <div class="reward-values">
             ${isLevel ? `<span>${escapeHtml(t("level"))} ${state.progress.level}</span>` : ""}
             ${reward.xp ? `<span>+${reward.xp} XP</span>` : ""}
-            ${isLevel ? `<span>${state.progress.xp} XP</span>` : ""}
+            ${isLevel ? `<span>${levelInfo.current}/${levelInfo.next} XP</span>` : ""}
             ${reward.coins ? `<span>+${reward.coins} ${escapeHtml(t("coins"))}</span>` : ""}
             ${isLevel ? `<span>${state.progress.moonFragments} ${escapeHtml(t("coins"))}</span>` : ""}
           </div>
@@ -16381,17 +17908,15 @@
     function renderContactModal() {
         if (!state.contactModal)
             return "";
-        const title = lang() === "ru" ? "Сообщить об ошибке" : "Report a bug";
+        const title = lang() === "ru" ? "\u0421\u043E\u043E\u0431\u0449\u0438\u0442\u044C \u043E\u0431 \u043E\u0448\u0438\u0431\u043A\u0435" : "Report a bug";
         const description = lang() === "ru"
-            ? "Если почтовое приложение не открывается, скопируй адрес и отправь сообщение вручную."
-            : "If your mail app does not open, copy the address and send the message manually.";
-        const copyLabel = lang() === "ru" ? "Скопировать email" : "Copy email";
-        const openLabel = lang() === "ru" ? "Открыть почту" : "Open email";
-        const closeLabel = lang() === "ru" ? "Закрыть" : "Close";
+            ? "\u0415\u0441\u043B\u0438 \u043F\u043E\u0447\u0442\u043E\u0432\u043E\u0435 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043D\u0435 \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F, \u0441\u043A\u043E\u043F\u0438\u0440\u0443\u0439 \u0430\u0434\u0440\u0435\u0441 \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u044C \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u0432\u0440\u0443\u0447\u043D\u0443\u044E." : "If your mail app does not open, copy the address and send the message manually.";
+        const copyLabel = lang() === "ru" ? "\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C email" : "Copy email";
+        const openLabel = lang() === "ru" ? "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u0447\u0442\u0443" : "Open email";
+        const closeLabel = lang() === "ru" ? "\u0417\u0430\u043A\u0440\u044B\u0442\u044C" : "Close";
         const subject = encodeURIComponent(SUPPORT_EMAIL_SUBJECT);
         const body = encodeURIComponent(lang() === "ru"
-            ? "Привет! Я нашел ошибку в Flash Kanji:\n\n"
-            : "Hi! I found an issue in Flash Kanji:\n\n");
+            ? "\u041F\u0440\u0438\u0432\u0435\u0442! \u042F \u043D\u0430\u0448\u0435\u043B \u043E\u0448\u0438\u0431\u043A\u0443 \u0432 Flash Kanji:\n\n" : "Hi! I found an issue in Flash Kanji:\n\n");
         const mailto = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
         return `
       <div class="reward-backdrop contact-backdrop">
@@ -16406,7 +17931,7 @@
           <p id="contactModalDesc">${escapeHtml(description)}</p>
           <div class="contact-email-block">
             <strong>${escapeHtml(SUPPORT_EMAIL)}</strong>
-            <small>${escapeHtml(lang() === "ru" ? "Для багов, багрепортов и ошибок интерфейса." : "For bugs, bug reports, and UI issues.")}</small>
+            <small>${escapeHtml(lang() === "ru" ? "\u0414\u043B\u044F \u0431\u0430\u0433\u043E\u0432, \u0431\u0430\u0433\u0440\u0435\u043F\u043E\u0440\u0442\u043E\u0432 \u0438 \u043E\u0448\u0438\u0431\u043E\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430." : "For bugs, bug reports, and UI issues.")}</small>
           </div>
           <div class="actions contact-modal-actions">
             <button class="btn ghost" type="button" data-action="copy-contact-email">${escapeHtml(copyLabel)}</button>
@@ -16452,7 +17977,7 @@
         const copy = notificationPromptCopy();
         return `
       <aside class="pwa-install-banner notification-permission-banner" role="dialog" aria-modal="false" aria-label="${escapeAttr(copy.title)}">
-        <div class="pwa-install-logo notification-bell">月</div>
+        <div class="pwa-install-logo notification-bell">\u6708</div>
         <div class="pwa-install-copy">
           <span class="pill">${escapeHtml(copy.badge)}</span>
           <h2>${escapeHtml(copy.title)}</h2>
@@ -16492,7 +18017,7 @@
       <div class="${className} mascot-${character} mood-${mood}" data-action="mascot-click" data-character="${escapeAttr(character)}">
         <img src="${escapeAttr(image)}" alt="${escapeAttr(localized(mascot.name))}" />
         <div class="speech speech-dismissible" data-mascot-speech-key="${escapeAttr(speechKey)}" data-autohide-ms="${MASCOT_SPEECH_AUTO_HIDE_MS}">
-          <button class="speech-close" type="button" data-action="dismiss-mascot-speech" data-speech-key="${escapeAttr(speechKey)}" aria-label="${escapeAttr(lang() === "ru" ? "Закрыть облако" : "Close speech bubble")}">×</button>
+          <button class="speech-close" type="button" data-action="dismiss-mascot-speech" data-speech-key="${escapeAttr(speechKey)}" aria-label="${escapeAttr(lang() === "ru" ? "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043E\u0431\u043B\u0430\u043A\u043E" : "Close speech bubble")}">×</button>
           <span class="speech-text">${escapeHtml(phrase)}</span>
         </div>
       </div>
@@ -16600,7 +18125,8 @@
     function formatMascotDialogueText(text) {
         if (lang() !== "ru")
             return text;
-        return String(text || "").replace(/(^|\s)([А-Яа-яЁё])\s+(?=[А-Яа-яЁё]{4,})/g, "$1$2\u00a0");
+        const cyrillic = "[\\u0410-\\u042f\\u0430-\\u044f\\u0401\\u0451]";
+        return String(text || "").replace(new RegExp(`(^|\\s)(${cyrillic})\\s+(?=${cyrillic}{4,})`, "gu"), "$1$2\u00a0");
     }
     function rateActiveCard(rating) {
         const card = findCard(state.activeCardId);
@@ -16656,16 +18182,16 @@
     }
     function srsButtonLabels() {
         return lang() === "ru"
-            ? { forgot: "Не помню", remember: "Помню", forgotHint: "вернём быстро", rememberHint: "Повторение выберет срок" }
+            ? { forgot: "\u041D\u0435 \u043F\u043E\u043C\u043D\u044E", remember: "\u041F\u043E\u043C\u043D\u044E", forgotHint: "\u0432\u0435\u0440\u043D\u0451\u043C \u0431\u044B\u0441\u0442\u0440\u043E", rememberHint: "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 \u0432\u044B\u0431\u0435\u0440\u0435\u0442 \u0441\u0440\u043E\u043A" }
             : { forgot: "Forgot", remember: "Remember", forgotHint: "review soon", rememberHint: "review decides" };
     }
     function srsDecisionHint(card) {
         const labels = srsButtonLabels();
         const decision = resolveSrsDecision(getCardProgress(card.id), "remember");
         const intervals = {
-            hard: lang() === "ru" ? "около 12 ч." : "about 12 h",
-            good: lang() === "ru" ? "около 1 дня" : "about 1 day",
-            easy: lang() === "ru" ? "дольше обычного" : "longer interval"
+            hard: lang() === "ru" ? "\u043E\u043A\u043E\u043B\u043E 12 \u0447." : "about 12 h",
+            good: lang() === "ru" ? "\u043E\u043A\u043E\u043B\u043E 1 \u0434\u043D\u044F" : "about 1 day",
+            easy: lang() === "ru" ? "\u0434\u043E\u043B\u044C\u0448\u0435 \u043E\u0431\u044B\u0447\u043D\u043E\u0433\u043E" : "longer interval"
         };
         return `${labels.rememberHint}: ${intervals[decision] || intervals.good}`;
     }
@@ -16768,7 +18294,7 @@
         adjustEvaRelationship({ warmth: 2.4, trust: 2, discipline: 2.2, curiosity: 0.8 }, "lesson_completion");
         dispatchEvaEvent("lesson_complete", { lessonId, xp, coins });
         queueReward({
-            title: localized({ ru: "Урок завершён", en: "Lesson complete" }),
+            title: localized({ ru: "\u0423\u0440\u043E\u043A \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D", en: "Lesson complete" }),
             message: dialogueText("eva", "lessonComplete"),
             xp,
             coins,
@@ -16822,9 +18348,9 @@
         playUxSound("streak_reward");
         addReward(0, coins, `streak:${pending.milestone}:claim`);
         queueReward({
-            title: lang() === "ru" ? "Награда за стрик" : "Streak reward",
+            title: lang() === "ru" ? "\u041D\u0430\u0433\u0440\u0430\u0434\u0430 \u0437\u0430 \u0441\u0442\u0440\u0438\u043A" : "Streak reward",
             message: lang() === "ru"
-                ? `Бонус за серию ${pending.milestone} дней готов.`
+                ? `\u0411\u043E\u043D\u0443\u0441 \u0437\u0430 \u0441\u0435\u0440\u0438\u044E ${pending.milestone} \u0434\u043D\u0435\u0439 \u0433\u043E\u0442\u043E\u0432.`
                 : `Your ${pending.milestone}-day streak bonus is ready.`,
             xp: 0,
             coins,
@@ -17139,10 +18665,11 @@
         if (state.progress.level > previousLevel) {
             playUxSound("level_up");
             dispatchEvaEvent("level_up", { level: state.progress.level, xp: state.progress.xp, moonFragments: state.progress.moonFragments });
+            const levelInfo = getLevelInfo();
             queueReward({
                 type: "level",
                 title: t("levelUp"),
-                message: `${t("level")} ${state.progress.level} - ${state.progress.xp} XP - ${state.progress.moonFragments} ${t("coins")}`,
+                message: `${t("level")} ${state.progress.level} - ${levelInfo.current}/${levelInfo.next} XP - ${state.progress.moonFragments} ${t("coins")}`,
                 xp: 0,
                 coins: 0,
                 mascot: state.progress.level % 2 === 0 ? "leya" : "eva",
@@ -17419,29 +18946,29 @@
                 score: 0,
                 success: false,
                 expectedCount,
-                message: lang() === "ru" ? "Начни с первой черты." : "Start with the first stroke."
+                message: lang() === "ru" ? "\u041D\u0430\u0447\u043D\u0438 \u0441 \u043F\u0435\u0440\u0432\u043E\u0439 \u0447\u0435\u0440\u0442\u044B." : "Start with the first stroke."
             };
         }
         const countScore = clamp(Math.round((Math.min(actual.length, expectedCount) / expectedCount) * 100), 0, 100);
         const score = final ? 100 : countScore;
         const success = Boolean(final && actual.length);
         let message = lang() === "ru"
-            ? `Черты: ${actual.length}/${expectedCount}. Самопроверка без распознавания.`
+            ? `\u0427\u0435\u0440\u0442\u044B: ${actual.length}/${expectedCount}. \u0421\u0430\u043C\u043E\u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0431\u0435\u0437 \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0432\u0430\u043D\u0438\u044F.`
             : `Strokes: ${actual.length}/${expectedCount}. Self-check without recognition.`;
         if (!final && actual.length < expectedCount) {
             message = lang() === "ru"
-                ? `Черта ${actual.length + 1}/${expectedCount}: продолжай по образцу.`
+                ? `\u0427\u0435\u0440\u0442\u0430 ${actual.length + 1}/${expectedCount}: \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u0439 \u043F\u043E \u043E\u0431\u0440\u0430\u0437\u0446\u0443.`
                 : `Stroke ${actual.length + 1}/${expectedCount}: keep following the guide.`;
         }
         else if (!final && actual.length > expectedCount) {
             message = lang() === "ru"
-                ? `Черты: ${actual.length}/${expectedCount}. Если лишняя линия случайная, нажми «Отменить черту».`
+                ? `\u0427\u0435\u0440\u0442\u044B: ${actual.length}/${expectedCount}. \u0415\u0441\u043B\u0438 \u043B\u0438\u0448\u043D\u044F\u044F \u043B\u0438\u043D\u0438\u044F \u0441\u043B\u0443\u0447\u0430\u0439\u043D\u0430\u044F, \u043D\u0430\u0436\u043C\u0438 \u00AB\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C \u0447\u0435\u0440\u0442\u0443\u00BB.`
                 : `Strokes: ${actual.length}/${expectedCount}. If one was accidental, tap “Undo stroke”.`;
         }
         else if (final) {
             message = hasPreciseStrokeData(card)
-                ? (lang() === "ru" ? "Записано. Сравни с жёлтым порядком KanjiVG и двигайся дальше." : "Saved. Compare it with the yellow KanjiVG order and move on.")
-                : (lang() === "ru" ? "Записано. Для этого кандзи пока есть только шаблон, без точной схемы штрихов." : "Saved. This kanji currently has a template only, without exact stroke paths.");
+                ? (lang() === "ru" ? "\u0417\u0430\u043F\u0438\u0441\u0430\u043D\u043E. \u0421\u0440\u0430\u0432\u043D\u0438 \u0441 \u0436\u0451\u043B\u0442\u044B\u043C \u043F\u043E\u0440\u044F\u0434\u043A\u043E\u043C KanjiVG \u0438 \u0434\u0432\u0438\u0433\u0430\u0439\u0441\u044F \u0434\u0430\u043B\u044C\u0448\u0435." : "Saved. Compare it with the yellow KanjiVG order and move on.")
+                : (lang() === "ru" ? "\u0417\u0430\u043F\u0438\u0441\u0430\u043D\u043E. \u0414\u043B\u044F \u044D\u0442\u043E\u0433\u043E \u043A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E\u043A\u0430 \u0435\u0441\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0448\u0430\u0431\u043B\u043E\u043D, \u0431\u0435\u0437 \u0442\u043E\u0447\u043D\u043E\u0439 \u0441\u0445\u0435\u043C\u044B \u0448\u0442\u0440\u0438\u0445\u043E\u0432." : "Saved. This kanji currently has a template only, without exact stroke paths.");
         }
         return { score, success, expectedCount, message };
     }
@@ -17666,14 +19193,14 @@
         context.font = `900 ${Math.floor(canvas.height * 0.7)}px "Noto Sans JP", "Yu Gothic", serif`;
         context.textAlign = "center";
         context.textBaseline = "middle";
-        context.fillText(card?.kanji || "文", canvas.width / 2, canvas.height / 2 + canvas.height * 0.04);
+        context.fillText(card?.kanji || "\u6587", canvas.width / 2, canvas.height / 2 + canvas.height * 0.04);
         context.globalAlpha = 1;
         context.fillStyle = accent;
         context.font = "800 15px system-ui";
         context.textAlign = "left";
         context.textBaseline = "top";
         const label = lang() === "ru"
-            ? `Шаг ${activeIndex + 1}/${writingStepCount(card)} · точной схемы пока нет`
+            ? `Шаг ${activeIndex + 1}/${writingStepCount(card)} \u00B7 \u0442\u043E\u0447\u043D\u043E\u0439 \u0441\u0445\u0435\u043C\u044B \u043F\u043E\u043A\u0430 \u043D\u0435\u0442`
             : `Step ${activeIndex + 1}/${writingStepCount(card)} · exact paths not available yet`;
         context.fillText(label, 18, 16);
         context.restore();
@@ -17772,7 +19299,7 @@
         const precise = preciseStrokeDataForCard(card);
         if (precise?.strokeOrder?.length) {
             return precise.strokeOrder.map((stroke, index) => lang() === "ru"
-                ? (stroke.description_ru || `Штрих ${index + 1} по данным KanjiVG`)
+                ? (stroke.description_ru || `Штрих ${index + 1} \u043F\u043E \u0434\u0430\u043D\u043D\u044B\u043C KanjiVG`)
                 : (stroke.description_en || `Stroke ${index + 1} from KanjiVG data`));
         }
         const source = Array.isArray(card?.stroke_order) ? card.stroke_order : [];
@@ -17782,7 +19309,7 @@
         if (lang() !== "ru") {
             return `Step ${index + 1}: exact stroke paths are not available yet. Use the translucent ${card?.kanji || "kanji"} template.`;
         }
-        return `Шаг ${index + 1}: для этого кандзи пока нет точной схемы штрихов. Обводи полупрозрачный шаблон ${card?.kanji || ""}.`;
+        return `Шаг ${index + 1}: \u0434\u043B\u044F \u044D\u0442\u043E\u0433\u043E \u043A\u0430\u043D\u0434\u0437\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0442\u043E\u0447\u043D\u043E\u0439 \u0441\u0445\u0435\u043C\u044B \u0448\u0442\u0440\u0438\u0445\u043E\u0432. \u041E\u0431\u0432\u043E\u0434\u0438 \u043F\u043E\u043B\u0443\u043F\u0440\u043E\u0437\u0440\u0430\u0447\u043D\u044B\u0439 \u0448\u0430\u0431\u043B\u043E\u043D ${card?.kanji || ""}.`;
     }
     function compareStroke(actualStroke, expectedStroke, canvas) {
         const expected = expectedStroke.map(toCanvasPoint);
@@ -18073,10 +19600,10 @@
         const hasValue = tokens.length > 0;
         const status = hasValue && matched ? "correct" : "wrong";
         const message = !hasValue
-            ? (lang() === "ru" ? "Сначала напиши чтение хираганой или катаканой." : "Type a reading in hiragana or katakana first.")
+            ? (lang() === "ru" ? "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043D\u0430\u043F\u0438\u0448\u0438 \u0447\u0442\u0435\u043D\u0438\u0435 \u0445\u0438\u0440\u0430\u0433\u0430\u043D\u043E\u0439 \u0438\u043B\u0438 \u043A\u0430\u0442\u0430\u043A\u0430\u043D\u043E\u0439." : "Type a reading in hiragana or katakana first.")
             : matched
-                ? (lang() === "ru" ? "Верно. Это чтение есть у карточки." : "Correct. This reading belongs to the card.")
-                : (lang() === "ru" ? "Почти. Попробуй другое онъёми или кунъёми." : "Almost. Try another on'yomi or kun'yomi.");
+                ? (lang() === "ru" ? "\u0412\u0435\u0440\u043D\u043E. \u042D\u0442\u043E \u0447\u0442\u0435\u043D\u0438\u0435 \u0435\u0441\u0442\u044C \u0443 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438." : "Correct. This reading belongs to the card.")
+                : (lang() === "ru" ? "\u041F\u043E\u0447\u0442\u0438. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0434\u0440\u0443\u0433\u043E\u0435 \u043E\u043D\u044A\u0451\u043C\u0438 \u0438\u043B\u0438 \u043A\u0443\u043D\u044A\u0451\u043C\u0438." : "Almost. Try another on'yomi or kun'yomi.");
         state.readingCheck = {
             cardId: card.id,
             value: state.readingCheck.value,
@@ -18129,7 +19656,7 @@
     function expandKanaLongVowels(value) {
         let output = "";
         for (const char of String(value || "")) {
-            if (char === "ー") {
+            if (char === "\u30FC") {
                 output += kanaVowel(output.slice(-1));
                 continue;
             }
@@ -18138,16 +19665,16 @@
         return output;
     }
     function kanaVowel(char) {
-        if ("あかさたなはまやらわがざだばぱゃぁ".includes(char))
-            return "あ";
-        if ("いきしちにひみりぎじぢびぴぃ".includes(char))
-            return "い";
-        if ("うくすつぬふむゆるぐずづぶぷゅぅ".includes(char))
-            return "う";
-        if ("えけせてねへめれげぜでべぺぇ".includes(char))
-            return "え";
-        if ("おこそとのほもよろをごぞどぼぽょぉ".includes(char))
-            return "お";
+        if ("\u3042\u304B\u3055\u305F\u306A\u306F\u307E\u3084\u3089\u308F\u304C\u3056\u3060\u3070\u3071\u3083\u3041".includes(char))
+            return "\u3042";
+        if ("\u3044\u304D\u3057\u3061\u306B\u3072\u307F\u308A\u304E\uFFFD?\u3062\u3073\u3074\u3043".includes(char))
+            return "\u3044";
+        if ("\u3046\u304F\u3059\u3064\u306C\u3075\u3080\u3086\u308B\u3050\u305A\u3065\u3076\u3077\u3085\u3045".includes(char))
+            return "\u3046";
+        if ("\u3048\u3051\u305B\u3066\u306D\u3078\u3081\u308C\u3052\u305C\u3067\u3079\u307A\u3047".includes(char))
+            return "\u3048";
+        if ("\u304A\u3053\u305D\u3068\u306E\u307B\u3082\u3088\u308D\u3092\u3054\u305E\u3069\u307C\u307D\u3087\u3049".includes(char))
+            return "\u304A";
         return "";
     }
     function getJlptDetailForCard(card) {
@@ -18168,42 +19695,140 @@
         return catalog.find((d) => d && d.kanji === card.kanji) || null;
     }
     const READING_ROMAJI_BASE = {
-        あ: "a", い: "i", う: "u", え: "e", お: "o",
-        か: "ka", き: "ki", く: "ku", け: "ke", こ: "ko",
-        が: "ga", ぎ: "gi", ぐ: "gu", げ: "ge", ご: "go",
-        さ: "sa", し: "shi", す: "su", せ: "se", そ: "so",
-        ざ: "za", じ: "ji", ず: "zu", ぜ: "ze", ぞ: "zo",
-        た: "ta", ち: "chi", つ: "tsu", て: "te", と: "to",
-        だ: "da", ぢ: "ji", づ: "zu", で: "de", ど: "do",
-        な: "na", に: "ni", ぬ: "nu", ね: "ne", の: "no",
-        は: "ha", ひ: "hi", ふ: "fu", へ: "he", ほ: "ho",
-        ば: "ba", び: "bi", ぶ: "bu", べ: "be", ぼ: "bo",
-        ぱ: "pa", ぴ: "pi", ぷ: "pu", ぺ: "pe", ぽ: "po",
-        ま: "ma", み: "mi", む: "mu", め: "me", も: "mo",
-        や: "ya", ゆ: "yu", よ: "yo",
-        ら: "ra", り: "ri", る: "ru", れ: "re", ろ: "ro",
-        わ: "wa", ゐ: "i", ゑ: "e", を: "o", ん: "n",
-        ゔ: "vu"
+        "\u3042": "a",
+        "\u3044": "i",
+        "\u3046": "u",
+        "\u3048": "e",
+        "\u304a": "o",
+        "\u304b": "ka",
+        "\u304d": "ki",
+        "\u304f": "ku",
+        "\u3051": "ke",
+        "\u3053": "ko",
+        "\u304c": "ga",
+        "\u304e": "gi",
+        "\u3050": "gu",
+        "\u3052": "ge",
+        "\u3054": "go",
+        "\u3055": "sa",
+        "\u3057": "shi",
+        "\u3059": "su",
+        "\u305b": "se",
+        "\u305d": "so",
+        "\u3056": "za",
+        "\u3058": "ji",
+        "\u305a": "zu",
+        "\u305c": "ze",
+        "\u305e": "zo",
+        "\u305f": "ta",
+        "\u3061": "chi",
+        "\u3064": "tsu",
+        "\u3066": "te",
+        "\u3068": "to",
+        "\u3060": "da",
+        "\u3062": "ji",
+        "\u3065": "zu",
+        "\u3067": "de",
+        "\u3069": "do",
+        "\u306a": "na",
+        "\u306b": "ni",
+        "\u306c": "nu",
+        "\u306d": "ne",
+        "\u306e": "no",
+        "\u306f": "ha",
+        "\u3072": "hi",
+        "\u3075": "fu",
+        "\u3078": "he",
+        "\u307b": "ho",
+        "\u3070": "ba",
+        "\u3073": "bi",
+        "\u3076": "bu",
+        "\u3079": "be",
+        "\u307c": "bo",
+        "\u3071": "pa",
+        "\u3074": "pi",
+        "\u3077": "pu",
+        "\u307a": "pe",
+        "\u307d": "po",
+        "\u307e": "ma",
+        "\u307f": "mi",
+        "\u3080": "mu",
+        "\u3081": "me",
+        "\u3082": "mo",
+        "\u3084": "ya",
+        "\u3086": "yu",
+        "\u3088": "yo",
+        "\u3089": "ra",
+        "\u308a": "ri",
+        "\u308b": "ru",
+        "\u308c": "re",
+        "\u308d": "ro",
+        "\u308f": "wa",
+        "\u3090": "i",
+        "\u3091": "e",
+        "\u3092": "o",
+        "\u3093": "n",
+        "\u3094": "vu"
     };
     const READING_ROMAJI_YOON = {
-        きゃ: "kya", きゅ: "kyu", きょ: "kyo",
-        ぎゃ: "gya", ぎゅ: "gyu", ぎょ: "gyo",
-        しゃ: "sha", しゅ: "shu", しょ: "sho",
-        じゃ: "ja", じゅ: "ju", じょ: "jo",
-        ちゃ: "cha", ちゅ: "chu", ちょ: "cho",
-        ぢゃ: "ja", ぢゅ: "ju", ぢょ: "jo",
-        にゃ: "nya", にゅ: "nyu", にょ: "nyo",
-        ひゃ: "hya", ひゅ: "hyu", ひょ: "hyo",
-        びゃ: "bya", びゅ: "byu", びょ: "byo",
-        ぴゃ: "pya", ぴゅ: "pyu", ぴょ: "pyo",
-        みゃ: "mya", みゅ: "myu", みょ: "myo",
-        りゃ: "rya", りゅ: "ryu", りょ: "ryo",
-        ふぁ: "fa", ふぃ: "fi", ふぇ: "fe", ふぉ: "fo",
-        しぇ: "she", じぇ: "je", ちぇ: "che",
-        てぃ: "ti", でぃ: "di", とぅ: "tu", どぅ: "du",
-        つぁ: "tsa", つぃ: "tsi", つぇ: "tse", つぉ: "tso",
-        うぃ: "wi", うぇ: "we", うぉ: "wo",
-        ゔぁ: "va", ゔぃ: "vi", ゔぇ: "ve", ゔぉ: "vo"
+        "\u304d\u3083": "kya",
+        "\u304d\u3085": "kyu",
+        "\u304d\u3087": "kyo",
+        "\u304e\u3083": "gya",
+        "\u304e\u3085": "gyu",
+        "\u304e\u3087": "gyo",
+        "\u3057\u3083": "sha",
+        "\u3057\u3085": "shu",
+        "\u3057\u3087": "sho",
+        "\u3058\u3083": "ja",
+        "\u3058\u3085": "ju",
+        "\u3058\u3087": "jo",
+        "\u3061\u3083": "cha",
+        "\u3061\u3085": "chu",
+        "\u3061\u3087": "cho",
+        "\u3062\u3083": "ja",
+        "\u3062\u3085": "ju",
+        "\u3062\u3087": "jo",
+        "\u306b\u3083": "nya",
+        "\u306b\u3085": "nyu",
+        "\u306b\u3087": "nyo",
+        "\u3072\u3083": "hya",
+        "\u3072\u3085": "hyu",
+        "\u3072\u3087": "hyo",
+        "\u3073\u3083": "bya",
+        "\u3073\u3085": "byu",
+        "\u3073\u3087": "byo",
+        "\u3074\u3083": "pya",
+        "\u3074\u3085": "pyu",
+        "\u3074\u3087": "pyo",
+        "\u307f\u3083": "mya",
+        "\u307f\u3085": "myu",
+        "\u307f\u3087": "myo",
+        "\u308a\u3083": "rya",
+        "\u308a\u3085": "ryu",
+        "\u308a\u3087": "ryo",
+        "\u3075\u3041": "fa",
+        "\u3075\u3043": "fi",
+        "\u3075\u3047": "fe",
+        "\u3075\u3049": "fo",
+        "\u3057\u3047": "she",
+        "\u3058\u3047": "je",
+        "\u3061\u3047": "che",
+        "\u3066\u3043": "ti",
+        "\u3067\u3043": "di",
+        "\u3068\u3045": "tu",
+        "\u3069\u3045": "du",
+        "\u3064\u3041": "tsa",
+        "\u3064\u3043": "tsi",
+        "\u3064\u3047": "tse",
+        "\u3064\u3049": "tso",
+        "\u3046\u3043": "wi",
+        "\u3046\u3047": "we",
+        "\u3046\u3049": "wo",
+        "\u3094\u3041": "va",
+        "\u3094\u3043": "vi",
+        "\u3094\u3047": "ve",
+        "\u3094\u3049": "vo"
     };
     function cardReadings(card) {
         const detail = getJlptDetailForCard(card);
@@ -18265,11 +19890,11 @@
         for (let i = 0; i < chars.length; i += 1) {
             const char = chars[i];
             const next = chars[i + 1] || "";
-            if (char === "っ") {
+            if (char === "\u3063") {
                 geminate = true;
                 continue;
             }
-            if (char === "ー") {
+            if (char === "\u30FC") {
                 const vowel = lastReadingVowel(result);
                 if (vowel)
                     result += vowel;
@@ -18333,7 +19958,7 @@
         return [
             `${readingShortLabel("onyomi")}: ${readings.onyomi.kana || "—"} (${readings.onyomi.romaji || "—"})`,
             `${readingShortLabel("kunyomi")}: ${readings.kunyomi.kana || "—"} (${readings.kunyomi.romaji || "—"})`
-        ].join(" · ");
+        ].join(" В· ");
     }
     function getKanjiAudioPath(card) {
         if (!card)
@@ -18449,7 +20074,7 @@
         return true;
     }
     function playAudioPlaceholder(url, label) {
-        toast(url ? `${label}: ${url}` : `${label}: ${lang() === "ru" ? "аудио пока не добавлено" : "audio not added yet"}`);
+        toast(url ? `${label}: ${url}` : `${label}: ${lang() === "ru" ? "\u0430\u0443\u0434\u0438\u043E \u043F\u043E\u043A\u0430 \u043D\u0435 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043E" : "audio not added yet"}`);
     }
     function ensureActiveLesson() {
         const active = state.lessons.find((lesson) => lesson.id === state.activeLessonId);
@@ -18491,10 +20116,10 @@
     function lessonStatusLabel(status) {
         const ru = lang() === "ru";
         if (status === "completed")
-            return ru ? "Урок пройден" : "Lesson completed";
+            return ru ? "\u0423\u0440\u043E\u043A \u043F\u0440\u043E\u0439\u0434\u0435\u043D" : "Lesson completed";
         if (status === "started")
-            return ru ? "Урок начат" : "Lesson started";
-        return ru ? "Не начат" : "Not started";
+            return ru ? "\u0423\u0440\u043E\u043A \u043D\u0430\u0447\u0430\u0442" : "Lesson started";
+        return ru ? "\u041D\u0435 \u043D\u0430\u0447\u0430\u0442" : "Not started";
     }
     function renderLessonStatusDot(status) {
         if (status !== "completed" && status !== "started")
@@ -18589,9 +20214,9 @@
     function textbookUnlockText(level) {
         const requirements = textbookRequirementLevels(level);
         if (!requirements.length)
-            return lang() === "ru" ? "Откроется после учебника N5." : "Unlocks after the N5 textbook.";
+            return lang() === "ru" ? "\u041E\u0442\u043A\u0440\u043E\u0435\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0430 N5." : "Unlocks after the N5 textbook.";
         return lang() === "ru"
-            ? `Откроется после завершения ${formatLevelChain(requirements)}.`
+            ? `\u041E\u0442\u043A\u0440\u043E\u0435\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F ${formatLevelChain(requirements)}.`
             : `Unlocks after completing ${formatLevelChain(requirements)}.`;
     }
     function textbookLessonsForLevel(level) {
@@ -18789,20 +20414,20 @@
     function jlptLessonExtraLabels() {
         return lang() === "ru"
             ? {
-                courseText: "Стратегия уровня, чтения, лексика, приложения и интерактивная практика. Контент хранится в JSON, поэтому урок можно расширять без изменения логики.",
-                apps: "Приложения и интерфейсы",
-                kana: "Хирагана и катакана",
-                hiragana: "Хирагана",
-                katakana: "Катакана",
-                kanjiFocus: "Кандзи с фуриганой",
-                sentenceDrill: "Поставь кандзи в пропуск",
-                fillBlanks: "Заполни пропуск плитками по порядку.",
-                check: "Проверить",
-                undo: "Убрать",
-                clear: "Очистить",
-                next: "Следующее",
-                correct: "Верно. +8 XP и +1 Moon Fragment.",
-                wrong: "Почти. Проверь порядок плиток и попробуй ещё раз."
+                courseText: "\u0421\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F \u0443\u0440\u043E\u0432\u043D\u044F, \u0447\u0442\u0435\u043D\u0438\u044F, \u043B\u0435\u043A\u0441\u0438\u043A\u0430, \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u0438 \u0438\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u0430\u044F \u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0430. \u041A\u043E\u043D\u0442\u0435\u043D\u0442 \u0445\u0440\u0430\u043D\u0438\u0442\u0441\u044F \u0432 JSON, \u043F\u043E\u044D\u0442\u043E\u043C\u0443 \u0443\u0440\u043E\u043A \u043C\u043E\u0436\u043D\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u044F\u0442\u044C \u0431\u0435\u0437 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u043B\u043E\u0433\u0438\u043A\u0438.",
+                apps: "\u041F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u0438 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u044B",
+                kana: "\u0425\u0438\u0440\u0430\u0433\u0430\u043D\u0430 \u0438 \u043A\u0430\u0442\u0430\u043A\u0430\u043D\u0430",
+                hiragana: "\u0425\u0438\u0440\u0430\u0433\u0430\u043D\u0430",
+                katakana: "\u041A\u0430\u0442\u0430\u043A\u0430\u043D\u0430",
+                kanjiFocus: "\u041A\u0430\u043D\u0434\u0437\u0438 \u0441 \u0444\u0443\u0440\u0438\u0433\u0430\u043D\u043E\u0439",
+                sentenceDrill: "\u041F\u043E\u0441\u0442\u0430\u0432\u044C \u043A\u0430\u043D\u0434\u0437\u0438 \u0432 \u043F\u0440\u043E\u043F\u0443\u0441\u043A",
+                fillBlanks: "\u0417\u0430\u043F\u043E\u043B\u043D\u0438 \u043F\u0440\u043E\u043F\u0443\u0441\u043A \u043F\u043B\u0438\u0442\u043A\u0430\u043C\u0438 \u043F\u043E \u043F\u043E\u0440\u044F\u0434\u043A\u0443.",
+                check: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+                undo: "\u0423\u0431\u0440\u0430\u0442\u044C",
+                clear: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C",
+                next: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0435",
+                correct: "\u0412\u0435\u0440\u043D\u043E. +8 XP \u0438 +1 Moon Fragment.",
+                wrong: "\u041F\u043E\u0447\u0442\u0438. \u041F\u0440\u043E\u0432\u0435\u0440\u044C \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u043F\u043B\u0438\u0442\u043E\u043A \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0435\u0449\u0451 \u0440\u0430\u0437."
             }
             : {
                 courseText: "Level strategy, readings, vocabulary, apps, and interactive practice. Content lives in JSON, so lessons can grow without changing app logic.",
@@ -18824,15 +20449,15 @@
     function jlptLessonLabels() {
         return lang() === "ru"
             ? {
-                back: "К учебнику",
-                courseMap: "Полноценный JLPT-модуль",
-                courseText: "Краткая стратегия уровня, чтения, лексика и практика. Данные хранятся в JSON, поэтому урок можно расширять без изменения логики.",
-                available: "кандзи уровня",
-                learned: "изучено",
-                mastered: "освоено",
-                goals: "Цели уровня",
-                practice: "Практика",
-                checkpoint: "Чекпоинт"
+                back: "\u041A \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0443",
+                courseMap: "\u041F\u043E\u043B\u043D\u043E\u0446\u0435\u043D\u043D\u044B\u0439 JLPT-\u043C\u043E\u0434\u0443\u043B\u044C",
+                courseText: "\u041A\u0440\u0430\u0442\u043A\u0430\u044F \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u044F \u0443\u0440\u043E\u0432\u043D\u044F, \u0447\u0442\u0435\u043D\u0438\u044F, \u043B\u0435\u043A\u0441\u0438\u043A\u0430 \u0438 \u043F\u0440\u0430\u043A\u0442\u0438\u043A\u0430. \u0414\u0430\u043D\u043D\u044B\u0435 \u0445\u0440\u0430\u043D\u044F\u0442\u0441\u044F \u0432 JSON, \u043F\u043E\u044D\u0442\u043E\u043C\u0443 \u0443\u0440\u043E\u043A \u043C\u043E\u0436\u043D\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u044F\u0442\u044C \u0431\u0435\u0437 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u043B\u043E\u0433\u0438\u043A\u0438.",
+                available: "\u043A\u0430\u043D\u0434\u0437\u0438 \u0443\u0440\u043E\u0432\u043D\u044F",
+                learned: "\u0438\u0437\u0443\u0447\u0435\u043D\u043E",
+                mastered: "\u043E\u0441\u0432\u043E\u0435\u043D\u043E",
+                goals: "\u0426\u0435\u043B\u0438 \u0443\u0440\u043E\u0432\u043D\u044F",
+                practice: "\u041F\u0440\u0430\u043A\u0442\u0438\u043A\u0430",
+                checkpoint: "\u0427\u0435\u043A\u043F\u043E\u0438\u043D\u0442"
             }
             : {
                 back: "Back to textbook",
@@ -18946,12 +20571,12 @@
         const level = canonicalJlptLevel(context.level || state.activeJlptLesson || state.activeTextbookLevel || "");
         const ru = lang() === "ru";
         const titles = {
-            textbooks: ru ? "Учебники Flash Kanji" : "Flash Kanji textbooks",
-            textbook: ru ? "Учебник Flash Kanji" : "Flash Kanji textbook",
-            lesson: ru ? "Урок Flash Kanji" : "Flash Kanji lesson",
-            srs: ru ? "Повторение Flash Kanji" : "Flash Kanji review",
-            stats: ru ? "Статистика Flash Kanji" : "Flash Kanji stats",
-            achievements: ru ? "Достижения Flash Kanji" : "Flash Kanji achievements",
+            textbooks: ru ? "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438 Flash Kanji" : "Flash Kanji textbooks",
+            textbook: ru ? "\u0423\u0447\u0435\u0431\u043D\u0438\u043A Flash Kanji" : "Flash Kanji textbook",
+            lesson: ru ? "\u0423\u0440\u043E\u043A Flash Kanji" : "Flash Kanji lesson",
+            srs: ru ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435 Flash Kanji" : "Flash Kanji review",
+            stats: ru ? "\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430 Flash Kanji" : "Flash Kanji stats",
+            achievements: ru ? "\u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F Flash Kanji" : "Flash Kanji achievements",
             achievement: ru ? "Flash Kanji" : "Flash Kanji"
         };
         const base = titles[normalized] || titles.achievement;
@@ -18965,32 +20590,31 @@
         const ru = lang() === "ru";
         if (normalized === "textbooks") {
             return ru
-                ? "Функциональные учебники JLPT N5-N1 внутри Flash Kanji."
-                : "Functional JLPT N5-N1 textbooks inside Flash Kanji.";
+                ? "\u0424\u0443\u043D\u043A\u0446\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438 JLPT N5-N1 \u0432\u043D\u0443\u0442\u0440\u0438 Flash Kanji." : "Functional JLPT N5-N1 textbooks inside Flash Kanji.";
         }
         if (normalized === "textbook") {
             const title = localized(textbook?.displayTitle || textbook?.title || {});
             const lessons = Number(textbook?.lessonCount || 0);
             const kanji = Number(textbook?.kanjiCount || 0);
             return ru
-                ? `${title || "Учебник"}: ${lessons} уроков и ${kanji} кандзи.`
+                ? `${title || "\u0423\u0447\u0435\u0431\u043D\u0438\u043A"}: ${lessons} \u0443\u0440\u043E\u043A\u043E\u0432 \u0438 ${kanji} \u043A\u0430\u043D\u0434\u0437\u0438.`
                 : `${title || "Textbook"}: ${lessons} lessons and ${kanji} kanji.`;
         }
         if (normalized === "lesson") {
             const title = localized(lesson?.title || {});
             const summary = localized(lesson?.summary || {});
             return ru
-                ? `${level ? `${level} · ` : ""}${title || "Урок"} — ${summary || "урок в Flash Kanji"}.`
+                ? `${level ? `${level} · ` : ""}${title || "\u0423\u0440\u043E\u043A"} — ${summary || "\u0443\u0440\u043E\u043A \u0432 Flash Kanji"}.`
                 : `${level ? `${level} · ` : ""}${title || "Lesson"} — ${summary || "a Flash Kanji lesson"}.`;
         }
         if (normalized === "srs") {
-            return ru ? "Очередь повторений Flash Kanji." : "Flash Kanji review queue.";
+            return ru ? "\u041E\u0447\u0435\u0440\u0435\u0434\u044C \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0439 Flash Kanji." : "Flash Kanji review queue.";
         }
         if (normalized === "stats") {
-            return ru ? "Моя статистика и прогресс во Flash Kanji." : "My Flash Kanji stats and progress.";
+            return ru ? "\u041C\u043E\u044F \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430 \u0438 \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441 \u0432\u043E Flash Kanji." : "My Flash Kanji stats and progress.";
         }
         if (normalized === "achievements") {
-            return ru ? "Достижения и секреты Flash Kanji." : "Flash Kanji achievements and secrets.";
+            return ru ? "\u0414\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u044F \u0438 \u0441\u0435\u043A\u0440\u0435\u0442\u044B Flash Kanji." : "Flash Kanji achievements and secrets.";
         }
         if (normalized === "achievement") {
             return achievementShareText(context.reward || state.rewardModal || {});
@@ -18998,7 +20622,7 @@
         return "Flash Kanji.";
     }
     function shareButtonLabel() {
-        return lang() === "ru" ? "Поделиться" : "Share";
+        return lang() === "ru" ? "\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F" : "Share";
     }
     function renderShareButton(section = state.route, context = {}) {
         const level = canonicalJlptLevel(context.level || "");
@@ -19111,7 +20735,7 @@
         }
         if (result === "abort")
             return false;
-        toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed");
+        toast(lang() === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F" : "Share failed");
         return false;
     }
     async function shareAchievement() {
@@ -19120,7 +20744,8 @@
     function achievementShareText(reward = {}) {
         const prefix = t("shareFallback");
         const level = reward.level || state.progress.level;
-        const xp = reward.type === "level" ? state.progress.xp : reward.totalXp || state.progress.xp;
+        const levelInfo = getLevelInfo();
+        const xp = reward.type === "level" ? `${levelInfo.current}/${levelInfo.next}` : reward.totalXp || state.progress.xp;
         const coins = reward.type === "level" ? state.progress.moonFragments : reward.moonFragments || state.progress.moonFragments;
         return `${prefix}: ${t("level")} ${level}, ${xp} XP, ${coins} Moon Fragments.`;
     }
@@ -19138,7 +20763,8 @@
             return null;
         drawAchievementCardBackground(context, width, height);
         const cardLevel = reward.level || state.progress.level;
-        const cardXp = reward.type === "level" ? state.progress.xp : reward.totalXp || state.progress.xp;
+        const levelInfo = getLevelInfo();
+        const cardXp = reward.type === "level" ? `${levelInfo.current}/${levelInfo.next}` : reward.totalXp || state.progress.xp;
         const cardFragments = reward.type === "level" ? state.progress.moonFragments : reward.moonFragments || state.progress.moonFragments;
         const mascotKey = reward.mascot || (state.progress.level % 2 === 0 ? "leya" : "eva");
         const mascotSrc = mascotImageSrc(mascotKey, reward.mood || "happy", reward.dialog || reward.type || "achievement");
@@ -19275,7 +20901,7 @@
         }
     }
     function resetProgress() {
-        if (!confirm(lang() === "ru" ? "Сбросить прогресс?" : "Reset progress?"))
+        if (!confirm(lang() === "ru" ? "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441?" : "Reset progress?"))
             return;
         const settings = state.progress.settings;
         state.progress = defaultProgress();
@@ -19303,10 +20929,11 @@
     }
     function toggleSound() {
         state.progress.settings.sound = !normalizeBooleanSetting(state.progress.settings.sound, true);
+        state.progress.settings.uxSound = state.progress.settings.sound;
         syncUxSoundSettings();
         syncHeaderSoundButton();
         saveProgress();
-        toast(state.progress.settings.sound ? "♪" : "×");
+        toast(state.progress.settings.sound ? "в™Є" : "Г—");
     }
     function toggleUxSound() {
         state.progress.settings.uxSound = !normalizeBooleanSetting(state.progress.settings.uxSound, true);
@@ -19344,7 +20971,7 @@
             return;
         const enabled = normalizeBooleanSetting(state.progress?.settings?.sound, true);
         const label = lang() === "ru"
-            ? (enabled ? "Звук" : "Звук выключен")
+            ? (enabled ? "\u0417\u0432\u0443\u043A" : "\u0417\u0432\u0443\u043A \u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D")
             : (enabled ? "Sound" : "Sound off");
         button.classList.toggle("is-muted", !enabled);
         button.setAttribute("aria-pressed", String(enabled));
@@ -19392,10 +21019,10 @@
         const available = Boolean(prompt.docked || state.notificationPromptVisible || canShowNotificationPrompt("header"));
         const open = Boolean(state.notificationPromptVisible);
         const label = open
-            ? (lang() === "ru" ? "Скрыть уведомление" : "Hide notification")
+            ? (lang() === "ru" ? "\u0421\u043A\u0440\u044B\u0442\u044C \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u0435" : "Hide notification")
             : (prompt.docked
-                ? (lang() === "ru" ? "Открыть уведомление" : "Open notification")
-                : (lang() === "ru" ? "Уведомления" : "Notifications"));
+                ? (lang() === "ru" ? "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u0435" : "Open notification")
+                : (lang() === "ru" ? "\u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F" : "Notifications"));
         button.hidden = !available;
         button.classList.toggle("is-active", open);
         button.classList.toggle("has-prompt", Boolean(prompt.docked || open));
@@ -19410,7 +21037,7 @@
             return;
         const open = isHeaderSocialOpen();
         const label = lang() === "ru"
-            ? (open ? "Скрыть соцсети" : "Открыть соцсети")
+            ? (open ? "\u0421\u043A\u0440\u044B\u0442\u044C \u0441\u043E\u0446\u0441\u0435\u0442\u0438" : "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u043E\u0446\u0441\u0435\u0442\u0438")
             : (open ? "Hide social links" : "Open social links");
         button.setAttribute("aria-expanded", String(open));
         button.classList.toggle("is-active", open);
@@ -19457,14 +21084,14 @@
         document.documentElement.dataset.customTheme = state.customization?.selected?.theme || "theme_default_dark";
         const roomBackground = currentEvaRoomBackground();
         document.documentElement.dataset.customRoom = roomBackground?.id || "bg_study_hub";
-        document.documentElement.style.setProperty("--app-room-bg", cssImageUrl(roomBackground?.file || "assets/bg/bg_study_hub.png"));
+        document.documentElement.style.setProperty("--app-room-bg", cssImageUrl(roomBackground?.file || "assets/bg/bg_study_hub.webp"));
         const activeEffectId = activeCustomizationEffectId();
         document.documentElement.dataset.customEffect = activeEffectId || "none";
         document.querySelector('meta[name="theme-color"]')?.setAttribute("content", state.progress.settings.theme === "light" ? "#f8f7f2" : "#08080c");
     }
     function cssImageUrl(value) {
         const safe = String(value || "").replace(/["\\\n\r]/g, "");
-        return `url("${safe || "assets/bg/bg_study_hub.png"}")`;
+        return `url("${safe || "assets/bg/bg_study_hub.webp"}")`;
     }
     function t(key) {
         return state.i18n?.ui?.[key]?.[lang()] || state.i18n?.ui?.[key]?.ru || key;
@@ -19716,20 +21343,20 @@
         return `
       <section class="boot-screen loading" aria-label="Flash Kanji loading">
         <div class="boot-panel">
-          <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
+          <p class="eyebrow">JLPT N5-N1 \u00B7 \u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438 \u00B7 \u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435</p>
           <h1 class="hero-title">Flash Kanji</h1>
-          <p class="hero-subtitle">${escapeHtml(lang() === "ru" ? "Кандзи через учебники, SRS-повторение и практику письма." : "Kanji through textbooks, SRS review, and writing practice.")}</p>
+          <p class="hero-subtitle">${escapeHtml(lang() === "ru" ? "\u041A\u0430\u043D\u0434\u0437\u0438 \u0447\u0435\u0440\u0435\u0437 \u0443\u0447\u0435\u0431\u043D\u0438\u043A\u0438 \u0438 SRS-\u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435." : "Kanji through textbooks and SRS review.")}</p>
           <div class="hero-actions" aria-hidden="true">
-            <button class="btn primary" type="button" disabled>冊 ${escapeHtml(lang() === "ru" ? "Учебники" : "Textbooks")}</button>
-            <button class="btn" type="button" disabled>典 ${escapeHtml(lang() === "ru" ? "Словарь" : "Dictionary")}</button>
-            <button class="btn ghost" type="button" disabled>↻ ${escapeHtml(lang() === "ru" ? "Повторение" : "Review")}</button>
+            <button class="btn primary" type="button" disabled>\u518A ${escapeHtml(lang() === "ru" ? "\u0423\u0447\u0435\u0431\u043D\u0438\u043A\u0438" : "Textbooks")}</button>
+            <button class="btn" type="button" disabled>典 ${escapeHtml(lang() === "ru" ? "\u0421\u043B\u043E\u0432\u0430\u0440\u044C" : "Dictionary")}</button>
+            <button class="btn ghost" type="button" disabled>↻ ${escapeHtml(lang() === "ru" ? "\u041F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u0435" : "Review")}</button>
           </div>
-          <div class="boot-status" role="status">${escapeHtml(lang() === "ru" ? "Загрузка Flash Kanji..." : "Loading Flash Kanji...")}</div>
+          <div class="boot-status" role="status">${escapeHtml(lang() === "ru" ? "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 Flash Kanji..." : "Loading Flash Kanji...")}</div>
         </div>
       </section>`;
     }
     function renderLoadError(error) {
-        return `<section class="empty-state" style="margin-top:24px"><span class="kanji-char">警</span><h1>Data error</h1><p>${escapeHtml(error.message)}</p></section>`;
+        return `<section class="empty-state" style="margin-top:24px"><span class="kanji-char">и­¦</span><h1>Data error</h1><p>${escapeHtml(error.message)}</p></section>`;
     }
     function clearFlashKanjiStorage() {
         try {
@@ -20031,11 +21658,11 @@
         }
         return {
             badge: "Offline PWA",
-            title: "Установить Flash Kanji на главный экран?",
-            description: "Так прогресс, уроки и повторения будут открываться как приложение.",
-            iosInstruction: "Нажмите Поделиться → На экран Домой.",
-            install: "Установить",
-            later: "Позже"
+            title: "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C Flash Kanji \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u044B\u0439 \u044D\u043A\u0440\u0430\u043D?",
+            description: "\u0422\u0430\u043A \u043F\u0440\u043E\u0433\u0440\u0435\u0441\u0441, \u0443\u0440\u043E\u043A\u0438 \u0438 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F \u0431\u0443\u0434\u0443\u0442 \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0442\u044C\u0441\u044F \u043A\u0430\u043A \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435.",
+            iosInstruction: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F \u2192 \u041D\u0430 \u044D\u043A\u0440\u0430\u043D \u0414\u043E\u043C\u043E\u0439.",
+            install: "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C",
+            later: "\u041F\u043E\u0437\u0436\u0435"
         };
     }
     function loadNotificationPromptState() {
@@ -20294,22 +21921,22 @@
         const payloads = {
             review: {
                 title: "Flash Kanji",
-                body: ru ? "Ваши кандзи ждут повторения." : "Your kanji are waiting for review.",
+                body: ru ? "\u0412\u0430\u0448\u0438 \u043A\u0430\u043D\u0434\u0437\u0438 \u0436\u0434\u0443\u0442 \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F." : "Your kanji are waiting for review.",
                 url: "./index.html#review"
             },
             streak: {
-                title: ru ? "Лея рядом 🌙" : "Leya is nearby 🌙",
-                body: ru ? "Не потеряйте свою серию дней." : "Do not lose your daily streak.",
+                title: ru ? "\u041B\u0435\u044F \u0440\u044F\u0434\u043E\u043C \uD83C\uDF19" : "Leya is nearby 🌙",
+                body: ru ? "\u041D\u0435 \u043F\u043E\u0442\u0435\u0440\u044F\u0439\u0442\u0435 \u0441\u0432\u043E\u044E \u0441\u0435\u0440\u0438\u044E \u0434\u043D\u0435\u0439." : "Do not lose your daily streak.",
                 url: "./index.html#home"
             },
             daily_bonus: {
-                title: ru ? "Ежедневный бонус" : "Daily Bonus",
+                title: ru ? "\u0415\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u044B\u0439 \u0431\u043E\u043D\u0443\u0441" : "Daily Bonus",
                 body: ru ? "Заберите XP и Moon Fragments." : "Claim XP and Moon Fragments.",
                 url: "./index.html#home"
             },
             lesson: {
-                title: ru ? "Новые знания ждут" : "New knowledge awaits",
-                body: ru ? "Продолжите изучение кандзи." : "Continue learning kanji.",
+                title: ru ? "\u041D\u043E\u0432\u044B\u0435 \u0437\u043D\u0430\u043D\u0438\u044F \u0436\u0434\u0443\u0442" : "New knowledge awaits",
+                body: ru ? "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u0435 \u0438\u0437\u0443\u0447\u0435\u043D\u0438\u0435 \u043A\u0430\u043D\u0434\u0437\u0438." : "Continue learning kanji.",
                 url: "./index.html#textbooks"
             }
         };
@@ -20352,12 +21979,12 @@
             };
         }
         return {
-            badge: "PWA напоминания",
-            title: "Разрешить уведомления Flash Kanji?",
-            description: "Мы напомним о повторениях, серии и ежедневном бонусе.",
-            allow: "Разрешить",
-            later: "Позже",
-            enabled: "Уведомления включены"
+            badge: "PWA \u043D\u0430\u043F\u043E\u043C\u0438\u043D\u0430\u043D\u0438\u044F",
+            title: "\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F Flash Kanji?",
+            description: "\u041C\u044B \u043D\u0430\u043F\u043E\u043C\u043D\u0438\u043C \u043E \u043F\u043E\u0432\u0442\u043E\u0440\u0435\u043D\u0438\u044F\u0445, \u0441\u0435\u0440\u0438\u0438 \u0438 \u0435\u0436\u0435\u0434\u043D\u0435\u0432\u043D\u043E\u043C \u0431\u043E\u043D\u0443\u0441\u0435.",
+            allow: "\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C",
+            later: "\u041F\u043E\u0437\u0436\u0435",
+            enabled: "\u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u044B"
         };
     }
     function cloneProgress(progress) {
@@ -20398,18 +22025,18 @@
     }
     function formatDue(iso) {
         if (!iso)
-            return lang() === "ru" ? "сейчас" : "now";
+            return lang() === "ru" ? "\u0441\u0435\u0439\u0447\u0430\u0441" : "now";
         const diff = new Date(iso).getTime() - Date.now();
         if (diff <= 0)
-            return lang() === "ru" ? "сейчас" : "now";
+            return lang() === "ru" ? "\u0441\u0435\u0439\u0447\u0430\u0441" : "now";
         const minutes = Math.ceil(diff / 60000);
         if (minutes < 60)
-            return lang() === "ru" ? `через ${minutes} мин.` : `in ${minutes} min`;
+            return lang() === "ru" ? `\u0447\u0435\u0440\u0435\u0437 ${minutes} мин.` : `in ${minutes} min`;
         const hours = Math.ceil(minutes / 60);
         if (hours < 24)
-            return lang() === "ru" ? `через ${hours} ч.` : `in ${hours} h`;
+            return lang() === "ru" ? `\u0447\u0435\u0440\u0435\u0437 ${hours} ч.` : `in ${hours} h`;
         const days = Math.ceil(hours / 24);
-        return lang() === "ru" ? `через ${days} дн.` : `in ${days} d`;
+        return lang() === "ru" ? `\u0447\u0435\u0440\u0435\u0437 ${days} \u0434\u043D.` : `in ${days} d`;
     }
     function progressWidth(value, total) {
         return total ? clamp(Math.round((value / total) * 100), 0, 100) : 0;
@@ -20450,6 +22077,26 @@
     function readTextbookRouteSubroute() {
         const raw = decodeURIComponent(location.hash.replace("#", ""));
         const match = raw.match(/^textbooks\/[^/?#]+\/([^?#]+)/i) || raw.match(/^jlpt\/[^/?#]+\/([^?#]+)/i);
+        return match ? String(match[1] || "") : "";
+    }
+    function readLearnRouteView() {
+        const raw = decodeURIComponent(location.hash.replace("#", ""));
+        const match = raw.match(/^learn(?:\/([^/?#]+))?/i);
+        const view = String(match?.[1] || "").toLowerCase();
+        if (view === LEARNING_PATH_LESSON_VIEW)
+            return LEARNING_PATH_LESSON_VIEW;
+        if (view === LEARNING_PATH_LEGACY_VIEW)
+            return LEARNING_PATH_LEGACY_VIEW;
+        return LEARNING_PATH_MAP_VIEW;
+    }
+    function readLearnRouteNodeId() {
+        const raw = decodeURIComponent(location.hash.replace("#", ""));
+        const match = raw.match(/^learn\/lesson\/([^/?#]+)/i);
+        return match ? String(match[1] || "") : "";
+    }
+    function readLearnLegacyLessonId() {
+        const raw = decodeURIComponent(location.hash.replace("#", ""));
+        const match = raw.match(/^learn\/legacy\/([^/?#]+)/i);
         return match ? String(match[1] || "") : "";
     }
     function readJlptLessonRouteLevel() {

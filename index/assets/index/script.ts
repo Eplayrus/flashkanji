@@ -4401,7 +4401,7 @@ if (await refreshStaleAppCache()) return;
           `}
         </div>
         <button class="home-eva-avatar" type="button" data-action="eva-click" data-character="eva" aria-label="${escapeAttr(scene.speaker)}">
-          <img class="${escapeAttr(evaSpriteMotionClass({ line: scene.line, isAutonomy: true, mood: scene.mood, emotion: scene.emotion }))}" src="${escapeAttr(scene.sprite)}" alt="${escapeAttr(scene.speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.png'" />
+          <img class="${escapeAttr(evaSpriteMotionClass({ line: scene.line, isAutonomy: true, mood: scene.mood, emotion: scene.emotion }))}" src="${escapeAttr(scene.sprite)}" alt="${escapeAttr(scene.speaker)}" loading="eager" decoding="async" onerror="this.src='assets/mascots/eva_normal.webp'" />
         </button>
       </section>
     `;
@@ -4512,7 +4512,7 @@ if (await refreshStaleAppCache()) return;
         <article class="eva-vn-scene ${scene.isAutonomy ? "is-autonomous" : ""} is-${escapeAttr(presenceState)}" data-eva-state="${escapeAttr(presenceState)}" data-eva-mood="${escapeAttr(scene.mood || evaRelationship().mood)}" data-eva-emotion="${escapeAttr(scene.emotion || "calm")}" style="--eva-bg:url('${escapeAttr(bg.file)}')">
           <div class="eva-vn-bg" aria-hidden="true"></div>
           <button class="eva-sprite-button" type="button" data-action="eva-click" aria-label="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}">
-            <img class="${escapeAttr(evaSpriteMotionClass(scene))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.png'" />
+            <img class="${escapeAttr(evaSpriteMotionClass(scene))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.webp'" />
           </button>
           ${renderEvaRoomDecoration(scene)}
           <div class="eva-dialogue-box">
@@ -5357,7 +5357,7 @@ if (await refreshStaleAppCache()) return;
     const base = state.evaBackgrounds?.length ? state.evaBackgrounds : [{
       id: "bg_study_hub",
       title: { ru: "Учебная комната", en: "Study Hub" },
-      file: "assets/bg/bg_study_hub.png",
+      file: "assets/bg/bg_study_hub.webp",
       price: 0,
       defaultUnlocked: true
     }];
@@ -6562,7 +6562,7 @@ if (await refreshStaleAppCache()) return;
   }
 
   function evaSpritePath(sprite) {
-    return state.evaSprites?.[sprite] || state.evaSprites?.default || "assets/mascots/eva_normal.png";
+    return state.evaSprites?.[sprite] || state.evaSprites?.default || "assets/mascots/eva_normal.webp";
   }
 
   function preloadEvaVisuals(spriteId, backgroundSrc = "") {
@@ -7106,7 +7106,7 @@ if (await refreshStaleAppCache()) return;
     return `
       <article class="learn-level-panel">
         <div class="learn-level-cover">
-          <img src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <img src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
           <span class="pill">${escapeHtml(textbook.jlpt || "")}</span>
         </div>
         <div class="learn-level-copy">
@@ -7229,7 +7229,7 @@ if (await refreshStaleAppCache()) return;
         </div>
         ${textbook ? `
           <article class="jlpt-textbook-hero">
-            <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+            <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
             <div class="jlpt-textbook-body">
               <span class="pill">${escapeHtml(textbook.jlpt)}</span>
               <h2>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h2>
@@ -7330,7 +7330,7 @@ if (await refreshStaleAppCache()) return;
           ${items.map((item) => `
             <article class="textbook-card ${isTextbookUnlocked(item.jlpt) ? "is-unlocked" : "is-locked"}" id="textbook-${escapeAttr(item.jlpt)}">
               <div class="textbook-cover-wrap">
-                <img class="textbook-cover" src="${escapeAttr(item.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+                <img class="textbook-cover" src="${escapeAttr(item.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
                 <span class="pill textbook-level">${escapeHtml(item.jlpt)}</span>
               </div>
               <div class="textbook-body">
@@ -7392,7 +7392,7 @@ if (await refreshStaleAppCache()) return;
           </div>
         </div>
         <article class="lesson-locked-panel textbook-locked-panel">
-          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook?.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook?.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
           <div class="jlpt-textbook-body">
             <span class="pill danger-pill">${escapeHtml(level || "JLPT")}</span>
             <h2>${escapeHtml(localized(textbook?.displayTitle || textbook?.title || { ru: labels.title, en: labels.title }))}</h2>
@@ -7480,7 +7480,7 @@ if (await refreshStaleAppCache()) return;
         </div>
 
         <article class="jlpt-textbook-hero">
-          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.png")}" alt="" loading="lazy" />
+          <img class="jlpt-textbook-cover" src="${escapeAttr(textbook.coverImage || "assets/bg/bg_classroom.webp")}" alt="" loading="lazy" />
           <div class="jlpt-textbook-body">
             <span class="pill">${escapeHtml(textbook.jlpt)}</span>
             <h2>${escapeHtml(localized(textbook.displayTitle || textbook.title || {}))}</h2>
@@ -16024,10 +16024,10 @@ if (await refreshStaleAppCache()) return;
               </div>
               <div class="settings-row">
                 <span>
-                  <strong>${escapeHtml(lang() === "ru" ? "Р­РєСЃРєСѓСЂСЃРёСЏ" : "Onboarding")}</strong>
-                  <small>${escapeHtml(lang() === "ru" ? "РџРѕРІС‚РѕСЂРёС‚СЊ РїРµСЂРІРѕРµ Р·РЅР°РєРѕРјСЃС‚РІРѕ СЃ Flash Kanji." : "Replay the first-time tour.")}</small>
+                  <strong>${escapeHtml(lang() === "ru" ? "Экскурсия" : "Onboarding")}</strong>
+                  <small>${escapeHtml(lang() === "ru" ? "Повторить первое знакомство с Flash Kanji." : "Replay the first-time tour.")}</small>
                 </span>
-                <button class="btn ghost" type="button" data-action="repeat-onboarding">${escapeHtml(lang() === "ru" ? "РџРѕРІС‚РѕСЂРёС‚СЊ" : "Repeat tour")}</button>
+                <button class="btn ghost" type="button" data-action="repeat-onboarding">${escapeHtml(lang() === "ru" ? "Повторить" : "Repeat tour")}</button>
               </div>
               <label class="settings-row settings-row-range">
                 <span>
@@ -19037,7 +19037,7 @@ if (await refreshStaleAppCache()) return;
     document.documentElement.dataset.customTheme = state.customization?.selected?.theme || "theme_default_dark";
     const roomBackground = currentEvaRoomBackground();
     document.documentElement.dataset.customRoom = roomBackground?.id || "bg_study_hub";
-    document.documentElement.style.setProperty("--app-room-bg", cssImageUrl(roomBackground?.file || "assets/bg/bg_study_hub.png"));
+    document.documentElement.style.setProperty("--app-room-bg", cssImageUrl(roomBackground?.file || "assets/bg/bg_study_hub.webp"));
     const activeEffectId = activeCustomizationEffectId();
     document.documentElement.dataset.customEffect = activeEffectId || "none";
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", state.progress.settings.theme === "light" ? "#f8f7f2" : "#08080c");
@@ -19045,7 +19045,7 @@ if (await refreshStaleAppCache()) return;
 
   function cssImageUrl(value) {
     const safe = String(value || "").replace(/["\\\n\r]/g, "");
-    return `url("${safe || "assets/bg/bg_study_hub.png"}")`;
+    return `url("${safe || "assets/bg/bg_study_hub.webp"}")`;
   }
 
   function t(key) {

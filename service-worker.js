@@ -1,4 +1,4 @@
-const ROOT_CLEANUP_VERSION = "2026-06-23-readings-audit-v31";
+const ROOT_CLEANUP_VERSION = "2026-06-23-deferred-data-v32";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());

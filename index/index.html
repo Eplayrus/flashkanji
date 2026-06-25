@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -35,11 +35,11 @@
   <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
   <link rel="icon" href="assets/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" sizes="192x192" />
-  <link rel="manifest" href="manifest.webmanifest?v=2026-06-23-readings-audit-v31" />
+  <link rel="manifest" href="manifest.webmanifest?v=2026-06-25-loading-fix-v44" />
   <link rel="preload" href="assets/logo.png" as="image" fetchpriority="high" />
-  <link rel="preload" href="assets/bg_1.png" as="image" fetchpriority="high" />
-  <link rel="preload" href="assets/mascots/eva/eva_default_pack/eva_idle.png" as="image" />
- <link rel="stylesheet" href="styles.css?v=2026-06-23-readings-audit-v31" />
+  <link rel="preload" href="assets/bg_1.webp" as="image" fetchpriority="high" />
+  <link rel="preload" href="assets/mascots/eva/eva_default_pack/eva_idle.webp" as="image" />
+ <link rel="stylesheet" href="styles.css?v=2026-06-25-loading-fix-v44" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -81,7 +81,7 @@
     ym(109492033, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
   </script>
   <!-- /Yandex.Metrika counter -->
- <script src="script.js?v=2026-06-23-readings-audit-v31" defer></script>
+  <script src="script.js?v=2026-06-25-loading-fix-v44" defer></script>
 </head>
 <body>
   <noscript><div><img src="https://mc.yandex.ru/watch/109492033" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
@@ -153,33 +153,33 @@
           <h1 class="hero-title">Flash Kanji</h1>
           <p class="hero-subtitle">Кандзи через учебники, SRS-повторение и практику письма.</p>
           <div class="hero-actions" aria-hidden="true">
-            <button class="btn primary" type="button" disabled>冊 Учебники</button>
-            <button class="btn" type="button" disabled>典 Словарь</button>
-            <button class="btn ghost" type="button" disabled>↻ Повторение</button>
+            <button class="btn primary" type="button" disabled>&#x518A; Учебники</button>
+            <button class="btn" type="button" disabled>&#x5178; Словарь</button>
+            <button class="btn ghost" type="button" disabled>&#x21BB; Повторение</button>
           </div>
           <div class="boot-status" role="status">Загрузка Flash Kanji...</div>
         </div>
       </section>
+        </div>
+      </section>
+        </div>
+      </section>
     </main>
-
     <nav class="bottom-nav" aria-label="Основная навигация">
       <button class="nav-btn is-active" type="button" data-action="route" data-route="home">
-        <span>⌂</span><small>Главная</small>
+        <span>&#8962;</span><small>Главная</small>
       </button>
       <button class="nav-btn" type="button" data-action="route" data-route="learn" data-tour="jlpt-lessons" aria-haspopup="menu" aria-expanded="false">
-        <span>文</span><small>Урок</small>
+        <span>&#25991;</span><small>Урок</small>
       </button>
       <button class="nav-btn" type="button" data-action="route" data-route="review" data-tour="srs-review" aria-haspopup="menu" aria-expanded="false">
-        <span>↻</span><small>Повтор</small>
+        <span>&#8635;</span><small>Повтор</small>
       </button>
       <button class="nav-btn" type="button" data-action="route" data-route="dictionary" data-tour="dictionary">
-        <span>典</span><small>Словарь</small>
-      </button>
-      <button class="nav-btn" type="button" data-action="route" data-route="writing" data-tour="writing-practice" aria-haspopup="menu" aria-expanded="false">
-        <span>筆</span><small>Письмо</small>
+        <span>&#20856;</span><small>Словарь</small>
       </button>
       <button class="nav-btn" type="button" data-action="route" data-route="stats" data-tour="profile-progress-nav" aria-haspopup="menu" aria-expanded="false">
-        <span>▥</span><small>Статы</small>
+        <span>&#9637;</span><small>Профиль</small>
       </button>
     </nav>
 
@@ -189,5 +189,8 @@
   </div>
 </body>
 </html>
+
+
+
 
 

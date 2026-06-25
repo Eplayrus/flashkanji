@@ -7,8 +7,8 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
 OG = ASSETS / "og"
-BG = ASSETS / "bg" / "bg_eva_room.png"
-EVA = ASSETS / "mascots" / "eva" / "eva_default_pack" / "eva_idle.png"
+BG = ASSETS / "bg" / "bg_eva_room.webp"
+EVA = ASSETS / "mascots" / "eva" / "eva_default_pack" / "eva_idle.webp"
 LOGO = ASSETS / "logo.png"
 ICON = ASSETS / "favicon.png"
 
