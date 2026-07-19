@@ -1,0 +1,268 @@
+{
+  "id": "lesson-1",
+  "jlpt": "N5",
+  "order": 1,
+  "title": {
+    "ru": "N5 урок 1: день, луна, человек, книга",
+    "en": "N5 lesson 1: day, moon, person, book"
+  },
+  "summary": {
+    "ru": "Первый интерактивный слой учебника: четыре кандзи, их чтения, слова-опоры, короткие предложения, мини-практика и добавление в повторение.",
+    "en": "The first interactive textbook layer: four kanji, readings, support words, short sentences, mini practice, and review entry."
+  },
+  "estimatedMinutes": 12,
+  "kanjiIds": ["1", "2", "3", "4"],
+  "objectives": [
+    {
+      "ru": "Связать знак со значением: день/солнце, месяц/луна, человек, книга/основа.",
+      "en": "Connect the sign with meaning: day/sun, month/moon, person, book/origin."
+    },
+    {
+      "ru": "Различать онъёми и кунъёми в коротких словах.",
+      "en": "Distinguish on'yomi and kun'yomi in short words."
+    },
+    {
+      "ru": "Добавить знаки в повторение и подготовить их к повторению.",
+      "en": "Add the signs to review and prepare them for review."
+    }
+  ],
+  "sections": [
+    {
+      "title": {
+        "ru": "Принцип урока",
+        "en": "Lesson principle"
+      },
+      "body": {
+        "ru": "Сначала смотри на знак и смысл, затем на слово, где чтение уже естественно. Не пытайся запомнить всё сразу: учебник отправит кандзи в повторение.",
+        "en": "Start with the sign and meaning, then move to a word where the reading is natural. Do not memorize everything at once: the textbook sends kanji into review."
+      }
+    }
+  ],
+  "kanjiBlocks": [
+    {
+      "cardId": "1",
+      "sentence": {
+        "jp": "今日は日本語を読みます。",
+        "hiragana": "きょうは にほんごを よみます。",
+        "translation": {
+          "ru": "Сегодня я читаю японский.",
+          "en": "Today I read Japanese."
+        }
+      }
+    },
+    {
+      "cardId": "2",
+      "sentence": {
+        "jp": "月曜日にアプリを開きます。",
+        "hiragana": "げつようびに アプリを ひらきます。",
+        "translation": {
+          "ru": "В понедельник я открываю приложение.",
+          "en": "On Monday I open the app."
+        }
+      }
+    },
+    {
+      "cardId": "3",
+      "sentence": {
+        "jp": "日本人の先生がいます。",
+        "hiragana": "にほんじんの せんせいが います。",
+        "translation": {
+          "ru": "Есть японский преподаватель.",
+          "en": "There is a Japanese teacher."
+        }
+      }
+    },
+    {
+      "cardId": "4",
+      "sentence": {
+        "jp": "本を一冊読みます。",
+        "hiragana": "ほんを いっさつ よみます。",
+        "translation": {
+          "ru": "Я читаю одну книгу.",
+          "en": "I read one book."
+        }
+      }
+    }
+  ],
+  "supportWords": [
+    {
+      "word": "日本",
+      "reading": "にほん",
+      "romaji": "nihon",
+      "translation": {
+        "ru": "Япония",
+        "en": "Japan"
+      }
+    },
+    {
+      "word": "月曜日",
+      "reading": "げつようび",
+      "romaji": "getsuyoubi",
+      "translation": {
+        "ru": "понедельник",
+        "en": "Monday"
+      }
+    },
+    {
+      "word": "日本人",
+      "reading": "にほんじん",
+      "romaji": "nihonjin",
+      "translation": {
+        "ru": "японец, японка",
+        "en": "Japanese person"
+      }
+    },
+    {
+      "word": "本",
+      "reading": "ほん",
+      "romaji": "hon",
+      "translation": {
+        "ru": "книга",
+        "en": "book"
+      }
+    }
+  ],
+  "exercises": [
+    {
+      "id": "n5-l1-meaning-hi",
+      "type": "meaning",
+      "prompt": {
+        "ru": "Что чаще всего означает 日 в N5-контексте?",
+        "en": "What does 日 most often mean in N5 context?"
+      },
+      "answer": "day_sun",
+      "rewardXp": 5,
+      "options": [
+        {
+          "value": "day_sun",
+          "label": {
+            "ru": "день, солнце",
+            "en": "day, sun"
+          }
+        },
+        {
+          "value": "person",
+          "label": {
+            "ru": "человек",
+            "en": "person"
+          }
+        },
+        {
+          "value": "book",
+          "label": {
+            "ru": "книга",
+            "en": "book"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n5-l1-reading-nihon",
+      "type": "reading",
+      "prompt": {
+        "ru": "Как читается слово 日本?",
+        "en": "How is 日本 read?"
+      },
+      "answer": "nihon",
+      "rewardXp": 5,
+      "options": [
+        {
+          "value": "nihon",
+          "label": {
+            "ru": "にほん · nihon",
+            "en": "にほん · nihon"
+          }
+        },
+        {
+          "value": "hito",
+          "label": {
+            "ru": "ひと · hito",
+            "en": "ひと · hito"
+          }
+        },
+        {
+          "value": "tsuki",
+          "label": {
+            "ru": "つき · tsuki",
+            "en": "つき · tsuki"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n5-l1-word-getsuyoubi",
+      "type": "word",
+      "prompt": {
+        "ru": "Какое слово означает понедельник?",
+        "en": "Which word means Monday?"
+      },
+      "answer": "getsuyoubi",
+      "rewardXp": 5,
+      "options": [
+        {
+          "value": "getsuyoubi",
+          "label": {
+            "ru": "月曜日",
+            "en": "月曜日"
+          }
+        },
+        {
+          "value": "nihonjin",
+          "label": {
+            "ru": "日本人",
+            "en": "日本人"
+          }
+        },
+        {
+          "value": "hon",
+          "label": {
+            "ru": "本",
+            "en": "本"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n5-l1-sentence-book",
+      "type": "sentence",
+      "prompt": {
+        "ru": "Что нужно вставить в предложение: ___を読みます。",
+        "en": "What should be inserted into: ___を読みます。"
+      },
+      "hint": {
+        "ru": "Нужно слово "книга".",
+        "en": "You need the word "book"."
+      },
+      "answer": "hon",
+      "rewardXp": 6,
+      "rewardMoon": 1,
+      "options": [
+        {
+          "value": "nihon",
+          "label": {
+            "ru": "日本",
+            "en": "日本"
+          }
+        },
+        {
+          "value": "hon",
+          "label": {
+            "ru": "本",
+            "en": "本"
+          }
+        },
+        {
+          "value": "hito",
+          "label": {
+            "ru": "人",
+            "en": "人"
+          }
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "completeXp": 35,
+    "completeMoon": 5
+  }
+}

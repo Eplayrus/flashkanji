@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-28",
+  "total_cards": 1200,
+  "generated_cards": 1180,
+  "generated_lessons": 61,
+  "sources": [
+    {
+      "name": "JLPT Kanji Dataset (filtered from kanjiapi.dev)",
+      "url": "https://raw.githubusercontent.com/Smallsan/jlpt_kanji_json_msgpack/main/kanji_jlpt_only.json",
+      "use": "readings, stroke counts, English meanings and JLPT level metadata"
+    },
+    {
+      "name": "AnchorI JLPT Kanji Dictionary",
+      "url": "https://github.com/AnchorI/jlpt-kanji-dictionary",
+      "use": "Russian vocabulary examples and kanji frequency metadata"
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+[
+  {
+    "id": "lesson_hira_001",
+    "courseId": "hiragana",
+    "title": { "ru": "Звук и форма", "en": "Sound and shape" },
+    "description": { "ru": "Короткая разминка на одно простое чтение.", "en": "A short warm-up on a simple reading." },
+    "xpReward": 12,
+    "stardustReward": 4,
+    "items": [],
+    "steps": [
+      {
+        "type": "intro",
+        "entity": {
+          "symbol": "あ",
+          "reading": "a",
+          "romaji": "a",
+          "meaning": { "ru": "гласный звук a", "en": "the vowel a" },
+          "example": { "jp": "あさ", "kana": "あさ", "ru": "утро", "en": "morning" }
+        }
+      },
+      {
+        "type": "multiple_choice_reading",
+        "question": { "ru": "Как читается あ?", "en": "How do you read あ?" },
+        "options": ["a", "i", "u", "e"],
+        "answer": "a"
+      },
+      {
+        "type": "type_answer",
+        "question": { "ru": "Напиши чтение латиницей.", "en": "Type the reading in romaji." },
+        "answers": ["a"]
+      },
+      { "type": "finish" }
+    ]
+  },
+  {
+    "id": "lesson_kata_001",
+    "courseId": "katakana",
+    "title": { "ru": "Жёсткий контур", "en": "Sharp contour" },
+    "description": { "ru": "Ещё одна короткая разминка.", "en": "Another short warm-up." },
+    "xpReward": 12,
+    "stardustReward": 4,
+    "items": [],
+    "steps": [
+      {
+        "type": "intro",
+        "entity": {
+          "symbol": "ア",
+          "reading": "a",
+          "romaji": "a",
+          "meaning": { "ru": "катакана для звука a", "en": "katakana for the sound a" },
+          "example": { "jp": "アプリ", "kana": "あぷり", "ru": "приложение", "en": "app" }
+        }
+      },
+      {
+        "type": "multiple_choice_reading",
+        "question": { "ru": "Как читается ア?", "en": "How do you read ア?" },
+        "options": ["ka", "a", "shi", "to"],
+        "answer": "a"
+      },
+      {
+        "type": "type_answer",
+        "question": { "ru": "Введи чтение латиницей.", "en": "Type the romaji reading." },
+        "answers": ["a"]
+      },
+      { "type": "finish" }
+    ]
+  },
+  {
+    "id": "lesson_basic_001",
+    "courseId": "basic_kanji",
+    "title": { "ru": "Первый кандзи", "en": "First kanji" },
+    "description": { "ru": "Смотрим на знак, значение и первое чтение.", "en": "See the sign, meaning, and first reading." },
+    "xpReward": 20,
+    "stardustReward": 6,
+    "items": ["kanji_ichi"],
+    "steps": [
+      { "type": "intro", "kanjiId": "kanji_ichi" },
+      {
+        "type": "multiple_choice_meaning",
+        "kanjiId": "kanji_ichi",
+        "question": { "ru": "Что значит 一?", "en": "What does 一 mean?" },
+        "options": ["один", "два", "три", "гора"],
+        "answer": "один"
+      },
+      {
+        "type": "multiple_choice_reading",
+        "kanjiId": "kanji_ichi",
+        "question": { "ru": "Выбери чтение 一.", "en": "Pick the reading of 一." },
+        "options": ["ichi", "ni", "san", "yama"],
+        "answer": "ichi"
+      },
+      {
+        "type": "sentence_choice",
+        "kanjiId": "kanji_ichi",
+        "question": { "ru": "Где 一 использовано правильно?", "en": "Where is 一 used correctly?" },
+        "options": [
+          "一人です。",
+          "二人です。",
+          "山です。"
+        ],
+        "answer": "一人です。"
+      },
+      {
+        "type": "type_answer",
+        "kanjiId": "kanji_ichi",
+        "question": { "ru": "Введи чтение 一 латиницей.", "en": "Type the reading of 一 in romaji." },
+        "answers": ["ichi", "hito"]
+      },
+      { "type": "finish" }
+    ]
+  },
+  {
+    "id": "lesson_basic_002",
+    "courseId": "basic_kanji",
+    "title": { "ru": "Учёба и наука", "en": "Study and science" },
+    "description": { "ru": "Работаем с 学 и короткой связкой.", "en": "Work with 学 and a short link." },
+    "xpReward": 22,
+    "stardustReward": 7,
+    "items": ["kanji_gaku"],
+    "steps": [
+      { "type": "intro", "kanjiId": "kanji_gaku" },
+      {
+        "type": "multiple_choice_meaning",
+        "kanjiId": "kanji_gaku",
+        "question": { "ru": "Что значит 学?", "en": "What does 学 mean?" },
+        "options": ["учёба", "день", "гора", "рот"],
+        "answer": "учёба"
+      },
+      {
+        "type": "multiple_choice_reading",
+        "kanjiId": "kanji_gaku",
+        "question": { "ru": "Какое чтение у 学?", "en": "Which reading matches 学?" },
+        "options": ["gaku", "hon", "yama", "kuchi"],
+        "answer": "gaku"
+      },
+      {
+        "type": "match",
+        "pairs": [
+          { "left": "学", "right": "учёба" },
+          { "left": "日", "right": "день" },
+          { "left": "山", "right": "гора" }
+        ]
+      },
+      { "type": "finish" }
+    ]
+  },
+  {
+    "id": "lesson_n5_001",
+    "courseId": "jlpt_n5",
+    "title": { "ru": "Солнечный день", "en": "Sunny day" },
+    "description": { "ru": "日, 本 и понятный пример.", "en": "日, 本 and a clear example." },
+    "xpReward": 26,
+    "stardustReward": 8,
+    "items": ["kanji_nichi", "kanji_hon"],
+    "steps": [
+      { "type": "intro", "kanjiId": "kanji_nichi" },
+      {
+        "type": "multiple_choice_meaning",
+        "kanjiId": "kanji_nichi",
+        "question": { "ru": "Что значит 日?", "en": "What does 日 mean?" },
+        "options": ["день", "книга", "человек", "еда"],
+        "answer": "день"
+      },
+      {
+        "type": "multiple_choice_reading",
+        "kanjiId": "kanji_nichi",
+        "question": { "ru": "Выбери чтение 日.", "en": "Choose the reading of 日." },
+        "options": ["nichi", "hon", "hito", "shoku"],
+        "answer": "nichi"
+      },
+      {
+        "type": "sentence_choice",
+        "kanjiId": "kanji_nichi",
+        "question": { "ru": "Где 日 используется естественно?", "en": "Where is 日 used naturally?" },
+        "options": [
+          "今日はいい日です。",
+          "本は青いです。",
+          "人が山へ行きます。"
+        ],
+        "answer": "今日はいい日です。"
+      },
+      {
+        "type": "type_answer",
+        "kanjiId": "kanji_nichi",
+        "question": { "ru": "Введи чтение 日 латиницей.", "en": "Type the romaji reading of 日." },
+        "answers": ["nichi", "hi"]
+      },
+      { "type": "finish" }
+    ]
+  },
+  {
+    "id": "lesson_n5_002",
+    "courseId": "jlpt_n5",
+    "title": { "ru": "Книга и человек", "en": "Book and person" },
+    "description": { "ru": "本 и 人 в простом контексте.", "en": "本 and 人 in a simple context." },
+    "xpReward": 26,
+    "stardustReward": 8,
+    "items": ["kanji_hon", "kanji_hito"],
+    "steps": [
+      { "type": "intro", "kanjiId": "kanji_hon" },
+      {
+        "type": "multiple_choice_meaning",
+        "kanjiId": "kanji_hon",
+        "question": { "ru": "Что значит 本?", "en": "What does 本 mean?" },
+        "options": ["книга", "гора", "день", "идти"],
+        "answer": "книга"
+      },
+      {
+        "type": "multiple_choice_reading",
+        "kanjiId": "kanji_hon",
+        "question": { "ru": "Выбери чтение 本.", "en": "Choose the reading of 本." },
+        "options": ["hon", "gaku", "yama", "iku"],
+        "answer": "hon"
+      },
+      {
+        "type": "match",
+        "pairs": [
+          { "left": "本", "right": "книга" },
+          { "left": "人", "right": "человек" },
+          { "left": "見", "right": "видеть" }
+        ]
+      },
+      { "type": "finish" }
+    ]
+  },
+  {
+    "id": "lesson_n4_001",
+    "courseId": "jlpt_n4",
+    "title": { "ru": "Движение", "en": "Movement" },
+    "description": { "ru": "行 и карта простого пути.", "en": "行 and a simple path map." },
+    "xpReward": 32,
+    "stardustReward": 10,
+    "items": ["kanji_gyou", "kanji_yama"],
+    "steps": [
+      { "type": "intro", "kanjiId": "kanji_gyou" },
+      {
+        "type": "multiple_choice_meaning",
+        "kanjiId": "kanji_gyou",
+        "question": { "ru": "Что значит 行?", "en": "What does 行 mean?" },
+        "options": ["идти", "смотреть", "гора", "книга"],
+        "answer": "идти"
+      },
+      {
+        "type": "multiple_choice_reading",
+        "kanjiId": "kanji_gyou",
+        "question": { "ru": "Выбери чтение 行.", "en": "Choose the reading of 行." },
+        "options": ["iku", "miru", "yama", "hon"],
+        "answer": "iku"
+      },
+      {
+        "type": "sentence_choice",
+        "kanjiId": "kanji_gyou",
+        "question": { "ru": "Где 行 стоит естественно?", "en": "Where does 行 fit naturally?" },
+        "options": [
+          "駅へ行きます。",
+          "本を見ます。",
+          "山が高いです。"
+        ],
+        "answer": "駅へ行きます。"
+      },
+      {
+        "type": "type_answer",
+        "kanjiId": "kanji_gyou",
+        "question": { "ru": "Введи чтение 行 латиницей.", "en": "Type the romaji reading of 行." },
+        "answers": ["iku", "kou", "gyou"]
+      },
+      { "type": "finish" }
+    ]
+  }
+]

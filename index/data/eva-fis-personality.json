@@ -1,0 +1,921 @@
+{
+  "version": 1,
+  "visualPolicy": "Use only existing sprites from assets/mascots/eva/eva_default_pack. No redesign, no replacement outfit, no new face or hairstyle.",
+  "spoilerPolicy": "Personality lines are inspired by Eva as a guarded traveler, mercenary, bodyguard, teacher, and companion. They avoid plot spoilers and named story events.",
+  "introChoices": [
+    {
+      "text": {
+        "ru": "Что ты заметила?",
+        "en": "What did you notice?"
+      },
+      "randomLine": "fis_observation",
+      "relationshipDelta": {
+        "curiosity": 0.7,
+        "trust": 0.2
+      }
+    },
+    {
+      "text": {
+        "ru": "Совет с дороги.",
+        "en": "Road advice."
+      },
+      "randomLine": "fis_road",
+      "relationshipDelta": {
+        "discipline": 0.7,
+        "trust": 0.2
+      }
+    },
+    {
+      "text": {
+        "ru": "Проверить комнату.",
+        "en": "Check the room."
+      },
+      "next": "fis_room_check",
+      "relationshipDelta": {
+        "trust": 0.5,
+        "curiosity": 0.3
+      }
+    },
+    {
+      "text": {
+        "ru": "Как держать внимание?",
+        "en": "How do I keep focus?"
+      },
+      "next": "fis_focus",
+      "relationshipDelta": {
+        "discipline": 0.8
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "fis_room_check",
+      "background": "bg_study_hub",
+      "sprite": "think",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Окно слева. Бумаги на столе. Книга раскрыта не там, где ты остановился. Ничего опасного. Просто беспорядок, который крадет внимание.",
+        "en": "Window on the left. Papers on the desk. The book is open at the wrong place. Nothing dangerous. Just disorder stealing attention."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "Навести порядок в голове.",
+            "en": "Put my head in order."
+          },
+          "randomLine": "fis_focus",
+          "relationshipDelta": {
+            "discipline": 1,
+            "trust": 0.3
+          }
+        },
+        {
+          "text": {
+            "ru": "Ещё наблюдение.",
+            "en": "Another observation."
+          },
+          "randomLine": "fis_observation",
+          "relationshipDelta": {
+            "curiosity": 0.6
+          }
+        },
+        {
+          "text": {
+            "ru": "Назад.",
+            "en": "Back."
+          },
+          "next": "intro"
+        }
+      ]
+    },
+    {
+      "id": "fis_focus",
+      "background": "bg_library",
+      "sprite": "review",
+      "speaker": {
+        "ru": "Ева",
+        "en": "Eva"
+      },
+      "text": {
+        "ru": "Внимание держат не силой. Его держат короткой задачей. Один знак. Одно чтение. Один ответ без торга с собой.",
+        "en": "Focus is not held by force. It is held by a short task. One character. One reading. One answer without bargaining with yourself."
+      },
+      "choices": [
+        {
+          "text": {
+            "ru": "К повтору.",
+            "en": "To review."
+          },
+          "route": "review",
+          "next": "intro",
+          "relationshipDelta": {
+            "discipline": 1.2,
+            "trust": 0.4
+          }
+        },
+        {
+          "text": {
+            "ru": "К уроку.",
+            "en": "To lesson."
+          },
+          "route": "learn",
+          "next": "intro",
+          "relationshipDelta": {
+            "discipline": 1.1,
+            "curiosity": 0.3
+          }
+        },
+        {
+          "text": {
+            "ru": "Ещё короче.",
+            "en": "Shorter."
+          },
+          "randomLine": "fis_short",
+          "relationshipDelta": {
+            "warmth": 0.2
+          }
+        }
+      ]
+    }
+  ],
+  "linePools": {
+    "fis_observation": [
+      {
+        "id": "fis_obs_001",
+        "category": "fis_observation",
+        "background": "bg_study_hub",
+        "sprite": "think",
+        "text": {
+          "ru": "Ты пропустил радикал. Он маленький, но такие мелочи часто решают исход.",
+          "en": "You missed the radical. It is small, but small things often decide the outcome."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.4
+        }
+      },
+      {
+        "id": "fis_obs_002",
+        "category": "fis_observation",
+        "background": "bg_library",
+        "sprite": "idle",
+        "text": {
+          "ru": "Ты читаешь быстрее, когда не пытаешься угадать. Это полезная разница.",
+          "en": "You read faster when you stop trying to guess. That difference is useful."
+        },
+        "relationshipDelta": {
+          "trust": 0.3
+        }
+      },
+      {
+        "id": "fis_obs_003",
+        "category": "fis_observation",
+        "background": "bg_study_hub",
+        "sprite": "review",
+        "text": {
+          "ru": "Ошибка повторилась дважды. Значит, это не случайность. Значит, это след.",
+          "en": "The mistake repeated twice. That means it is not random. It is a trail."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4
+        }
+      },
+      {
+        "id": "fis_obs_004",
+        "category": "fis_observation",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Ты задержался на форме. Хорошо. Сначала видят силуэт, потом имя.",
+          "en": "You paused on the shape. Good. First you see the silhouette, then the name."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.3
+        }
+      },
+      {
+        "id": "fis_obs_005",
+        "category": "fis_observation",
+        "background": "bg_study_hub",
+        "sprite": "idle",
+        "text": {
+          "ru": "Твой темп сегодня ровный. Не красивый. Надежный. Это лучше.",
+          "en": "Your pace is steady today. Not pretty. Reliable. Better."
+        },
+        "relationshipDelta": {
+          "trust": 0.4
+        }
+      },
+      {
+        "id": "fis_obs_006",
+        "category": "fis_observation",
+        "background": "bg_study_hub",
+        "sprite": "sad",
+        "text": {
+          "ru": "Ты устал. Видно по ответам. Два повтора и остановимся.",
+          "en": "You are tired. It shows in the answers. Two reviews, then we stop."
+        },
+        "maxDiscipline": 42,
+        "relationshipDelta": {
+          "warmth": 0.3
+        }
+      },
+      {
+        "id": "fis_obs_007",
+        "category": "fis_observation",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Этот знак похож на другой. Не смотри на весь знак. Смотри на угол.",
+          "en": "This character resembles another. Do not look at the whole thing. Look at the corner."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.4
+        }
+      },
+      {
+        "id": "fis_obs_008",
+        "category": "fis_observation",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Сейчас ты ответил без лишнего движения. Запомни это ощущение.",
+          "en": "You answered without extra movement just now. Remember that feeling."
+        },
+        "minTrust": 45,
+        "relationshipDelta": {
+          "trust": 0.4
+        }
+      }
+    ],
+    "fis_road": [
+      {
+        "id": "fis_road_001",
+        "category": "fis_road",
+        "background": "bg_evening_street",
+        "sprite": "idle",
+        "text": {
+          "ru": "На старых дорогах выживает не быстрый. Выживает тот, кто проверяет ремни перед выходом.",
+          "en": "On old roads, the fast one does not survive. The one who checks the straps before leaving does."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5
+        }
+      },
+      {
+        "id": "fis_road_002",
+        "category": "fis_road",
+        "background": "bg_evening_street",
+        "sprite": "think",
+        "text": {
+          "ru": "Длинный путь не выглядит героическим. Чаще он выглядит как повторение одного шага.",
+          "en": "A long road does not look heroic. Usually it looks like repeating one step."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4
+        }
+      },
+      {
+        "id": "fis_road_003",
+        "category": "fis_road",
+        "background": "bg_study_hub",
+        "sprite": "review",
+        "text": {
+          "ru": "Не оставляй очередь повторений на ночь. Ночь любит делать простое тяжелым.",
+          "en": "Do not leave the review queue for night. Night likes making simple things heavy."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4
+        }
+      },
+      {
+        "id": "fis_road_004",
+        "category": "fis_road",
+        "background": "bg_evening_street",
+        "sprite": "idle",
+        "text": {
+          "ru": "Если дорога плохая, шаг делают короче. Уроки работают так же.",
+          "en": "If the road is bad, you shorten the step. Lessons work the same way."
+        },
+        "relationshipDelta": {
+          "warmth": 0.2,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "fis_road_005",
+        "category": "fis_road",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Слова как следы на пыли. Один стерся - смотри рядом.",
+          "en": "Words are like tracks in dust. If one fades, look beside it."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.4
+        }
+      },
+      {
+        "id": "fis_road_006",
+        "category": "fis_road",
+        "background": "bg_study_hub",
+        "sprite": "idle",
+        "text": {
+          "ru": "Обещания в дороге легкие. Фляга с водой полезнее. В учебе фляга - это повтор.",
+          "en": "Promises are light on the road. A water flask is more useful. In study, the flask is review."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5
+        }
+      }
+    ],
+    "fis_focus": [
+      {
+        "id": "fis_focus_001",
+        "category": "fis_focus",
+        "background": "bg_study_hub",
+        "sprite": "review",
+        "text": {
+          "ru": "Не гонись за серией ответов. Держи взгляд на текущей карточке.",
+          "en": "Do not chase a chain of answers. Keep your eyes on the current card."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4
+        }
+      },
+      {
+        "id": "fis_focus_002",
+        "category": "fis_focus",
+        "background": "bg_library",
+        "sprite": "think",
+        "text": {
+          "ru": "Если мысль ушла, не ругай ее. Верни. Молча. Как клинок в ножны.",
+          "en": "If the thought wanders, do not scold it. Return it. Quietly. Like a blade to its sheath."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4,
+          "warmth": 0.2
+        }
+      },
+      {
+        "id": "fis_focus_003",
+        "category": "fis_focus",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Один правильный ответ без спешки ценнее пяти на удачу.",
+          "en": "One correct answer without haste is worth five lucky ones."
+        },
+        "relationshipDelta": {
+          "trust": 0.3,
+          "discipline": 0.3
+        }
+      },
+      {
+        "id": "fis_focus_004",
+        "category": "fis_focus",
+        "background": "bg_library",
+        "sprite": "idle",
+        "text": {
+          "ru": "Пока не понял пример, не открывай следующий. Непонятое ходит следом.",
+          "en": "Do not open the next example before you understand this one. The unclear thing follows you."
+        },
+        "relationshipDelta": {
+          "discipline": 0.5
+        }
+      },
+      {
+        "id": "fis_focus_005",
+        "category": "fis_focus",
+        "background": "bg_study_hub",
+        "sprite": "think",
+        "text": {
+          "ru": "Ты отвлекся на кнопку. Бывает. Теперь обратно к знаку.",
+          "en": "You got distracted by the button. It happens. Back to the character."
+        },
+        "relationshipDelta": {
+          "discipline": 0.2
+        }
+      },
+      {
+        "id": "fis_focus_006",
+        "category": "fis_focus",
+        "background": "bg_library",
+        "sprite": "review",
+        "text": {
+          "ru": "Тихая проверка: значение, чтение, пример. Если все три стоят, можно идти дальше.",
+          "en": "Quiet check: meaning, reading, example. If all three stand, move on."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4,
+          "trust": 0.2
+        }
+      }
+    ],
+    "fis_room": [
+      {
+        "id": "fis_room_001",
+        "category": "fis_room",
+        "background": "bg_study_hub",
+        "sprite": "think",
+        "text": {
+          "ru": "Эта комната теплая. Не расслабляйся полностью. Тепло тоже усыпляет.",
+          "en": "This room is warm. Do not relax completely. Warmth can make you sleepy too."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.2
+        }
+      },
+      {
+        "id": "fis_room_002",
+        "category": "fis_room",
+        "background": "bg_library",
+        "sprite": "idle",
+        "text": {
+          "ru": "В библиотеке легче слышать свои ошибки. Они шуршат громче страниц.",
+          "en": "In a library, mistakes are easier to hear. They rustle louder than pages."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.3
+        }
+      },
+      {
+        "id": "fis_room_003",
+        "category": "fis_room",
+        "background": "bg_practice_room",
+        "sprite": "review",
+        "text": {
+          "ru": "Комната для практики честнее уютной. Здесь видно, где рука дрогнула.",
+          "en": "The practice room is more honest than a cozy one. Here you can see where the hand shook."
+        },
+        "relationshipDelta": {
+          "discipline": 0.4
+        }
+      },
+      {
+        "id": "fis_room_004",
+        "category": "fis_room",
+        "background": "bg_cafe",
+        "sprite": "idle",
+        "text": {
+          "ru": "В кафе слишком много мягких звуков. Для отдыха хорошо. Для точности - спорно.",
+          "en": "A cafe has too many soft sounds. Good for rest. Debatable for precision."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.2
+        }
+      },
+      {
+        "id": "fis_room_005",
+        "category": "fis_room",
+        "background": "bg_evening_street",
+        "sprite": "sad",
+        "text": {
+          "ru": "Вечерняя улица напоминает: закончи важное до темноты.",
+          "en": "The evening street reminds you: finish the important thing before dark."
+        },
+        "relationshipDelta": {
+          "discipline": 0.3
+        }
+      }
+    ],
+    "fis_short": [
+      {
+        "id": "fis_short_001",
+        "category": "fis_short",
+        "background": "bg_study_hub",
+        "sprite": "idle",
+        "text": {
+          "ru": "Один знак.",
+          "en": "One character."
+        },
+        "relationshipDelta": {
+          "discipline": 0.1
+        }
+      },
+      {
+        "id": "fis_short_002",
+        "category": "fis_short",
+        "background": "bg_study_hub",
+        "sprite": "think",
+        "text": {
+          "ru": "Смотри внимательнее.",
+          "en": "Look closer."
+        },
+        "relationshipDelta": {
+          "curiosity": 0.1
+        }
+      },
+      {
+        "id": "fis_short_003",
+        "category": "fis_short",
+        "background": "bg_library",
+        "sprite": "review",
+        "text": {
+          "ru": "Проверь чтение.",
+          "en": "Check the reading."
+        },
+        "relationshipDelta": {
+          "discipline": 0.1
+        }
+      },
+      {
+        "id": "fis_short_004",
+        "category": "fis_short",
+        "background": "bg_study_hub",
+        "sprite": "approve",
+        "text": {
+          "ru": "Достаточно точно.",
+          "en": "Accurate enough."
+        },
+        "relationshipDelta": {
+          "trust": 0.1
+        }
+      },
+      {
+        "id": "fis_short_005",
+        "category": "fis_short",
+        "background": "bg_study_hub",
+        "sprite": "idle",
+        "text": {
+          "ru": "Без шума.",
+          "en": "No noise."
+        },
+        "relationshipDelta": {
+          "discipline": 0.1
+        }
+      }
+    ]
+  },
+  "autonomyLines": [
+    {
+      "id": "fis_auto_study_001",
+      "category": "fis_study",
+      "moods": ["neutral", "reserved", "curious"],
+      "sprite": "think",
+      "text": {
+        "ru": "Кандзи не нападает. Но если смотреть рассеянно, он все равно победит.",
+        "en": "A kanji does not attack. But if you look carelessly, it still wins."
+      },
+      "relationshipDelta": {
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_study_002",
+      "category": "fis_study",
+      "moods": ["neutral", "proud"],
+      "sprite": "approve",
+      "text": {
+        "ru": "Сначала форма. Потом звук. Потом смысл в предложении. Порядок скучный. Поэтому он работает.",
+        "en": "Shape first. Then sound. Then meaning in a sentence. The order is boring. That is why it works."
+      },
+      "relationshipDelta": {
+        "discipline": 0.3
+      }
+    },
+    {
+      "id": "fis_auto_study_003",
+      "category": "fis_study",
+      "moods": ["worried", "reserved"],
+      "sprite": "sad",
+      "text": {
+        "ru": "Сегодня не бери много новых знаков. Усталость любит притворяться решимостью.",
+        "en": "Do not take many new characters today. Fatigue likes pretending to be resolve."
+      },
+      "relationshipDelta": {
+        "warmth": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_study_004",
+      "category": "fis_study",
+      "moods": ["curious", "neutral"],
+      "sprite": "think",
+      "text": {
+        "ru": "Если знак кажется чужим, найди в нем знакомую часть. На незнакомой дороге тоже ищут ориентиры.",
+        "en": "If a character feels foreign, find a familiar part. On an unknown road, you look for landmarks."
+      },
+      "relationshipDelta": {
+        "curiosity": 0.3
+      }
+    },
+    {
+      "id": "fis_auto_review_001",
+      "category": "fis_review",
+      "moods": ["neutral", "reserved", "worried"],
+      "sprite": "review",
+      "text": {
+        "ru": "Повторы ждут. Ждать они умеют лучше людей.",
+        "en": "Reviews are waiting. They are better at waiting than people."
+      },
+      "relationshipDelta": {
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_review_002",
+      "category": "fis_review",
+      "moods": ["neutral", "proud"],
+      "sprite": "review",
+      "text": {
+        "ru": "Нажимай «помню» только когда не пришлось выторговывать ответ у памяти.",
+        "en": "Press remember only when you did not have to bargain the answer out of memory."
+      },
+      "relationshipDelta": {
+        "discipline": 0.3
+      }
+    },
+    {
+      "id": "fis_auto_review_003",
+      "category": "fis_review",
+      "moods": ["worried"],
+      "sprite": "sad",
+      "text": {
+        "ru": "Очередь тяжелая. Разрежем ее. Пять карточек - уже не ноль.",
+        "en": "The queue is heavy. We cut it down. Five cards is already not zero."
+      },
+      "relationshipDelta": {
+        "warmth": 0.2,
+        "discipline": 0.1
+      }
+    },
+    {
+      "id": "fis_auto_review_004",
+      "category": "fis_review",
+      "moods": ["curious", "neutral"],
+      "sprite": "think",
+      "text": {
+        "ru": "Ошибка показывает место удара. Не отворачивайся от него.",
+        "en": "A mistake shows the point of impact. Do not look away from it."
+      },
+      "relationshipDelta": {
+        "curiosity": 0.3
+      }
+    },
+    {
+      "id": "fis_auto_road_001",
+      "category": "fis_road",
+      "moods": ["neutral", "reserved"],
+      "sprite": "idle",
+      "preferredBackgrounds": ["bg_evening_street", "bg_study_hub"],
+      "text": {
+        "ru": "Старые дороги учат простому: уходя, проверь, что взял нужное. В учебе это повтор.",
+        "en": "Old roads teach a simple thing: before leaving, check that you took what matters. In study, that is review."
+      },
+      "relationshipDelta": {
+        "discipline": 0.3
+      }
+    },
+    {
+      "id": "fis_auto_road_002",
+      "category": "fis_road",
+      "moods": ["neutral", "curious"],
+      "sprite": "think",
+      "preferredBackgrounds": ["bg_evening_street", "bg_library"],
+      "text": {
+        "ru": "На опасной дороге не спорят с картой. В японском тоже: сначала смотри на контекст.",
+        "en": "On a dangerous road, you do not argue with the map. Japanese is the same: look at context first."
+      },
+      "relationshipDelta": {
+        "curiosity": 0.2,
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_guard_001",
+      "category": "fis_guard",
+      "moods": ["reserved", "neutral", "worried"],
+      "sprite": "idle",
+      "text": {
+        "ru": "Я слежу не за тобой. За тем, где внимание начинает уходить.",
+        "en": "I am not watching you. I am watching where your attention starts to leave."
+      },
+      "relationshipDelta": {
+        "trust": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_guard_002",
+      "category": "fis_guard",
+      "moods": ["neutral", "close"],
+      "sprite": "approve",
+      "text": {
+        "ru": "Хороший телохранитель стоит так, чтобы его почти не замечали. Хороший учитель иногда тоже.",
+        "en": "A good bodyguard stands where you barely notice them. A good teacher sometimes does the same."
+      },
+      "relationshipDelta": {
+        "trust": 0.3,
+        "warmth": 0.1
+      }
+    },
+    {
+      "id": "fis_auto_guard_003",
+      "category": "fis_guard",
+      "moods": ["worried", "reserved"],
+      "sprite": "sad",
+      "text": {
+        "ru": "Ты слишком долго молчал перед карточкой. Либо устал, либо угадал проблему. Оба варианта полезны.",
+        "en": "You stayed silent too long before the card. Either tired, or you found the problem. Both are useful."
+      },
+      "relationshipDelta": {
+        "curiosity": 0.2,
+        "warmth": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_room_001",
+      "category": "fis_room",
+      "moods": ["neutral", "curious"],
+      "sprite": "think",
+      "preferredBackgrounds": ["bg_study_hub", "bg_library"],
+      "text": {
+        "ru": "В комнате достаточно света. Значит, оправдание придется выбрать другое.",
+        "en": "There is enough light in the room. So you will need another excuse."
+      },
+      "relationshipDelta": {
+        "curiosity": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_room_002",
+      "category": "fis_room",
+      "moods": ["reserved", "worried"],
+      "sprite": "idle",
+      "preferredBackgrounds": ["bg_library", "bg_study_hub"],
+      "text": {
+        "ru": "Я поставила нас в тихое место. Не потому что красиво. Потому что шум мешал.",
+        "en": "I placed us somewhere quiet. Not because it is pretty. Because the noise was in the way."
+      },
+      "relationshipDelta": {
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_night_001",
+      "category": "fis_night",
+      "moods": ["neutral", "worried", "reserved"],
+      "sprite": "sad",
+      "preferredBackgrounds": ["bg_evening_street", "bg_study_hub"],
+      "text": {
+        "ru": "Поздний час делает уверенность хрупкой. Один повтор. Потом сон.",
+        "en": "A late hour makes confidence fragile. One review. Then sleep."
+      },
+      "relationshipDelta": {
+        "warmth": 0.2,
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_night_002",
+      "category": "fis_night",
+      "moods": ["curious", "neutral"],
+      "sprite": "think",
+      "preferredBackgrounds": ["bg_library"],
+      "text": {
+        "ru": "Ночью легко принять тишину за ясность. Проверяй ответ дважды.",
+        "en": "At night, it is easy to mistake silence for clarity. Check the answer twice."
+      },
+      "relationshipDelta": {
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_return_001",
+      "category": "fis_return",
+      "moods": ["reserved", "worried", "neutral"],
+      "sprite": "idle",
+      "text": {
+        "ru": "Ты вернулся. Хорошо. Я не буду украшать паузу. Просто продолжим.",
+        "en": "You returned. Good. I will not decorate the pause. We continue."
+      },
+      "relationshipDelta": {
+        "trust": 0.2,
+        "warmth": 0.1
+      }
+    },
+    {
+      "id": "fis_auto_return_002",
+      "category": "fis_return",
+      "moods": ["close", "proud", "neutral"],
+      "sprite": "approve",
+      "text": {
+        "ru": "Ты снова здесь. Это говорит больше, чем обещание.",
+        "en": "You are here again. That says more than a promise."
+      },
+      "relationshipDelta": {
+        "trust": 0.3,
+        "warmth": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_streak_001",
+      "category": "fis_streak",
+      "moods": ["proud", "neutral"],
+      "sprite": "proud",
+      "text": {
+        "ru": "Серия держится. Не празднуй слишком громко. Просто не урони.",
+        "en": "The streak holds. Do not celebrate too loudly. Just do not drop it."
+      },
+      "relationshipDelta": {
+        "discipline": 0.4,
+        "trust": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_streak_002",
+      "category": "fis_streak",
+      "moods": ["worried", "reserved"],
+      "sprite": "sad",
+      "text": {
+        "ru": "Серия стала тонкой. Такие вещи рвутся без звука.",
+        "en": "The streak has grown thin. Things like that tear without a sound."
+      },
+      "relationshipDelta": {
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_reward_001",
+      "category": "fis_reward",
+      "moods": ["neutral", "proud"],
+      "sprite": "approve",
+      "text": {
+        "ru": "Награда получена. Не задерживайся на блеске. Он быстро слепит.",
+        "en": "Reward received. Do not linger on the shine. It blinds quickly."
+      },
+      "relationshipDelta": {
+        "discipline": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_reward_002",
+      "category": "fis_reward",
+      "moods": ["close", "proud"],
+      "sprite": "proud",
+      "text": {
+        "ru": "Ты заслужил это. Да, я сказала вслух. Не привыкай.",
+        "en": "You earned it. Yes, I said it aloud. Do not get used to it."
+      },
+      "minTrust": 55,
+      "relationshipDelta": {
+        "warmth": 0.3,
+        "trust": 0.2
+      }
+    },
+    {
+      "id": "fis_auto_short_001",
+      "category": "fis_short",
+      "moods": ["neutral", "reserved", "worried", "curious", "proud", "close"],
+      "sprite": "idle",
+      "text": {
+        "ru": "Дыши. Смотри. Отвечай.",
+        "en": "Breathe. Look. Answer."
+      },
+      "relationshipDelta": {
+        "discipline": 0.1
+      }
+    },
+    {
+      "id": "fis_auto_short_002",
+      "category": "fis_short",
+      "moods": ["neutral", "reserved", "worried", "curious", "proud", "close"],
+      "sprite": "think",
+      "text": {
+        "ru": "Ты пропустил деталь.",
+        "en": "You missed a detail."
+      },
+      "relationshipDelta": {
+        "curiosity": 0.1
+      }
+    },
+    {
+      "id": "fis_auto_short_003",
+      "category": "fis_short",
+      "moods": ["neutral", "reserved", "worried", "curious", "proud", "close"],
+      "sprite": "review",
+      "text": {
+        "ru": "Повтори без спешки.",
+        "en": "Review without haste."
+      },
+      "relationshipDelta": {
+        "discipline": 0.1
+      }
+    },
+    {
+      "id": "fis_auto_short_004",
+      "category": "fis_short",
+      "moods": ["neutral", "reserved", "worried", "curious", "proud", "close"],
+      "sprite": "approve",
+      "text": {
+        "ru": "Нормально. Идем дальше.",
+        "en": "Fine. Move on."
+      },
+      "relationshipDelta": {
+        "trust": 0.1
+      }
+    }
+  ]
+}

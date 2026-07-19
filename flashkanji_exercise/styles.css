@@ -1,0 +1,207 @@
+/*
+  Стили для страницы с упражнением из Flash Kanji.
+  Цвета и элементы подобраны для напоминания о красочном,
+  аутентичном интерфейсе оригинального приложения. Текст
+  выровнен таким образом, чтобы аккуратно взаимодействовать
+  с пустыми блоками под кандзи. Интерактивные элементы
+  выделены тенями и изменением цвета при выборе.
+*/
+
+:root {
+    --bg-top: #f5e8d6;
+    --bg-bottom: #f0d8b4;
+    --topbar-start: #2b1940;
+    --topbar-end: #523969;
+    --highlight-text: #f7d85f;
+    --topbar-text: #fdf9f6;
+    --score-badge-bg: #496d2b;
+    --score-badge-border: #7bae43;
+    --stats-bg: #f4dfc9;
+    --stats-border: #dac1a6;
+    --stats-text: #5a4330;
+    --choice-bg: #f2ddbe;
+    --choice-border: #d5b087;
+    --blank-bg: #fff8e8;
+    --blank-border: #dac1a5;
+    --button-start: #f7b14d;
+    --button-end: #e66e2f;
+    --button-text: #533101;
+    --result-correct: #79c54a;
+    --result-wrong: #d65757;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(var(--bg-top), var(--bg-bottom));
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1.5rem 0;
+    color: var(--stats-text);
+}
+
+.app-wrapper {
+    background: #f9f4ec;
+    border-radius: 20px;
+    border: 1px solid var(--stats-border);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 430px;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Верхняя панель */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, var(--topbar-start), var(--topbar-end));
+    color: var(--topbar-text);
+    padding: 0.8rem 1rem;
+    border-radius: 18px 18px 0 0;
+    font-size: 0.95rem;
+}
+.top-bar .progress {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+.top-bar .progress span {
+    color: var(--highlight-text);
+}
+.score {
+    display: flex;
+    align-items: center;
+    background: var(--score-badge-bg);
+    border: 2px solid var(--score-badge-border);
+    border-radius: 12px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.9rem;
+    color: #fdf9f6;
+}
+.score .check-icon {
+    margin-right: 0.3rem;
+    font-size: 1rem;
+}
+
+/* Панель сегодняшнего прогресса */
+.stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--stats-bg);
+    border-bottom: 1px solid var(--stats-border);
+    padding: 0.6rem 1rem;
+    color: var(--stats-text);
+    font-size: 0.9rem;
+}
+.stats-bar .small-check {
+    color: var(--score-badge-border);
+    margin-right: 0.3rem;
+}
+
+/* Область упражнения */
+.exercise-area {
+    padding: 1rem 1rem 1.5rem;
+    background: #faf3e7;
+    border-bottom: 1px solid var(--stats-border);
+}
+
+.sentence-container {
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    word-break: break-all;
+}
+.blank {
+    display: inline-block;
+    min-width: 36px;
+    min-height: 36px;
+    border: 2px solid var(--blank-border);
+    background: var(--blank-bg);
+    border-radius: 8px;
+    margin: 0 4px;
+    text-align: center;
+    line-height: 34px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--topbar-start);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.blank.filled {
+    background: var(--choice-bg);
+    border-color: var(--choice-border);
+}
+
+/* Список кандзи */
+.choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+.choice {
+    cursor: pointer;
+    background: var(--choice-bg);
+    border: 2px solid var(--choice-border);
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--topbar-start);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.choice:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+.choice.selected {
+    box-shadow: 0 0 0 3px var(--score-badge-border);
+}
+.choice.used {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Кнопка проверки */
+.check-btn {
+    width: calc(100% - 2rem);
+    margin: 1rem 1rem 0;
+    padding: 0.8rem 1rem;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(var(--button-start), var(--button-end));
+    color: var(--button-text);
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s ease;
+}
+.check-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Сообщение о результате */
+.result {
+    margin: 0.8rem 1rem 1.2rem;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: bold;
+}
+.result.correct {
+    color: var(--result-correct);
+}
+.result.wrong {
+    color: var(--result-wrong);
+}

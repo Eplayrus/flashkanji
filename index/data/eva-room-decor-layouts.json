@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "rooms": {
+    "bg_study_hub": [
+      { "id": "deco_bookshelf", "x": 84, "y": 26, "w": 23, "layer": 0, "narrow": { "x": 90, "y": 22, "w": 19 } },
+      { "id": "deco_kanji_board", "x": 12, "y": 48, "w": 16, "layer": 0, "narrow": { "x": 10, "y": 44, "w": 14 } },
+      { "id": "deco_tea_table", "x": 24, "y": 12, "w": 19, "layer": 1, "narrow": { "x": 18, "y": 10, "w": 16 } },
+      { "id": "deco_plant", "x": 91, "y": 16, "w": 10, "layer": 1, "narrow": { "x": 92, "y": 12, "w": 9 } }
+    ],
+    "bg_classroom": [
+      { "id": "deco_kanji_board", "x": 18, "y": 44, "w": 18, "layer": 0, "narrow": { "x": 12, "y": 40, "w": 15 } },
+      { "id": "deco_bookshelf", "x": 86, "y": 28, "w": 21, "layer": 0, "narrow": { "x": 90, "y": 24, "w": 18 } },
+      { "id": "deco_scroll", "x": 78, "y": 54, "w": 12, "layer": 0, "narrow": { "x": 82, "y": 50, "w": 10 } },
+      { "id": "deco_plant", "x": 10, "y": 14, "w": 9, "layer": 1, "narrow": { "x": 8, "y": 12, "w": 8 } }
+    ],
+    "bg_library": [
+      { "id": "deco_bookshelf", "x": 12, "y": 30, "w": 22, "layer": 0, "slot": 0, "narrow": { "x": 8, "y": 26, "w": 17 } },
+      { "id": "deco_bookshelf", "x": 88, "y": 30, "w": 22, "layer": 0, "flip": true, "slot": 1, "narrow": { "x": 92, "y": 26, "w": 17 } },
+      { "id": "deco_lantern", "x": 50, "y": 58, "w": 9, "layer": 0, "opacity": 0.88, "narrow": { "x": 50, "y": 54, "w": 8 } },
+      { "id": "deco_scroll", "x": 72, "y": 50, "w": 11, "layer": 0, "narrow": { "x": 76, "y": 46, "w": 9 } }
+    ],
+    "bg_cafe": [
+      { "id": "deco_tea_table", "x": 28, "y": 14, "w": 22, "layer": 1, "narrow": { "x": 22, "y": 11, "w": 18 } },
+      { "id": "deco_plant", "x": 88, "y": 18, "w": 11, "layer": 1, "narrow": { "x": 90, "y": 14, "w": 9 } },
+      { "id": "deco_golden_accent", "x": 62, "y": 62, "w": 14, "layer": 0, "opacity": 0.72, "narrow": { "x": 58, "y": 58, "w": 12 } }
+    ],
+    "bg_park": [
+      { "id": "deco_plant", "x": 14, "y": 16, "w": 12, "layer": 1, "slot": 0, "narrow": { "x": 10, "y": 13, "w": 10 } },
+      { "id": "deco_plant", "x": 90, "y": 14, "w": 11, "layer": 1, "flip": true, "slot": 1, "narrow": { "x": 92, "y": 12, "w": 9 } },
+      { "id": "deco_lantern", "x": 78, "y": 36, "w": 8, "layer": 0, "opacity": 0.82, "narrow": { "x": 80, "y": 34, "w": 7 } }
+    ],
+    "bg_school_street": [
+      { "id": "deco_lantern", "x": 16, "y": 40, "w": 9, "layer": 0, "narrow": { "x": 12, "y": 36, "w": 8 } },
+      { "id": "deco_scroll", "x": 84, "y": 46, "w": 10, "layer": 0, "narrow": { "x": 88, "y": 42, "w": 9 } }
+    ],
+    "bg_shrine": [
+      { "id": "deco_lantern", "x": 20, "y": 42, "w": 10, "layer": 0, "slot": 0, "narrow": { "x": 14, "y": 38, "w": 8 } },
+      { "id": "deco_lantern", "x": 80, "y": 42, "w": 10, "layer": 0, "flip": true, "slot": 1, "narrow": { "x": 86, "y": 38, "w": 8 } },
+      { "id": "deco_scroll", "x": 50, "y": 56, "w": 12, "layer": 0, "narrow": { "x": 50, "y": 52, "w": 10 } },
+      { "id": "deco_moon_frame", "x": 50, "y": 68, "w": 16, "layer": 0, "opacity": 0.78, "narrow": { "x": 50, "y": 64, "w": 13 } }
+    ],
+    "bg_evening_street": [
+      { "id": "deco_lantern", "x": 14, "y": 38, "w": 10, "layer": 0, "narrow": { "x": 10, "y": 34, "w": 8 } },
+      { "id": "deco_golden_accent", "x": 72, "y": 52, "w": 15, "layer": 0, "opacity": 0.68, "narrow": { "x": 76, "y": 48, "w": 12 } },
+      { "id": "deco_plant", "x": 90, "y": 12, "w": 10, "layer": 1, "narrow": { "x": 92, "y": 10, "w": 8 } }
+    ],
+    "bg_eva_room": [
+      { "id": "deco_bookshelf", "x": 86, "y": 28, "w": 24, "layer": 0, "narrow": { "x": 90, "y": 24, "w": 19 } },
+      { "id": "deco_kanji_board", "x": 14, "y": 46, "w": 17, "layer": 0, "narrow": { "x": 10, "y": 42, "w": 14 } },
+      { "id": "deco_tea_table", "x": 26, "y": 12, "w": 20, "layer": 1, "narrow": { "x": 20, "y": 10, "w": 17 } },
+      { "id": "deco_plant", "x": 92, "y": 15, "w": 10, "layer": 1, "narrow": { "x": 92, "y": 12, "w": 8 } },
+      { "id": "deco_scroll", "x": 68, "y": 52, "w": 11, "layer": 0, "narrow": { "x": 72, "y": 48, "w": 9 } }
+    ],
+    "bg_practice_room": [
+      { "id": "deco_kanji_board", "x": 16, "y": 42, "w": 19, "layer": 0, "narrow": { "x": 12, "y": 38, "w": 15 } },
+      { "id": "deco_scroll", "x": 82, "y": 48, "w": 12, "layer": 0, "narrow": { "x": 86, "y": 44, "w": 10 } },
+      { "id": "deco_bookshelf", "x": 88, "y": 26, "w": 20, "layer": 0, "narrow": { "x": 90, "y": 22, "w": 17 } },
+      { "id": "deco_tea_table", "x": 22, "y": 11, "w": 18, "layer": 1, "narrow": { "x": 18, "y": 9, "w": 15 } }
+    ],
+    "bg_moon_room": [
+      { "id": "deco_moon_frame", "x": 50, "y": 64, "w": 18, "layer": 0, "opacity": 0.82, "narrow": { "x": 50, "y": 60, "w": 14 } },
+      { "id": "deco_bookshelf", "x": 14, "y": 28, "w": 22, "layer": 0, "narrow": { "x": 10, "y": 24, "w": 17 } },
+      { "id": "deco_scroll", "x": 84, "y": 50, "w": 12, "layer": 0, "narrow": { "x": 88, "y": 46, "w": 10 } },
+      { "id": "deco_golden_accent", "x": 62, "y": 34, "w": 14, "layer": 0, "opacity": 0.7, "narrow": { "x": 58, "y": 32, "w": 11 } },
+      { "id": "deco_lantern", "x": 36, "y": 18, "w": 9, "layer": 1, "opacity": 0.9, "narrow": { "x": 30, "y": 15, "w": 8 } }
+    ],
+    "bg_winter_city": [
+      { "id": "deco_lantern", "x": 18, "y": 36, "w": 10, "layer": 0, "narrow": { "x": 12, "y": 32, "w": 8 } },
+      { "id": "deco_plant", "x": 86, "y": 14, "w": 10, "layer": 1, "narrow": { "x": 90, "y": 11, "w": 8 } },
+      { "id": "deco_golden_accent", "x": 58, "y": 58, "w": 13, "layer": 0, "opacity": 0.6, "narrow": { "x": 54, "y": 54, "w": 11 } }
+    ],
+    "bg_cyber_room": [
+      { "id": "deco_kanji_board", "x": 14, "y": 50, "w": 17, "layer": 0, "opacity": 0.92, "narrow": { "x": 10, "y": 46, "w": 14 } },
+      { "id": "deco_golden_accent", "x": 78, "y": 58, "w": 16, "layer": 0, "opacity": 0.55, "narrow": { "x": 82, "y": 54, "w": 12 } },
+      { "id": "deco_lantern", "x": 88, "y": 34, "w": 9, "layer": 0, "opacity": 0.75, "narrow": { "x": 90, "y": 30, "w": 8 } }
+    ],
+    "bg_silent_road": [
+      { "id": "deco_lantern", "x": 22, "y": 22, "w": 9, "layer": 1, "opacity": 0.85, "narrow": { "x": 16, "y": 18, "w": 8 } },
+      { "id": "deco_scroll", "x": 78, "y": 40, "w": 10, "layer": 0, "opacity": 0.8, "narrow": { "x": 82, "y": 36, "w": 9 } }
+    ]
+  }
+}
