@@ -18,155 +18,46 @@
     {
       "jlpt": "N5",
       "apps": [
-        {
-          "name": "Google Calendar",
-          "context": {
-            "ru": "даты, дни недели, месяц",
-            "en": "dates, weekdays, months"
-          }
-        },
-        {
-          "name": "LINE",
-          "context": {
-            "ru": "короткие уведомления и профиль",
-            "en": "short notifications and profiles"
-          }
-        },
-        {
-          "name": "Google Maps",
-          "context": {
-            "ru": "школа, станция, направление",
-            "en": "school, station, directions"
-          }
-        }
+        { "name": "Google Calendar", "context": { "ru": "даты, дни недели, месяц", "en": "dates, weekdays, months" } },
+        { "name": "LINE", "context": { "ru": "короткие уведомления и профиль", "en": "short notifications and profiles" } },
+        { "name": "Google Maps", "context": { "ru": "школа, станция, направление", "en": "school, station, directions" } }
       ],
       "kana": {
         "hiragana": [
-          {
-            "kana": "に",
-            "romaji": "ni",
-            "note": {
-              "ru": "частица направления/времени",
-              "en": "direction/time particle"
-            }
-          },
-          {
-            "kana": "へ",
-            "romaji": "e",
-            "note": {
-              "ru": "направление движения",
-              "en": "movement direction"
-            }
-          },
-          {
-            "kana": "を",
-            "romaji": "o",
-            "note": {
-              "ru": "объект действия",
-              "en": "object marker"
-            }
-          }
+          { "kana": "に", "romaji": "ni", "note": { "ru": "частица направления/времени", "en": "direction/time particle" } },
+          { "kana": "へ", "romaji": "e", "note": { "ru": "направление движения", "en": "movement direction" } },
+          { "kana": "を", "romaji": "o", "note": { "ru": "объект действия", "en": "object marker" } }
         ],
         "katakana": [
-          {
-            "kana": "アプリ",
-            "romaji": "apuri",
-            "note": {
-              "ru": "приложение",
-              "en": "app"
-            }
-          },
-          {
-            "kana": "メール",
-            "romaji": "meeru",
-            "note": {
-              "ru": "почта",
-              "en": "mail"
-            }
-          },
-          {
-            "kana": "カレンダー",
-            "romaji": "karendaa",
-            "note": {
-              "ru": "календарь",
-              "en": "calendar"
-            }
-          }
+          { "kana": "アプリ", "romaji": "apuri", "note": { "ru": "приложение", "en": "app" } },
+          { "kana": "メール", "romaji": "meeru", "note": { "ru": "почта", "en": "mail" } },
+          { "kana": "カレンダー", "romaji": "karendaa", "note": { "ru": "календарь", "en": "calendar" } }
         ]
       },
       "kanjiFocus": [
         {
           "kanji": "日",
           "word": "日本",
-          "furigana": [
-            {
-              "text": "日",
-              "rt": "に"
-            },
-            {
-              "text": "本",
-              "rt": "ほん"
-            }
-          ],
+          "furigana": [{ "text": "日", "rt": "に" }, { "text": "本", "rt": "ほん" }],
           "romaji": "nihon",
-          "meaning": {
-            "ru": "Япония",
-            "en": "Japan"
-          },
-          "appUse": {
-            "ru": "выбор языка и страны",
-            "en": "language and country selectors"
-          }
+          "meaning": { "ru": "Япония", "en": "Japan" },
+          "appUse": { "ru": "выбор языка и страны", "en": "language and country selectors" }
         },
         {
           "kanji": "学",
           "word": "学校",
-          "furigana": [
-            {
-              "text": "学",
-              "rt": "がっ"
-            },
-            {
-              "text": "校",
-              "rt": "こう"
-            }
-          ],
+          "furigana": [{ "text": "学", "rt": "がっ" }, { "text": "校", "rt": "こう" }],
           "romaji": "gakkou",
-          "meaning": {
-            "ru": "школа",
-            "en": "school"
-          },
-          "appUse": {
-            "ru": "карты, профили, расписания",
-            "en": "maps, profiles, schedules"
-          }
+          "meaning": { "ru": "школа", "en": "school" },
+          "appUse": { "ru": "карты, профили, расписания", "en": "maps, profiles, schedules" }
         },
         {
           "kanji": "月",
           "word": "月曜日",
-          "furigana": [
-            {
-              "text": "月",
-              "rt": "げつ"
-            },
-            {
-              "text": "曜",
-              "rt": "よう"
-            },
-            {
-              "text": "日",
-              "rt": "び"
-            }
-          ],
+          "furigana": [{ "text": "月", "rt": "げつ" }, { "text": "曜", "rt": "よう" }, { "text": "日", "rt": "び" }],
           "romaji": "getsuyoubi",
-          "meaning": {
-            "ru": "понедельник",
-            "en": "Monday"
-          },
-          "appUse": {
-            "ru": "календарь и уведомления",
-            "en": "calendar and reminders"
-          }
+          "meaning": { "ru": "понедельник", "en": "Monday" },
+          "appUse": { "ru": "календарь и уведомления", "en": "calendar and reminders" }
         }
       ],
       "drills": [
@@ -174,78 +65,26 @@
           "id": "jlpt-n5-school",
           "sentence": "私は___へ行きます。",
           "reading": "わたしは がっこうへ いきます。",
-          "translation": {
-            "ru": "Я иду в школу.",
-            "en": "I go to school."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "学",
-                "校"
-              ],
-              "reading": [
-                "がく",
-                "こう"
-              ]
-            }
-          ],
+          "translation": { "ru": "Я иду в школу.", "en": "I go to school." },
+          "blanks": [{ "answer": ["学", "校"], "reading": ["がく", "こう"] }],
           "tiles": [
-            {
-              "kanji": "学",
-              "reading": "がく"
-            },
-            {
-              "kanji": "校",
-              "reading": "こう"
-            },
-            {
-              "kanji": "本",
-              "reading": "ほん"
-            },
-            {
-              "kanji": "日",
-              "reading": "にち"
-            }
+            { "kanji": "学", "reading": "がく" },
+            { "kanji": "校", "reading": "こう" },
+            { "kanji": "本", "reading": "ほん" },
+            { "kanji": "日", "reading": "にち" }
           ]
         },
         {
           "id": "jlpt-n5-japan",
           "sentence": "___語を読みます。",
           "reading": "にほんごを よみます。",
-          "translation": {
-            "ru": "Я читаю японский язык.",
-            "en": "I read Japanese."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "日",
-                "本"
-              ],
-              "reading": [
-                "に",
-                "ほん"
-              ]
-            }
-          ],
+          "translation": { "ru": "Я читаю японский язык.", "en": "I read Japanese." },
+          "blanks": [{ "answer": ["日", "本"], "reading": ["に", "ほん"] }],
           "tiles": [
-            {
-              "kanji": "日",
-              "reading": "に"
-            },
-            {
-              "kanji": "本",
-              "reading": "ほん"
-            },
-            {
-              "kanji": "月",
-              "reading": "げつ"
-            },
-            {
-              "kanji": "人",
-              "reading": "じん"
-            }
+            { "kanji": "日", "reading": "に" },
+            { "kanji": "本", "reading": "ほん" },
+            { "kanji": "月", "reading": "げつ" },
+            { "kanji": "人", "reading": "じん" }
           ]
         }
       ]
@@ -253,154 +92,46 @@
     {
       "jlpt": "N4",
       "apps": [
-        {
-          "name": "Amazon",
-          "context": {
-            "ru": "покупки, корзина, оплата",
-            "en": "shopping, cart, checkout"
-          }
-        },
-        {
-          "name": "Rakuten",
-          "context": {
-            "ru": "товары и скидки",
-            "en": "items and discounts"
-          }
-        },
-        {
-          "name": "Instagram",
-          "context": {
-            "ru": "фото и публикации",
-            "en": "photos and posts"
-          }
-        }
+        { "name": "Amazon", "context": { "ru": "покупки, корзина, оплата", "en": "shopping, cart, checkout" } },
+        { "name": "Rakuten", "context": { "ru": "товары и скидки", "en": "items and discounts" } },
+        { "name": "Instagram", "context": { "ru": "фото и публикации", "en": "photos and posts" } }
       ],
       "kana": {
         "hiragana": [
-          {
-            "kana": "もの",
-            "romaji": "mono",
-            "note": {
-              "ru": "вещь/предмет",
-              "en": "thing/item"
-            }
-          },
-          {
-            "kana": "ところ",
-            "romaji": "tokoro",
-            "note": {
-              "ru": "место",
-              "en": "place"
-            }
-          },
-          {
-            "kana": "よてい",
-            "romaji": "yotei",
-            "note": {
-              "ru": "план",
-              "en": "plan"
-            }
-          }
+          { "kana": "もの", "romaji": "mono", "note": { "ru": "вещь/предмет", "en": "thing/item" } },
+          { "kana": "ところ", "romaji": "tokoro", "note": { "ru": "место", "en": "place" } },
+          { "kana": "よてい", "romaji": "yotei", "note": { "ru": "план", "en": "plan" } }
         ],
         "katakana": [
-          {
-            "kana": "セール",
-            "romaji": "seeru",
-            "note": {
-              "ru": "распродажа",
-              "en": "sale"
-            }
-          },
-          {
-            "kana": "ショップ",
-            "romaji": "shoppu",
-            "note": {
-              "ru": "магазин",
-              "en": "shop"
-            }
-          },
-          {
-            "kana": "フォト",
-            "romaji": "foto",
-            "note": {
-              "ru": "фото",
-              "en": "photo"
-            }
-          }
+          { "kana": "セール", "romaji": "seeru", "note": { "ru": "распродажа", "en": "sale" } },
+          { "kana": "ショップ", "romaji": "shoppu", "note": { "ru": "магазин", "en": "shop" } },
+          { "kana": "フォト", "romaji": "foto", "note": { "ru": "фото", "en": "photo" } }
         ]
       },
       "kanjiFocus": [
         {
           "kanji": "買",
           "word": "買い物",
-          "furigana": [
-            {
-              "text": "買",
-              "rt": "か"
-            },
-            {
-              "text": "い"
-            },
-            {
-              "text": "物",
-              "rt": "もの"
-            }
-          ],
+          "furigana": [{ "text": "買", "rt": "か" }, { "text": "い" }, { "text": "物", "rt": "もの" }],
           "romaji": "kaimono",
-          "meaning": {
-            "ru": "покупки",
-            "en": "shopping"
-          },
-          "appUse": {
-            "ru": "корзина и история заказов",
-            "en": "cart and order history"
-          }
+          "meaning": { "ru": "покупки", "en": "shopping" },
+          "appUse": { "ru": "корзина и история заказов", "en": "cart and order history" }
         },
         {
           "kanji": "写",
           "word": "写真",
-          "furigana": [
-            {
-              "text": "写",
-              "rt": "しゃ"
-            },
-            {
-              "text": "真",
-              "rt": "しん"
-            }
-          ],
+          "furigana": [{ "text": "写", "rt": "しゃ" }, { "text": "真", "rt": "しん" }],
           "romaji": "shashin",
-          "meaning": {
-            "ru": "фотография",
-            "en": "photo"
-          },
-          "appUse": {
-            "ru": "галереи и профили",
-            "en": "galleries and profiles"
-          }
+          "meaning": { "ru": "фотография", "en": "photo" },
+          "appUse": { "ru": "галереи и профили", "en": "galleries and profiles" }
         },
         {
           "kanji": "場",
           "word": "場所",
-          "furigana": [
-            {
-              "text": "場",
-              "rt": "ば"
-            },
-            {
-              "text": "所",
-              "rt": "しょ"
-            }
-          ],
+          "furigana": [{ "text": "場", "rt": "ば" }, { "text": "所", "rt": "しょ" }],
           "romaji": "basho",
-          "meaning": {
-            "ru": "место",
-            "en": "place"
-          },
-          "appUse": {
-            "ru": "карты и встречи",
-            "en": "maps and meetings"
-          }
+          "meaning": { "ru": "место", "en": "place" },
+          "appUse": { "ru": "карты и встречи", "en": "maps and meetings" }
         }
       ],
       "drills": [
@@ -408,78 +139,26 @@
           "id": "jlpt-n4-shopping",
           "sentence": "アプリで___をします。",
           "reading": "アプリで かいものを します。",
-          "translation": {
-            "ru": "Я делаю покупки в приложении.",
-            "en": "I shop in the app."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "買",
-                "物"
-              ],
-              "reading": [
-                "かい",
-                "もの"
-              ]
-            }
-          ],
+          "translation": { "ru": "Я делаю покупки в приложении.", "en": "I shop in the app." },
+          "blanks": [{ "answer": ["買", "物"], "reading": ["かい", "もの"] }],
           "tiles": [
-            {
-              "kanji": "買",
-              "reading": "かい"
-            },
-            {
-              "kanji": "物",
-              "reading": "もの"
-            },
-            {
-              "kanji": "売",
-              "reading": "ばい"
-            },
-            {
-              "kanji": "場",
-              "reading": "ば"
-            }
+            { "kanji": "買", "reading": "かい" },
+            { "kanji": "物", "reading": "もの" },
+            { "kanji": "売", "reading": "ばい" },
+            { "kanji": "場", "reading": "ば" }
           ]
         },
         {
           "id": "jlpt-n4-photo",
           "sentence": "プロフィールに___を入れます。",
           "reading": "プロフィールに しゃしんを いれます。",
-          "translation": {
-            "ru": "Я добавляю фото в профиль.",
-            "en": "I add a photo to the profile."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "写",
-                "真"
-              ],
-              "reading": [
-                "しゃ",
-                "しん"
-              ]
-            }
-          ],
+          "translation": { "ru": "Я добавляю фото в профиль.", "en": "I add a photo to the profile." },
+          "blanks": [{ "answer": ["写", "真"], "reading": ["しゃ", "しん"] }],
           "tiles": [
-            {
-              "kanji": "写",
-              "reading": "しゃ"
-            },
-            {
-              "kanji": "真",
-              "reading": "しん"
-            },
-            {
-              "kanji": "場",
-              "reading": "ば"
-            },
-            {
-              "kanji": "所",
-              "reading": "しょ"
-            }
+            { "kanji": "写", "reading": "しゃ" },
+            { "kanji": "真", "reading": "しん" },
+            { "kanji": "場", "reading": "ば" },
+            { "kanji": "所", "reading": "しょ" }
           ]
         }
       ]
@@ -487,151 +166,46 @@
     {
       "jlpt": "N3",
       "apps": [
-        {
-          "name": "Gmail",
-          "context": {
-            "ru": "подтверждение и уведомления",
-            "en": "confirmation and notices"
-          }
-        },
-        {
-          "name": "Notion",
-          "context": {
-            "ru": "изменения, задачи, условия",
-            "en": "changes, tasks, conditions"
-          }
-        },
-        {
-          "name": "Discord",
-          "context": {
-            "ru": "правила и предупреждения",
-            "en": "rules and warnings"
-          }
-        }
+        { "name": "Gmail", "context": { "ru": "подтверждение и уведомления", "en": "confirmation and notices" } },
+        { "name": "Notion", "context": { "ru": "изменения, задачи, условия", "en": "changes, tasks, conditions" } },
+        { "name": "Discord", "context": { "ru": "правила и предупреждения", "en": "rules and warnings" } }
       ],
       "kana": {
         "hiragana": [
-          {
-            "kana": "ひつよう",
-            "romaji": "hitsuyou",
-            "note": {
-              "ru": "необходимо",
-              "en": "necessary"
-            }
-          },
-          {
-            "kana": "かくにん",
-            "romaji": "kakunin",
-            "note": {
-              "ru": "подтверждение",
-              "en": "confirmation"
-            }
-          },
-          {
-            "kana": "へんこう",
-            "romaji": "henkou",
-            "note": {
-              "ru": "изменение",
-              "en": "change"
-            }
-          }
+          { "kana": "ひつよう", "romaji": "hitsuyou", "note": { "ru": "необходимо", "en": "necessary" } },
+          { "kana": "かくにん", "romaji": "kakunin", "note": { "ru": "подтверждение", "en": "confirmation" } },
+          { "kana": "へんこう", "romaji": "henkou", "note": { "ru": "изменение", "en": "change" } }
         ],
         "katakana": [
-          {
-            "kana": "チェック",
-            "romaji": "chekku",
-            "note": {
-              "ru": "проверка",
-              "en": "check"
-            }
-          },
-          {
-            "kana": "エラー",
-            "romaji": "eraa",
-            "note": {
-              "ru": "ошибка",
-              "en": "error"
-            }
-          },
-          {
-            "kana": "ルール",
-            "romaji": "ruuru",
-            "note": {
-              "ru": "правило",
-              "en": "rule"
-            }
-          }
+          { "kana": "チェック", "romaji": "chekku", "note": { "ru": "проверка", "en": "check" } },
+          { "kana": "エラー", "romaji": "eraa", "note": { "ru": "ошибка", "en": "error" } },
+          { "kana": "ルール", "romaji": "ruuru", "note": { "ru": "правило", "en": "rule" } }
         ]
       },
       "kanjiFocus": [
         {
           "kanji": "確",
           "word": "確認",
-          "furigana": [
-            {
-              "text": "確",
-              "rt": "かく"
-            },
-            {
-              "text": "認",
-              "rt": "にん"
-            }
-          ],
+          "furigana": [{ "text": "確", "rt": "かく" }, { "text": "認", "rt": "にん" }],
           "romaji": "kakunin",
-          "meaning": {
-            "ru": "подтверждение",
-            "en": "confirmation"
-          },
-          "appUse": {
-            "ru": "логин, формы, модерация",
-            "en": "login, forms, moderation"
-          }
+          "meaning": { "ru": "подтверждение", "en": "confirmation" },
+          "appUse": { "ru": "логин, формы, модерация", "en": "login, forms, moderation" }
         },
         {
           "kanji": "変",
           "word": "変更",
-          "furigana": [
-            {
-              "text": "変",
-              "rt": "へん"
-            },
-            {
-              "text": "更",
-              "rt": "こう"
-            }
-          ],
+          "furigana": [{ "text": "変", "rt": "へん" }, { "text": "更", "rt": "こう" }],
           "romaji": "henkou",
-          "meaning": {
-            "ru": "изменение",
-            "en": "change"
-          },
-          "appUse": {
-            "ru": "настройки и расписания",
-            "en": "settings and schedules"
-          }
+          "meaning": { "ru": "изменение", "en": "change" },
+          "appUse": { "ru": "настройки и расписания", "en": "settings and schedules" }
         },
         {
           "kanji": "必",
           "word": "必要",
-          "furigana": [
-            {
-              "text": "必",
-              "rt": "ひつ"
-            },
-            {
-              "text": "要",
-              "rt": "よう"
-            }
-          ],
+          "furigana": [{ "text": "必", "rt": "ひつ" }, { "text": "要", "rt": "よう" }],
           "romaji": "hitsuyou",
-          "meaning": {
-            "ru": "необходимость",
-            "en": "necessity"
-          },
-          "appUse": {
-            "ru": "ошибки формы и требования",
-            "en": "form errors and requirements"
-          }
+          "meaning": { "ru": "необходимость", "en": "necessity" },
+          "appUse": { "ru": "ошибки формы и требования", "en": "form errors and requirements" }
         }
       ],
       "drills": [
@@ -639,78 +213,26 @@
           "id": "jlpt-n3-confirm",
           "sentence": "メールで___してください。",
           "reading": "メールで かくにんしてください。",
-          "translation": {
-            "ru": "Пожалуйста, подтвердите по почте.",
-            "en": "Please confirm by email."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "確",
-                "認"
-              ],
-              "reading": [
-                "かく",
-                "にん"
-              ]
-            }
-          ],
+          "translation": { "ru": "Пожалуйста, подтвердите по почте.", "en": "Please confirm by email." },
+          "blanks": [{ "answer": ["確", "認"], "reading": ["かく", "にん"] }],
           "tiles": [
-            {
-              "kanji": "確",
-              "reading": "かく"
-            },
-            {
-              "kanji": "認",
-              "reading": "にん"
-            },
-            {
-              "kanji": "変",
-              "reading": "へん"
-            },
-            {
-              "kanji": "更",
-              "reading": "こう"
-            }
+            { "kanji": "確", "reading": "かく" },
+            { "kanji": "認", "reading": "にん" },
+            { "kanji": "変", "reading": "へん" },
+            { "kanji": "更", "reading": "こう" }
           ]
         },
         {
           "id": "jlpt-n3-change",
           "sentence": "予定を___しました。",
           "reading": "よていを へんこうしました。",
-          "translation": {
-            "ru": "Я изменил план.",
-            "en": "I changed the plan."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "変",
-                "更"
-              ],
-              "reading": [
-                "へん",
-                "こう"
-              ]
-            }
-          ],
+          "translation": { "ru": "Я изменил план.", "en": "I changed the plan." },
+          "blanks": [{ "answer": ["変", "更"], "reading": ["へん", "こう"] }],
           "tiles": [
-            {
-              "kanji": "変",
-              "reading": "へん"
-            },
-            {
-              "kanji": "更",
-              "reading": "こう"
-            },
-            {
-              "kanji": "必",
-              "reading": "ひつ"
-            },
-            {
-              "kanji": "要",
-              "reading": "よう"
-            }
+            { "kanji": "変", "reading": "へん" },
+            { "kanji": "更", "reading": "こう" },
+            { "kanji": "必", "reading": "ひつ" },
+            { "kanji": "要", "reading": "よう" }
           ]
         }
       ]
@@ -718,151 +240,46 @@
     {
       "jlpt": "N2",
       "apps": [
-        {
-          "name": "My Number Portal",
-          "context": {
-            "ru": "регистрация и подтверждение",
-            "en": "registration and confirmation"
-          }
-        },
-        {
-          "name": "Chrome",
-          "context": {
-            "ru": "разрешения и ограничения",
-            "en": "permissions and restrictions"
-          }
-        },
-        {
-          "name": "App Store",
-          "context": {
-            "ru": "управление и удаление",
-            "en": "management and deletion"
-          }
-        }
+        { "name": "My Number Portal", "context": { "ru": "регистрация и подтверждение", "en": "registration and confirmation" } },
+        { "name": "Chrome", "context": { "ru": "разрешения и ограничения", "en": "permissions and restrictions" } },
+        { "name": "App Store", "context": { "ru": "управление и удаление", "en": "management and deletion" } }
       ],
       "kana": {
         "hiragana": [
-          {
-            "kana": "とうろく",
-            "romaji": "touroku",
-            "note": {
-              "ru": "регистрация",
-              "en": "registration"
-            }
-          },
-          {
-            "kana": "せいげん",
-            "romaji": "seigen",
-            "note": {
-              "ru": "ограничение",
-              "en": "restriction"
-            }
-          },
-          {
-            "kana": "しょうにん",
-            "romaji": "shounin",
-            "note": {
-              "ru": "одобрение",
-              "en": "approval"
-            }
-          }
+          { "kana": "とうろく", "romaji": "touroku", "note": { "ru": "регистрация", "en": "registration" } },
+          { "kana": "せいげん", "romaji": "seigen", "note": { "ru": "ограничение", "en": "restriction" } },
+          { "kana": "しょうにん", "romaji": "shounin", "note": { "ru": "одобрение", "en": "approval" } }
         ],
         "katakana": [
-          {
-            "kana": "アカウント",
-            "romaji": "akaunto",
-            "note": {
-              "ru": "аккаунт",
-              "en": "account"
-            }
-          },
-          {
-            "kana": "パスワード",
-            "romaji": "pasuwaado",
-            "note": {
-              "ru": "пароль",
-              "en": "password"
-            }
-          },
-          {
-            "kana": "アクセス",
-            "romaji": "akusesu",
-            "note": {
-              "ru": "доступ",
-              "en": "access"
-            }
-          }
+          { "kana": "アカウント", "romaji": "akaunto", "note": { "ru": "аккаунт", "en": "account" } },
+          { "kana": "パスワード", "romaji": "pasuwaado", "note": { "ru": "пароль", "en": "password" } },
+          { "kana": "アクセス", "romaji": "akusesu", "note": { "ru": "доступ", "en": "access" } }
         ]
       },
       "kanjiFocus": [
         {
           "kanji": "登",
           "word": "登録",
-          "furigana": [
-            {
-              "text": "登",
-              "rt": "とう"
-            },
-            {
-              "text": "録",
-              "rt": "ろく"
-            }
-          ],
+          "furigana": [{ "text": "登", "rt": "とう" }, { "text": "録", "rt": "ろく" }],
           "romaji": "touroku",
-          "meaning": {
-            "ru": "регистрация",
-            "en": "registration"
-          },
-          "appUse": {
-            "ru": "создание аккаунта",
-            "en": "account creation"
-          }
+          "meaning": { "ru": "регистрация", "en": "registration" },
+          "appUse": { "ru": "создание аккаунта", "en": "account creation" }
         },
         {
           "kanji": "制",
           "word": "制限",
-          "furigana": [
-            {
-              "text": "制",
-              "rt": "せい"
-            },
-            {
-              "text": "限",
-              "rt": "げん"
-            }
-          ],
+          "furigana": [{ "text": "制", "rt": "せい" }, { "text": "限", "rt": "げん" }],
           "romaji": "seigen",
-          "meaning": {
-            "ru": "ограничение",
-            "en": "restriction"
-          },
-          "appUse": {
-            "ru": "права доступа",
-            "en": "access rights"
-          }
+          "meaning": { "ru": "ограничение", "en": "restriction" },
+          "appUse": { "ru": "права доступа", "en": "access rights" }
         },
         {
           "kanji": "承",
           "word": "承認",
-          "furigana": [
-            {
-              "text": "承",
-              "rt": "しょう"
-            },
-            {
-              "text": "認",
-              "rt": "にん"
-            }
-          ],
+          "furigana": [{ "text": "承", "rt": "しょう" }, { "text": "認", "rt": "にん" }],
           "romaji": "shounin",
-          "meaning": {
-            "ru": "одобрение",
-            "en": "approval"
-          },
-          "appUse": {
-            "ru": "модерация и заявки",
-            "en": "moderation and requests"
-          }
+          "meaning": { "ru": "одобрение", "en": "approval" },
+          "appUse": { "ru": "модерация и заявки", "en": "moderation and requests" }
         }
       ],
       "drills": [
@@ -870,78 +287,26 @@
           "id": "jlpt-n2-register",
           "sentence": "アカウントを___します。",
           "reading": "アカウントを とうろくします。",
-          "translation": {
-            "ru": "Я регистрирую аккаунт.",
-            "en": "I register an account."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "登",
-                "録"
-              ],
-              "reading": [
-                "とう",
-                "ろく"
-              ]
-            }
-          ],
+          "translation": { "ru": "Я регистрирую аккаунт.", "en": "I register an account." },
+          "blanks": [{ "answer": ["登", "録"], "reading": ["とう", "ろく"] }],
           "tiles": [
-            {
-              "kanji": "登",
-              "reading": "とう"
-            },
-            {
-              "kanji": "録",
-              "reading": "ろく"
-            },
-            {
-              "kanji": "承",
-              "reading": "しょう"
-            },
-            {
-              "kanji": "認",
-              "reading": "にん"
-            }
+            { "kanji": "登", "reading": "とう" },
+            { "kanji": "録", "reading": "ろく" },
+            { "kanji": "承", "reading": "しょう" },
+            { "kanji": "認", "reading": "にん" }
           ]
         },
         {
           "id": "jlpt-n2-limit",
           "sentence": "アクセスが___されています。",
           "reading": "アクセスが せいげんされています。",
-          "translation": {
-            "ru": "Доступ ограничен.",
-            "en": "Access is restricted."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "制",
-                "限"
-              ],
-              "reading": [
-                "せい",
-                "げん"
-              ]
-            }
-          ],
+          "translation": { "ru": "Доступ ограничен.", "en": "Access is restricted." },
+          "blanks": [{ "answer": ["制", "限"], "reading": ["せい", "げん"] }],
           "tiles": [
-            {
-              "kanji": "制",
-              "reading": "せい"
-            },
-            {
-              "kanji": "限",
-              "reading": "げん"
-            },
-            {
-              "kanji": "削",
-              "reading": "さく"
-            },
-            {
-              "kanji": "除",
-              "reading": "じょ"
-            }
+            { "kanji": "制", "reading": "せい" },
+            { "kanji": "限", "reading": "げん" },
+            { "kanji": "削", "reading": "さく" },
+            { "kanji": "除", "reading": "じょ" }
           ]
         }
       ]
@@ -949,151 +314,46 @@
     {
       "jlpt": "N1",
       "apps": [
-        {
-          "name": "News apps",
-          "context": {
-            "ru": "новости и аналитика",
-            "en": "news and analysis"
-          }
-        },
-        {
-          "name": "Government portals",
-          "context": {
-            "ru": "официальные уведомления",
-            "en": "official notices"
-          }
-        },
-        {
-          "name": "Research databases",
-          "context": {
-            "ru": "статьи и выводы",
-            "en": "articles and conclusions"
-          }
-        }
+        { "name": "News apps", "context": { "ru": "новости и аналитика", "en": "news and analysis" } },
+        { "name": "Government portals", "context": { "ru": "официальные уведомления", "en": "official notices" } },
+        { "name": "Research databases", "context": { "ru": "статьи и выводы", "en": "articles and conclusions" } }
       ],
       "kana": {
         "hiragana": [
-          {
-            "kana": "ろん",
-            "romaji": "ron",
-            "note": {
-              "ru": "аргумент/теория",
-              "en": "argument/theory"
-            }
-          },
-          {
-            "kana": "えいきょう",
-            "romaji": "eikyou",
-            "note": {
-              "ru": "влияние",
-              "en": "influence"
-            }
-          },
-          {
-            "kana": "しょうする",
-            "romaji": "shousuru",
-            "note": {
-              "ru": "называть",
-              "en": "to call/name"
-            }
-          }
+          { "kana": "ろん", "romaji": "ron", "note": { "ru": "аргумент/теория", "en": "argument/theory" } },
+          { "kana": "えいきょう", "romaji": "eikyou", "note": { "ru": "влияние", "en": "influence" } },
+          { "kana": "しょうする", "romaji": "shou suru", "note": { "ru": "называть", "en": "to call/name" } }
         ],
         "katakana": [
-          {
-            "kana": "データ",
-            "romaji": "deeta",
-            "note": {
-              "ru": "данные",
-              "en": "data"
-            }
-          },
-          {
-            "kana": "レポート",
-            "romaji": "repooto",
-            "note": {
-              "ru": "отчёт",
-              "en": "report"
-            }
-          },
-          {
-            "kana": "システム",
-            "romaji": "shisutemu",
-            "note": {
-              "ru": "система",
-              "en": "system"
-            }
-          }
+          { "kana": "データ", "romaji": "deeta", "note": { "ru": "данные", "en": "data" } },
+          { "kana": "レポート", "romaji": "repooto", "note": { "ru": "отчёт", "en": "report" } },
+          { "kana": "システム", "romaji": "shisutemu", "note": { "ru": "система", "en": "system" } }
         ]
       },
       "kanjiFocus": [
         {
           "kanji": "論",
           "word": "議論",
-          "furigana": [
-            {
-              "text": "議",
-              "rt": "ぎ"
-            },
-            {
-              "text": "論",
-              "rt": "ろん"
-            }
-          ],
+          "furigana": [{ "text": "議", "rt": "ぎ" }, { "text": "論", "rt": "ろん" }],
           "romaji": "giron",
-          "meaning": {
-            "ru": "дискуссия",
-            "en": "discussion"
-          },
-          "appUse": {
-            "ru": "комментарии и аналитика",
-            "en": "comments and analysis"
-          }
+          "meaning": { "ru": "дискуссия", "en": "discussion" },
+          "appUse": { "ru": "комментарии и аналитика", "en": "comments and analysis" }
         },
         {
           "kanji": "影",
           "word": "影響",
-          "furigana": [
-            {
-              "text": "影",
-              "rt": "えい"
-            },
-            {
-              "text": "響",
-              "rt": "きょう"
-            }
-          ],
+          "furigana": [{ "text": "影", "rt": "えい" }, { "text": "響", "rt": "きょう" }],
           "romaji": "eikyou",
-          "meaning": {
-            "ru": "влияние",
-            "en": "influence"
-          },
-          "appUse": {
-            "ru": "новости и отчёты",
-            "en": "news and reports"
-          }
+          "meaning": { "ru": "влияние", "en": "influence" },
+          "appUse": { "ru": "новости и отчёты", "en": "news and reports" }
         },
         {
           "kanji": "称",
           "word": "名称",
-          "furigana": [
-            {
-              "text": "名",
-              "rt": "めい"
-            },
-            {
-              "text": "称",
-              "rt": "しょう"
-            }
-          ],
+          "furigana": [{ "text": "名", "rt": "めい" }, { "text": "称", "rt": "しょう" }],
           "romaji": "meishou",
-          "meaning": {
-            "ru": "название",
-            "en": "name/title"
-          },
-          "appUse": {
-            "ru": "официальные формы",
-            "en": "official forms"
-          }
+          "meaning": { "ru": "название", "en": "name/title" },
+          "appUse": { "ru": "официальные формы", "en": "official forms" }
         }
       ],
       "drills": [
@@ -1101,78 +361,26 @@
           "id": "jlpt-n1-influence",
           "sentence": "変更は利用者に大きな___を与えた。",
           "reading": "へんこうは りようしゃに おおきな えいきょうを あたえた。",
-          "translation": {
-            "ru": "Изменение оказало большое влияние на пользователей.",
-            "en": "The change had a major influence on users."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "影",
-                "響"
-              ],
-              "reading": [
-                "えい",
-                "きょう"
-              ]
-            }
-          ],
+          "translation": { "ru": "Изменение оказало большое влияние на пользователей.", "en": "The change had a major influence on users." },
+          "blanks": [{ "answer": ["影", "響"], "reading": ["えい", "きょう"] }],
           "tiles": [
-            {
-              "kanji": "影",
-              "reading": "えい"
-            },
-            {
-              "kanji": "響",
-              "reading": "きょう"
-            },
-            {
-              "kanji": "議",
-              "reading": "ぎ"
-            },
-            {
-              "kanji": "論",
-              "reading": "ろん"
-            }
+            { "kanji": "影", "reading": "えい" },
+            { "kanji": "響", "reading": "きょう" },
+            { "kanji": "議", "reading": "ぎ" },
+            { "kanji": "論", "reading": "ろん" }
           ]
         },
         {
           "id": "jlpt-n1-discussion",
           "sentence": "この問題について___が続いている。",
           "reading": "この もんだいについて ぎろんが つづいている。",
-          "translation": {
-            "ru": "Дискуссия по этой проблеме продолжается.",
-            "en": "The discussion about this issue continues."
-          },
-          "blanks": [
-            {
-              "answer": [
-                "議",
-                "論"
-              ],
-              "reading": [
-                "ぎ",
-                "ろん"
-              ]
-            }
-          ],
+          "translation": { "ru": "Дискуссия по этой проблеме продолжается.", "en": "The discussion about this issue continues." },
+          "blanks": [{ "answer": ["議", "論"], "reading": ["ぎ", "ろん"] }],
           "tiles": [
-            {
-              "kanji": "議",
-              "reading": "ぎ"
-            },
-            {
-              "kanji": "論",
-              "reading": "ろん"
-            },
-            {
-              "kanji": "名",
-              "reading": "めい"
-            },
-            {
-              "kanji": "称",
-              "reading": "しょう"
-            }
+            { "kanji": "議", "reading": "ぎ" },
+            { "kanji": "論", "reading": "ろん" },
+            { "kanji": "名", "reading": "めい" },
+            { "kanji": "称", "reading": "しょう" }
           ]
         }
       ]

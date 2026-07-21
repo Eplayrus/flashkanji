@@ -25,8 +25,7 @@ export function getKanjiAudioPath(card?: Partial<KanjiAudioLookup>): string {
   return expectedKanjiAudioPath(card);
 }
 
-export function expectedKanjiAudioPath(card?: Partial<KanjiAudioLookup>): string {
-  if (!card) return "";
+export function expectedKanjiAudioPath(card: Partial<KanjiAudioLookup>): string {
   const slug = kanjiAudioSlugs(card)[0] || "";
   if (!card.id || !card.jlpt || !card.lessonId || !slug) return "";
   return `./audio/kanji/${String(card.jlpt).toLowerCase()}/${card.lessonId}/${card.id}-${slug}.mp3`;

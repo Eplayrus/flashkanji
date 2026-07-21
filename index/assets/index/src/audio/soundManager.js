@@ -30,14 +30,7 @@
   };
 
   const FALLBACKS = {
-    lesson_complete: "level_up",
-    achievement_unlock: "level_up",
-    item_unlock: "button_click",
-    moon_fragment_gain: "notification_reward",
-    purchase_failed: "answer_wrong",
-    purchase_success: "answer_correct",
-    tab_switch: "button_click",
-    xp_gain: "notification_soft"
+    lesson_complete: "achievement_unlock"
   };
 
   const sounds = new Map();
@@ -113,7 +106,6 @@
   function playSound(name) {
     if (!settings.enabled || settings.volume <= 0) return false;
     const resolved = resolveSoundName(String(name));
-    const file = SOUND_FILES[resolved];
     const now = performance.now();
     if (now - (lastPlayed.get(resolved) || 0) < COOLDOWN_MS) return false;
 
@@ -122,15 +114,10 @@
 
     lastPlayed.set(resolved, now);
     try {
-      const audio = new Audio(source.currentSrc || source.src || `${BASE_PATH}${file}`);
-      audio.preload = "auto";
+      const audio = source.cloneNode(true);
       audio.volume = settings.volume;
-      audio.addEventListener("error", () => warnMissing(resolved), {
-        once: true
-      });
       audio.play().catch((error) => {
         if (error?.name !== "NotAllowedError") console.warn(`Cannot play UX sound: ${resolved}`, error);
-        window.FlashKanjiUxToneFallback?.(resolved);
       });
       return true;
     } catch (error) {

@@ -2,18 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#08080c" />
-  <meta name="application-name" content="Flash Kanji" />
-  <meta name="apple-mobile-web-app-title" content="Flash Kanji" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Flash Kanji — PWA-приложение для изучения японских кандзи через SRS, уроки JLPT N5–N1, письмо, словарь и Eva Room." />
   <meta name="keywords" content="японский язык, кандзи, JLPT, N5, N4, N3, N2, N1, SRS, японские иероглифы, учить кандзи, Flash Kanji" />
-  <meta name="robots" content="index, follow" />
-  <meta property="og:site_name" content="Flash Kanji" />
-  <meta property="og:locale" content="ru_RU" />
-  <meta property="og:locale:alternate" content="en_US" />
   <meta property="og:title" content="Flash Kanji — учи японские кандзи" />
   <meta property="og:description" content="SRS, уроки JLPT, практика письма, словарь и игровая система Moon Fragments." />
   <meta property="og:type" content="website" />
@@ -35,42 +26,14 @@
   <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
   <link rel="icon" href="./index/assets/favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./index/assets/icon-192.png" sizes="192x192" />
-  <link rel="manifest" href="./index/manifest.webmanifest?v=2026-07-18-route-fix-v67" />
-  <link rel="stylesheet" href="./index/styles.css?v=2026-07-18-route-fix-v67" />
+  <link rel="manifest" href="./index/manifest.webmanifest?v=2026-06-13-bugfix-v4" />
+  <meta http-equiv="refresh" content="0; url=./recovery/entry.html" />
+  <script>
+    const target = "./recovery/entry.html" + window.location.search + window.location.hash;
+    window.location.replace(target);
+  </script>
 </head>
 <body>
-  <div class="app-shell" data-booting="true">
-    <div class="scene-bg" aria-hidden="true"></div>
-    <div class="scene-effects" aria-hidden="true">
-      <span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span>
-    </div>
-
-    <main id="app" class="app-main" aria-live="polite" aria-busy="true">
-      <section class="boot-screen" aria-label="Flash Kanji loading">
-        <div class="boot-panel">
-          <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>
-          <h1 class="hero-title">Flash Kanji</h1>
-          <p class="hero-subtitle">Кандзи через учебники, SRS-повторение и практику письма.</p>
-          <div class="hero-actions">
-            <a class="btn primary" href="./recovery/entry.html">Открыть Flash Kanji</a>
-            <a class="btn" href="/ru/textbooks/">Учебники</a>
-            <a class="btn ghost" href="./ru/kanji/">Кандзи</a>
-          </div>
-          <div class="boot-status" role="status">Загрузка Flash Kanji...</div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script>
-    const target = new URL("./recovery/entry.html", window.location.href);
-    target.search = window.location.search;
-    target.hash = window.location.hash;
-    window.setTimeout(() => {
-      window.location.replace(target.toString());
-    }, 250);
-  </script>
+  <p>Opening Flash Kanji...</p>
 </body>
 </html>

@@ -30,14 +30,7 @@
   };
 
   const FALLBACKS = {
-    lesson_complete: "level_up",
-    achievement_unlock: "level_up",
-    item_unlock: "button_click",
-    moon_fragment_gain: "notification_reward",
-    purchase_failed: "answer_wrong",
-    purchase_success: "answer_correct",
-    tab_switch: "button_click",
-    xp_gain: "notification_soft"
+    lesson_complete: "achievement_unlock"
   };
 
   const sounds = new Map();
@@ -121,12 +114,10 @@
 
     lastPlayed.set(resolved, now);
     try {
-      source.pause();
-      source.currentTime = 0;
-      source.volume = settings.volume;
-      source.play().catch((error) => {
+      const audio = source.cloneNode(true);
+      audio.volume = settings.volume;
+      audio.play().catch((error) => {
         if (error?.name !== "NotAllowedError") console.warn(`Cannot play UX sound: ${resolved}`, error);
-        window.FlashKanjiUxToneFallback?.(resolved);
       });
       return true;
     } catch (error) {
