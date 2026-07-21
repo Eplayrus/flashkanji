@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flash Kanji</title>
+  <script>
+    (function () {
+      const route = location.pathname.replace(/^\/+|\/+$/g, "");
+      const target = route && !/^index(?:\.html)?$/i.test(route) ? `./index.html#${route}` : "./index.html#home";
+      window.location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting to Flash Kanji...</p>
+</body>
+</html>

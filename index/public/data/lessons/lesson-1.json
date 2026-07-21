@@ -1,0 +1,389 @@
+{
+  "lesson": {
+    "id": "lesson-1",
+    "title": "N5: первые интерфейсы",
+    "jlpt": "N5",
+    "order": 1,
+    "enrichment": "kanji_only_from_textbooks",
+    "enrichment_sources": [
+      "Y_all.pdf",
+      "Z_all.pdf",
+      "ZZ_all.pdf",
+      "JLPTsensei N5-N2 HTML lists"
+    ],
+    "noise_removed": [
+      "grammar",
+      "long dialogues",
+      "navigation",
+      "ads/menus",
+      "page headers/footers",
+      "general textbook intro"
+    ]
+  },
+  "items": [
+    {
+      "id": 1,
+      "kanji": "日",
+      "meaning_ru": "день, солнце",
+      "hiragana": "にち / ひ",
+      "romaji": "nichi / hi",
+      "jlpt": "N5",
+      "strokes": 4,
+      "stroke_order": [
+        "левая вертикаль",
+        "верхняя и правая линия одним движением",
+        "средняя горизонталь",
+        "нижняя горизонталь"
+      ],
+      "examples": [
+        {
+          "word": "日本",
+          "reading": "にほん",
+          "romaji": "nihon",
+          "translation": "Япония"
+        },
+        {
+          "word": "今日",
+          "reading": "きょう",
+          "romaji": "kyou",
+          "translation": "сегодня"
+        }
+      ],
+      "apps": [
+        "LINE",
+        "Discord",
+        "Twitter",
+        "YouTube",
+        "Google Calendar"
+      ],
+      "interface_use": "В датах, календарях, лентах новостей и настройках языка.",
+      "onyomi": "じつ / にち",
+      "onyomi_romaji": "jitsu / nichi",
+      "kunyomi": "か / び / ひ",
+      "kunyomi_romaji": "ka / bi / hi",
+      "audio": "./audio/kanji/n5/lesson-1/1-hi.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: день, солнце; англ. опора: day, sun, Japan, counter for days; слова: 日本, 今日, な今日, 生活の日本語, すでに日本.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ニチ, ジツ",
+          "kunyomi": "ひ / び / か",
+          "meaning_en": "day, sun, Japan, counter for days",
+          "source": "JLPTsensei kanji list",
+          "onyomi_romaji": "nichi / jitsu",
+          "kunyomi_romaji": "hi / bi / ka"
+        },
+        "textbook_examples": [
+          {
+            "word": "な今日",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "生活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "すでに日本",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "kanji": "月",
+      "meaning_ru": "месяц, луна",
+      "hiragana": "げつ / つき",
+      "romaji": "getsu / tsuki",
+      "jlpt": "N5",
+      "strokes": 4,
+      "stroke_order": [
+        "левая вертикальная дуга",
+        "верхняя и правая линия",
+        "верхняя внутренняя горизонталь",
+        "нижняя внутренняя горизонталь"
+      ],
+      "examples": [
+        {
+          "word": "月曜日",
+          "reading": "げつようび",
+          "romaji": "getsuyoubi",
+          "translation": "понедельник"
+        },
+        {
+          "word": "一月",
+          "reading": "いちがつ",
+          "romaji": "ichigatsu",
+          "translation": "январь"
+        }
+      ],
+      "apps": [
+        "Google Calendar",
+        "Notion",
+        "Apple Calendar",
+        "Weather"
+      ],
+      "interface_use": "В календарях, месячных подписках, погоде и расписаниях.",
+      "onyomi": "がつ / げつ",
+      "onyomi_romaji": "gatsu / getsu",
+      "kunyomi": "つき",
+      "kunyomi_romaji": "tsuki",
+      "audio": "./audio/kanji/n5/lesson-1/2-tsuki.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: месяц, луна; англ. опора: month, moon; слова: 月曜日, 一月, 旧暦の正月, 月ごろ, 月に来ました.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ゲツ /  ガツ",
+          "kunyomi": "つき",
+          "meaning_en": "month, moon",
+          "source": "JLPTsensei kanji list",
+          "onyomi_romaji": "getsu / gatsu",
+          "kunyomi_romaji": "tsuki"
+        },
+        "textbook_examples": [
+          {
+            "word": "旧暦の正月",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "月ごろ",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "月に来ました",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "kanji": "人",
+      "meaning_ru": "человек",
+      "hiragana": "じん / ひと",
+      "romaji": "jin / hito",
+      "jlpt": "N5",
+      "strokes": 2,
+      "stroke_order": [
+        "падающая линия влево",
+        "падающая линия вправо"
+      ],
+      "examples": [
+        {
+          "word": "日本人",
+          "reading": "にほんじん",
+          "romaji": "nihonjin",
+          "translation": "японец"
+        },
+        {
+          "word": "一人",
+          "reading": "ひとり",
+          "romaji": "hitori",
+          "translation": "один человек"
+        }
+      ],
+      "apps": [
+        "Instagram",
+        "Discord",
+        "LinkedIn",
+        "Telegram"
+      ],
+      "interface_use": "В профилях, списках участников, ролях и статистике аудитории.",
+      "audio": "./audio/kanji/n5/lesson-1/3-jin.mp3",
+      "onyomi": "じん / にん",
+      "onyomi_romaji": "jin / nin",
+      "kunyomi": "と / り / ひと",
+      "kunyomi_romaji": "to / ri / hito",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: человек; англ. опора: person; слова: 日本人, 一人, 人的情, た人など, 日本人の名前.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ジン /  ニン",
+          "kunyomi": "ひと",
+          "meaning_en": "person",
+          "source": "JLPTsensei kanji list",
+          "onyomi_romaji": "jin / nin",
+          "kunyomi_romaji": "hito"
+        },
+        "textbook_examples": [
+          {
+            "word": "人的情",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "た人など",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "日本人の名前",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "kanji": "本",
+      "meaning_ru": "книга, основа",
+      "hiragana": "ほん / もと",
+      "romaji": "hon / moto",
+      "jlpt": "N5",
+      "strokes": 5,
+      "stroke_order": [
+        "горизонтальная линия",
+        "центральная вертикаль",
+        "левая диагональ",
+        "правая диагональ",
+        "короткая нижняя черта"
+      ],
+      "examples": [
+        {
+          "word": "本屋",
+          "reading": "ほんや",
+          "romaji": "honya",
+          "translation": "книжный магазин"
+        },
+        {
+          "word": "日本",
+          "reading": "にほん",
+          "romaji": "nihon",
+          "translation": "Япония"
+        }
+      ],
+      "apps": [
+        "Kindle",
+        "Bookmeter",
+        "Amazon",
+        "Browser UI"
+      ],
+      "interface_use": "В книжных приложениях, настройках языка и слове 日本.",
+      "onyomi": "ほん",
+      "onyomi_romaji": "hon",
+      "kunyomi": "もと",
+      "kunyomi_romaji": "moto",
+      "audio": "./audio/kanji/n5/lesson-1/4-moto.mp3",
+      "kanji_enrichment": {
+        "source_type": "kanji_only_enrichment",
+        "kept_content": [
+          "kanji",
+          "readings",
+          "meaning",
+          "compact vocabulary examples",
+          "study focus"
+        ],
+        "removed_noise": [
+          "grammar explanations",
+          "long dialogues",
+          "page headers",
+          "copyright/footer text",
+          "general lesson instructions"
+        ],
+        "study_focus_ru": "Запомни кандзи через значение: книга, основа; англ. опора: book, present, true, counter for long cylindrical things; слова: 本屋, 日本, 生活の日本語, すでに日本, 活の日本語.",
+        "jlpt_reference": {
+          "jlpt": "N5",
+          "onyomi": "ホン",
+          "kunyomi": "もと",
+          "meaning_en": "book, present, true, counter for long cylindrical things",
+          "source": "JLPTsensei kanji list",
+          "onyomi_romaji": "hon",
+          "kunyomi_romaji": "moto"
+        },
+        "textbook_examples": [
+          {
+            "word": "生活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "すでに日本",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          },
+          {
+            "word": "活の日本語",
+            "reading": "",
+            "translation_ru": "",
+            "source": "Y_all",
+            "note_ru": "Короткий пример из учебника: оставлено только слово/фраза с кандзи без грамматического мусора."
+          }
+        ]
+      }
+    }
+  ]
+}

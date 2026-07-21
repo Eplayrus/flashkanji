@@ -9,7 +9,7 @@ const ROOT = path.resolve(__dirname, "..");
 const REPO_ROOT = path.resolve(ROOT, "..");
 const BASE_URL = "https://flashkanji.space";
 const APP_URL = `${BASE_URL}/index/`;
-const OG_IMAGE = `${BASE_URL}/index/assets/og/flashkanji-og.png`;
+const OG_IMAGE = `${BASE_URL}/index/assets/og/flashkanji-og.webp`;
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const esc = (value = "") => String(value ?? "")

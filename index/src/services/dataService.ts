@@ -2,7 +2,7 @@ import type { KanjiCard, LessonManifestItem } from "../types";
 
 interface LessonPayload {
   lesson: Pick<LessonManifestItem, "id" | "title" | "jlpt" | "order">;
-  items: Omit<KanjiCard, "id" | "lessonId" | "lessonTitle" | "lessonOrder">[];
+  items: Array<Pick<KanjiCard, "id"> & Omit<KanjiCard, "id" | "lessonId" | "lessonTitle" | "lessonOrder">>;
 }
 
 interface CourseManifest {

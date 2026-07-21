@@ -1,0 +1,3244 @@
+{
+  "version": 1,
+  "level": "N3",
+  "generatedAt": "2026-06-12T18:47:18.303141+00:00",
+  "textbook": {
+    "jlpt": "N3",
+    "slug": "n3",
+    "title": {
+      "ru": "JLPT N3",
+      "en": "JLPT N3"
+    },
+    "displayTitle": {
+      "ru": "Мост к среднему уровню",
+      "en": "Bridge to the intermediate level"
+    },
+    "description": {
+      "ru": "N3 — мост к среднему японскому: больше текста, причин, мнений и выводов.",
+      "en": "N3 is the bridge to intermediate Japanese: more text, reasons, opinions, and conclusions."
+    },
+    "goal": {
+      "ru": "Учить N3 не списком знаков, а через связку: слово, грамматика, предложение, абзац и повторение.",
+      "en": "Study N3 through the chain of word, grammar, sentence, paragraph, and review."
+    },
+    "recommendedCycle": {
+      "ru": "60-дневный цикл: уроки, грамматика, чтение, аудирование, финальный тест и повтор ошибок.",
+      "en": "A 60-day cycle with lessons, grammar, reading, listening, a final test, and mistake review."
+    },
+    "previousLevels": [
+      "N5",
+      "N4"
+    ],
+    "nextLevels": [
+      "N2",
+      "N1"
+    ],
+    "coverImage": "assets/bg/bg_winter_city.webp",
+    "pdfFile": "docs/flashkanji_N3_textbook_flashkanji_space.pdf",
+    "pdfUrl": "docs/flashkanji_N3_textbook_flashkanji_space.pdf",
+    "lessonIds": [
+      "n3-lesson-1",
+      "n3-lesson-2",
+      "n3-lesson-3",
+      "n3-lesson-4",
+      "n3-lesson-5",
+      "n3-lesson-6",
+      "n3-lesson-7",
+      "n3-lesson-8",
+      "n3-lesson-9",
+      "n3-lesson-10",
+      "n3-lesson-11",
+      "n3-lesson-12",
+      "n3-lesson-13",
+      "n3-lesson-14",
+      "n3-lesson-15",
+      "n3-lesson-16",
+      "n3-lesson-17",
+      "n3-lesson-18",
+      "n3-lesson-19",
+      "n3-lesson-20",
+      "n3-lesson-21",
+      "n3-lesson-22",
+      "n3-lesson-23",
+      "n3-lesson-24",
+      "n3-lesson-25",
+      "n3-lesson-26",
+      "n3-lesson-27",
+      "n3-lesson-28",
+      "n3-lesson-29",
+      "n3-lesson-30",
+      "n3-lesson-31",
+      "n3-lesson-32",
+      "n3-lesson-33",
+      "n3-lesson-34",
+      "n3-lesson-35",
+      "n3-lesson-36",
+      "n3-lesson-37"
+    ],
+    "lessonCount": 37,
+    "kanjiCount": 370,
+    "cardCount": 370,
+    "files": {
+      "meta": "data/jlpt/n3/meta.json",
+      "kanji": "data/jlpt/n3/kanji.json",
+      "lessons": "data/jlpt/n3/lessons.json",
+      "grammar": "data/jlpt/n3/grammar.json",
+      "exercises": "data/jlpt/n3/exercises.json",
+      "reading": "data/jlpt/n3/reading.json",
+      "listening": "data/jlpt/n3/listening.json",
+      "finalTest": "data/jlpt/n3/final-test.json",
+      "tests": "data/jlpt/n3/tests.json"
+    }
+  },
+  "items": [
+    {
+      "id": "n3-lesson-1",
+      "level": "N3",
+      "order": 1,
+      "title": {
+        "ru": "Связи, общество и реальность",
+        "en": "N3 Lesson 1"
+      },
+      "theme": {
+        "ru": "Связи, общество и реальность",
+        "en": "N3 Lesson 1"
+      },
+      "kanji": [
+        "合",
+        "部",
+        "彼",
+        "内",
+        "実",
+        "当",
+        "戦",
+        "性",
+        "対",
+        "関"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "について",
+        "に関して",
+        "なら",
+        "そうに見える",
+        "実は"
+      ],
+      "grammarCards": [
+        {
+          "pattern": "について",
+          "title": {
+            "ru": "о теме; относительно",
+            "en": "about; regarding"
+          },
+          "explanation": {
+            "ru": "Используй について, когда говоришь о теме обсуждения или объекте внимания.",
+            "en": "Use について when you speak about a topic or an object of attention."
+          },
+          "formula": "N + について",
+          "examples": [
+            {
+              "jp": "この問題について、もう少し詳しく説明してください。",
+              "reading": "このもんだいについて、もうすこしくわしくせつめいしてください。",
+              "ru": "Пожалуйста, объясните подробнее эту проблему.",
+              "en": "Please explain this problem in more detail."
+            }
+          ],
+          "answer": "о теме; относительно",
+          "options": [
+            "о теме; относительно",
+            "только что",
+            "несмотря на",
+            "по сравнению с"
+          ]
+        },
+        {
+          "pattern": "に関して",
+          "title": {
+            "ru": "касательно; по поводу",
+            "en": "concerning; regarding"
+          },
+          "explanation": {
+            "ru": "に関して звучит чуть письменнее и помогает говорить о теме, вопросе или области.",
+            "en": "に関して is a slightly more written way to say 'concerning' a topic, issue, or field."
+          },
+          "formula": "N + に関して",
+          "examples": [
+            {
+              "jp": "最近、部分に関する記事を読みました。",
+              "reading": "さいきん、ぶぶんにかんするきじをよみました。",
+              "ru": "Недавно я прочитал статью, связанную с частью темы.",
+              "en": "Recently I read an article concerning one part of the topic."
+            }
+          ],
+          "answer": "касательно; по поводу",
+          "options": [
+            "касательно; по поводу",
+            "ничего не остаётся, кроме",
+            "как только",
+            "не более чем"
+          ]
+        },
+        {
+          "pattern": "なら / そうに見える / 実は",
+          "title": {
+            "ru": "условие, внешний вид и скрытая реальность",
+            "en": "condition, appearance, and hidden reality"
+          },
+          "explanation": {
+            "ru": "なら задаёт условие, そうに見える описывает впечатление, а 実は меняет картину после этого впечатления.",
+            "en": "なら sets a condition, そうに見える gives an impression, and 実は flips the picture after that impression."
+          },
+          "formula": "N/V + なら / そうに見える / 実は",
+          "examples": [
+            {
+              "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+              "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+              "ru": "Задача выглядит простой, но на самом деле она сложная.",
+              "en": "The problem looks simple, but in fact it is complex."
+            }
+          ],
+          "answer": "условие, внешний вид и скрытая реальность",
+          "options": [
+            "условие, внешний вид и скрытая реальность",
+            "результат сравнения",
+            "формальная причина",
+            "добавление и исключение"
+          ]
+        }
+      ],
+      "sentences": [
+        {
+          "jp": "最近、部分に関する記事を読みました。",
+          "reading": "さいきん、ぶぶんにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с частью.",
+          "en": "Recently I read an article related to one part of a topic."
+        },
+        {
+          "jp": "もし彼が必要なら、先に準備しておきます。",
+          "reading": "もしかれがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если он понадобится, я подготовлю всё заранее.",
+          "en": "If he is needed, I will prepare everything in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks easy, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "合",
+        "部",
+        "彼"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": "n3-reading-1"
+    },
+    {
+      "id": "n3-lesson-2",
+      "level": "N3",
+      "order": 2,
+      "title": {
+        "ru": "Чувства, политика и решения",
+        "en": "N3 Lesson 2"
+      },
+      "theme": {
+        "ru": "Чувства, политика и решения",
+        "en": "N3 Lesson 2"
+      },
+      "kanji": [
+        "感",
+        "定",
+        "政",
+        "取",
+        "所",
+        "現",
+        "最",
+        "化",
+        "民",
+        "相"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ために",
+        "ように",
+        "ようになる"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この感じるについて、もう少し詳しく説明してください。",
+          "reading": "このかんじるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «чувствовать».",
+          "en": "Please explain the topic of чувствовать in more detail."
+        },
+        {
+          "jp": "最近、予定に関する記事を読みました。",
+          "reading": "さいきん、よていにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «план».",
+          "en": "Recently I read an article related to план."
+        },
+        {
+          "jp": "もし政治が必要なら、先に準備しておきます。",
+          "reading": "もしせいじがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится политика, я подготовлюсь заранее.",
+          "en": "If политика is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "感",
+        "定",
+        "政"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": "n3-reading-2"
+    },
+    {
+      "id": "n3-lesson-3",
+      "level": "N3",
+      "order": 3,
+      "title": {
+        "ru": "Информация, изменения и записи",
+        "en": "N3 Lesson 3"
+      },
+      "theme": {
+        "ru": "Информация, изменения и записи",
+        "en": "N3 Lesson 3"
+      },
+      "kanji": [
+        "法",
+        "全",
+        "情",
+        "向",
+        "平",
+        "成",
+        "経",
+        "信",
+        "面",
+        "連"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ようになる",
+        "ようにする",
+        "ことにする"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この方法について、もう少し詳しく説明してください。",
+          "reading": "このほうほうについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «метод».",
+          "en": "Please explain the topic of метод in more detail."
+        },
+        {
+          "jp": "最近、全部に関する記事を読みました。",
+          "reading": "さいきん、ぜんぶにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «все».",
+          "en": "Recently I read an article related to все."
+        },
+        {
+          "jp": "もし情報が必要なら、先に準備しておきます。",
+          "reading": "もしじょうほうがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится информация, я подготовлюсь заранее.",
+          "en": "If информация is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "法",
+        "全",
+        "情"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": "n3-reading-3"
+    },
+    {
+      "id": "n3-lesson-4",
+      "level": "N3",
+      "order": 4,
+      "title": {
+        "ru": "Планы, ответы и активные действия",
+        "en": "N3 Lesson 4"
+      },
+      "theme": {
+        "ru": "Планы, ответы и активные действия",
+        "en": "N3 Lesson 4"
+      },
+      "kanji": [
+        "原",
+        "顔",
+        "機",
+        "次",
+        "数",
+        "美",
+        "回",
+        "表",
+        "声",
+        "報"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ことにする",
+        "ことになる",
+        "はずだ"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この原因について、もう少し詳しく説明してください。",
+          "reading": "このげんいんについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «причина».",
+          "en": "Please explain the topic of причина in more detail."
+        },
+        {
+          "jp": "最近、顔に関する記事を読みました。",
+          "reading": "さいきん、かおにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «лицо».",
+          "en": "Recently I read an article related to лицо."
+        },
+        {
+          "jp": "もし機会が必要なら、先に準備しておきます。",
+          "reading": "もしきかいがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится шанс, я подготовлюсь заранее.",
+          "en": "If шанс is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "原",
+        "顔",
+        "機"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": "n3-reading-4"
+    },
+    {
+      "id": "n3-lesson-5",
+      "level": "N3",
+      "order": 5,
+      "title": {
+        "ru": "Права, развитие и результат",
+        "en": "N3 Lesson 5"
+      },
+      "theme": {
+        "ru": "Права, развитие и результат",
+        "en": "N3 Lesson 5"
+      },
+      "kanji": [
+        "要",
+        "変",
+        "神",
+        "記",
+        "和",
+        "引",
+        "治",
+        "決",
+        "太",
+        "込"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "はずだ",
+        "はずがない",
+        "たばかり"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この必要について、もう少し詳しく説明してください。",
+          "reading": "このひつようについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «необходимый».",
+          "en": "Please explain the topic of необходимый in more detail."
+        },
+        {
+          "jp": "最近、変わるに関する記事を読みました。",
+          "reading": "さいきん、かわるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «меняться».",
+          "en": "Recently I read an article related to меняться."
+        },
+        {
+          "jp": "もし神が必要なら、先に準備しておきます。",
+          "reading": "もしかみがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится бог, я подготовлюсь заранее.",
+          "en": "If бог is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "要",
+        "変",
+        "神"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": "n3-reading-5"
+    },
+    {
+      "id": "n3-lesson-6",
+      "level": "N3",
+      "order": 6,
+      "title": {
+        "ru": "Аргументы, возраст и формы",
+        "en": "N3 Lesson 6"
+      },
+      "theme": {
+        "ru": "Аргументы, возраст и формы",
+        "en": "N3 Lesson 6"
+      },
+      "kanji": [
+        "受",
+        "解",
+        "市",
+        "期",
+        "様",
+        "活",
+        "頭",
+        "組",
+        "指",
+        "説"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "たばかり",
+        "ところだ",
+        "おかげで"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この受けるについて、もう少し詳しく説明してください。",
+          "reading": "このうけるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «получать/сдавать».",
+          "en": "Please explain the topic of получать/сдавать in more detail."
+        },
+        {
+          "jp": "最近、解決に関する記事を読みました。",
+          "reading": "さいきん、かいけつにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «решение».",
+          "en": "Recently I read an article related to решение."
+        },
+        {
+          "jp": "もし市が必要なら、先に準備しておきます。",
+          "reading": "もししがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится город, я подготовлюсь заранее.",
+          "en": "If город is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "受",
+        "解",
+        "市"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": "n3-reading-6"
+    },
+    {
+      "id": "n3-lesson-7",
+      "level": "N3",
+      "order": 7,
+      "title": {
+        "ru": "Свет, победа и отношения",
+        "en": "N3 Lesson 7"
+      },
+      "theme": {
+        "ru": "Свет, победа и отношения",
+        "en": "N3 Lesson 7"
+      },
+      "kanji": [
+        "能",
+        "葉",
+        "流",
+        "然",
+        "初",
+        "在",
+        "調",
+        "笑",
+        "議",
+        "直"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "おかげで",
+        "せいで",
+        "ので"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この能力について、もう少し詳しく説明してください。",
+          "reading": "こののうりょくについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «способность».",
+          "en": "Please explain the topic of способность in more detail."
+        },
+        {
+          "jp": "最近、言葉に関する記事を読みました。",
+          "reading": "さいきん、ことばにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «слово».",
+          "en": "Recently I read an article related to слово."
+        },
+        {
+          "jp": "もし流れるが必要なら、先に準備しておきます。",
+          "reading": "もしながれるがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится течь, я подготовлюсь заранее.",
+          "en": "If течь is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "能",
+        "葉",
+        "流"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-8",
+      "level": "N3",
+      "order": 8,
+      "title": {
+        "ru": "Состояния, обмен и общество",
+        "en": "N3 Lesson 8"
+      },
+      "theme": {
+        "ru": "Состояния, обмен и общество",
+        "en": "N3 Lesson 8"
+      },
+      "kanji": [
+        "夫",
+        "選",
+        "権",
+        "利",
+        "制",
+        "続",
+        "石",
+        "進",
+        "伝",
+        "加"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ので",
+        "からには",
+        "わけだ"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この夫について、もう少し詳しく説明してください。",
+          "reading": "このおっとについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «муж».",
+          "en": "Please explain the topic of муж in more detail."
+        },
+        {
+          "jp": "最近、選ぶに関する記事を読みました。",
+          "reading": "さいきん、えらぶにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «выбирать».",
+          "en": "Recently I read an article related to выбирать."
+        },
+        {
+          "jp": "もし権利が必要なら、先に準備しておきます。",
+          "reading": "もしけんりがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится право, я подготовлюсь заранее.",
+          "en": "If право is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "夫",
+        "選",
+        "権"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-9",
+      "level": "N3",
+      "order": 9,
+      "title": {
+        "ru": "Роли, техника и поддержка",
+        "en": "N3 Lesson 9"
+      },
+      "theme": {
+        "ru": "Роли, техника и поддержка",
+        "en": "N3 Lesson 9"
+      },
+      "kanji": [
+        "助",
+        "点",
+        "産",
+        "務",
+        "件",
+        "命",
+        "番",
+        "落",
+        "付",
+        "得"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "わけだ",
+        "わけではない",
+        "わけがない"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この助けるについて、もう少し詳しく説明してください。",
+          "reading": "このたすけるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «спасать».",
+          "en": "Please explain the topic of спасать in more detail."
+        },
+        {
+          "jp": "最近、点に関する記事を読みました。",
+          "reading": "さいきん、てんにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «точка/балл».",
+          "en": "Recently I read an article related to точка/балл."
+        },
+        {
+          "jp": "もし生産が必要なら、先に準備しておきます。",
+          "reading": "もしせいさんがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится производство, я подготовлюсь заранее.",
+          "en": "If производство is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "助",
+        "点",
+        "産"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-10",
+      "level": "N3",
+      "order": 10,
+      "title": {
+        "ru": "Структура, признание и положение",
+        "en": "N3 Lesson 10"
+      },
+      "theme": {
+        "ru": "Структура, признание и положение",
+        "en": "N3 Lesson 10"
+      },
+      "kanji": [
+        "好",
+        "違",
+        "殺",
+        "置",
+        "返",
+        "論",
+        "際",
+        "歳",
+        "反",
+        "形"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "わけがない",
+        "とは限らない",
+        "しかない"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この好きについて、もう少し詳しく説明してください。",
+          "reading": "このすきについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «нравиться».",
+          "en": "Please explain the topic of нравиться in more detail."
+        },
+        {
+          "jp": "最近、違うに関する記事を読みました。",
+          "reading": "さいきん、ちがうにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «отличаться».",
+          "en": "Recently I read an article related to отличаться."
+        },
+        {
+          "jp": "もし殺すが必要なら、先に準備しておきます。",
+          "reading": "もしころすがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится убивать, я подготовлюсь заранее.",
+          "en": "If убивать is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "好",
+        "違",
+        "殺"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-11",
+      "level": "N3",
+      "order": 11,
+      "title": {
+        "ru": "Дорога, гости и наблюдение",
+        "en": "N3 Lesson 11"
+      },
+      "theme": {
+        "ru": "Дорога, гости и наблюдение",
+        "en": "N3 Lesson 11"
+      },
+      "kanji": [
+        "光",
+        "首",
+        "勝",
+        "必",
+        "係",
+        "由",
+        "愛",
+        "都",
+        "放",
+        "確"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "しかない",
+        "にすぎない",
+        "ほど"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この光について、もう少し詳しく説明してください。",
+          "reading": "このひかりについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «свет».",
+          "en": "Please explain the topic of свет in more detail."
+        },
+        {
+          "jp": "最近、首に関する記事を読みました。",
+          "reading": "さいきん、くびにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «шея».",
+          "en": "Recently I read an article related to шея."
+        },
+        {
+          "jp": "もし勝つが必要なら、先に準備しておきます。",
+          "reading": "もしかつがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится выигрывать, я подготовлюсь заранее.",
+          "en": "If выигрывать is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "光",
+        "首",
+        "勝"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-12",
+      "level": "N3",
+      "order": 12,
+      "title": {
+        "ru": "Профессии, знания и трудность",
+        "en": "N3 Lesson 12"
+      },
+      "theme": {
+        "ru": "Профессии, знания и трудность",
+        "en": "N3 Lesson 12"
+      },
+      "kanji": [
+        "過",
+        "約",
+        "馬",
+        "状",
+        "想",
+        "官",
+        "交",
+        "米",
+        "配",
+        "若"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ほど",
+        "くらい / ぐらい",
+        "ほど〜ない"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この過ぎるについて、もう少し詳しく説明してください。",
+          "reading": "このすぎるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «проходить/слишком».",
+          "en": "Please explain the topic of проходить/слишком in more detail."
+        },
+        {
+          "jp": "最近、約束に関する記事を読みました。",
+          "reading": "さいきん、やくそくにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «обещание».",
+          "en": "Recently I read an article related to обещание."
+        },
+        {
+          "jp": "もし馬が必要なら、先に準備しておきます。",
+          "reading": "もしうまがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится лошадь, я подготовлюсь заранее.",
+          "en": "If лошадь is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "過",
+        "約",
+        "馬"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-13",
+      "level": "N3",
+      "order": 13,
+      "title": {
+        "ru": "Торговля, вред и просьбы",
+        "en": "N3 Lesson 13"
+      },
+      "theme": {
+        "ru": "Торговля, вред и просьбы",
+        "en": "N3 Lesson 13"
+      },
+      "kanji": [
+        "資",
+        "常",
+        "果",
+        "呼",
+        "共",
+        "残",
+        "判",
+        "役",
+        "他",
+        "術"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ほど〜ない",
+        "に比べて",
+        "ば〜ほど"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この資料について、もう少し詳しく説明してください。",
+          "reading": "このしりょうについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «материалы».",
+          "en": "Please explain the topic of материалы in more detail."
+        },
+        {
+          "jp": "最近、普通に関する記事を読みました。",
+          "reading": "さいきん、ふつうにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «обычный».",
+          "en": "Recently I read an article related to обычный."
+        },
+        {
+          "jp": "もし結果が必要なら、先に準備しておきます。",
+          "reading": "もしけっかがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится результат, я подготовлюсь заранее.",
+          "en": "If результат is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "資",
+        "常",
+        "果"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-14",
+      "level": "N3",
+      "order": 14,
+      "title": {
+        "ru": "Доход, этапы и выступления",
+        "en": "N3 Lesson 14"
+      },
+      "theme": {
+        "ru": "Доход, этапы и выступления",
+        "en": "N3 Lesson 14"
+      },
+      "kanji": [
+        "支",
+        "両",
+        "乗",
+        "済",
+        "供",
+        "格",
+        "打",
+        "御",
+        "断",
+        "式"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ば〜ほど",
+        "ようだ",
+        "みたいだ"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この支えるについて、もう少し詳しく説明してください。",
+          "reading": "このささえるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «поддерживать».",
+          "en": "Please explain the topic of поддерживать in more detail."
+        },
+        {
+          "jp": "最近、両方に関する記事を読みました。",
+          "reading": "さいきん、りょうほうにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «оба».",
+          "en": "Recently I read an article related to оба."
+        },
+        {
+          "jp": "もし乗るが必要なら、先に準備しておきます。",
+          "reading": "もしのるがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится садиться/ехать, я подготовлюсь заранее.",
+          "en": "If садиться/ехать is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "支",
+        "両",
+        "乗"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-15",
+      "level": "N3",
+      "order": 15,
+      "title": {
+        "ru": "Подготовка, работа и пейзажи",
+        "en": "N3 Lesson 15"
+      },
+      "theme": {
+        "ru": "Подготовка, работа и пейзажи",
+        "en": "N3 Lesson 15"
+      },
+      "kanji": [
+        "師",
+        "告",
+        "深",
+        "存",
+        "争",
+        "覚",
+        "側",
+        "飛",
+        "参",
+        "突"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "みたいだ",
+        "らしい",
+        "そうだ"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この教師について、もう少し詳しく説明してください。",
+          "reading": "このきょうしについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «учитель».",
+          "en": "Please explain the topic of учитель in more detail."
+        },
+        {
+          "jp": "最近、告げるに関する記事を読みました。",
+          "reading": "さいきん、つげるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «сообщать».",
+          "en": "Recently I read an article related to сообщать."
+        },
+        {
+          "jp": "もし深いが必要なら、先に準備しておきます。",
+          "reading": "もしふかいがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится глубокий, я подготовлюсь заранее.",
+          "en": "If глубокий is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "師",
+        "告",
+        "深"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-16",
+      "level": "N3",
+      "order": 16,
+      "title": {
+        "ru": "Желания, договоры и ограничения",
+        "en": "N3 Lesson 16"
+      },
+      "theme": {
+        "ru": "Желания, договоры и ограничения",
+        "en": "N3 Lesson 16"
+      },
+      "kanji": [
+        "容",
+        "育",
+        "構",
+        "認",
+        "位",
+        "達",
+        "守",
+        "満",
+        "消",
+        "任"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "そうだ",
+        "っぽい",
+        "がち"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この内容について、もう少し詳しく説明してください。",
+          "reading": "このないようについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «содержание».",
+          "en": "Please explain the topic of содержание in more detail."
+        },
+        {
+          "jp": "最近、育てるに関する記事を読みました。",
+          "reading": "さいきん、そだてるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «растить».",
+          "en": "Recently I read an article related to растить."
+        },
+        {
+          "jp": "もし構成が必要なら、先に準備しておきます。",
+          "reading": "もしこうせいがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится структура, я подготовлюсь заранее.",
+          "en": "If структура is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "容",
+        "育",
+        "構"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-17",
+      "level": "N3",
+      "order": 17,
+      "title": {
+        "ru": "Наука, просьбы и разговоры",
+        "en": "N3 Lesson 17"
+      },
+      "theme": {
+        "ru": "Наука, просьбы и разговоры",
+        "en": "N3 Lesson 17"
+      },
+      "kanji": [
+        "居",
+        "予",
+        "路",
+        "座",
+        "客",
+        "船",
+        "追",
+        "背",
+        "観",
+        "誰"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "がち",
+        "気味",
+        "っぱなし"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この居るについて、もう少し詳しく説明してください。",
+          "reading": "このいるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «находиться».",
+          "en": "Please explain the topic of находиться in more detail."
+        },
+        {
+          "jp": "最近、予定に関する記事を読みました。",
+          "reading": "さいきん、よていにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «план».",
+          "en": "Recently I read an article related to план."
+        },
+        {
+          "jp": "もし道路が必要なら、先に準備しておきます。",
+          "reading": "もしどうろがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится дорога, я подготовлюсь заранее.",
+          "en": "If дорога is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "居",
+        "予",
+        "路"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-18",
+      "level": "N3",
+      "order": 18,
+      "title": {
+        "ru": "Погода, счастье и классификация",
+        "en": "N3 Lesson 18"
+      },
+      "theme": {
+        "ru": "Погода, счастье и классификация",
+        "en": "N3 Lesson 18"
+      },
+      "kanji": [
+        "息",
+        "失",
+        "老",
+        "良",
+        "示",
+        "号",
+        "職",
+        "王",
+        "識",
+        "警"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "っぱなし",
+        "まま",
+        "最中に"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この息について、もう少し詳しく説明してください。",
+          "reading": "このいきについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «дыхание».",
+          "en": "Please explain the topic of дыхание in more detail."
+        },
+        {
+          "jp": "最近、失うに関する記事を読みました。",
+          "reading": "さいきん、うしなうにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «терять».",
+          "en": "Recently I read an article related to терять."
+        },
+        {
+          "jp": "もし老いるが必要なら、先に準備しておきます。",
+          "reading": "もしおいるがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится стареть, я подготовлюсь заранее.",
+          "en": "If стареть is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "息",
+        "失",
+        "老"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-19",
+      "level": "N3",
+      "order": 19,
+      "title": {
+        "ru": "Правила, труд и расходы",
+        "en": "N3 Lesson 19"
+      },
+      "theme": {
+        "ru": "Правила, труд и расходы",
+        "en": "N3 Lesson 19"
+      },
+      "kanji": [
+        "優",
+        "投",
+        "局",
+        "難",
+        "種",
+        "念",
+        "寄",
+        "商",
+        "害",
+        "頼"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "最中に",
+        "うちに",
+        "たびに"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この優しいについて、もう少し詳しく説明してください。",
+          "reading": "このやさしいについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «добрый».",
+          "en": "Please explain the topic of добрый in more detail."
+        },
+        {
+          "jp": "最近、投げるに関する記事を読みました。",
+          "reading": "さいきん、なげるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «бросать».",
+          "en": "Recently I read an article related to бросать."
+        },
+        {
+          "jp": "もし郵便局が必要なら、先に準備しておきます。",
+          "reading": "もしゆうびんきょくがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится почта, я подготовлюсь заранее.",
+          "en": "If почта is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "優",
+        "投",
+        "局"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-20",
+      "level": "N3",
+      "order": 20,
+      "title": {
+        "ru": "Побег, поиск и сомнение",
+        "en": "N3 Lesson 20"
+      },
+      "theme": {
+        "ru": "Побег, поиск и сомнение",
+        "en": "N3 Lesson 20"
+      },
+      "kanji": [
+        "横",
+        "増",
+        "差",
+        "苦",
+        "収",
+        "段",
+        "俺",
+        "渡",
+        "与",
+        "演"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "たびに",
+        "ついでに",
+        "て以来"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この横について、もう少し詳しく説明してください。",
+          "reading": "このよこについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «бок».",
+          "en": "Please explain the topic of бок in more detail."
+        },
+        {
+          "jp": "最近、増えるに関する記事を読みました。",
+          "reading": "さいきん、ふえるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «увеличиваться».",
+          "en": "Recently I read an article related to увеличиваться."
+        },
+        {
+          "jp": "もし差が必要なら、先に準備しておきます。",
+          "reading": "もしさがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится разница, я подготовлюсь заранее.",
+          "en": "If разница is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "横",
+        "増",
+        "差"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-21",
+      "level": "N3",
+      "order": 21,
+      "title": {
+        "ru": "Инструменты, скорость и сцена",
+        "en": "N3 Lesson 21"
+      },
+      "theme": {
+        "ru": "Инструменты, скорость и сцена",
+        "en": "N3 Lesson 21"
+      },
+      "kanji": [
+        "備",
+        "申",
+        "例",
+        "働",
+        "景",
+        "抜",
+        "遠",
+        "絶",
+        "負",
+        "福"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "て以来",
+        "たとたん",
+        "たとえ〜ても"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この準備について、もう少し詳しく説明してください。",
+          "reading": "このじゅんびについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «подготовка».",
+          "en": "Please explain the topic of подготовка in more detail."
+        },
+        {
+          "jp": "最近、申すに関する記事を読みました。",
+          "reading": "さいきん、もうすにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «говорить».",
+          "en": "Recently I read an article related to говорить."
+        },
+        {
+          "jp": "もし例が必要なら、先に準備しておきます。",
+          "reading": "もしれいがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится пример, я подготовлюсь заранее.",
+          "en": "If пример is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "備",
+        "申",
+        "例"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-22",
+      "level": "N3",
+      "order": 22,
+      "title": {
+        "ru": "Дом, рисунок и опасность",
+        "en": "N3 Lesson 22"
+      },
+      "theme": {
+        "ru": "Дом, рисунок и опасность",
+        "en": "N3 Lesson 22"
+      },
+      "kanji": [
+        "球",
+        "酒",
+        "君",
+        "察",
+        "望",
+        "婚",
+        "単",
+        "押",
+        "割",
+        "限"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "たとえ〜ても",
+        "としても",
+        "にしても"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この球について、もう少し詳しく説明してください。",
+          "reading": "このきゅうについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «шар».",
+          "en": "Please explain the topic of шар in more detail."
+        },
+        {
+          "jp": "最近、酒に関する記事を読みました。",
+          "reading": "さいきん、さけにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «алкоголь».",
+          "en": "Recently I read an article related to алкоголь."
+        },
+        {
+          "jp": "もし君が必要なら、先に準備しておきます。",
+          "reading": "もしきみがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится ты, я подготовлюсь заранее.",
+          "en": "If ты is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "球",
+        "酒",
+        "君"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-23",
+      "level": "N3",
+      "order": 23,
+      "title": {
+        "ru": "Имущество, игра и страх",
+        "en": "N3 Lesson 23"
+      },
+      "theme": {
+        "ru": "Имущество, игра и страх",
+        "en": "N3 Lesson 23"
+      },
+      "kanji": [
+        "戻",
+        "科",
+        "求",
+        "談",
+        "降",
+        "妻",
+        "岡",
+        "熱",
+        "浮",
+        "等"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "にしても",
+        "からといって",
+        "ものなら"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この戻るについて、もう少し詳しく説明してください。",
+          "reading": "このもどるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «возвращаться».",
+          "en": "Please explain the topic of возвращаться in more detail."
+        },
+        {
+          "jp": "最近、科学に関する記事を読みました。",
+          "reading": "さいきん、かがくにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «наука».",
+          "en": "Recently I read an article related to наука."
+        },
+        {
+          "jp": "もし求めるが必要なら、先に準備しておきます。",
+          "reading": "もしもとめるがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится требовать, я подготовлюсь заранее.",
+          "en": "If требовать is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "戻",
+        "科",
+        "求"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-24",
+      "level": "N3",
+      "order": 24,
+      "title": {
+        "ru": "Мечты, боль и завершение",
+        "en": "N3 Lesson 24"
+      },
+      "theme": {
+        "ru": "Мечты, боль и завершение",
+        "en": "N3 Lesson 24"
+      },
+      "kanji": [
+        "末",
+        "幸",
+        "草",
+        "越",
+        "登",
+        "類",
+        "未",
+        "規",
+        "精",
+        "抱"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ものなら",
+        "について",
+        "に関して"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この週末について、もう少し詳しく説明してください。",
+          "reading": "このしゅうまつについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «выходные».",
+          "en": "Please explain the topic of выходные in more detail."
+        },
+        {
+          "jp": "最近、幸せに関する記事を読みました。",
+          "reading": "さいきん、しあわせにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «счастье».",
+          "en": "Recently I read an article related to счастье."
+        },
+        {
+          "jp": "もし草が必要なら、先に準備しておきます。",
+          "reading": "もしくさがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится трава, я подготовлюсь заранее.",
+          "en": "If трава is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "末",
+        "幸",
+        "草"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-25",
+      "level": "N3",
+      "order": 25,
+      "title": {
+        "ru": "Просьбы, вина и путь",
+        "en": "N3 Lesson 25"
+      },
+      "theme": {
+        "ru": "Просьбы, вина и путь",
+        "en": "N3 Lesson 25"
+      },
+      "kanji": [
+        "労",
+        "処",
+        "退",
+        "費",
+        "非",
+        "喜",
+        "娘",
+        "逃",
+        "探",
+        "犯"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "に関して",
+        "に対して",
+        "にとって"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この労働について、もう少し詳しく説明してください。",
+          "reading": "このろうどうについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «труд».",
+          "en": "Please explain the topic of труд in more detail."
+        },
+        {
+          "jp": "最近、処理に関する記事を読みました。",
+          "reading": "さいきん、しょりにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «обработка».",
+          "en": "Recently I read an article related to обработка."
+        },
+        {
+          "jp": "もし退職が必要なら、先に準備しておきます。",
+          "reading": "もしたいしょくがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится увольнение, я подготовлюсь заранее.",
+          "en": "If увольнение is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "労",
+        "処",
+        "退"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-26",
+      "level": "N3",
+      "order": 26,
+      "title": {
+        "ru": "Погода, эмоции и ответственность",
+        "en": "N3 Lesson 26"
+      },
+      "theme": {
+        "ru": "Погода, эмоции и ответственность",
+        "en": "N3 Lesson 26"
+      },
+      "kanji": [
+        "薬",
+        "園",
+        "疑",
+        "緒",
+        "静",
+        "具",
+        "席",
+        "速",
+        "舞",
+        "宿"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "にとって",
+        "として",
+        "によって"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この薬について、もう少し詳しく説明してください。",
+          "reading": "このくすりについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «лекарство».",
+          "en": "Please explain the topic of лекарство in more detail."
+        },
+        {
+          "jp": "最近、公園に関する記事を読みました。",
+          "reading": "さいきん、こうえんにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «парк».",
+          "en": "Recently I read an article related to парк."
+        },
+        {
+          "jp": "もし疑うが必要なら、先に準備しておきます。",
+          "reading": "もしうたがうがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится сомневаться, я подготовлюсь заранее.",
+          "en": "If сомневаться is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "薬",
+        "園",
+        "疑"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-27",
+      "level": "N3",
+      "order": 27,
+      "title": {
+        "ru": "Закрытие, сон и семья",
+        "en": "N3 Lesson 27"
+      },
+      "theme": {
+        "ru": "Закрытие, сон и семья",
+        "en": "N3 Lesson 27"
+      },
+      "kanji": [
+        "程",
+        "倒",
+        "寝",
+        "宅",
+        "絵",
+        "破",
+        "庭",
+        "婦",
+        "余",
+        "訪"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "によって",
+        "によると",
+        "を通して"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この程度について、もう少し詳しく説明してください。",
+          "reading": "このていどについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «степень».",
+          "en": "Please explain the topic of степень in more detail."
+        },
+        {
+          "jp": "最近、倒れるに関する記事を読みました。",
+          "reading": "さいきん、たおれるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «падать».",
+          "en": "Recently I read an article related to падать."
+        },
+        {
+          "jp": "もし寝るが必要なら、先に準備しておきます。",
+          "reading": "もしねるがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится спать, я подготовлюсь заранее.",
+          "en": "If спать is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "程",
+        "倒",
+        "寝"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-28",
+      "level": "N3",
+      "order": 28,
+      "title": {
+        "ru": "Работа, удобство и кандидаты",
+        "en": "N3 Lesson 28"
+      },
+      "theme": {
+        "ru": "Работа, удобство и кандидаты",
+        "en": "N3 Lesson 28"
+      },
+      "kanji": [
+        "冷",
+        "暮",
+        "腹",
+        "危",
+        "許",
+        "似",
+        "険",
+        "財",
+        "遊",
+        "雑"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "を通して",
+        "を中心に",
+        "に沿って"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この冷たいについて、もう少し詳しく説明してください。",
+          "reading": "このつめたいについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «холодный».",
+          "en": "Please explain the topic of холодный in more detail."
+        },
+        {
+          "jp": "最近、暮らすに関する記事を読みました。",
+          "reading": "さいきん、くらすにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «жить».",
+          "en": "Recently I read an article related to жить."
+        },
+        {
+          "jp": "もし腹が必要なら、先に準備しておきます。",
+          "reading": "もしはらがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится живот, я подготовлюсь заранее.",
+          "en": "If живот is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "冷",
+        "暮",
+        "腹"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-29",
+      "level": "N3",
+      "order": 29,
+      "title": {
+        "ru": "Страх, отрицание и опоздание",
+        "en": "N3 Lesson 29"
+      },
+      "theme": {
+        "ru": "Страх, отрицание и опоздание",
+        "en": "N3 Lesson 29"
+      },
+      "kanji": [
+        "恐",
+        "値",
+        "暗",
+        "積",
+        "夢",
+        "痛",
+        "富",
+        "刻",
+        "鳴",
+        "欲"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "に沿って",
+        "だけでなく",
+        "ばかりでなく"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この恐いについて、もう少し詳しく説明してください。",
+          "reading": "このこわいについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «страшный».",
+          "en": "Please explain the topic of страшный in more detail."
+        },
+        {
+          "jp": "最近、値段に関する記事を読みました。",
+          "reading": "さいきん、ねだんにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «цена».",
+          "en": "Recently I read an article related to цена."
+        },
+        {
+          "jp": "もし暗いが必要なら、先に準備しておきます。",
+          "reading": "もしくらいがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится темный, я подготовлюсь заранее.",
+          "en": "If темный is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "恐",
+        "値",
+        "暗"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-30",
+      "level": "N3",
+      "order": 30,
+      "title": {
+        "ru": "Ученики, стирка и привычки",
+        "en": "N3 Lesson 30"
+      },
+      "theme": {
+        "ru": "Ученики, стирка и привычки",
+        "en": "N3 Lesson 30"
+      },
+      "kanji": [
+        "途",
+        "曲",
+        "耳",
+        "完",
+        "願",
+        "罪",
+        "陽",
+        "亡",
+        "散",
+        "掛"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ばかりでなく",
+        "に加えて",
+        "はもちろん"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この途中について、もう少し詳しく説明してください。",
+          "reading": "このとちゅうについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «по пути».",
+          "en": "Please explain the topic of по пути in more detail."
+        },
+        {
+          "jp": "最近、曲に関する記事を読みました。",
+          "reading": "さいきん、きょくにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «песня».",
+          "en": "Recently I read an article related to песня."
+        },
+        {
+          "jp": "もし耳が必要なら、先に準備しておきます。",
+          "reading": "もしみみがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится ухо, я подготовлюсь заранее.",
+          "en": "If ухо is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "途",
+        "曲",
+        "耳"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-31",
+      "level": "N3",
+      "order": 31,
+      "title": {
+        "ru": "Вечер, прибытие и приглашения",
+        "en": "N3 Lesson 31"
+      },
+      "theme": {
+        "ru": "Вечер, прибытие и приглашения",
+        "en": "N3 Lesson 31"
+      },
+      "kanji": [
+        "昨",
+        "怒",
+        "留",
+        "礼",
+        "列",
+        "雪",
+        "払",
+        "給",
+        "敗",
+        "捕"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "はもちろん",
+        "を除いて",
+        "つまり"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この昨日について、もう少し詳しく説明してください。",
+          "reading": "このきのうについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «вчера».",
+          "en": "Please explain the topic of вчера in more detail."
+        },
+        {
+          "jp": "最近、怒るに関する記事を読みました。",
+          "reading": "さいきん、おこるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «злиться».",
+          "en": "Recently I read an article related to злиться."
+        },
+        {
+          "jp": "もし留学が必要なら、先に準備しておきます。",
+          "reading": "もしりゅうがくがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится учеба за границей, я подготовлюсь заранее.",
+          "en": "If учеба за границей is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "昨",
+        "怒",
+        "留"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-32",
+      "level": "N3",
+      "order": 32,
+      "title": {
+        "ru": "Холод, усталость и бедность",
+        "en": "N3 Lesson 32"
+      },
+      "theme": {
+        "ru": "Холод, усталость и бедность",
+        "en": "N3 Lesson 32"
+      },
+      "kanji": [
+        "忘",
+        "晴",
+        "因",
+        "折",
+        "迎",
+        "悲",
+        "港",
+        "責",
+        "除",
+        "困"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "つまり",
+        "そのため",
+        "すると"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この忘れるについて、もう少し詳しく説明してください。",
+          "reading": "このわすれるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «забывать».",
+          "en": "Please explain the topic of забывать in more detail."
+        },
+        {
+          "jp": "最近、晴れるに関する記事を読みました。",
+          "reading": "さいきん、はれるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «проясниться».",
+          "en": "Recently I read an article related to проясниться."
+        },
+        {
+          "jp": "もし原因が必要なら、先に準備しておきます。",
+          "reading": "もしげんいんがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится причина, я подготовлюсь заранее.",
+          "en": "If причина is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "忘",
+        "晴",
+        "因"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-33",
+      "level": "N3",
+      "order": 33,
+      "title": {
+        "ru": "Ошибки, старание и случайность",
+        "en": "N3 Lesson 33"
+      },
+      "theme": {
+        "ru": "Ошибки, старание и случайность",
+        "en": "N3 Lesson 33"
+      },
+      "kanji": [
+        "閉",
+        "吸",
+        "髪",
+        "束",
+        "眠",
+        "易",
+        "窓",
+        "祖",
+        "勤",
+        "昔"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "すると",
+        "一方で",
+        "ただし"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この閉めるについて、もう少し詳しく説明してください。",
+          "reading": "このしめるについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «закрывать».",
+          "en": "Please explain the topic of закрывать in more detail."
+        },
+        {
+          "jp": "最近、吸うに関する記事を読みました。",
+          "reading": "さいきん、すうにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «вдыхать/курить».",
+          "en": "Recently I read an article related to вдыхать/курить."
+        },
+        {
+          "jp": "もし髪が必要なら、先に準備しておきます。",
+          "reading": "もしかみがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится волосы, я подготовлюсь заранее.",
+          "en": "If волосы is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "閉",
+        "吸",
+        "髪"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-34",
+      "level": "N3",
+      "order": 34,
+      "title": {
+        "ru": "Занятость, плавание и обувь",
+        "en": "N3 Lesson 34"
+      },
+      "theme": {
+        "ru": "Занятость, плавание и обувь",
+        "en": "N3 Lesson 34"
+      },
+      "kanji": [
+        "便",
+        "適",
+        "吹",
+        "候",
+        "怖",
+        "辞",
+        "否",
+        "遅",
+        "煙",
+        "徒"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "ただし",
+        "なんて",
+        "こそ"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この便利について、もう少し詳しく説明してください。",
+          "reading": "このべんりについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «удобный».",
+          "en": "Please explain the topic of удобный in more detail."
+        },
+        {
+          "jp": "最近、適当に関する記事を読みました。",
+          "reading": "さいきん、てきとうにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «подходящий/случайный».",
+          "en": "Recently I read an article related to подходящий/случайный."
+        },
+        {
+          "jp": "もし吹くが必要なら、先に準備しておきます。",
+          "reading": "もしふくがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится дуть, я подготовлюсь заранее.",
+          "en": "If дуть is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "便",
+        "適",
+        "吹"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-35",
+      "level": "N3",
+      "order": 35,
+      "title": {
+        "ru": "N3 повторение: человек и общество",
+        "en": "N3 Lesson 35"
+      },
+      "theme": {
+        "ru": "N3 повторение: человек и общество",
+        "en": "N3 Lesson 35"
+      },
+      "kanji": [
+        "欠",
+        "迷",
+        "洗",
+        "互",
+        "才",
+        "更",
+        "歯",
+        "盗",
+        "慣",
+        "晩"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "こそ",
+        "さえ",
+        "せっかく"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この欠席について、もう少し詳しく説明してください。",
+          "reading": "このけっせきについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «отсутствие».",
+          "en": "Please explain the topic of отсутствие in more detail."
+        },
+        {
+          "jp": "最近、迷うに関する記事を読みました。",
+          "reading": "さいきん、まようにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «заблудиться/сомневаться».",
+          "en": "Recently I read an article related to заблудиться/сомневаться."
+        },
+        {
+          "jp": "もし洗うが必要なら、先に準備しておきます。",
+          "reading": "もしあらうがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится мыть, я подготовлюсь заранее.",
+          "en": "If мыть is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "欠",
+        "迷",
+        "洗"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-36",
+      "level": "N3",
+      "order": 36,
+      "title": {
+        "ru": "N3 повторение: учеба и работа",
+        "en": "N3 Lesson 36"
+      },
+      "theme": {
+        "ru": "N3 повторение: учеба и работа",
+        "en": "N3 Lesson 36"
+      },
+      "kanji": [
+        "箱",
+        "到",
+        "頂",
+        "杯",
+        "皆",
+        "招",
+        "寒",
+        "恥",
+        "疲",
+        "貧"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "せっかく",
+        "わざわざ",
+        "において"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この箱について、もう少し詳しく説明してください。",
+          "reading": "このはこについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «коробка».",
+          "en": "Please explain the topic of коробка in more detail."
+        },
+        {
+          "jp": "最近、到着に関する記事を読みました。",
+          "reading": "さいきん、とうちゃくにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «прибытие».",
+          "en": "Recently I read an article related to прибытие."
+        },
+        {
+          "jp": "もし頂くが必要なら、先に準備しておきます。",
+          "reading": "もしいただくがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится получать/есть, я подготовлюсь заранее.",
+          "en": "If получать/есть is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "箱",
+        "到",
+        "頂"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    },
+    {
+      "id": "n3-lesson-37",
+      "level": "N3",
+      "order": 37,
+      "title": {
+        "ru": "N3 повторение: экзамен и чтение",
+        "en": "N3 Lesson 37"
+      },
+      "theme": {
+        "ru": "N3 повторение: экзамен и чтение",
+        "en": "N3 Lesson 37"
+      },
+      "kanji": [
+        "猫",
+        "誤",
+        "努",
+        "幾",
+        "賛",
+        "偶",
+        "忙",
+        "泳",
+        "靴",
+        "偉"
+      ],
+      "goal": {
+        "ru": "узнать знаки, привязать их к словам и использовать в коротких N3-предложениях.",
+        "en": "Study the lesson through kanji, words, grammar, sentence, and review."
+      },
+      "durationMinutes": 40,
+      "grammarFocus": [
+        "において",
+        "により",
+        "に基づいて"
+      ],
+      "grammarCards": [],
+      "sentences": [
+        {
+          "jp": "この猫について、もう少し詳しく説明してください。",
+          "reading": "このねこについて、もうすこしくわしくせつめいしてください。",
+          "ru": "Пожалуйста, объясните подробнее тему «кот».",
+          "en": "Please explain the topic of кот in more detail."
+        },
+        {
+          "jp": "最近、誤るに関する記事を読みました。",
+          "reading": "さいきん、あやまるにかんするきじをよみました。",
+          "ru": "Недавно я прочитал статью, связанную с темой «ошибаться».",
+          "en": "Recently I read an article related to ошибаться."
+        },
+        {
+          "jp": "もし努めるが必要なら、先に準備しておきます。",
+          "reading": "もしつとめるがひつようなら、さきにじゅんびしておきます。",
+          "ru": "Если понадобится стараться, я подготовлюсь заранее.",
+          "en": "If стараться is needed, I will prepare in advance."
+        },
+        {
+          "jp": "この問題は簡単そうに見えますが、実は複雑です。",
+          "reading": "このもんだいはかんたんそうにみえますが、じつはふくざつです。",
+          "ru": "Эта задача выглядит простой, но на самом деле она сложная.",
+          "en": "This problem looks simple, but in fact it is complex."
+        },
+        {
+          "jp": "Flash Kanjiで言葉と文を一緒に覚えましょう。",
+          "reading": "フラッシュカンジでことばとぶんをいっしょにおぼえましょう。",
+          "ru": "Запоминай слова и предложения вместе во Flash Kanji.",
+          "en": "Learn words and sentences together in Flash Kanji."
+        }
+      ],
+      "writing": [
+        "猫",
+        "誤",
+        "努"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        45,
+        60
+      ],
+      "miniReadingId": null
+    }
+  ]
+}

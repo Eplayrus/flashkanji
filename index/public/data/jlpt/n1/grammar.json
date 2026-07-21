@@ -1,0 +1,375 @@
+{
+  "version": 1,
+  "level": "N1",
+  "generatedAt": "2026-06-11T10:44:21.438595+00:00",
+  "textbook": {
+    "jlpt": "N1",
+    "slug": "n1",
+    "title": {
+      "ru": "N1: тексты и нюансы",
+      "en": "N1: Texts and Nuance"
+    },
+    "displayTitle": {
+      "ru": "Тексты и нюансы",
+      "en": "Texts and Nuance"
+    },
+    "description": {
+      "ru": "Плотные тексты, авторская позиция, абстрактная лексика и продвинутая грамматика. Верхний слой базы.",
+      "en": "Dense texts, author stance, abstract vocabulary, and advanced grammar. The top layer of the base."
+    },
+    "goal": {
+      "ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.",
+      "en": "Break down long phrases, rare readings, and meaning nuance in reading."
+    },
+    "recommendedCycle": {
+      "ru": "Повторяй каждые 5-7 дней с точечным возвратом к слабым карточкам.",
+      "en": "Review every 5-7 days with targeted returns to weak cards."
+    },
+    "previousLevels": [
+      "N5",
+      "N4",
+      "N3",
+      "N2"
+    ],
+    "nextLevels": [],
+    "coverImage": "assets/bg/bg_silent_road.webp",
+    "pdfFile": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+    "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+    "lessonIds": [
+      "bulk-n1-01",
+      "bulk-n1-02",
+      "bulk-n1-03",
+      "bulk-n1-04",
+      "bulk-n1-05",
+      "bulk-n1-06",
+      "bulk-n1-07",
+      "bulk-n1-08",
+      "bulk-n1-09",
+      "bulk-n1-10",
+      "bulk-n1-11"
+    ],
+    "lessonCount": 11,
+    "kanjiCount": 220,
+    "cardCount": 220,
+    "files": {
+      "kanji": "data/jlpt/n1/kanji.json",
+      "lessons": "data/jlpt/n1/lessons.json",
+      "grammar": "data/jlpt/n1/grammar.json",
+      "reading": "data/jlpt/n1/reading.json",
+      "listening": "data/jlpt/n1/listening.json",
+      "tests": "data/jlpt/n1/tests.json"
+    }
+  },
+  "items": [
+    {
+      "id": "grammar-n1-overview",
+      "kind": "overview",
+      "level": "N1",
+      "title": {
+        "ru": "JLPT N1: редкие кандзи, нюансы и чтение без опоры",
+        "en": "JLPT N1: Rare Kanji, Nuance, and Independent Reading"
+      },
+      "summary": {
+        "ru": "Высший уровень: редкие символы, книжная лексика, официальные тексты, нюансы оттенков значения.",
+        "en": "The highest level: rare characters, literary vocabulary, official texts, and nuanced meanings."
+      },
+      "goals": [
+        {
+          "ru": "Стабильно узнавать редкие формы и похожие компоненты.",
+          "en": "Recognize rare forms and similar components consistently."
+        },
+        {
+          "ru": "Строить значение слова из контекста, даже если чтение не идеально.",
+          "en": "Infer word meaning from context even when the reading is not perfect."
+        },
+        {
+          "ru": "Держать повторения без перегруза за счёт честной двухкнопочной SRS.",
+          "en": "Keep reviews manageable through honest two-button SRS."
+        }
+      ],
+      "sections": [
+        {
+          "title": {
+            "ru": "Что меняется на N1",
+            "en": "What Changes At N1"
+          },
+          "body": {
+            "ru": "N1 меньше похож на список символов и больше на чтение реальных текстов. Важны оттенки: 称, 納, 樹, 論, 認, 議, 影 и похожие семейства.",
+            "en": "N1 is less a list of characters and more real reading. Nuance matters: 称, 納, 樹, 論, 認, 議, 影, and related families."
+          },
+          "points": [
+            {
+              "ru": "Сравнивай близкие слова и не бойся возвращать карточку в повтор.",
+              "en": "Compare close words and do not fear sending a card back to review."
+            },
+            {
+              "ru": "Используй предложения и собственные источники как главный режим практики.",
+              "en": "Use sentence practice and custom sources as your main practice mode."
+            }
+          ]
+        },
+        {
+          "title": {
+            "ru": "Стратегия удержания",
+            "en": "Retention Strategy"
+          },
+          "body": {
+            "ru": "На N1 лучше меньше новых карточек, но больше контекста. Если 4 раза подряд попался один и тот же тип, меняй режим: письмо, предложения, словарь.",
+            "en": "At N1, fewer new cards and more context often works better. If the same type repeats too often, switch modes: writing, sentences, dictionary."
+          },
+          "points": [
+            {
+              "ru": "Избранное и письмо нужны для визуально похожих символов.",
+              "en": "Favorites and writing help with visually similar characters."
+            },
+            {
+              "ru": "Система сама растянет интервалы, когда успешность будет высокой.",
+              "en": "The system stretches intervals automatically when success becomes high."
+            }
+          ]
+        }
+      ],
+      "practice": [
+        {
+          "ru": "Добавь сложные предложения из новостей, документации или интерфейсов.",
+          "en": "Add complex sentences from news, documentation, or interfaces."
+        },
+        {
+          "ru": "Проверяй не только значение, но и уверенность чтения.",
+          "en": "Check both meaning and reading confidence."
+        }
+      ],
+      "checkpoint": [
+        {
+          "ru": "Можешь читать длинное предложение, не теряя грамматическую структуру.",
+          "en": "You can read a long sentence without losing its grammatical structure."
+        },
+        {
+          "ru": "Удерживаешь N1-карточки в Review/Mastered без лавины ошибок.",
+          "en": "You keep N1 cards in Review/Mastered without an error avalanche."
+        }
+      ]
+    },
+    {
+      "id": "grammar-n1-01",
+      "kind": "section",
+      "level": "N1",
+      "title": {
+        "ru": "Что меняется на N1",
+        "en": "What Changes At N1"
+      },
+      "body": {
+        "ru": "N1 меньше похож на список символов и больше на чтение реальных текстов. Важны оттенки: 称, 納, 樹, 論, 認, 議, 影 и похожие семейства.",
+        "en": "N1 is less a list of characters and more real reading. Nuance matters: 称, 納, 樹, 論, 認, 議, 影, and related families."
+      },
+      "points": [
+        {
+          "ru": "Сравнивай близкие слова и не бойся возвращать карточку в повтор.",
+          "en": "Compare close words and do not fear sending a card back to review."
+        },
+        {
+          "ru": "Используй предложения и собственные источники как главный режим практики.",
+          "en": "Use sentence practice and custom sources as your main practice mode."
+        }
+      ]
+    },
+    {
+      "id": "grammar-n1-02",
+      "kind": "section",
+      "level": "N1",
+      "title": {
+        "ru": "Стратегия удержания",
+        "en": "Retention Strategy"
+      },
+      "body": {
+        "ru": "На N1 лучше меньше новых карточек, но больше контекста. Если 4 раза подряд попался один и тот же тип, меняй режим: письмо, предложения, словарь.",
+        "en": "At N1, fewer new cards and more context often works better. If the same type repeats too often, switch modes: writing, sentences, dictionary."
+      },
+      "points": [
+        {
+          "ru": "Избранное и письмо нужны для визуально похожих символов.",
+          "en": "Favorites and writing help with visually similar characters."
+        },
+        {
+          "ru": "Система сама растянет интервалы, когда успешность будет высокой.",
+          "en": "The system stretches intervals automatically when success becomes high."
+        }
+      ]
+    },
+    {
+      "id": "n1-overlay-itaru",
+      "kind": "pattern",
+      "level": "N1",
+      "order": 3,
+      "pattern": "に至るまで",
+      "title": {
+        "ru": "до самой крайней точки",
+        "en": "up to the final point"
+      },
+      "explanation": {
+        "ru": "Показывает полный диапазон: от начальной точки до предела. В N1-текстах часто используется для официального охвата темы.",
+        "en": "Marks a full range from the starting point to the limit. In N1 texts it often frames official coverage."
+      },
+      "formula": "A から B に至るまで",
+      "examples": [
+        {
+          "jp": "氏名の確認から保護方針の統一に至るまでを第一段階とした。",
+          "reading": "しめいのかくにんからほごほうしんのとういつにいたるまでをだいいちだんかいとした。",
+          "ru": "Первым этапом сделали всё от проверки имён до унификации политики защиты.",
+          "en": "Everything from name verification to unified protection policy was set as the first stage."
+        }
+      ],
+      "question": {
+        "ru": "Какая функция у に至るまで?",
+        "en": "What does に至るまで do?"
+      },
+      "answer": "range",
+      "options": [
+        "range",
+        "quote",
+        "place",
+        "owner"
+      ]
+    },
+    {
+      "id": "n1-overlay-motte",
+      "kind": "pattern",
+      "level": "N1",
+      "order": 4,
+      "pattern": "をもって",
+      "title": {
+        "ru": "посредством / на основании",
+        "en": "by means of / on the basis of"
+      },
+      "explanation": {
+        "ru": "Формальная связка для средства, основания или момента завершения.",
+        "en": "A formal connector for means, basis, or point of completion."
+      },
+      "formula": "N をもって",
+      "examples": [
+        {
+          "jp": "本案をもって第一段階を終了する。",
+          "reading": "ほんあんをもってだいいちだんかいをしゅうりょうする。",
+          "ru": "Этим планом завершается первый этап.",
+          "en": "The first stage concludes with this proposal."
+        }
+      ],
+      "question": {
+        "ru": "Что подчёркивает をもって?",
+        "en": "What does をもって emphasize?"
+      },
+      "answer": "formal-basis",
+      "options": [
+        "formal-basis",
+        "casual-emotion",
+        "simple-place",
+        "question"
+      ]
+    },
+    {
+      "id": "n1-overlay-sokushite",
+      "kind": "pattern",
+      "level": "N1",
+      "order": 5,
+      "pattern": "に即して",
+      "title": {
+        "ru": "в соответствии с",
+        "en": "in line with"
+      },
+      "explanation": {
+        "ru": "Показывает, что действие строится по фактам, правилам или позиции.",
+        "en": "Shows that an action follows facts, rules, or a stated position."
+      },
+      "formula": "N に即して",
+      "examples": [
+        {
+          "jp": "各派の意見に即して対策を講じる。",
+          "reading": "かくはのいけんにそくしてたいさくをこうじる。",
+          "ru": "Принять меры в соответствии с мнениями каждой фракции.",
+          "en": "Take countermeasures in line with each faction's views."
+        }
+      ],
+      "question": {
+        "ru": "Какую связь даёт に即して?",
+        "en": "What relation does に即して express?"
+      },
+      "answer": "according-to",
+      "options": [
+        "according-to",
+        "because-of-emotion",
+        "before-time",
+        "speaker-quote"
+      ]
+    },
+    {
+      "id": "n1-overlay-yogi",
+      "kind": "pattern",
+      "level": "N1",
+      "order": 6,
+      "pattern": "を余儀なくされる",
+      "title": {
+        "ru": "быть вынужденным",
+        "en": "be forced to"
+      },
+      "explanation": {
+        "ru": "Формально показывает, что субъект вынужден принять действие из-за обстоятельств.",
+        "en": "Formally states that the subject is forced into an action by circumstances."
+      },
+      "formula": "N を余儀なくされる",
+      "examples": [
+        {
+          "jp": "制度の再検討を余儀なくされた。",
+          "reading": "せいどのさいけんとうをよぎなくされた。",
+          "ru": "Пришлось пересмотреть систему.",
+          "en": "They were forced to review the system."
+        }
+      ],
+      "question": {
+        "ru": "Что показывает を余儀なくされる?",
+        "en": "What does を余儀なくされる show?"
+      },
+      "answer": "forced-action",
+      "options": [
+        "forced-action",
+        "free-choice",
+        "small-place",
+        "polite-request"
+      ]
+    },
+    {
+      "id": "n1-overlay-kakawaru",
+      "kind": "pattern",
+      "level": "N1",
+      "order": 7,
+      "pattern": "にかかわる",
+      "title": {
+        "ru": "касаться / быть связанным с",
+        "en": "concern / be connected with"
+      },
+      "explanation": {
+        "ru": "Связывает тему с важным вопросом, областью ответственности или риском.",
+        "en": "Connects a topic to an important matter, responsibility area, or risk."
+      },
+      "formula": "N にかかわる",
+      "examples": [
+        {
+          "jp": "保護方針にかかわる問題を整理する。",
+          "reading": "ほごほうしんにかかわるもんだいをせいりする。",
+          "ru": "Упорядочить вопросы, связанные с политикой защиты.",
+          "en": "Organize issues related to the protection policy."
+        }
+      ],
+      "question": {
+        "ru": "Что делает にかかわる?",
+        "en": "What does にかかわる do?"
+      },
+      "answer": "related-topic",
+      "options": [
+        "related-topic",
+        "counting",
+        "weather",
+        "direct-quote"
+      ]
+    }
+  ]
+}
