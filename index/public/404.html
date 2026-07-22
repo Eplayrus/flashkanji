@@ -6,9 +6,14 @@
   <title>Flash Kanji</title>
   <script>
     (function () {
+      const legacyIndexShell = /^\/index(?:\/dist)?\/?$/i.test(location.pathname);
       const route = location.pathname.replace(/^\/+|\/+$/g, "");
-      const target = route && !/^index(?:\.html)?$/i.test(route) ? `./index.html#${route}` : "./index.html#home";
-      window.location.replace(target);
+      const target = new URL("./", location.origin);
+      target.search = location.search;
+      target.hash = legacyIndexShell || !route || /^index(?:\.html)?$/i.test(route)
+        ? (location.hash || "#home")
+        : `#${route}`;
+      window.location.replace(target.toString());
     })();
   </script>
 </head>

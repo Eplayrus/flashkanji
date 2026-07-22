@@ -32,7 +32,7 @@ npm run generate:wiki
 3. Выбрать `Source: GitHub Actions`.
 4. Запушить в `main`/`master` или запустить workflow вручную.
 
-Workflow `.github/workflows/deploy-pages.yml` публикует папку `index/` как корень сайта. Дополнительно добавлены `index/.nojekyll` и `index/404.html`.
+Workflow `.github/workflows/deploy-pages.yml` собирает Vite-приложение из `index/` и публикует `index/dist` как корень сайта. Статические файлы для Pages лежат в `index/public/`, включая `.nojekyll`, `404.html`, `CNAME`, `robots.txt` и `sitemap.xml`.
 
 ## Что реализовано
 
@@ -63,7 +63,7 @@ Workflow `.github/workflows/deploy-pages.yml` публикует папку `ind
 Каждый урок хранится отдельно:
 
 ```text
-data/
+public/data/
   kanji/
     meta.json
     hints.json

@@ -1,5 +1,5 @@
-const CACHE_NAME = "flash-kanji-runtime";
-const SW_BUILD_VERSION = "runtime";
+const SW_BUILD_VERSION = "2026-07-22-github-pages";
+const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
   "./",

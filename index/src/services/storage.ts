@@ -1,77 +1,33 @@
-import type { UserProgress } from "../types";
+import { migrateCardProgress, type CardProgress } from "./srs";
 
-export const STORAGE_KEY = "flashKanji.progress.v1";
+export const STORAGE_KEY = "flashKanji.progress.v2";
+export const LEGACY_STORAGE_KEY = "flashKanji.progress.v1";
 
-export function createDefaultProgress(theme: "dark" | "light" = "dark"): UserProgress {
-  return {
-    version: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    settings: {
-      theme,
-      sound: true,
-      language: "ru",
-      dailyGoal: 10
-    },
-    xp: 0,
-    level: 1,
-    moonFragments: 0,
-    totalCorrect: 0,
-    totalWrong: 0,
-    correctCombo: 0,
-    bestCorrectCombo: 0,
-    cards: {},
-    daily: {},
-    favorites: {},
-    transactions: [],
-    streakHistory: [],
-    streak: {
-      current: 0,
-      best: 0,
-      lastStudyDate: null
-    },
-    lessonCompletions: {},
-    achievements: {},
-    dailyBonuses: {},
-    shop: {
-      owned: [],
-      equipped: {}
-    }
-  };
-}
-
-export function loadProgress(): UserProgress {
-  const theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-  const base = createDefaultProgress(theme);
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return base;
-
+export function readStoredProgress(storage: Pick<Storage, "getItem"> = localStorage): Record<string, unknown> | null {
+  const raw = storage.getItem(STORAGE_KEY) || storage.getItem(LEGACY_STORAGE_KEY);
+  if (!raw) return null;
   try {
-    const saved = JSON.parse(raw) as Partial<UserProgress>;
-    return {
-      ...base,
-      ...saved,
-      settings: { ...base.settings, ...saved.settings },
-      cards: { ...base.cards, ...saved.cards },
-      daily: { ...base.daily, ...saved.daily },
-      favorites: { ...base.favorites, ...saved.favorites },
-      transactions: Array.isArray(saved.transactions) ? saved.transactions : base.transactions,
-      streakHistory: Array.isArray(saved.streakHistory) ? saved.streakHistory : base.streakHistory,
-      streak: { ...base.streak, ...saved.streak },
-      lessonCompletions: { ...base.lessonCompletions, ...saved.lessonCompletions },
-      achievements: { ...base.achievements, ...saved.achievements },
-      dailyBonuses: { ...base.dailyBonuses, ...saved.dailyBonuses },
-      shop: {
-        owned: [...new Set([...(base.shop.owned || []), ...((saved.shop && saved.shop.owned) || [])])],
-        equipped: { ...base.shop.equipped, ...((saved.shop && saved.shop.equipped) || {}) }
-      }
-    };
-  } catch {
-    return base;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const record = parsed as Record<string, unknown>;
+    return record.progress && typeof record.progress === "object" ? record.progress as Record<string, unknown> : record;
+  } catch (error) {
+    console.warn("Flash Kanji ignored damaged LocalStorage progress.", error);
+    return null;
   }
 }
 
-export function saveProgress(progress: UserProgress): void {
-  progress.updatedAt = new Date().toISOString();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+export function migrateCardMap(value: unknown): Record<string, CardProgress> {
+  if (!value || typeof value !== "object") return {};
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([cardId, progress]) => [cardId, migrateCardProgress(progress)]));
+}
+
+export function writeStoredProgress(progress: unknown, storage: Pick<Storage, "setItem"> = localStorage): boolean {
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    return true;
+  } catch (error) {
+    console.warn("Flash Kanji could not save LocalStorage progress.", error);
+    return false;
+  }
 }

@@ -22631,10 +22631,15 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return;
         }
         const card = findCard(state.activeCardId);
-        const audio = normalizeAudioPath(card?.audioSrc || card?.audio || "");
-        if (!card || !audio)
+        if (!card)
             return;
-        const key = `${state.route}:${card.id}:${audio}`;
+        const speechKey = kanjiSpeechItemsForCard(card)
+            .map((item) => `${item.kind}:${item.kana}`)
+            .join("|") || getKanjiSpeechText(card);
+        const audio = normalizeAudioPath(card?.audioSrc || card?.audio || "");
+        if (!speechKey && !audio)
+            return;
+        const key = `${state.route}:${card.id}:${speechKey || audio}`;
         if (key === lastAutoAudioKey)
             return;
         lastAutoAudioKey = key;
