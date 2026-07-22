@@ -1,0 +1,503 @@
+{
+  "version": 1,
+  "level": "N1",
+  "lessonQuestionCount": 12,
+  "reviewModes": [
+    {
+      "id": "due",
+      "title": {
+        "ru": "К повторению",
+        "en": "Due"
+      }
+    },
+    {
+      "id": "difficult",
+      "title": {
+        "ru": "Сложные",
+        "en": "Difficult"
+      }
+    },
+    {
+      "id": "all",
+      "title": {
+        "ru": "Все N1",
+        "en": "All N1"
+      }
+    }
+  ],
+  "types": [
+    {
+      "type": "meaning",
+      "title": {
+        "ru": "Значение в N1-контексте",
+        "en": "Meaning in N1 context"
+      },
+      "rewardXp": 13,
+      "rewardMoon": 1
+    },
+    {
+      "type": "kanji",
+      "title": {
+        "ru": "Кандзи по смыслу",
+        "en": "Kanji from meaning"
+      },
+      "rewardXp": 13,
+      "rewardMoon": 1
+    },
+    {
+      "type": "reading",
+      "title": {
+        "ru": "Чтение слова",
+        "en": "Word reading"
+      },
+      "rewardXp": 13,
+      "rewardMoon": 1
+    },
+    {
+      "type": "missing-word",
+      "title": {
+        "ru": "Слово-опора",
+        "en": "Support word"
+      },
+      "rewardXp": 13,
+      "rewardMoon": 1
+    },
+    {
+      "type": "sentence",
+      "title": {
+        "ru": "Позиция в предложении",
+        "en": "Sentence stance"
+      },
+      "rewardXp": 14,
+      "rewardMoon": 1
+    },
+    {
+      "type": "grammar-link",
+      "title": {
+        "ru": "Грамматическая связка",
+        "en": "Grammar link"
+      },
+      "rewardXp": 14,
+      "rewardMoon": 1
+    },
+    {
+      "type": "mini-reading",
+      "title": {
+        "ru": "Мини-reading",
+        "en": "Mini reading"
+      },
+      "rewardXp": 16,
+      "rewardMoon": 1
+    },
+    {
+      "type": "author-stance",
+      "title": {
+        "ru": "Позиция автора",
+        "en": "Author stance"
+      },
+      "rewardXp": 16,
+      "rewardMoon": 1
+    },
+    {
+      "type": "active-recall",
+      "title": {
+        "ru": "Активное вспоминание",
+        "en": "Active recall"
+      },
+      "rewardXp": 15,
+      "rewardMoon": 1
+    }
+  ],
+  "lessonOverlays": [
+    {
+      "lessonId": "bulk-n1-01",
+      "intro": {
+        "ru": "Первый N1-урок собирает административную и формальную лексику:氏, 統, 保, 第, 結, 派, 案, 策. Смотри не только на перевод, а на то, кто действует, что оформляется и какой вывод делает текст.",
+        "en": "The first N1 lesson gathers administrative and formal vocabulary: 氏, 統, 保, 第, 結, 派, 案, 策. Watch not only meaning, but who acts, what is formalized, and what conclusion the text reaches."
+      },
+      "grammarFocus": [
+        "に至るまで",
+        "をもって",
+        "に即して",
+        "を余儀なくされる",
+        "にかかわる"
+      ],
+      "miniReadingId": "n1-reading-lesson-01",
+      "collocations": [
+        {
+          "jp": "氏名を確認する",
+          "reading": "しめいをかくにんする",
+          "ru": "подтвердить имя и фамилию",
+          "en": "confirm full name"
+        },
+        {
+          "jp": "統一した方針",
+          "reading": "とういつしたほうしん",
+          "ru": "единая политика",
+          "en": "unified policy"
+        },
+        {
+          "jp": "保護を求める",
+          "reading": "ほごをもとめる",
+          "ru": "запрашивать защиту",
+          "en": "seek protection"
+        },
+        {
+          "jp": "第一段階",
+          "reading": "だいいちだんかい",
+          "ru": "первый этап",
+          "en": "first stage"
+        },
+        {
+          "jp": "結論に至る",
+          "reading": "けつろんにいたる",
+          "ru": "прийти к выводу",
+          "en": "reach a conclusion"
+        },
+        {
+          "jp": "派遣の条件",
+          "reading": "はけんのじょうけん",
+          "ru": "условия направления/отправки",
+          "en": "dispatch conditions"
+        },
+        {
+          "jp": "案を提出する",
+          "reading": "あんをていしゅつする",
+          "ru": "представить план",
+          "en": "submit a proposal"
+        },
+        {
+          "jp": "対策を講じる",
+          "reading": "たいさくをこうじる",
+          "ru": "принять меры",
+          "en": "take countermeasures"
+        }
+      ],
+      "sentences": [
+        {
+          "jp": "委員会は、氏名の確認から保護方針の統一に至るまで、第一段階として新たな案を示した。",
+          "reading": "いいんかいは、しめいのかくにんからほごほうしんのとういつにいたるまで、だいいちだんかいとしてあらたなあんをしめした。",
+          "ru": "Комитет как первый этап представил новый план: от проверки имён до унификации политики защиты.",
+          "en": "As a first stage, the committee presented a new proposal covering everything from name verification to unified protection policy."
+        },
+        {
+          "jp": "各派の意見に即して対策を講じるべきだ、という結論に至った。",
+          "reading": "かくはのいけんにそくしてたいさくをこうじるべきだ、というけつろんにいたった。",
+          "ru": "В итоге пришли к выводу, что меры следует принимать в соответствии с мнениями каждой фракции.",
+          "en": "They reached the conclusion that countermeasures should be taken in line with each faction's views."
+        },
+        {
+          "jp": "提案は採用されたものの、実施には保護体制の再検討が必要だ。",
+          "reading": "ていあんはさいようされたものの、じっしにはほごたいせいのさいけんとうがひつようだ。",
+          "ru": "Хотя предложение приняли, для реализации необходимо пересмотреть систему защиты.",
+          "en": "Although the proposal was accepted, implementation requires a review of the protection system."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "bulk-n1-01-stance-01",
+          "type": "author-stance",
+          "prompt": {
+            "ru": "Что автор подчёркивает в предложении: 各派の意見に即して対策を講じるべきだ、という結論に至った。",
+            "en": "What does the author emphasize in: 各派の意見に即して対策を講じるべきだ、という結論に至った。"
+          },
+          "answer": "process-to-conclusion",
+          "answerLabel": {
+            "ru": "путь от мнений к выводу и мерам",
+            "en": "the path from opinions to conclusion and measures"
+          },
+          "kanji": "策",
+          "options": [
+            {
+              "value": "process-to-conclusion",
+              "label": {
+                "ru": "путь от мнений к выводу и мерам",
+                "en": "the path from opinions to conclusion and measures"
+              }
+            },
+            {
+              "value": "personal-emotion",
+              "label": {
+                "ru": "личную эмоцию автора",
+                "en": "the author's personal emotion"
+              }
+            },
+            {
+              "value": "time-only",
+              "label": {
+                "ru": "только время действия",
+                "en": "only timing"
+              }
+            },
+            {
+              "value": "place-only",
+              "label": {
+                "ru": "только место действия",
+                "en": "only location"
+              }
+            }
+          ]
+        },
+        {
+          "id": "bulk-n1-01-grammar-01",
+          "type": "grammar-link",
+          "grammarId": "n1-overlay-itaru",
+          "prompt": {
+            "ru": "Какая связка показывает диапазон до крайней точки: 氏名の確認から保護方針の統一___?",
+            "en": "Which link marks a range up to the final point: 氏名の確認から保護方針の統一___?"
+          },
+          "answer": "に至るまで",
+          "answerLabel": {
+            "ru": "に至るまで",
+            "en": "に至るまで"
+          },
+          "kanji": "統",
+          "options": [
+            "に至るまで",
+            "に対して",
+            "として",
+            "によると"
+          ]
+        },
+        {
+          "id": "bulk-n1-01-reading-conclusion",
+          "type": "mini-reading",
+          "prompt": {
+            "ru": "Какой главный вывод мини-текста урока?",
+            "en": "What is the main conclusion of the lesson mini reading?"
+          },
+          "answer": "need-review-before-implementation",
+          "answerLabel": {
+            "ru": "перед реализацией нужен пересмотр системы",
+            "en": "the system needs review before implementation"
+          },
+          "kanji": "結",
+          "options": [
+            {
+              "value": "need-review-before-implementation",
+              "label": {
+                "ru": "перед реализацией нужен пересмотр системы",
+                "en": "the system needs review before implementation"
+              }
+            },
+            {
+              "value": "proposal-rejected",
+              "label": {
+                "ru": "предложение полностью отклонено",
+                "en": "the proposal was fully rejected"
+              }
+            },
+            {
+              "value": "names-are-unimportant",
+              "label": {
+                "ru": "имена не имеют значения",
+                "en": "names do not matter"
+              }
+            },
+            {
+              "value": "no-measures",
+              "label": {
+                "ru": "меры больше не нужны",
+                "en": "no measures are needed"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostic": [
+    {
+      "id": "diag-n5-particle-wo",
+      "topicId": "n5-particles",
+      "level": "N5",
+      "topic": {
+        "ru": "частицы を / に / で",
+        "en": "particles を / に / で"
+      },
+      "prompt": {
+        "ru": "Выбери частицу: 本___読みます。",
+        "en": "Choose the particle: 本___読みます。"
+      },
+      "answer": "を",
+      "options": [
+        {
+          "value": "を",
+          "label": {
+            "ru": "を",
+            "en": "を"
+          }
+        },
+        {
+          "value": "に",
+          "label": {
+            "ru": "に",
+            "en": "に"
+          }
+        },
+        {
+          "value": "で",
+          "label": {
+            "ru": "で",
+            "en": "で"
+          }
+        },
+        {
+          "value": "へ",
+          "label": {
+            "ru": "へ",
+            "en": "へ"
+          }
+        }
+      ],
+      "review": {
+        "ru": "Повтори базовое управление глаголов N5.",
+        "en": "Review basic N5 verb particles."
+      }
+    },
+    {
+      "id": "diag-n4-conditional",
+      "topicId": "n4-conditionals",
+      "level": "N4",
+      "topic": {
+        "ru": "условные формы たら / なら / ば / と",
+        "en": "conditionals たら / なら / ば / と"
+      },
+      "prompt": {
+        "ru": "Какая форма чаще задаёт условие с советом: 日本へ行く___、冬の服を持っていったほうがいい。",
+        "en": "Which form best sets a condition with advice: 日本へ行く___、冬の服を持っていったほうがいい。"
+      },
+      "answer": "なら",
+      "options": [
+        {
+          "value": "なら",
+          "label": {
+            "ru": "なら",
+            "en": "なら"
+          }
+        },
+        {
+          "value": "と",
+          "label": {
+            "ru": "と",
+            "en": "と"
+          }
+        },
+        {
+          "value": "まで",
+          "label": {
+            "ru": "まで",
+            "en": "まで"
+          }
+        },
+        {
+          "value": "から",
+          "label": {
+            "ru": "から",
+            "en": "から"
+          }
+        }
+      ],
+      "review": {
+        "ru": "Повтори N4-условия перед N1-аргументами.",
+        "en": "Review N4 conditionals before N1 argument flow."
+      }
+    },
+    {
+      "id": "diag-n3-contrast",
+      "topicId": "n3-contrast",
+      "level": "N3",
+      "topic": {
+        "ru": "контраст и уступка",
+        "en": "contrast and concession"
+      },
+      "prompt": {
+        "ru": "Что делает のに в: 便利なのに、利用者は少ない。",
+        "en": "What does のに do in: 便利なのに、利用者は少ない。"
+      },
+      "answer": "concession",
+      "options": [
+        {
+          "value": "concession",
+          "label": {
+            "ru": "уступка: хотя удобно, пользователей мало",
+            "en": "concession: although convenient, users are few"
+          }
+        },
+        {
+          "value": "cause",
+          "label": {
+            "ru": "простая причина",
+            "en": "simple cause"
+          }
+        },
+        {
+          "value": "time",
+          "label": {
+            "ru": "время",
+            "en": "time"
+          }
+        },
+        {
+          "value": "quotation",
+          "label": {
+            "ru": "цитата",
+            "en": "quotation"
+          }
+        }
+      ],
+      "review": {
+        "ru": "Повтори уступку и контраст N3.",
+        "en": "Review N3 concession and contrast."
+      }
+    },
+    {
+      "id": "diag-n2-author-stance",
+      "topicId": "n2-author-stance",
+      "level": "N2",
+      "topic": {
+        "ru": "позиция автора",
+        "en": "author stance"
+      },
+      "prompt": {
+        "ru": "В тексте: 便利だ。しかし、導入には慎重な議論が必要だ。 Какая позиция автора?",
+        "en": "In: 便利だ。しかし、導入には慎重な議論が必要だ。 What is the author's stance?"
+      },
+      "answer": "cautious-support",
+      "options": [
+        {
+          "value": "cautious-support",
+          "label": {
+            "ru": "осторожная поддержка",
+            "en": "cautious support"
+          }
+        },
+        {
+          "value": "full-rejection",
+          "label": {
+            "ru": "полный отказ",
+            "en": "full rejection"
+          }
+        },
+        {
+          "value": "no-opinion",
+          "label": {
+            "ru": "позиции нет",
+            "en": "no stance"
+          }
+        },
+        {
+          "value": "unrelated",
+          "label": {
+            "ru": "тема сменилась",
+            "en": "topic changed"
+          }
+        }
+      ],
+      "review": {
+        "ru": "Повтори N2-логику: польза + ограничение + вывод.",
+        "en": "Review N2 logic: benefit + limitation + conclusion."
+      }
+    }
+  ]
+}

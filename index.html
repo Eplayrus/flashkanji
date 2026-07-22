@@ -2,20 +2,38 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#08080c" />
-  <title>Flash Kanji</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Flash Kanji — PWA-приложение для изучения японских кандзи через SRS, уроки JLPT N5–N1, письмо, словарь и Eva Room." />
+  <meta name="keywords" content="японский язык, кандзи, JLPT, N5, N4, N3, N2, N1, SRS, японские иероглифы, учить кандзи, Flash Kanji" />
+  <meta property="og:title" content="Flash Kanji — учи японские кандзи" />
+  <meta property="og:description" content="SRS, уроки JLPT, практика письма, словарь и игровая система Moon Fragments." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://flashkanji.space/" />
+  <meta property="og:image" content="https://flashkanji.space/index/assets/og/flashkanji-og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="Flash Kanji - PWA for learning Japanese kanji with Eva and Moon Fragments." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Flash Kanji — учи японские кандзи" />
+  <meta name="twitter:description" content="SRS, JLPT N5–N1, практика письма и Eva Room." />
+  <meta name="twitter:image" content="https://flashkanji.space/index/assets/og/flashkanji-og.png" />
+  <meta name="twitter:image:alt" content="Flash Kanji - preview card with logo, Eva and kanji-learning features." />
+  <title>Flash Kanji — учи японские кандзи через SRS, письмо и повторение</title>
+  <link rel="canonical" href="https://flashkanji.space/" />
+  <link rel="alternate" hreflang="ru" href="https://flashkanji.space/ru/textbooks/" />
+  <link rel="alternate" hreflang="en" href="https://flashkanji.space/en/textbooks/" />
+  <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
+  <link rel="icon" href="./index/assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="./index/assets/icon-192.png" sizes="192x192" />
+  <link rel="manifest" href="./index/manifest.webmanifest?v=2026-06-13-bugfix-v4" />
+  <meta http-equiv="refresh" content="0; url=./recovery/entry.html" />
   <script>
-    (function () {
-      var target = new URL("index/dist/", window.location.href);
-      target.search = window.location.search;
-      target.hash = window.location.hash || "#home";
-      window.location.replace(target.toString());
-    })();
+    const target = "./recovery/entry.html" + window.location.search + window.location.hash;
+    window.location.replace(target);
   </script>
-  <meta http-equiv="refresh" content="0; url=index/dist/#home" />
 </head>
 <body>
-  <p><a href="index/dist/#home">Открыть Flash Kanji</a></p>
+  <p>Opening Flash Kanji...</p>
 </body>
 </html>

@@ -1,0 +1,813 @@
+{
+  "version": 1,
+  "level": "N3",
+  "generatedAt": "2026-06-12T18:47:18.303141+00:00",
+  "items": [
+    {
+      "id": "n3-reading-1",
+      "lessonId": "n3-lesson-1",
+      "title": {
+        "ru": "Урок 1: мини-чтение",
+        "en": "Lesson 1 mini reading"
+      },
+      "jp": "最近、日本語の勉強に関する記事を読みました。この記事では、単語だけでなく文の中で覚えることが大切だと説明していました。彼はFlash Kanjiで復習するようにしていて、実はその方法が一番合うと言っていました。私はその意見に対して、本当にそうだと思います。",
+      "ru": "Недавно я прочитал статью об изучении японского. В ней объяснялось, что важно запоминать не только отдельные слова, но и предложения. Автор писал, что старается повторять через Flash Kanji и что этот способ подходит ему лучше всего. Я тоже думаю, что это правда.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "О чём эта статья?",
+            "en": "What is this article about?"
+          },
+          "answer": "study_method",
+          "options": [
+            {
+              "value": "study_method",
+              "label": {
+                "ru": "о способе учить японский через слова и предложения",
+                "en": "about learning Japanese through words and sentences"
+              }
+            },
+            {
+              "value": "politics",
+              "label": {
+                "ru": "о политике",
+                "en": "about politics"
+              }
+            },
+            {
+              "value": "travel",
+              "label": {
+                "ru": "о путешествии",
+                "en": "about a trip"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Что автор делает через Flash Kanji?",
+            "en": "What does the author do with Flash Kanji?"
+          },
+          "answer": "review",
+          "options": [
+            {
+              "value": "review",
+              "label": {
+                "ru": "повторяет слова и предложения",
+                "en": "reviews words and sentences"
+              }
+            },
+            {
+              "value": "sleep",
+              "label": {
+                "ru": "ложится спать",
+                "en": "goes to sleep"
+              }
+            },
+            {
+              "value": "shop",
+              "label": {
+                "ru": "идёт в магазин",
+                "en": "goes shopping"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Почему этот способ кажется удобным?",
+            "en": "Why does this method feel useful?"
+          },
+          "answer": "natural_context",
+          "options": [
+            {
+              "value": "natural_context",
+              "label": {
+                "ru": "потому что слова сразу видны в контексте",
+                "en": "because words appear immediately in context"
+              }
+            },
+            {
+              "value": "shorter",
+              "label": {
+                "ru": "потому что там меньше кандзи",
+                "en": "because there are fewer kanji"
+              }
+            },
+            {
+              "value": "faster_test",
+              "label": {
+                "ru": "потому что тесты исчезают",
+                "en": "because tests disappear"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какую связку можно увидеть в тексте?",
+            "en": "Which connector appears in the text?"
+          },
+          "answer": "に関して",
+          "options": [
+            {
+              "value": "に関して",
+              "label": {
+                "ru": "に関して",
+                "en": "に関して"
+              }
+            },
+            {
+              "value": "だけでなく",
+              "label": {
+                "ru": "だけでなく",
+                "en": "だけでなく"
+              }
+            },
+            {
+              "value": "ものなら",
+              "label": {
+                "ru": "ものなら",
+                "en": "ものなら"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какое мнение выражает рассказчик?",
+            "en": "What opinion does the narrator express?"
+          },
+          "answer": "agrees",
+          "options": [
+            {
+              "value": "agrees",
+              "label": {
+                "ru": "он согласен с этим способом",
+                "en": "they agree with the method"
+              }
+            },
+            {
+              "value": "rejects",
+              "label": {
+                "ru": "он полностью против",
+                "en": "they reject it"
+              }
+            },
+            {
+              "value": "neutral",
+              "label": {
+                "ru": "у него нет мнения",
+                "en": "they have no opinion"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-2",
+      "lessonId": "n3-lesson-2",
+      "title": {
+        "ru": "Урок 2: мини-чтение",
+        "en": "Lesson 2 mini reading"
+      },
+      "jp": "最近、予定に関する短い記事を読みました。感じるだけでなく、政治や取るも一緒に覚えると、文章の流れが分かりやすくなります。毎日少しずつ復習するようにすると、N3の内容でも落ち着いて読めるようになります。",
+      "ru": "Недавно я прочитал короткую статью о теме «план». Если учить не только «чувствовать», но и политика и брать вместе, понимать ход текста становится легче. Если понемногу повторять каждый день, даже тексты уровня N3 читаются спокойнее.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что помогает лучше понимать поток текста?",
+            "en": "What helps you follow the flow of the text?"
+          },
+          "answer": "learn_together",
+          "options": [
+            {
+              "value": "learn_together",
+              "label": {
+                "ru": "учить слова и связки вместе",
+                "en": "learning words and connectors together"
+              }
+            },
+            {
+              "value": "single_list",
+              "label": {
+                "ru": "зубрить только отдельный список",
+                "en": "memorizing only a single list"
+              }
+            },
+            {
+              "value": "skip_review",
+              "label": {
+                "ru": "пропускать повторение",
+                "en": "skipping review"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какой режим советует текст?",
+            "en": "What rhythm does the text recommend?"
+          },
+          "answer": "daily_review",
+          "options": [
+            {
+              "value": "daily_review",
+              "label": {
+                "ru": "повторять понемногу каждый день",
+                "en": "review a little every day"
+              }
+            },
+            {
+              "value": "monthly_only",
+              "label": {
+                "ru": "заниматься только раз в месяц",
+                "en": "study only once a month"
+              }
+            },
+            {
+              "value": "no_context",
+              "label": {
+                "ru": "учить без контекста",
+                "en": "study without context"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-3",
+      "lessonId": "n3-lesson-3",
+      "title": {
+        "ru": "Урок 3: мини-чтение",
+        "en": "Lesson 3 mini reading"
+      },
+      "jp": "最近、全部に関する短い記事を読みました。方法だけでなく、情報や向くも一緒に覚えると、文章の流れが分かりやすくなります。毎日少しずつ復習するようにすると、N3の内容でも落ち着いて読めるようになります。",
+      "ru": "Недавно я прочитал короткую статью о теме «все». Если учить не только «метод», но и информация и быть обращенным вместе, понимать ход текста становится легче. Если понемногу повторять каждый день, даже тексты уровня N3 читаются спокойнее.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что помогает лучше понимать поток текста?",
+            "en": "What helps you follow the flow of the text?"
+          },
+          "answer": "learn_together",
+          "options": [
+            {
+              "value": "learn_together",
+              "label": {
+                "ru": "учить слова и связки вместе",
+                "en": "learning words and connectors together"
+              }
+            },
+            {
+              "value": "single_list",
+              "label": {
+                "ru": "зубрить только отдельный список",
+                "en": "memorizing only a single list"
+              }
+            },
+            {
+              "value": "skip_review",
+              "label": {
+                "ru": "пропускать повторение",
+                "en": "skipping review"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какой режим советует текст?",
+            "en": "What rhythm does the text recommend?"
+          },
+          "answer": "daily_review",
+          "options": [
+            {
+              "value": "daily_review",
+              "label": {
+                "ru": "повторять понемногу каждый день",
+                "en": "review a little every day"
+              }
+            },
+            {
+              "value": "monthly_only",
+              "label": {
+                "ru": "заниматься только раз в месяц",
+                "en": "study only once a month"
+              }
+            },
+            {
+              "value": "no_context",
+              "label": {
+                "ru": "учить без контекста",
+                "en": "study without context"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-4",
+      "lessonId": "n3-lesson-4",
+      "title": {
+        "ru": "Урок 4: мини-чтение",
+        "en": "Lesson 4 mini reading"
+      },
+      "jp": "最近、顔に関する短い記事を読みました。原因だけでなく、機会や次も一緒に覚えると、文章の流れが分かりやすくなります。毎日少しずつ復習するようにすると、N3の内容でも落ち着いて読めるようになります。",
+      "ru": "Недавно я прочитал короткую статью о теме «лицо». Если учить не только «причина», но и шанс и следующий вместе, понимать ход текста становится легче. Если понемногу повторять каждый день, даже тексты уровня N3 читаются спокойнее.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что помогает лучше понимать поток текста?",
+            "en": "What helps you follow the flow of the text?"
+          },
+          "answer": "learn_together",
+          "options": [
+            {
+              "value": "learn_together",
+              "label": {
+                "ru": "учить слова и связки вместе",
+                "en": "learning words and connectors together"
+              }
+            },
+            {
+              "value": "single_list",
+              "label": {
+                "ru": "зубрить только отдельный список",
+                "en": "memorizing only a single list"
+              }
+            },
+            {
+              "value": "skip_review",
+              "label": {
+                "ru": "пропускать повторение",
+                "en": "skipping review"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какой режим советует текст?",
+            "en": "What rhythm does the text recommend?"
+          },
+          "answer": "daily_review",
+          "options": [
+            {
+              "value": "daily_review",
+              "label": {
+                "ru": "повторять понемногу каждый день",
+                "en": "review a little every day"
+              }
+            },
+            {
+              "value": "monthly_only",
+              "label": {
+                "ru": "заниматься только раз в месяц",
+                "en": "study only once a month"
+              }
+            },
+            {
+              "value": "no_context",
+              "label": {
+                "ru": "учить без контекста",
+                "en": "study without context"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-5",
+      "lessonId": "n3-lesson-5",
+      "title": {
+        "ru": "Урок 5: мини-чтение",
+        "en": "Lesson 5 mini reading"
+      },
+      "jp": "最近、変わるに関する短い記事を読みました。必要だけでなく、神や記事も一緒に覚えると、文章の流れが分かりやすくなります。毎日少しずつ復習するようにすると、N3の内容でも落ち着いて読めるようになります。",
+      "ru": "Недавно я прочитал короткую статью о теме «меняться». Если учить не только «необходимый», но и бог и статья вместе, понимать ход текста становится легче. Если понемногу повторять каждый день, даже тексты уровня N3 читаются спокойнее.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что помогает лучше понимать поток текста?",
+            "en": "What helps you follow the flow of the text?"
+          },
+          "answer": "learn_together",
+          "options": [
+            {
+              "value": "learn_together",
+              "label": {
+                "ru": "учить слова и связки вместе",
+                "en": "learning words and connectors together"
+              }
+            },
+            {
+              "value": "single_list",
+              "label": {
+                "ru": "зубрить только отдельный список",
+                "en": "memorizing only a single list"
+              }
+            },
+            {
+              "value": "skip_review",
+              "label": {
+                "ru": "пропускать повторение",
+                "en": "skipping review"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какой режим советует текст?",
+            "en": "What rhythm does the text recommend?"
+          },
+          "answer": "daily_review",
+          "options": [
+            {
+              "value": "daily_review",
+              "label": {
+                "ru": "повторять понемногу каждый день",
+                "en": "review a little every day"
+              }
+            },
+            {
+              "value": "monthly_only",
+              "label": {
+                "ru": "заниматься только раз в месяц",
+                "en": "study only once a month"
+              }
+            },
+            {
+              "value": "no_context",
+              "label": {
+                "ru": "учить без контекста",
+                "en": "study without context"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-6",
+      "lessonId": "n3-lesson-6",
+      "title": {
+        "ru": "Урок 6: мини-чтение",
+        "en": "Lesson 6 mini reading"
+      },
+      "jp": "最近、解決に関する短い記事を読みました。受けるだけでなく、市や期間も一緒に覚えると、文章の流れが分かりやすくなります。毎日少しずつ復習するようにすると、N3の内容でも落ち着いて読めるようになります。",
+      "ru": "Недавно я прочитал короткую статью о теме «решение». Если учить не только «получать/сдавать», но и город и период вместе, понимать ход текста становится легче. Если понемногу повторять каждый день, даже тексты уровня N3 читаются спокойнее.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что помогает лучше понимать поток текста?",
+            "en": "What helps you follow the flow of the text?"
+          },
+          "answer": "learn_together",
+          "options": [
+            {
+              "value": "learn_together",
+              "label": {
+                "ru": "учить слова и связки вместе",
+                "en": "learning words and connectors together"
+              }
+            },
+            {
+              "value": "single_list",
+              "label": {
+                "ru": "зубрить только отдельный список",
+                "en": "memorizing only a single list"
+              }
+            },
+            {
+              "value": "skip_review",
+              "label": {
+                "ru": "пропускать повторение",
+                "en": "skipping review"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Какой режим советует текст?",
+            "en": "What rhythm does the text recommend?"
+          },
+          "answer": "daily_review",
+          "options": [
+            {
+              "value": "daily_review",
+              "label": {
+                "ru": "повторять понемногу каждый день",
+                "en": "review a little every day"
+              }
+            },
+            {
+              "value": "monthly_only",
+              "label": {
+                "ru": "заниматься только раз в месяц",
+                "en": "study only once a month"
+              }
+            },
+            {
+              "value": "no_context",
+              "label": {
+                "ru": "учить без контекста",
+                "en": "study without context"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-7",
+      "title": {
+        "ru": "駅前の新しい店",
+        "en": "A new shop near the station"
+      },
+      "jp": "駅前に新しい店ができた。最初は小さい店だと思っていたが、入ってみると本や文房具だけでなく、勉強できる席もあった。私はN3の問題集を買い、ついでに店員におすすめの辞書について聞いた。店員は親切に説明してくれたので、次の週も行くことにした。",
+      "ru": "У станции открылся новый магазин. Сначала я думал, что он маленький, но внутри были не только книги и канцтовары, но и места для учебы. Я купил сборник задач N3 и заодно спросил продавца о словаре. Он всё любезно объяснил, поэтому я решил прийти и на следующей неделе.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что было в магазине, кроме книг и канцтоваров?",
+            "en": "What was in the shop besides books and stationery?"
+          },
+          "answer": "study_seats",
+          "options": [
+            {
+              "value": "study_seats",
+              "label": {
+                "ru": "места для учебы",
+                "en": "study seats"
+              }
+            },
+            {
+              "value": "cinema",
+              "label": {
+                "ru": "кинотеатр",
+                "en": "a cinema"
+              }
+            },
+            {
+              "value": "gym",
+              "label": {
+                "ru": "спортзал",
+                "en": "a gym"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Почему герой решил прийти снова?",
+            "en": "Why did the person decide to come again?"
+          },
+          "answer": "kind_explanation",
+          "options": [
+            {
+              "value": "kind_explanation",
+              "label": {
+                "ru": "продавец всё понятно объяснил",
+                "en": "the clerk explained everything kindly"
+              }
+            },
+            {
+              "value": "sale",
+              "label": {
+                "ru": "была большая скидка",
+                "en": "there was a huge sale"
+              }
+            },
+            {
+              "value": "friend",
+              "label": {
+                "ru": "там работал друг",
+                "en": "a friend worked there"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-8",
+      "title": {
+        "ru": "Flash Kanjiでの復習",
+        "en": "Reviewing with Flash Kanji"
+      },
+      "jp": "漢字を覚えるとき、形だけを見るとすぐに忘れてしまう。そこでFlash Kanjiでは、漢字、言葉、文法、例文を一緒に練習する。例えば「関」という字は、関係、関心、に関してという形で覚える。単語だけでなく文の中で見ると、使い方が自然に分かるようになる。",
+      "ru": "Если запоминать кандзи только по форме, они быстро забываются. Поэтому во Flash Kanji знак, слово, грамматика и пример тренируются вместе. Например, 関 закрепляется через 関係, 関心 и に関して. Когда видишь не только слово, но и предложение, использование становится естественным.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что тренируют вместе во Flash Kanji?",
+            "en": "What is trained together in Flash Kanji?"
+          },
+          "answer": "full_chain",
+          "options": [
+            {
+              "value": "full_chain",
+              "label": {
+                "ru": "кандзи, слова, грамматику и примеры",
+                "en": "kanji, words, grammar, and examples"
+              }
+            },
+            {
+              "value": "kana_only",
+              "label": {
+                "ru": "только азбуку",
+                "en": "only kana"
+              }
+            },
+            {
+              "value": "history_only",
+              "label": {
+                "ru": "только историю языка",
+                "en": "only language history"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Что становится естественным, когда видишь слово в предложении?",
+            "en": "What becomes natural when you see the word in a sentence?"
+          },
+          "answer": "usage",
+          "options": [
+            {
+              "value": "usage",
+              "label": {
+                "ru": "использование",
+                "en": "usage"
+              }
+            },
+            {
+              "value": "drawing",
+              "label": {
+                "ru": "рисование",
+                "en": "drawing"
+              }
+            },
+            {
+              "value": "shopping",
+              "label": {
+                "ru": "покупки",
+                "en": "shopping"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-9",
+      "title": {
+        "ru": "天気による予定変更",
+        "en": "A schedule change because of the weather"
+      },
+      "jp": "週末に友達と山へ行く予定だった。しかし天気予報によると、朝から強い雨が降るらしい。山道は危険になるかもしれないので、今回は中止することにした。その代わりに、駅の近くのカフェで会い、旅行の計画について話すことになった。",
+      "ru": "На выходных я собирался идти с другом в горы. Но по прогнозу с утра должен идти сильный дождь. Поскольку дорога в горах может стать опасной, мы решили отменить поездку. Вместо этого мы встретимся в кафе около станции и обсудим план путешествия.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Почему поездку отменили?",
+            "en": "Why was the trip cancelled?"
+          },
+          "answer": "rain_danger",
+          "options": [
+            {
+              "value": "rain_danger",
+              "label": {
+                "ru": "из-за дождя и опасной горной дороги",
+                "en": "because of the rain and the dangerous mountain road"
+              }
+            },
+            {
+              "value": "closed_shop",
+              "label": {
+                "ru": "из-за закрытого магазина",
+                "en": "because a shop was closed"
+              }
+            },
+            {
+              "value": "late_train",
+              "label": {
+                "ru": "из-за опоздавшего поезда",
+                "en": "because of a late train"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Что они сделают вместо поездки?",
+            "en": "What will they do instead?"
+          },
+          "answer": "cafe_plan",
+          "options": [
+            {
+              "value": "cafe_plan",
+              "label": {
+                "ru": "встретятся в кафе и обсудят план",
+                "en": "meet in a cafe and discuss the plan"
+              }
+            },
+            {
+              "value": "stay_home",
+              "label": {
+                "ru": "останутся дома и будут спать",
+                "en": "stay home and sleep"
+              }
+            },
+            {
+              "value": "go_work",
+              "label": {
+                "ru": "поедут на работу",
+                "en": "go to work"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n3-reading-10",
+      "title": {
+        "ru": "仕事と勉強の両立",
+        "en": "Balancing work and study"
+      },
+      "jp": "仕事をしながら日本語を勉強するのは簡単ではない。忙しい日は復習を忘れがちだ。しかし、五分だけでも例文を読むようにしている。長い時間が取れなくても、毎日続ければ力になる。大切なのは完璧にやることではなく、やめないことだ。",
+      "ru": "Учить японский, работая, непросто. В занятые дни легко забыть повторение. Но я стараюсь читать примеры хотя бы пять минут. Даже если нет много времени, ежедневное продолжение дает силу. Важно не делать идеально, а не бросать.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что человек старается делать даже в занятые дни?",
+            "en": "What does the person try to do even on busy days?"
+          },
+          "answer": "five_minutes",
+          "options": [
+            {
+              "value": "five_minutes",
+              "label": {
+                "ru": "читать примеры хотя бы пять минут",
+                "en": "read example sentences for at least five minutes"
+              }
+            },
+            {
+              "value": "watch_tv",
+              "label": {
+                "ru": "смотреть телевизор",
+                "en": "watch TV"
+              }
+            },
+            {
+              "value": "skip_all",
+              "label": {
+                "ru": "полностью пропускать учебу",
+                "en": "skip studying entirely"
+              }
+            }
+          ]
+        },
+        {
+          "prompt": {
+            "ru": "Что автор считает важным?",
+            "en": "What does the author consider important?"
+          },
+          "answer": "not_quit",
+          "options": [
+            {
+              "value": "not_quit",
+              "label": {
+                "ru": "не бросать",
+                "en": "not giving up"
+              }
+            },
+            {
+              "value": "be_perfect",
+              "label": {
+                "ru": "делать всё идеально",
+                "en": "doing everything perfectly"
+              }
+            },
+            {
+              "value": "study_once",
+              "label": {
+                "ru": "заниматься только раз в неделю",
+                "en": "studying only once a week"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

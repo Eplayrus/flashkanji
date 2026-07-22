@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Winter City">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#121827"/><stop offset="1" stop-color="#39485f"/></linearGradient>
+    <radialGradient id="moon" cx=".2" cy=".18" r=".55"><stop offset="0" stop-color="#dbeafe" stop-opacity=".7"/><stop offset="1" stop-color="#dbeafe" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#moon)"/>
+  <path d="M0 620 C220 520 360 650 580 560 S960 520 1280 600 V720 H0Z" fill="#05050a" opacity=".55"/>
+  <path d="M90 120 H1180 M130 190 H1140 M90 260 H1180" stroke="#fff" stroke-opacity=".12" stroke-width="3"/>
+  <path d="M180 620 L310 250 H352 L470 620 M840 620 L940 210 H984 L1090 620" stroke="#fff" stroke-opacity=".12" stroke-width="18" fill="none"/>
+  <circle cx="1020" cy="120" r="78" fill="#dbeafe" opacity=".32"/>
+  <text x="58" y="96" font-family="Georgia, serif" font-size="42" fill="#f7f4ee" opacity=".72">Flash Kanji</text>
+</svg>

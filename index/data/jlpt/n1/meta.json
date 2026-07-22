@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "level": "N1",
+  "title": {
+    "ru": "JLPT N1",
+    "en": "JLPT N1"
+  },
+  "description": {
+    "ru": "N1 - верхний уровень Flash Kanji: редкие кандзи, формальные слова, плотные абзацы, авторская позиция и выводы.",
+    "en": "N1 is the top Flash Kanji layer: rare kanji, formal words, dense paragraphs, author stance, and conclusions."
+  },
+  "principle": {
+    "ru": "кандзи -> полезное слово -> чтение -> сочетание -> грамматика -> предложение -> абзац -> аргумент -> позиция автора -> вывод -> ошибка -> SRS",
+    "en": "kanji -> useful word -> reading -> collocation -> grammar -> sentence -> paragraph -> argument -> author stance -> conclusion -> error -> SRS"
+  },
+  "kanjiCount": 1047,
+  "currentKanjiCount": 220,
+  "lessonCount": 53,
+  "currentLessonCount": 11,
+  "kanjiPerLesson": 20,
+  "grammarCount": 150,
+  "readingCount": 12,
+  "listeningCount": 8,
+  "writingGoal": 53,
+  "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+  "reviewPlan": [
+    {
+      "day": "1-11",
+      "label": {
+        "ru": "рабочий слой: 11 уроков по 20 кандзи",
+        "en": "working layer: 11 lessons with 20 kanji each"
+      }
+    },
+    {
+      "day": "12-53",
+      "label": {
+        "ru": "целевой слой: расширение до 1047 кандзи после проверки данных",
+        "en": "target layer: expand to 1047 kanji after data validation"
+      }
+    },
+    {
+      "day": "1 -> 3 -> 7 -> 14 -> 30 -> 60 -> 90",
+      "label": {
+        "ru": "правило повторения Flash Kanji для N1",
+        "en": "Flash Kanji N1 review rule"
+      }
+    }
+  ],
+  "prerequisiteCheck": [
+    "N5 particles",
+    "N4 conditionals",
+    "N3 connectors",
+    "N2 author stance",
+    "N2 paragraph conclusion"
+  ],
+  "rewards": {
+    "addToSrsXp": 8,
+    "knowXp": 11,
+    "hardXp": 2,
+    "exerciseXp": 13,
+    "exerciseMoon": 1,
+    "grammarXp": 14,
+    "grammarMoon": 1,
+    "lessonCompleteXp": 110,
+    "lessonCompleteMoon": 14,
+    "readingXp": 55,
+    "readingMoon": 5,
+    "listeningXp": 45,
+    "listeningMoon": 4,
+    "diagnosticXp": 25,
+    "diagnosticMoon": 3,
+    "finalTestXp": 320,
+    "finalTestMoon": 60
+  }
+}

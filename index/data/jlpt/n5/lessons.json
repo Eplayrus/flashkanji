@@ -1,0 +1,210 @@
+{
+  "version": 2,
+  "level": "N5",
+  "generatedAt": "2026-06-12T00:00:00.000Z",
+  "textbook": {
+    "jlpt": "N5",
+    "slug": "n5",
+    "title": {
+      "ru": "JLPT N5",
+      "en": "JLPT N5"
+    },
+    "displayTitle": {
+      "ru": "Flash Kanji N5",
+      "en": "Flash Kanji N5"
+    },
+    "description": {
+      "ru": "Полноценный учебный маршрут: кандзи -> значение -> слово -> предложение -> упражнение -> письмо -> SRS.",
+      "en": "A full study path: kanji -> meaning -> word -> sentence -> exercise -> writing -> SRS."
+    },
+    "goal": {
+      "ru": "Уверенно узнавать 80 базовых N5-кандзи в словах, коротких предложениях и повторении.",
+      "en": "Recognize 80 core N5 kanji in words, short sentences, and review."
+    },
+    "recommendedCycle": {
+      "ru": "Повторяй после урока через 1, 3, 7, 14 и 30 дней.",
+      "en": "Review after each lesson on days 1, 3, 7, 14, and 30."
+    },
+    "coverImage": "assets/bg/bg_classroom.png",
+    "pdfFile": "docs/flashkanji_N5_expanded_textbook.pdf",
+    "pdfUrl": "docs/flashkanji_N5_expanded_textbook.pdf",
+    "lessonIds": [
+      "n5-lesson-1",
+      "n5-lesson-2",
+      "n5-lesson-3",
+      "n5-lesson-4",
+      "n5-lesson-5",
+      "n5-lesson-6",
+      "n5-lesson-7",
+      "n5-lesson-8",
+      "n5-lesson-9",
+      "n5-lesson-10"
+    ],
+    "lessonCount": 10,
+    "kanjiCount": 80,
+    "cardCount": 80,
+    "source": "flashkanji_N5_expanded_textbook.pdf"
+  },
+  "items": [
+    {
+      "id": "n5-lesson-1",
+      "order": 1,
+      "title": { "ru": "Числа, люди и базовые слова", "en": "Numbers, people, and core words" },
+      "theme": { "ru": "числа, люди и базовые слова", "en": "numbers, people, and core words" },
+      "kanji": ["日", "一", "国", "人", "年", "大", "十", "二"],
+      "goal": { "ru": "Связать первые N5-знаки с простыми словами и предложениями.", "en": "Connect the first N5 signs with simple words and sentences." },
+      "sentences": [
+        { "jp": "日本人です。", "reading": "にほんじんです。", "ru": "Я японец / японка.", "en": "I am Japanese." },
+        { "jp": "一年は十二か月です。", "reading": "いちねんはじゅうにかげつです。", "ru": "В одном году 12 месяцев.", "en": "There are twelve months in one year." },
+        { "jp": "大きい国です。", "reading": "おおきいくにです。", "ru": "Это большая страна.", "en": "It is a big country." },
+        { "jp": "二人で行きます。", "reading": "ふたりでいきます。", "ru": "Пойдём вдвоём.", "en": "We will go as two people." }
+      ],
+      "writing": ["日", "国"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-2",
+      "order": 2,
+      "title": { "ru": "Книга, пространство, время и движение", "en": "Books, space, time, and movement" },
+      "theme": { "ru": "книга, пространство, время и движение", "en": "books, space, time, and movement" },
+      "kanji": ["本", "中", "長", "出", "三", "時", "行", "見"],
+      "goal": { "ru": "Читать простые слова про книгу, внутреннее пространство, время и движение.", "en": "Read simple words about books, inside space, time, and movement." },
+      "sentences": [
+        { "jp": "本の中を見ます。", "reading": "ほんのなかをみます。", "ru": "Смотрю внутрь книги.", "en": "I look inside the book." },
+        { "jp": "三時に出ます。", "reading": "さんじにでます。", "ru": "Выйду в три часа.", "en": "I leave at three." },
+        { "jp": "長い道を行きます。", "reading": "ながいみちをいきます。", "ru": "Иду по длинной дороге.", "en": "I go along a long road." },
+        { "jp": "出口を見てください。", "reading": "でぐちをみてください。", "ru": "Посмотрите на выход.", "en": "Please look at the exit." }
+      ],
+      "writing": ["本", "行"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-3",
+      "order": 3,
+      "title": { "ru": "Месяц, порядок, жизнь и положение", "en": "Months, order, life, and position" },
+      "theme": { "ru": "месяц, порядок, жизнь и положение", "en": "months, order, life, and position" },
+      "kanji": ["月", "分", "後", "前", "生", "五", "間", "上"],
+      "goal": { "ru": "Понять связку времени: месяц, минуты, до/после, верх и промежуток.", "en": "Understand the time chain: month, minutes, before/after, up, and interval." },
+      "sentences": [
+        { "jp": "今月の前に勉強しました。", "reading": "こんげつのまえにべんきょうしました。", "ru": "Я учился до этого месяца.", "en": "I studied before this month." },
+        { "jp": "五分後に来ます。", "reading": "ごふんごにきます。", "ru": "Приду через пять минут.", "en": "I will come in five minutes." },
+        { "jp": "先生は上にいます。", "reading": "せんせいはうえにいます。", "ru": "Учитель наверху.", "en": "The teacher is upstairs/above." },
+        { "jp": "学生の間で話します。", "reading": "がくせいのあいだではなします。", "ru": "Говорим среди студентов.", "en": "We talk among students." }
+      ],
+      "writing": ["月", "分"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-4",
+      "order": 4,
+      "title": { "ru": "Деньги, школа, высота и восток", "en": "Money, school, height, and east" },
+      "theme": { "ru": "деньги, школа, высота и восток", "en": "money, school, height, and east" },
+      "kanji": ["東", "四", "今", "金", "九", "入", "学", "高"],
+      "goal": { "ru": "Использовать кандзи в коротких фразах про школу, цену и направление.", "en": "Use kanji in short phrases about school, price, and direction." },
+      "sentences": [
+        { "jp": "東京は東にあります。", "reading": "とうきょうはひがしにあります。", "ru": "Токио находится на востоке.", "en": "Tokyo is in the east." },
+        { "jp": "今、学校に入ります。", "reading": "いま、がっこうにはいります。", "ru": "Сейчас вхожу в школу.", "en": "I enter school now." },
+        { "jp": "この本は九百円です。", "reading": "このほんはきゅうひゃくえんです。", "ru": "Эта книга стоит 900 йен.", "en": "This book is 900 yen." },
+        { "jp": "高い山を見ます。", "reading": "たかいやまをみます。", "ru": "Смотрю на высокую гору.", "en": "I look at a high mountain." }
+      ],
+      "writing": ["東", "学"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-5",
+      "order": 5,
+      "title": { "ru": "Дети, внешнее пространство, низ и настроение", "en": "Children, outside space, down, and mood" },
+      "theme": { "ru": "дети, внешнее пространство, низ и настроение", "en": "children, outside space, down, and mood" },
+      "kanji": ["円", "子", "外", "八", "六", "下", "来", "気"],
+      "goal": { "ru": "Читать базовые фразы про детей, деньги, место и состояние.", "en": "Read basic phrases about children, money, place, and state." },
+      "sentences": [
+        { "jp": "子どもは外にいます。", "reading": "こどもはそとにいます。", "ru": "Ребёнок находится снаружи.", "en": "The child is outside." },
+        { "jp": "八月と六月は夏です。", "reading": "はちがつとろくがつはなつです。", "ru": "Август и июнь - лето.", "en": "August and June are summer months." },
+        { "jp": "下に来てください。", "reading": "したにきてください。", "ru": "Спуститесь, пожалуйста.", "en": "Please come down." },
+        { "jp": "元気ですか。", "reading": "げんきですか。", "ru": "Как дела? / Ты бодр?", "en": "How are you?" }
+      ],
+      "writing": ["子", "気"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-6",
+      "order": 6,
+      "title": { "ru": "Размер, гора, разговор, женщина, север и счёт", "en": "Size, mountain, talk, women, north, and counting" },
+      "theme": { "ru": "размер, гора, разговор, женщина, север и счёт", "en": "size, mountain, talk, women, north, and counting" },
+      "kanji": ["小", "七", "山", "話", "女", "北", "午", "百"],
+      "goal": { "ru": "Собрать кандзи для людей, направлений, времени и простого счёта.", "en": "Connect kanji for people, directions, time, and simple counting." },
+      "sentences": [
+        { "jp": "小さい女の子が山にいます。", "reading": "ちいさいおんなのこがやまにいます。", "ru": "Маленькая девочка находится в горах.", "en": "A small girl is in the mountains." },
+        { "jp": "七時に電話で話します。", "reading": "しちじにでんわではなします。", "ru": "В семь часов говорю по телефону.", "en": "I talk on the phone at seven." },
+        { "jp": "午後に北へ行きます。", "reading": "ごごにきたへいきます。", "ru": "После полудня иду на север.", "en": "In the afternoon I go north." },
+        { "jp": "百円があります。", "reading": "ひゃくえんがあります。", "ru": "Есть 100 йен.", "en": "There is 100 yen." }
+      ],
+      "writing": ["小", "話"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-7",
+      "order": 7,
+      "title": { "ru": "Письмо, имя, вода, река и половина", "en": "Writing, names, water, rivers, and half" },
+      "theme": { "ru": "письмо, имя, вода, река и половина", "en": "writing, names, water, rivers, and half" },
+      "kanji": ["書", "先", "名", "川", "千", "水", "半", "男"],
+      "goal": { "ru": "Читать слова про имя, письмо, воду, числа и людей.", "en": "Read words about names, writing, water, numbers, and people." },
+      "sentences": [
+        { "jp": "名前を書いてください。", "reading": "なまえをかいてください。", "ru": "Напишите имя, пожалуйста.", "en": "Please write your name." },
+        { "jp": "先月、川を見ました。", "reading": "せんげつ、かわをみました。", "ru": "В прошлом месяце видел реку.", "en": "I saw a river last month." },
+        { "jp": "千円の半分です。", "reading": "せんえんのはんぶんです。", "ru": "Это половина от 1000 йен.", "en": "This is half of 1000 yen." },
+        { "jp": "男の子は水を飲みます。", "reading": "おとこのこはみずをのみます。", "ru": "Мальчик пьёт воду.", "en": "The boy drinks water." }
+      ],
+      "writing": ["書", "水"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-8",
+      "order": 8,
+      "title": { "ru": "Запад, электричество, школа, язык и еда", "en": "West, electricity, school, language, and food" },
+      "theme": { "ru": "запад, электричество, школа, язык и еда", "en": "west, electricity, school, language, and food" },
+      "kanji": ["西", "電", "校", "語", "土", "木", "聞", "食"],
+      "goal": { "ru": "Собрать школьные и бытовые слова в короткие N5-предложения.", "en": "Build school and daily-life words into short N5 sentences." },
+      "sentences": [
+        { "jp": "西口で電車を待ちます。", "reading": "にしぐちででんしゃをまちます。", "ru": "Жду поезд у западного выхода.", "en": "I wait for the train at the west exit." },
+        { "jp": "学校で日本語を聞きます。", "reading": "がっこうでにほんごをききます。", "ru": "В школе слушаю японский.", "en": "I listen to Japanese at school." },
+        { "jp": "木曜日に食事をします。", "reading": "もくようびにしょくじをします。", "ru": "В четверг ем / принимаю пищу.", "en": "I have a meal on Thursday." },
+        { "jp": "土曜日に本を読みます。", "reading": "どようびにほんをよみます。", "ru": "В субботу читаю книгу.", "en": "I read a book on Saturday." }
+      ],
+      "writing": ["語", "食"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-9",
+      "order": 9,
+      "title": { "ru": "Транспорт, вопросы, юг, каждый день и небо", "en": "Transport, questions, south, every day, and sky" },
+      "theme": { "ru": "транспорт, вопросы, юг, каждый день и небо", "en": "transport, questions, south, every day, and sky" },
+      "kanji": ["車", "何", "南", "万", "毎", "白", "天", "母"],
+      "goal": { "ru": "Тренировать вопросы, направления, погоду и частотность.", "en": "Practice questions, directions, weather, and frequency." },
+      "sentences": [
+        { "jp": "毎日、白い車を見ます。", "reading": "まいにち、しろいくるまをみます。", "ru": "Каждый день вижу белую машину.", "en": "Every day I see a white car." },
+        { "jp": "何人が南へ行きますか。", "reading": "なんにんがみなみへいきますか。", "ru": "Сколько людей идёт на юг?", "en": "How many people go south?" },
+        { "jp": "一万円があります。", "reading": "いちまんえんがあります。", "ru": "Есть 10 000 йен.", "en": "There is 10,000 yen." },
+        { "jp": "天気はどうですか。", "reading": "てんきはどうですか。", "ru": "Какая погода?", "en": "How is the weather?" }
+      ],
+      "writing": ["車", "母"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    },
+    {
+      "id": "n5-lesson-10",
+      "order": 10,
+      "title": { "ru": "Семья, стороны, чтение, отдых и погода", "en": "Family, sides, reading, rest, and weather" },
+      "theme": { "ru": "семья, стороны, чтение, отдых и погода", "en": "family, sides, reading, rest, and weather" },
+      "kanji": ["火", "右", "読", "友", "左", "休", "父", "雨"],
+      "goal": { "ru": "Закрепить финальные N5-кандзи через семью, стороны и действия.", "en": "Lock in the final N5 kanji through family, sides, and actions." },
+      "sentences": [
+        { "jp": "火曜日に本を読みます。", "reading": "かようびにほんをよみます。", "ru": "Во вторник читаю книгу.", "en": "I read a book on Tuesday." },
+        { "jp": "右手と左手を見てください。", "reading": "みぎてとひだりてをみてください。", "ru": "Посмотрите на правую и левую руку.", "en": "Please look at the right and left hands." },
+        { "jp": "友だちと休みます。", "reading": "ともだちとやすみます。", "ru": "Отдыхаю с другом.", "en": "I rest with a friend." },
+        { "jp": "父と母は雨を見ます。", "reading": "ちちとはははあめをみます。", "ru": "Отец и мать смотрят на дождь.", "en": "Father and mother look at the rain." }
+      ],
+      "writing": ["読", "雨"],
+      "reviewAfterDays": [1, 3, 7, 14, 30]
+    }
+  ]
+}
