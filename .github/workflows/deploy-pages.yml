@@ -24,13 +24,142 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: index/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: index
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: index
+        run: npm run build
+
+      - name: Prepare static Pages artifact
+        shell: bash
+        run: |
+          rm -rf .pages
+          mkdir -p .pages/index
+
+          cp index.html .pages/index.html
+          cp 404.html .pages/404.html
+          cp service-worker.js .pages/service-worker.js
+
+          if [ -f CNAME ]; then
+            cp CNAME .pages/CNAME
+          elif [ -f index/dist/CNAME ]; then
+            cp index/dist/CNAME .pages/CNAME
+          fi
+
+          if [ -f index/.nojekyll ]; then
+            cp index/.nojekyll .pages/.nojekyll
+          elif [ -f index/dist/.nojekyll ]; then
+            cp index/dist/.nojekyll .pages/.nojekyll
+          fi
+
+          if [ -f index/robots.txt ]; then
+            cp index/robots.txt .pages/robots.txt
+          elif [ -f robots.txt ]; then
+            cp robots.txt .pages/robots.txt
+          elif [ -f index/dist/robots.txt ]; then
+            cp index/dist/robots.txt .pages/robots.txt
+          fi
+
+          if [ -f index/sitemap.xml ]; then
+            cp index/sitemap.xml .pages/sitemap.xml
+          elif [ -f sitemap.xml ]; then
+            cp sitemap.xml .pages/sitemap.xml
+          elif [ -f index/dist/sitemap.xml ]; then
+            cp index/dist/sitemap.xml .pages/sitemap.xml
+          fi
+
+          if [ -f yandex_fd57ad803ca03f70.html ]; then
+            cp yandex_fd57ad803ca03f70.html .pages/yandex_fd57ad803ca03f70.html
+          fi
+
+          cp -a index/dist .pages/index/dist
+
+          # The current app shell is still a static legacy frontend. Vite keeps
+          # non-module scripts as external files, so the Pages artifact must copy
+          # the runtime folders next to /index/dist/index.html.
+          for file in script.js styles.css kanji-page.css manifest.webmanifest service-worker.js; do
+            if [ -f "index/${file}" ]; then
+              cp "index/${file}" ".pages/index/${file}"
+              cp "index/${file}" ".pages/index/dist/${file}"
+            fi
+          done
+
+          for dir in assets audio data vendor; do
+            if [ -d "index/${dir}" ]; then
+              mkdir -p ".pages/index/${dir}" ".pages/index/dist/${dir}"
+              cp -a "index/${dir}/." ".pages/index/${dir}/"
+              cp -a "index/${dir}/." ".pages/index/dist/${dir}/"
+            fi
+          done
+
+          if [ -f index/src/audio/soundManager.js ]; then
+            mkdir -p .pages/index/dist/src/audio .pages/index/src/audio
+            cp index/src/audio/soundManager.js .pages/index/dist/src/audio/soundManager.js
+            cp index/src/audio/soundManager.js .pages/index/src/audio/soundManager.js
+          fi
+
+          mkdir -p .pages/assets .pages/index/assets .pages/index/dist/assets
+          cp -a index/dist/assets/. .pages/assets/
+          cp -a index/dist/assets/. .pages/index/assets/
+          cp -a index/dist/assets/. .pages/index/dist/assets/
+
+          cat > .pages/index/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ru">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+            <meta name="theme-color" content="#08080c" />
+            <title>Flash Kanji</title>
+            <script>
+              (function () {
+                var target = new URL("dist/", window.location.href);
+                target.search = window.location.search;
+                target.hash = window.location.hash || "#home";
+                window.location.replace(target.toString());
+              })();
+            </script>
+            <meta http-equiv="refresh" content="0; url=dist/#home" />
+          </head>
+          <body>
+            <p><a href="dist/#home">Open Flash Kanji</a></p>
+          </body>
+          </html>
+          HTML
+
+          test -f .pages/index/dist/index.html
+          test -f .pages/index/dist/script.js
+          test -f .pages/index/dist/vendor/chart.umd.min.js
+          test -f .pages/index/dist/src/audio/soundManager.js
+          test -f .pages/index/dist/styles.css
+          test -d .pages/index/dist/assets
+          test -d .pages/index/dist/data
+          test -d .pages/assets
+
+          if [ -d ru ]; then
+            cp -a ru .pages/ru
+          fi
+
+          if [ -d en ]; then
+            cp -a en .pages/en
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload static frontend
         uses: actions/upload-pages-artifact@v3
         with:
-          path: index
+          path: .pages
 
       - name: Deploy to GitHub Pages
         id: deployment
