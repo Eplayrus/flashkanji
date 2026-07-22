@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "level": "N2",
+  "generatedAt": "2026-06-12T19:36:03.439173+00:00",
+  "items": [
+    {
+      "id": "n2-listening-1",
+      "title": {
+        "ru": "Скрипт 1: 会議の変更",
+        "en": "Script 1: 会議の変更"
+      },
+      "jp": "A: 明日の会議ですが、資料の準備が終わり次第、開始時間を連絡します。 B: では、午前中とは限らないんですね。 A: はい。遅くとも三時までには始める予定です。",
+      "ru": "Диалог о переносе времени начала встречи после завершения подготовки материалов.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Когда начнётся встреча?",
+            "en": "When will the meeting start?"
+          },
+          "answer": "after_prep_by_three",
+          "options": [
+            {
+              "value": "after_prep_by_three",
+              "label": {
+                "ru": "после завершения подготовки, но не позже трёх часов",
+                "en": "after preparation is finished, but no later than three o'clock"
+              }
+            },
+            {
+              "value": "exact_noon",
+              "label": {
+                "ru": "ровно в полдень",
+                "en": "exactly at noon"
+              }
+            },
+            {
+              "value": "cancelled",
+              "label": {
+                "ru": "встреча отменена",
+                "en": "the meeting is cancelled"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n2-listening-2",
+      "title": {
+        "ru": "Скрипт 2: 駅での案内",
+        "en": "Script 2: 駅での案内"
+      },
+      "jp": "アナウンス: 強風の影響により、列車が遅れています。お急ぎのところ申し訳ありませんが、振替輸送をご利用ください。",
+      "ru": "Объявление на станции советует воспользоваться альтернативной перевозкой из-за задержек поездов.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что рекомендуют пассажирам?",
+            "en": "What are passengers advised to do?"
+          },
+          "answer": "use_transfer",
+          "options": [
+            {
+              "value": "use_transfer",
+              "label": {
+                "ru": "воспользоваться альтернативной перевозкой",
+                "en": "use replacement transportation"
+              }
+            },
+            {
+              "value": "wait_home",
+              "label": {
+                "ru": "вернуться домой и ждать",
+                "en": "go home and wait"
+              }
+            },
+            {
+              "value": "buy_ticket",
+              "label": {
+                "ru": "купить новый билет на самолёт",
+                "en": "buy a new plane ticket"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n2-listening-3",
+      "title": {
+        "ru": "Скрипт 3: 職場の相談",
+        "en": "Script 3: 職場の相談"
+      },
+      "jp": "A: この仕事、今日中に終わらせるべきでしょうか。 B: 無理をすることはありません。ただ、明日の朝までには確認しておいたほうがいいです。",
+      "ru": "Разговор о том, что не нужно чрезмерно спешить, но к утру следующего дня работу всё же стоит проверить.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что советует собеседник B?",
+            "en": "What does speaker B recommend?"
+          },
+          "answer": "check_by_morning",
+          "options": [
+            {
+              "value": "check_by_morning",
+              "label": {
+                "ru": "не перенапрягаться, но проверить к завтрашнему утру",
+                "en": "do not overwork, but check it by tomorrow morning"
+              }
+            },
+            {
+              "value": "finish_now",
+              "label": {
+                "ru": "обязательно закончить всё сегодня же",
+                "en": "absolutely finish everything today"
+              }
+            },
+            {
+              "value": "ignore_task",
+              "label": {
+                "ru": "полностью забыть о задаче",
+                "en": "completely forget the task"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n2-listening-4",
+      "title": {
+        "ru": "Скрипт 4: 店での会話",
+        "en": "Script 4: 店での会話"
+      },
+      "jp": "客: この商品は高いですね。 店員: はい。ただ、品質の面から言うと、長く使えるので損ではありません。",
+      "ru": "Продавец объясняет, что товар дорогой, но его качество и срок службы оправдывают цену.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Как продавец описывает товар?",
+            "en": "How does the clerk describe the item?"
+          },
+          "answer": "expensive_but_worth_it",
+          "options": [
+            {
+              "value": "expensive_but_worth_it",
+              "label": {
+                "ru": "дорогой, но выгодный из-за качества и долгого срока службы",
+                "en": "expensive, but worth it because of quality and durability"
+              }
+            },
+            {
+              "value": "cheap_weak",
+              "label": {
+                "ru": "дешёвый, но слабый",
+                "en": "cheap, but weak"
+              }
+            },
+            {
+              "value": "free_today",
+              "label": {
+                "ru": "сегодня бесплатный",
+                "en": "free today"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n2-listening-5",
+      "title": {
+        "ru": "Скрипт 5: 学校の連絡",
+        "en": "Script 5: 学校の連絡"
+      },
+      "jp": "先生: レポートは資料に基づいて書いてください。インターネットの情報を使う場合は、出典を必ず書くこと。",
+      "ru": "Учитель требует писать работу на основе источников и обязательно указывать происхождение интернет-данных.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что учащиеся обязаны указать?",
+            "en": "What must students include?"
+          },
+          "answer": "source",
+          "options": [
+            {
+              "value": "source",
+              "label": {
+                "ru": "источник информации",
+                "en": "the information source"
+              }
+            },
+            {
+              "value": "favorite_color",
+              "label": {
+                "ru": "любимый цвет",
+                "en": "their favorite color"
+              }
+            },
+            {
+              "value": "seat_number",
+              "label": {
+                "ru": "номер места в классе",
+                "en": "their seat number"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n2-listening-6",
+      "title": {
+        "ru": "Скрипт 6: 友人との会話",
+        "en": "Script 6: 友人との会話"
+      },
+      "jp": "A: N2の文法、覚えることが多すぎるよ。 B: 形だけ覚えるより、例文ごと覚えたほうがいいよ。Flash Kanjiみたいに文で見たほうが残るし。",
+      "ru": "Друг советует запоминать грамматику не по голой форме, а вместе с примером и контекстом, как во Flash Kanji.",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой способ учёбы советует B?",
+            "en": "What study method does B recommend?"
+          },
+          "answer": "learn_with_examples",
+          "options": [
+            {
+              "value": "learn_with_examples",
+              "label": {
+                "ru": "учить формы вместе с примерными предложениями",
+                "en": "learn forms together with example sentences"
+              }
+            },
+            {
+              "value": "memorize_shapes",
+              "label": {
+                "ru": "зубрить только форму",
+                "en": "memorize only the bare form"
+              }
+            },
+            {
+              "value": "quit_grammar",
+              "label": {
+                "ru": "вообще бросить грамматику",
+                "en": "stop studying grammar entirely"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

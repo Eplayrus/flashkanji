@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flash Kanji</title>
+  <script>
+    (function () {
+      const legacyIndexShell = /^\/index(?:\/dist)?\/?$/i.test(location.pathname);
+      const route = location.pathname.replace(/^\/+|\/+$/g, "");
+      const target = new URL("./", location.origin);
+      target.search = location.search;
+      target.hash = legacyIndexShell || !route || /^index(?:\.html)?$/i.test(route)
+        ? (location.hash || "#home")
+        : `#${route}`;
+      window.location.replace(target.toString());
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting to Flash Kanji...</p>
+</body>
+</html>

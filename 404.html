@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex, follow" />
   <title>Flash Kanji</title>
-  <meta http-equiv="refresh" content="0; url=/index/#home" />
   <script>
     (function () {
-      var target = new URL("/index/", window.location.origin);
-      target.hash = window.location.hash || "#home";
+      var route = window.location.pathname.replace(/^\/+|\/+$/g, "");
+      var legacyShell = !route || /^index(?:\/dist)?\/?$/i.test(route) || /^index(?:\.html)?$/i.test(route);
+      var target = new URL("/index/dist/", window.location.origin);
+      target.search = window.location.search;
+      target.hash = window.location.hash || (legacyShell ? "#home" : "#" + route);
       window.location.replace(target.toString());
     })();
   </script>
 </head>
 <body>
-  <p><a href="/index/#home">Открыть Flash Kanji</a></p>
+  <p><a href="/index/dist/#home">Открыть Flash Kanji</a></p>
 </body>
 </html>

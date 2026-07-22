@@ -29,6 +29,20 @@
   <meta name="twitter:image" content="https://flashkanji.space/assets/og/flashkanji-og.webp" />
   <meta name="twitter:image:alt" content="Flash Kanji - preview card with logo, Eva and kanji-learning features." />
   <title>Flash Kanji — учи японские кандзи через JLPT-учебники, письмо и повторение</title>
+  <script>
+    (function () {
+      var pathname = window.location.pathname;
+      var isSourceFolder = /\/index\/?$/i.test(pathname);
+      var isSourceFile = /\/index\/index\.html$/i.test(pathname);
+      if (!isSourceFolder && !isSourceFile) {
+        return;
+      }
+      var targetPath = isSourceFolder
+        ? pathname.replace(/\/?$/, "/dist/")
+        : pathname.replace(/\/index\.html$/i, "/dist/");
+      window.location.replace(targetPath + window.location.search + (window.location.hash || "#home"));
+    })();
+  </script>
   <link rel="canonical" href="https://flashkanji.space/" />
   <link rel="alternate" hreflang="ru" href="https://flashkanji.space/ru/textbooks/" />
   <link rel="alternate" hreflang="en" href="https://flashkanji.space/en/textbooks/" />
