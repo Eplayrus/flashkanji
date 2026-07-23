@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Инструкция установки Flash Kanji на iOS</title>
+  <desc id="desc">Откройте Safari, нажмите Поделиться, выберите На экран Домой.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#171824"/>
+      <stop offset="1" stop-color="#08080d"/>
+    </linearGradient>
+    <linearGradient id="hot" x1="0" x2="1">
+      <stop offset="0" stop-color="#ff315f"/>
+      <stop offset="1" stop-color="#cf1745"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" rx="34" fill="url(#bg)"/>
+  <circle cx="796" cy="104" r="104" fill="#ffdf6e" opacity=".13"/>
+  <circle cx="842" cy="98" r="92" fill="#08080d" opacity=".74"/>
+  <g transform="translate(86 62)">
+    <rect width="250" height="416" rx="46" fill="#0d0e16" stroke="#fff" stroke-opacity=".18" stroke-width="3"/>
+    <rect x="24" y="58" width="202" height="298" rx="26" fill="#171824" stroke="#ff315f" stroke-opacity=".34"/>
+    <text x="125" y="132" text-anchor="middle" fill="#ffdf6e" font-family="Georgia,serif" font-size="52" font-weight="700">月</text>
+    <rect x="56" y="182" width="138" height="44" rx="15" fill="url(#hot)"/>
+    <text x="125" y="211" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="900">Safari</text>
+    <g transform="translate(76 260)">
+      <path d="M49 14v74" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+      <path d="M20 44l29-30 29 30" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="0" y="76" width="98" height="48" rx="13" fill="none" stroke="#fff" stroke-width="9"/>
+    </g>
+    <circle cx="125" cy="382" r="13" fill="#fff" opacity=".22"/>
+  </g>
+  <g transform="translate(390 108)" font-family="Arial,sans-serif">
+    <text x="0" y="0" fill="#ffdf6e" font-size="18" font-weight="900" letter-spacing="3">IPHONE · IPAD</text>
+    <text x="0" y="58" fill="#fff" font-size="42" font-weight="900">Safari → Поделиться</text>
+    <text x="0" y="112" fill="#c8bfca" font-size="24">1. Откройте Flash Kanji в Safari.</text>
+    <text x="0" y="160" fill="#c8bfca" font-size="24">2. Нажмите системную кнопку «Поделиться».</text>
+    <text x="0" y="208" fill="#c8bfca" font-size="24">3. Выберите «На экран Домой».</text>
+    <rect x="0" y="260" width="390" height="76" rx="24" fill="#ff315f" fill-opacity=".16" stroke="#ff315f" stroke-opacity=".55"/>
+    <text x="28" y="308" fill="#fff" font-size="24" font-weight="900">Flash Kanji появится как приложение</text>
+  </g>
+</svg>

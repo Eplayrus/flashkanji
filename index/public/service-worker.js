@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-07-22-github-pages";
+const SW_BUILD_VERSION = "2026-07-23-download-page";
 const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -6,6 +6,13 @@ const PRECACHE_URLS = [
   "./index.html",
   "./kanji-page.css",
   "./manifest.webmanifest",
+  "./download/",
+  "./download/index.html",
+  "./download/download.css",
+  "./download/install.js",
+  "./download/assets/android-apk-steps.svg",
+  "./download/assets/pwa-install-steps.svg",
+  "./download/assets/ios-pwa-steps.svg",
   "./vendor/chart.umd.min.js",
   "./assets/favicon.ico",
   "./assets/favicon.png",

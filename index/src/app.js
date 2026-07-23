@@ -6327,6 +6327,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             ${!isPwaInstalled() ? `
               <article class="study-card home-install-card">
                 <button class="btn ghost" type="button" data-action="pwa-install">${escapeHtml(installCopy.install)}</button>
+                <a class="btn ghost" href="./download/">${escapeHtml(ru ? "Скачать APK / PWA" : "Download APK / PWA")}</a>
                 <p class="home-install-hint">${escapeHtml(installCopy.description)}${isIosSafari() ? ` ${escapeHtml(installCopy.iosInstruction)}` : ""}</p>
               </article>
             ` : ""}
