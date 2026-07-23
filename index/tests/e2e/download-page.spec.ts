@@ -30,3 +30,15 @@ test("download page stays within mobile viewport and PWA button opens manual hel
   await page.locator("#pwaInstallButton").click();
   await expect(page.locator("#pwaStatus")).toContainText(/меню браузера|На iPhone/i);
 });
+
+test("home hero links to the real download page without SPA redirect", async ({ page }) => {
+  await page.goto("./#home");
+
+  const downloadLink = page.locator(".home-hero-actions .home-download-cta");
+  await expect(downloadLink).toBeVisible();
+  await expect(downloadLink).toHaveAttribute("href", "/download/");
+
+  await downloadLink.click();
+  await expect(page).toHaveURL(/\/download\/$/);
+  await expect(page.locator("h1")).toHaveText("Скачать Flash Kanji для Android и установить PWA");
+});

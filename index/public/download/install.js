@@ -84,7 +84,11 @@
   });
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("../service-worker.js").catch(() => {
+    const scriptUrl = document.currentScript instanceof HTMLScriptElement && document.currentScript.src
+      ? document.currentScript.src
+      : document.baseURI;
+    const serviceWorkerUrl = new URL("../service-worker.js", scriptUrl);
+    navigator.serviceWorker.register(serviceWorkerUrl.href).catch(() => {
       setStatus("Страница загрузки открыта. Если PWA-кнопка недоступна, используйте меню браузера.");
     });
   }

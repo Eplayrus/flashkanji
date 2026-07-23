@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-07-23-download-page";
+const SW_BUILD_VERSION = "2026-07-23-download-page-v2";
 const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -121,6 +121,10 @@ async function networkFirst(request, fallbackRequests = []) {
   }
 }
 
+function isDownloadDocumentUrl(url) {
+  return /\/download(?:\/index\.html)?\/?$/i.test(url.pathname);
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
@@ -147,7 +151,10 @@ self.addEventListener("fetch", (event) => {
   const isAudioRequest = request.destination === "audio" || url.pathname.includes("/audio/kanji/");
 
   if (isDocument) {
-    event.respondWith(networkFirst(request, ["./index.html", "./"]));
+    const fallbacks = isDownloadDocumentUrl(url)
+      ? ["./download/index.html", "./download/", "./index.html", "./"]
+      : ["./index.html", "./"];
+    event.respondWith(networkFirst(request, fallbacks));
     return;
   }
 

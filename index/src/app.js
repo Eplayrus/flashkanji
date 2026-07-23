@@ -6289,6 +6289,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             <div class="hero-actions home-hero-actions">
               <button class="btn primary home-primary-cta" type="button" data-action="home-lesson" data-tour="home-lesson" data-level="${escapeAttr(lessonAction.level)}" data-lesson-id="${escapeAttr(lessonAction.lessonId || "")}">${escapeHtml(lessonAction.label)}</button>
               ${reviewQueue > 0 ? `<button class="btn ghost home-primary-cta" type="button" data-action="home-review" data-tour="home-review">${escapeHtml(ru ? `Повторить: ${reviewQueue}` : `Review: ${reviewQueue}`)}</button>` : ""}
+              <a class="btn ghost home-primary-cta home-download-cta" href="/download/">${escapeHtml(ru ? "Скачать APK / PWA" : "Download APK / PWA")}</a>
             </div>
             <div class="home-hero-progress" aria-label="${escapeAttr(labels.level)}">
               <progress class="progress-line" max="100" value="${escapeAttr(String(percent))}">0%</progress>
@@ -6327,7 +6328,6 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             ${!isPwaInstalled() ? `
               <article class="study-card home-install-card">
                 <button class="btn ghost" type="button" data-action="pwa-install">${escapeHtml(installCopy.install)}</button>
-                <a class="btn ghost" href="./download/">${escapeHtml(ru ? "Скачать APK / PWA" : "Download APK / PWA")}</a>
                 <p class="home-install-hint">${escapeHtml(installCopy.description)}${isIosSafari() ? ` ${escapeHtml(installCopy.iosInstruction)}` : ""}</p>
               </article>
             ` : ""}
