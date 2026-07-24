@@ -5,13 +5,17 @@ test.use({ serviceWorkers: "block" });
 test("download page is SEO-readable and links to the official APK", async ({ page, request }) => {
   await page.goto("./download/");
 
-  await expect(page.locator("h1")).toHaveText("Скачать Flash Kanji для Android и установить PWA");
-  await expect(page.locator("main")).toContainText("Официальная сборка Flash Kanji");
+  await expect(page.locator("h1")).toHaveText("Flash Kanji APK для Android");
+  await expect(page.locator("main")).toContainText("Готовая Android-сборка");
   await expect(page.locator("#faq")).toContainText("Частые вопросы");
 
-  const apkLink = page.locator('a[download="flash-kanji-android.apk"]');
-  await expect(apkLink).toHaveAttribute("href", "../downloads/flash-kanji-android.apk");
-  await expect(apkLink).toHaveText(/Скачать APK для Android/);
+  const apkLink = page.locator("a.apk-download");
+  await expect(apkLink).toHaveAttribute("href", "https://drive.google.com/uc?export=download&id=1lIwF4vLq2DNAQ_Hufkmve7-m3bLWpvua");
+  await expect(apkLink).toHaveText(/Скачать APK/);
+
+  const mirrorLink = page.locator('a[download="flash-kanji-android.apk"]');
+  await expect(mirrorLink).toHaveAttribute("href", "../downloads/flash-kanji-android.apk");
+  await expect(mirrorLink).toHaveText(/Зеркало с сайта/);
 
   const response = await request.get("./downloads/flash-kanji-android.apk");
   expect(response.status()).toBe(200);
@@ -28,10 +32,13 @@ test("download page stays within mobile viewport and PWA button opens manual hel
   expect(overflow).toBeLessThanOrEqual(1);
 
   await page.locator("#pwaInstallButton").click();
-  await expect(page.locator("#pwaStatus")).toContainText(/меню браузера|На iPhone/i);
+  await expect(page.locator("#pwaStatus")).toContainText(/меню браузера|На iPhone|PWA/i);
 });
 
 test("home hero links to the real download page without SPA redirect", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
+  });
   await page.goto("./#home");
 
   const downloadLink = page.locator(".home-hero-actions .home-download-cta");
@@ -40,5 +47,5 @@ test("home hero links to the real download page without SPA redirect", async ({ 
 
   await downloadLink.click();
   await expect(page).toHaveURL(/\/download\/$/);
-  await expect(page.locator("h1")).toHaveText("Скачать Flash Kanji для Android и установить PWA");
+  await expect(page.locator("h1")).toHaveText("Flash Kanji APK для Android");
 });

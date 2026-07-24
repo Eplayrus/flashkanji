@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-07-23-download-page-v2";
+const SW_BUILD_VERSION = "2026-07-24-apk-download-page";
 const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
