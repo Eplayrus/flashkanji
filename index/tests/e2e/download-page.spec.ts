@@ -32,14 +32,35 @@ test("download page is SEO-readable and links to the official APK", async ({ pag
 });
 
 test("download page keeps the app-like desktop shell visible", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("./download/");
   await expect(page.locator(".download-hero")).toBeVisible();
   await expect(page.locator(".download-sidebar")).toBeVisible();
   await expect(page.locator(".phone-preview")).toBeVisible();
 
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(1);
+  const layout = await page.evaluate(() => {
+    const rect = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, width: box.width };
+    };
+    const heading = rect("h1");
+    const phone = rect(".phone-preview");
+    return {
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      sidebarWidth: getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width").trim(),
+      oldSidebarVar: getComputedStyle(document.documentElement).getPropertyValue("--sidebar").trim(),
+      headingPhoneGap: heading && phone ? phone.left - heading.right : null,
+      headingWidth: heading?.width ?? 0
+    };
+  });
+  expect(layout.overflow).toBeLessThanOrEqual(1);
+  expect(layout.sidebarWidth).toBe("252px");
+  expect(layout.oldSidebarVar).toBe("");
+  expect(layout.headingWidth).toBeGreaterThan(300);
+  expect(layout.headingPhoneGap).not.toBeNull();
+  expect(layout.headingPhoneGap ?? 0).toBeGreaterThanOrEqual(12);
 });
 
 test("home hero links to the real download page without SPA redirect", async ({ page }) => {

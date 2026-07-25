@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-07-25-download-routing-fix";
+const SW_BUILD_VERSION = "2026-07-25-download-visual-refresh";
 const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -125,6 +125,10 @@ function isDownloadDocumentUrl(url) {
   return /\/download(?:\/index\.html)?\/?$/i.test(url.pathname);
 }
 
+function isDownloadRuntimeAssetUrl(url) {
+  return /\/download\/(?:download\.css|install\.js|assets\/)/i.test(url.pathname);
+}
+
 function downloadDocumentRequest() {
   return new Request(new URL("./download/index.html", self.registration.scope).href, {
     credentials: "same-origin"
@@ -155,6 +159,7 @@ self.addEventListener("fetch", (event) => {
   const isDocument = request.destination === "document" || request.mode === "navigate";
   const isDataRequest = url.pathname.includes("/data/");
   const isAudioRequest = request.destination === "audio" || url.pathname.includes("/audio/kanji/");
+  const isDownloadRuntimeAsset = isDownloadRuntimeAssetUrl(url);
 
   if (isDocument) {
     if (isDownloadDocumentUrl(url)) {
@@ -167,6 +172,11 @@ self.addEventListener("fetch", (event) => {
 
   if (isDataRequest) {
     event.respondWith(staleWhileRevalidate(event, request));
+    return;
+  }
+
+  if (isDownloadRuntimeAsset) {
+    event.respondWith(networkFirst(request, [request]));
     return;
   }
 
