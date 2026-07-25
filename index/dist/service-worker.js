@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-07-22-github-pages";
+const SW_BUILD_VERSION = "2026-07-25-download-spa-route";
 const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -6,6 +6,9 @@ const PRECACHE_URLS = [
   "./index.html",
   "./kanji-page.css",
   "./manifest.webmanifest",
+  "./download/",
+  "./download/index.html",
+  "./assets/download/android-app-screenshot.png",
   "./vendor/chart.umd.min.js",
   "./assets/favicon.ico",
   "./assets/favicon.png",
@@ -114,6 +117,16 @@ async function networkFirst(request, fallbackRequests = []) {
   }
 }
 
+function isDownloadDocumentUrl(url) {
+  return /\/download(?:\/index\.html)?\/?$/i.test(url.pathname);
+}
+
+function downloadDocumentRequest() {
+  return new Request(new URL("./download/index.html", self.registration.scope).href, {
+    credentials: "same-origin"
+  });
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
@@ -140,6 +153,10 @@ self.addEventListener("fetch", (event) => {
   const isAudioRequest = request.destination === "audio" || url.pathname.includes("/audio/kanji/");
 
   if (isDocument) {
+    if (isDownloadDocumentUrl(url)) {
+      event.respondWith(networkFirst(downloadDocumentRequest(), ["./download/index.html", "./download/", "./index.html", "./"]));
+      return;
+    }
     event.respondWith(networkFirst(request, ["./index.html", "./"]));
     return;
   }

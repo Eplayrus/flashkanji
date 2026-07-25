@@ -428,7 +428,7 @@ function indexHtml(cards, translations, lang) {
 }
 
 function sitemapXml(cards) {
-  const urls = [`${BASE_URL}/`, `${BASE_URL}/index/`, `${BASE_URL}/ru/kanji/`, `${BASE_URL}/en/kanji/`];
+  const urls = [`${BASE_URL}/`, `${BASE_URL}/index/`, `${BASE_URL}/download/`, `${BASE_URL}/ru/kanji/`, `${BASE_URL}/en/kanji/`];
   for (const card of cards) {
     urls.push(pageUrl("ru", card), pageUrl("en", card));
   }

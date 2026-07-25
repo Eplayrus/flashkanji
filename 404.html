@@ -8,6 +8,13 @@
   <script>
     (function () {
       var route = window.location.pathname.replace(/^\/+|\/+$/g, "");
+      if (/^download(?:\/index\.html)?$/i.test(route)) {
+        var downloadPage = new URL("/index/dist/", window.location.origin);
+        downloadPage.search = window.location.search;
+        downloadPage.hash = "#download";
+        window.location.replace(downloadPage.toString());
+        return;
+      }
       var legacyShell = !route || /^index(?:\/dist)?\/?$/i.test(route) || /^index(?:\.html)?$/i.test(route);
       var target = new URL("/index/dist/", window.location.origin);
       target.search = window.location.search;

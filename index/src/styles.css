@@ -8931,6 +8931,67 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   max-width: none;
 }
 
+.download-hero-card {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
+  align-items: center;
+}
+
+.download-hero-copy {
+  max-width: 760px;
+}
+
+.download-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.download-app-preview {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+  width: min(100%, 320px);
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 28px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2), transparent 4%), var(--surface));
+  box-shadow: 0 24px 60px var(--shadow), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.download-app-preview img {
+  display: block;
+  width: 100%;
+  max-height: 620px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 20px;
+}
+
+.download-install-step {
+  cursor: default;
+}
+
+.download-install-step .home-task-item-icon {
+  font-family: var(--ui-font);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.download-info-card h2 {
+  margin: 0;
+}
+
+.download-info-card ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .home-install-cta {
   display: grid;
   gap: 8px;
@@ -9010,6 +9071,10 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
     grid-template-columns: 1fr;
   }
 
+  .download-hero-card {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 300px);
+  }
+
   .home-route-track {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -9030,6 +9095,14 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
     right: 10px;
     top: 12px;
     opacity: 0.66;
+  }
+
+  .download-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .download-app-preview {
+    width: min(100%, 280px);
   }
 
   .home-metrics {
