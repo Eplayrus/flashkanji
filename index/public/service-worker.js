@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-07-25-download-visual-refresh";
+const SW_BUILD_VERSION = "2026-07-25-download-spa-route";
 const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -8,11 +8,7 @@ const PRECACHE_URLS = [
   "./manifest.webmanifest",
   "./download/",
   "./download/index.html",
-  "./download/download.css",
-  "./download/install.js",
-  "./download/assets/android-apk-steps.svg",
-  "./download/assets/pwa-install-steps.svg",
-  "./download/assets/ios-pwa-steps.svg",
+  "./assets/download/android-app-screenshot.png",
   "./vendor/chart.umd.min.js",
   "./assets/favicon.ico",
   "./assets/favicon.png",
@@ -125,10 +121,6 @@ function isDownloadDocumentUrl(url) {
   return /\/download(?:\/index\.html)?\/?$/i.test(url.pathname);
 }
 
-function isDownloadRuntimeAssetUrl(url) {
-  return /\/download\/(?:download\.css|install\.js|assets\/)/i.test(url.pathname);
-}
-
 function downloadDocumentRequest() {
   return new Request(new URL("./download/index.html", self.registration.scope).href, {
     credentials: "same-origin"
@@ -159,7 +151,6 @@ self.addEventListener("fetch", (event) => {
   const isDocument = request.destination === "document" || request.mode === "navigate";
   const isDataRequest = url.pathname.includes("/data/");
   const isAudioRequest = request.destination === "audio" || url.pathname.includes("/audio/kanji/");
-  const isDownloadRuntimeAsset = isDownloadRuntimeAssetUrl(url);
 
   if (isDocument) {
     if (isDownloadDocumentUrl(url)) {
@@ -172,11 +163,6 @@ self.addEventListener("fetch", (event) => {
 
   if (isDataRequest) {
     event.respondWith(staleWhileRevalidate(event, request));
-    return;
-  }
-
-  if (isDownloadRuntimeAsset) {
-    event.respondWith(networkFirst(request, [request]));
     return;
   }
 

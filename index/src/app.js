@@ -5,12 +5,6 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
 
 (() => {
     "use strict";
-    const downloadPagePath = window.location?.pathname || "";
-    if (/\/download\/?$/i.test(downloadPagePath)) {
-        const normalizedDownloadPath = downloadPagePath.endsWith("/") ? downloadPagePath : `${downloadPagePath}/`;
-        window.location.replace(`${normalizedDownloadPath}index.html${window.location.search || ""}${window.location.hash || ""}`);
-        return;
-    }
     const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v2";
     const PWA_INSTALL_STORAGE_KEY_LEGACY = "flashKanji.pwaInstallPrompt.v1";
     const NOTIFICATION_STORAGE_KEY = "flashKanji.notificationPrompt.v1";
@@ -31,6 +25,9 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     };
     const SUPPORT_EMAIL = "aleksey.lebedev606@gmail.com";
     const SUPPORT_EMAIL_SUBJECT = "Flash Kanji bug report";
+    const ANDROID_APK_DRIVE_URL = "https://drive.google.com/uc?export=download&id=1lIwF4vLq2DNAQ_Hufkmve7-m3bLWpvua";
+    const ANDROID_APK_MIRROR_URL = "downloads/flash-kanji-android.apk";
+    const ANDROID_SCREENSHOT_URL = "assets/download/android-app-screenshot.png";
     // Guard key for one-time forced PWA cache reset.
     // When set to "done", the app will skip resetting caches on subsequent loads.
     const FORCE_PWA_CACHE_RESET_FLAG = "flashKanji.forcePwaCacheReset.v1";
@@ -5219,6 +5216,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             let html = "";
             if (state.route === "home")
                 html = renderHome();
+            if (state.route === "download")
+                html = renderDownload();
             if (state.route === "about")
                 html = renderAbout();
             if (state.route === "learn") {
@@ -5897,6 +5896,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 { route: "writing", focus: "writing-canvas", icon: "筆", title: ru ? "Письмо" : "Writing", text: ru ? "Практика написания." : "Writing practice." },
                 { route: "stats", focus: "stats-top", icon: "в–Ґ", title: ru ? "Профиль" : "Profile", text: ru ? "Статистика, награды и прогресс." : "Stats, achievements, and progress." },
                 { route: "eva-room", focus: "eva-room", icon: "☾", title: ru ? "Комната Евы" : "Eva room", text: ru ? "Диалоги и уютные фоны." : "Dialogue scenes and cozy rooms." },
+                { route: "download", focus: "download-top", icon: "⇩", title: ru ? "Скачать" : "Download", text: ru ? "APK для Android и PWA-установка." : "Android APK and PWA install." },
                 { route: "about", focus: "about", icon: "ℹ", title: ru ? "О проекте" : "About", text: ru ? "Что такое Flash Kanji." : "What Flash Kanji is." }
             ]
         };
@@ -5909,6 +5909,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return lang() === "ru" ? "О проекте" : "About";
         if (route === "stats")
             return lang() === "ru" ? "Профиль" : "Profile";
+        if (route === "download")
+            return lang() === "ru" ? "Скачать" : "Download";
         if (route === "textbooks")
             return lang() === "ru" ? "Учебники" : "Textbooks";
         if (route === "learn")
@@ -5916,7 +5918,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         return t(route);
     }
     function footerNavItems() {
-        return ["home", "textbooks", "review", "dictionary", "stats", "about"];
+        return ["home", "textbooks", "review", "dictionary", "download", "stats", "about"];
     }
     function footerNavIcon(route) {
         return {
@@ -5925,6 +5927,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             learn: "文",
             review: "↻",
             dictionary: "典",
+            download: "⇩",
             stats: "▥",
             about: "ℹ"
         }[route] || "•";
@@ -5980,6 +5983,127 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
           <p class="site-footer-copy">© Flash Kanji ${year}</p>
         </div>
       </footer>
+    `;
+    }
+    function downloadPageCopy() {
+        const ru = lang() === "ru";
+        return ru
+            ? {
+                eyebrow: "Flash Kanji · Android",
+                title: "Скачать Flash Kanji",
+                accent: "и установить PWA",
+                lead: "Та же оболочка Flash Kanji: JLPT-учебники, SRS-повторение, словарь и практика письма — на Android и в браузере.",
+                note: "Официальная сборка Flash Kanji. Кнопка APK ведёт на файл в Google Drive, зеркало на сайте остаётся запасным вариантом.",
+                apk: "Скачать APK",
+                pwa: "Установить PWA",
+                web: "Открыть веб-версию",
+                meta: "Android 8.0+ · APK · бесплатно · 793 КБ",
+                stepsTitle: "Как установить",
+                stepsSubtitle: "Коротко и без лишних экранов.",
+                infoTitle: "Что внутри",
+                info: [
+                    "JLPT N5–N1 учебники и маршрут уроков.",
+                    "SRS-повторение и словарь кандзи.",
+                    "Практика письма, импорт/экспорт прогресса и PWA-режим."
+                ],
+                steps: [
+                    { icon: "1", title: "Скачайте APK", text: "Нажмите «Скачать APK» и дождитесь завершения загрузки." },
+                    { icon: "2", title: "Разрешите установку", text: "Если Android попросит, разрешите установку из этого источника." },
+                    { icon: "3", title: "Откройте Flash Kanji", text: "Запустите приложение и продолжайте учить кандзи где угодно." }
+                ],
+                mirror: "Запасное зеркало APK",
+                screenshotAlt: "Скриншот Flash Kanji на Android"
+            }
+            : {
+                eyebrow: "Flash Kanji · Android",
+                title: "Download Flash Kanji",
+                accent: "and install the PWA",
+                lead: "The same Flash Kanji shell: JLPT textbooks, SRS review, dictionary, and writing practice on Android and in the browser.",
+                note: "Official Flash Kanji build. The APK button opens the Google Drive file; the site mirror is kept as a fallback.",
+                apk: "Download APK",
+                pwa: "Install PWA",
+                web: "Open web version",
+                meta: "Android 8.0+ · APK · free · 793 KB",
+                stepsTitle: "How to install",
+                stepsSubtitle: "Short and clean.",
+                infoTitle: "What's inside",
+                info: [
+                    "JLPT N5–N1 textbooks and lesson route.",
+                    "SRS review and kanji dictionary.",
+                    "Writing practice, progress import/export, and PWA mode."
+                ],
+                steps: [
+                    { icon: "1", title: "Download the APK", text: "Tap Download APK and wait for the file to finish." },
+                    { icon: "2", title: "Allow install", text: "If Android asks, allow installation from this source." },
+                    { icon: "3", title: "Open Flash Kanji", text: "Launch the app and keep studying kanji anywhere." }
+                ],
+                mirror: "Fallback APK mirror",
+                screenshotAlt: "Flash Kanji Android screenshot"
+            };
+    }
+    function renderDownloadInstallStep(step) {
+        return `
+      <article class="home-task-item download-install-step">
+        <span class="home-task-item-icon" aria-hidden="true">${escapeHtml(step.icon)}</span>
+        <span class="home-task-item-copy">
+          <strong>${escapeHtml(step.title)}</strong>
+          <p>${escapeHtml(step.text)}</p>
+        </span>
+      </article>
+    `;
+    }
+    function renderDownload() {
+        const copy = downloadPageCopy();
+        return `
+      <section class="page home-shell download-page" data-section="download-page">
+        <article class="home-hero-card download-hero-card" data-section="download-top" aria-labelledby="downloadTitle">
+          <img class="home-hero-moon" src="assets/decor/elements/crescent-moon.webp" alt="" aria-hidden="true" loading="eager" decoding="async" />
+          <div class="home-hero-copy download-hero-copy">
+            <p class="eyebrow">${escapeHtml(copy.eyebrow)}</p>
+            <h1 class="hero-title home-hero-title" id="downloadTitle">${escapeHtml(copy.title)}<br><em>${escapeHtml(copy.accent)}</em></h1>
+            <p class="home-hero-note">${escapeHtml(copy.lead)}</p>
+            <p class="hero-subtitle">${escapeHtml(copy.note)}</p>
+            <div class="hero-actions home-hero-actions">
+              <a class="btn primary home-primary-cta apk-download" href="${escapeAttr(ANDROID_APK_DRIVE_URL)}" target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true">⇩</span>
+                <span>${escapeHtml(copy.apk)}</span>
+              </a>
+              <button class="btn ghost home-primary-cta" type="button" data-action="pwa-install">${escapeHtml(copy.pwa)}</button>
+              <button class="btn ghost home-primary-cta" type="button" data-action="route" data-route="home">${escapeHtml(copy.web)}</button>
+            </div>
+            <p class="download-meta">${escapeHtml(copy.meta)}</p>
+          </div>
+          <figure class="download-app-preview">
+            <img src="${escapeAttr(ANDROID_SCREENSHOT_URL)}" alt="${escapeAttr(copy.screenshotAlt)}" loading="eager" decoding="async" />
+          </figure>
+        </article>
+        <section class="home-dashboard download-dashboard">
+          <div class="home-dashboard-main">
+            <article class="study-card home-task-card">
+              <div class="section-head">
+                <div>
+                  <span class="eyebrow accent">Android</span>
+                  <h2>${escapeHtml(copy.stepsTitle)}</h2>
+                  <p>${escapeHtml(copy.stepsSubtitle)}</p>
+                </div>
+              </div>
+              <div class="home-task-list download-install-list">
+                ${copy.steps.map(renderDownloadInstallStep).join("")}
+              </div>
+            </article>
+          </div>
+          <aside class="home-dashboard-side">
+            <article class="study-card home-install-card download-info-card">
+              <span class="eyebrow accent">Flash Kanji</span>
+              <h2>${escapeHtml(copy.infoTitle)}</h2>
+              <ul>
+                ${copy.info.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+              </ul>
+              <a class="btn ghost" href="${escapeAttr(ANDROID_APK_MIRROR_URL)}" download="flash-kanji-android.apk">${escapeHtml(copy.mirror)}</a>
+            </article>
+          </aside>
+        </section>
+      </section>
     `;
     }
     function aboutPageCopy() {
@@ -6141,6 +6265,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             "writing-canvas": "[data-section='writing-canvas']",
             "eva-room": ".eva-room-entry, .eva-room-page, .eva-room-shell",
             "about": ".about-page",
+            "download-top": "[data-section='download-top']",
             "stats-top": ".metric-grid",
             "achievements-top": ".achievements-page .metric-grid",
             "shop-panel": "[data-section='shop-panel']"
@@ -6295,7 +6420,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             <div class="hero-actions home-hero-actions">
               <button class="btn primary home-primary-cta" type="button" data-action="home-lesson" data-tour="home-lesson" data-level="${escapeAttr(lessonAction.level)}" data-lesson-id="${escapeAttr(lessonAction.lessonId || "")}">${escapeHtml(lessonAction.label)}</button>
               ${reviewQueue > 0 ? `<button class="btn ghost home-primary-cta" type="button" data-action="home-review" data-tour="home-review">${escapeHtml(ru ? `Повторить: ${reviewQueue}` : `Review: ${reviewQueue}`)}</button>` : ""}
-              <a class="btn ghost home-primary-cta home-download-cta" href="/download/">${escapeHtml(ru ? "Скачать APK / PWA" : "Download APK / PWA")}</a>
+              <button class="btn ghost home-primary-cta home-download-cta" type="button" data-action="route" data-route="download">${escapeHtml(ru ? "Скачать APK / PWA" : "Download APK / PWA")}</button>
             </div>
             <div class="home-hero-progress" aria-label="${escapeAttr(labels.level)}">
               <progress class="progress-line" max="100" value="${escapeAttr(String(percent))}">0%</progress>

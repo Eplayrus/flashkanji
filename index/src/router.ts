@@ -3,6 +3,7 @@ export const ROUTES = [
   "learn",
   "review",
   "dictionary",
+  "download",
   "about",
   "kanji",
   "stats",
