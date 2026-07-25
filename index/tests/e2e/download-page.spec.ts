@@ -3,7 +3,14 @@ import { expect, test } from "@playwright/test";
 test.use({ serviceWorkers: "block" });
 
 test("download page is SEO-readable and links to the official APK", async ({ page, request }) => {
+  const documentResponse = await request.get("./download/");
+  expect(documentResponse.status()).toBe(200);
+  const documentHtml = await documentResponse.text();
+  expect(documentHtml).toContain("download-app-shell");
+  expect(documentHtml).not.toContain('id="app"');
+
   await page.goto("./download/");
+  await expect(page).toHaveURL(/\/download\/$/);
 
   await expect(page.locator("h1")).toHaveText(/Учи кандзи\s+где угодно/);
   await expect(page.locator("main")).toContainText("Учебники JLPT, SRS-повторение и практика письма");

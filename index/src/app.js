@@ -5,6 +5,12 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
 
 (() => {
     "use strict";
+    const downloadPagePath = window.location?.pathname || "";
+    if (/\/download\/?$/i.test(downloadPagePath)) {
+        const normalizedDownloadPath = downloadPagePath.endsWith("/") ? downloadPagePath : `${downloadPagePath}/`;
+        window.location.replace(`${normalizedDownloadPath}index.html${window.location.search || ""}${window.location.hash || ""}`);
+        return;
+    }
     const PWA_INSTALL_STORAGE_KEY = "flashKanji.pwaInstallPrompt.v2";
     const PWA_INSTALL_STORAGE_KEY_LEGACY = "flashKanji.pwaInstallPrompt.v1";
     const NOTIFICATION_STORAGE_KEY = "flashKanji.notificationPrompt.v1";
