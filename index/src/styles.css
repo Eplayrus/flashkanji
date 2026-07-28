@@ -542,10 +542,16 @@ textarea:focus-visible {
   position: relative;
   min-height: 100svh;
   isolation: isolate;
+  overflow-anchor: none;
   background:
     linear-gradient(140deg, rgba(255, 56, 92, 0.14), transparent 36%),
     linear-gradient(25deg, rgba(57, 217, 138, 0.08), transparent 52%),
     color-mix(in srgb, var(--bg), transparent 8%);
+}
+
+#app,
+.app-main {
+  overflow-anchor: none;
 }
 
 .scene-bg {

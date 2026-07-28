@@ -5309,6 +5309,32 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         renderNow();
     }
+    function restoreViewportScroll(scrollX, scrollY) {
+        if (typeof window === "undefined")
+            return;
+        const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        window.scrollTo({
+            left: Math.max(0, Number(scrollX) || 0),
+            top: Math.min(Math.max(0, Number(scrollY) || 0), maxScrollY),
+            behavior: "auto"
+        });
+    }
+    function renderImmediatePreservingScroll() {
+        if (typeof window === "undefined") {
+            renderImmediate();
+            return;
+        }
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
+        renderImmediate();
+        restoreViewportScroll(scrollX, scrollY);
+        requestAnimationFrame(() => {
+            restoreViewportScroll(scrollX, scrollY);
+            requestAnimationFrame(() => restoreViewportScroll(scrollX, scrollY));
+        });
+        window.setTimeout(() => restoreViewportScroll(scrollX, scrollY), 120);
+        window.setTimeout(() => restoreViewportScroll(scrollX, scrollY), 320);
+    }
     function render() {
         scheduleRender();
     }
@@ -11934,7 +11960,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         evaluateAchievements();
         saveProgress();
-        renderImmediate();
+        renderImmediatePreservingScroll();
     }
     function markN5Writing(cardId) {
         const card = findCard(cardId);
@@ -13529,7 +13555,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         evaluateAchievements();
         saveProgress();
-        renderImmediate();
+        renderImmediatePreservingScroll();
     }
     function markN4Writing(cardId) {
         const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
@@ -15254,7 +15280,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         evaluateAchievements();
         saveProgress();
-        renderImmediate();
+        renderImmediatePreservingScroll();
     }
     function markN3Writing(cardId) {
         const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
@@ -16979,7 +17005,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         evaluateAchievements();
         saveProgress();
-        renderImmediate();
+        renderImmediatePreservingScroll();
     }
     function markN2Writing(cardId) {
         const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
@@ -20445,8 +20471,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
-        state.pendingFocus = "__scroll-top__";
-        renderImmediate();
+        state.pendingFocus = null;
+        renderImmediatePreservingScroll();
     }
     function srsButtonLabels() {
         return lang() === "ru"
@@ -24535,6 +24561,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             try {
                 const serviceWorkerUrl = new URL("service-worker.js", document.baseURI);
                 const registration = await navigator.serviceWorker.register(serviceWorkerUrl.href);
+                if (!registration || typeof registration.update !== "function")
+                    return;
                 watchServiceWorkerUpdate(registration);
                 await registration.update().catch(console.warn);
             }
