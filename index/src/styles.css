@@ -533,6 +533,11 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+:is(button, a, [role="button"]).is-action-pressed {
+  transform: translateY(1px) scale(0.992);
+  filter: brightness(1.08);
+}
+
 .app-shell {
   position: relative;
   min-height: 100svh;
@@ -1556,6 +1561,19 @@ textarea:focus-visible {
 
 .app-shell[data-booting="true"] :is(.btn, .icon-btn, .nav-btn) {
   opacity: 0.72;
+}
+
+.home-dashboard,
+.lesson-grid,
+.textbooks-page,
+.dictionary-grid,
+.stats-grid,
+.achievements-grid,
+.kanji-page,
+.download-page,
+.about-page {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 820px;
 }
 
 .boot-screen {

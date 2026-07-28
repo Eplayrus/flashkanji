@@ -1,57 +1,45 @@
-const SW_BUILD_VERSION = "2026-07-25-download-spa-route";
-const CACHE_NAME = `flash-kanji-runtime-${SW_BUILD_VERSION}`;
+const SW_BUILD_VERSION = "2026-07-28-performance-cache-v1";
+const CACHE_PREFIX = "flash-kanji-";
+const STATIC_CACHE = `${CACHE_PREFIX}static-${SW_BUILD_VERSION}`;
+const DATA_CACHE = `${CACHE_PREFIX}data-v1`;
+const AUDIO_CACHE = `${CACHE_PREFIX}audio-v1`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-v1`;
+const CURRENT_CACHES = new Set([STATIC_CACHE, DATA_CACHE, AUDIO_CACHE, RUNTIME_CACHE]);
+const FLASH_KANJI_CACHE_PATTERN = /^(flash-kanji-|fk-)/;
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./kanji-page.css",
   "./manifest.webmanifest",
   "./download/",
   "./download/index.html",
-  "./assets/download/android-app-screenshot.png",
-  "./vendor/chart.umd.min.js",
-  "./assets/favicon.ico",
   "./assets/favicon.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
-  "./assets/logo.webp",
-  "./assets/bg_1.webp",
-  "./assets/bg/bg_study_hub.webp",
-  "./assets/bg/bg_classroom.webp",
-  "./assets/mascots/eva_normal.webp",
-  "./assets/mascots/leya_calm.webp",
-  "./data/rewards.json",
-  "./data/i18n.json",
-  "./data/dialogues.json",
-  "./data/achievements/index.json",
-  "./data/customization-shop.json",
-  "./data/jlpt/index.json",
-  "./data/jlpt-lessons.json",
-  "./data/jlpt-practice-lessons.json",
-  "./data/lessons.json",
-  "./data/lessons/translations.json",
-  "./data/monetization/catalog.json"
+  "./assets/brand/flash-kanji-logo.webp",
+  "./assets/brand/study-room.webp",
+  "./assets/download/android-app-screenshot.png"
 ];
 
 const NOTIFICATION_FALLBACKS = {
   review: {
     title: "Flash Kanji",
-    body: "Ваши кандзи ждут повторения.",
+    body: "Твои карточки ждут повторения.",
     url: "./index.html#review"
   },
   streak: {
-    title: "Лея рядом",
-    body: "Не потеряйте свою серию дней.",
+    title: "Твой стрик",
+    body: "Не потеряй свою серию занятий.",
     url: "./index.html#home"
   },
   daily_bonus: {
     title: "Ежедневный бонус",
-    body: "Заберите XP и Moon Fragments.",
+    body: "Забери XP и Moon Fragments.",
     url: "./index.html#home"
   },
   lesson: {
-    title: "Новые знания ждут",
-    body: "Продолжите изучение кандзи.",
+    title: "Новый урок ждёт",
+    body: "Продолжи изучать кандзи.",
     url: "./index.html#textbooks"
   }
 };
@@ -71,24 +59,53 @@ function notificationPayload(type = "review", overrides = {}) {
   };
 }
 
-async function putInCache(request, response) {
-  if (!response || !response.ok) return response;
-  const cache = await caches.open(CACHE_NAME);
+function isFlashKanjiCache(cacheName) {
+  return FLASH_KANJI_CACHE_PATTERN.test(cacheName);
+}
+
+function toRequest(input) {
+  if (input instanceof Request) return input;
+  return new Request(new URL(input, self.registration.scope).href, { credentials: "same-origin" });
+}
+
+async function trimCache(cacheName, maxEntries) {
+  if (!maxEntries) return;
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length <= maxEntries) return;
+  await Promise.all(keys.slice(0, keys.length - maxEntries).map((key) => cache.delete(key)));
+}
+
+async function putInCache(cacheName, request, response, { maxEntries = 0 } = {}) {
+  if (!response || (!response.ok && response.type !== "opaque")) return response;
+  const cache = await caches.open(cacheName);
   await cache.put(request, response.clone());
+  if (maxEntries) await trimCache(cacheName, maxEntries);
   return response;
 }
 
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
-  const response = await fetch(request);
-  return putInCache(request, response);
+async function matchInCurrentCaches(request) {
+  for (const cacheName of CURRENT_CACHES) {
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+  }
+  return null;
 }
 
-async function staleWhileRevalidate(event, request) {
-  const cached = await caches.match(request);
+async function cacheFirst(request, cacheName = RUNTIME_CACHE, { maxEntries = 120 } = {}) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  return putInCache(cacheName, request, response, { maxEntries });
+}
+
+async function staleWhileRevalidate(event, request, cacheName = DATA_CACHE, { maxEntries = 80 } = {}) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
   const revalidate = fetch(request)
-    .then((response) => putInCache(request, response))
+    .then((response) => putInCache(cacheName, request, response, { maxEntries }))
     .catch(() => null);
   if (cached) {
     event.waitUntil(revalidate);
@@ -98,20 +115,20 @@ async function staleWhileRevalidate(event, request) {
   return response || new Response("", { status: 503, statusText: "Offline" });
 }
 
-async function networkFirst(request, fallbackRequests = []) {
+async function networkFirst(request, fallbackRequests = [], cacheName = STATIC_CACHE) {
   try {
     const response = await fetch(request);
     if (response.ok) {
-      await putInCache(request, response);
+      await putInCache(cacheName, request, response);
       return response;
     }
     throw new Error(`Unexpected response for ${request.url}`);
-  } catch (error) {
-    for (const fallbackRequest of fallbackRequests) {
-      const cached = await caches.match(fallbackRequest);
+  } catch {
+    for (const fallbackRequest of fallbackRequests.map(toRequest)) {
+      const cached = await matchInCurrentCaches(fallbackRequest);
       if (cached) return cached;
     }
-    const cached = await caches.match(request);
+    const cached = await matchInCurrentCaches(request);
     if (cached) return cached;
     return new Response("", { status: 503, statusText: "Offline" });
   }
@@ -127,9 +144,21 @@ function downloadDocumentRequest() {
   });
 }
 
+function isDataRequest(url) {
+  return url.pathname.includes("/data/");
+}
+
+function isAudioRequest(request, url) {
+  return request.destination === "audio" || /\/audio\/|\/sounds\//i.test(url.pathname);
+}
+
+function isVersionedAsset(url) {
+  return /\/assets\/.+-[A-Za-z0-9_-]{8,}\.(?:js|css|webp|png|jpg|jpeg|svg|woff2?)$/i.test(url.pathname);
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
+    const cache = await caches.open(STATIC_CACHE);
     await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
     await self.skipWaiting();
   })());
@@ -138,7 +167,9 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+    await Promise.all(keys
+      .filter((key) => isFlashKanjiCache(key) && !CURRENT_CACHES.has(key))
+      .map((key) => caches.delete(key)));
     await self.clients.claim();
   })());
 });
@@ -146,11 +177,10 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
+  if (request.headers.has("range")) return;
 
   const url = new URL(request.url);
   const isDocument = request.destination === "document" || request.mode === "navigate";
-  const isDataRequest = url.pathname.includes("/data/");
-  const isAudioRequest = request.destination === "audio" || url.pathname.includes("/audio/kanji/");
 
   if (isDocument) {
     if (isDownloadDocumentUrl(url)) {
@@ -161,17 +191,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (isDataRequest) {
-    event.respondWith(staleWhileRevalidate(event, request));
+  if (isDataRequest(url)) {
+    event.respondWith(staleWhileRevalidate(event, request, DATA_CACHE, { maxEntries: 90 }));
     return;
   }
 
-  if (isAudioRequest) {
-    event.respondWith(cacheFirst(request));
+  if (isAudioRequest(request, url)) {
+    event.respondWith(cacheFirst(request, AUDIO_CACHE, { maxEntries: 80 }));
     return;
   }
 
-  event.respondWith(cacheFirst(request));
+  if (isVersionedAsset(url)) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    return;
+  }
+
+  event.respondWith(cacheFirst(request, RUNTIME_CACHE, { maxEntries: 120 }));
 });
 
 self.addEventListener("message", (event) => {
@@ -179,11 +214,11 @@ self.addEventListener("message", (event) => {
   if (type === "FLASH_KANJI_FORCE_CACHE_RESET") {
     event.waitUntil((async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
+      await Promise.all(keys.filter(isFlashKanjiCache).map((key) => caches.delete(key)));
       const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       clients.forEach((client) => client.postMessage({
         type: "FLASH_KANJI_CACHE_RESET_DONE",
-        cacheName: CACHE_NAME,
+        cacheName: STATIC_CACHE,
         buildVersion: SW_BUILD_VERSION
       }));
     })());

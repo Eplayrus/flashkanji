@@ -331,6 +331,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     let soundManagerScriptPromise = null;
     let cyberHudScriptPromise = null;
     let deferredDataPromise = null;
+    let deferredDataScheduleTimer = 0;
+    let deferredDataScheduleToken = 0;
     let learningPathMapPromise = null;
     let learningPathMetaPromise = null;
     const learningPathLessonPromises = new Map();
@@ -426,7 +428,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             scrollPageToTop();
             renderImmediate();
             if (routeNeedsDeferredData(route))
-                scheduleDeferredDataLoad();
+                scheduleDeferredDataLoad({ route, delay: 0 });
             if (route === "eva-room")
                 dispatchEvaEvent("room_opened");
         }
@@ -483,7 +485,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             saveProgress();
             render();
             loadDeferredEnhancements();
-            scheduleDeferredDataLoad();
+            scheduleDeferredDataLoad({ route: state.route, delay: routeNeedsDeferredData(state.route) ? 0 : DEFERRED_DATA_START_DELAY_MS });
             registerServiceWorker();
             scheduleFlashKanjiOnboarding();
             startEvaAutonomyLoop();
@@ -533,6 +535,13 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             script.onerror = () => reject(new Error(`Cannot load ${src}`));
             document.head.appendChild(script);
         });
+    }
+    function scheduleIdleTask(callback, { timeout = 1800 } = {}) {
+        if ("requestIdleCallback" in window) {
+            window.requestIdleCallback(callback, { timeout });
+            return;
+        }
+        window.setTimeout(callback, 0);
     }
     function defaultRewardsPayload() {
         return {
@@ -656,18 +665,27 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     function routeNeedsDeferredData(route = state.route) {
         return DEFERRED_DATA_ROUTES.has(route);
     }
-    function scheduleDeferredDataLoad() {
+    function scheduleDeferredDataLoad({ route = state.route, delay = DEFERRED_DATA_START_DELAY_MS, force = false } = {}) {
+        if (state.deferredDataLoaded || state.deferredDataLoading || deferredDataPromise)
+            return;
+        if (!force && !routeNeedsDeferredData(route))
+            return;
+        if (deferredDataScheduleTimer) {
+            window.clearTimeout(deferredDataScheduleTimer);
+            deferredDataScheduleTimer = 0;
+        }
+        const token = ++deferredDataScheduleToken;
         const run = () => {
+            if (token !== deferredDataScheduleToken)
+                return;
+            if (!force && !routeNeedsDeferredData(state.route))
+                return;
             loadDeferredAppData().catch((error) => console.warn("Deferred app data failed to load.", error));
         };
-        window.setTimeout(() => {
-            if ("requestIdleCallback" in window) {
-                window.requestIdleCallback(run, { timeout: 1800 });
-            }
-            else {
-                run();
-            }
-        }, DEFERRED_DATA_START_DELAY_MS);
+        deferredDataScheduleTimer = window.setTimeout(() => {
+            deferredDataScheduleTimer = 0;
+            scheduleIdleTask(run, { timeout: 1800 });
+        }, Math.max(0, Number(delay) || 0));
     }
     async function loadDeferredAppData({ renderAfter = true } = {}) {
         if (state.deferredDataLoaded)
@@ -900,10 +918,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
                 const timeout = controller ? window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS) : 0;
                 try {
-                    const response = await fetch(candidate, {
-                        cache: "no-store",
-                        signal: controller?.signal
-                    });
+                    const response = await fetch(candidate, { signal: controller?.signal });
                     if (!response.ok) {
                         lastError = new Error(`Cannot load ${candidate}`);
                         continue;
@@ -950,10 +965,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
                 const timeout = controller ? window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS) : 0;
                 try {
-                    const response = await fetch(candidate, {
-                        cache: "no-store",
-                        signal: controller?.signal
-                    });
+                    const response = await fetch(candidate, { signal: controller?.signal });
                     if (!response.ok) {
                         lastError = new Error(`Cannot load ${candidate}`);
                         continue;
@@ -4233,6 +4245,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return true;
         });
     }
+    function markActionPressed(target) {
+        if (!(target instanceof HTMLElement) || target.hasAttribute("disabled"))
+            return;
+        target.classList.add("is-action-pressed");
+        window.requestAnimationFrame(() => {
+            window.setTimeout(() => target.classList.remove("is-action-pressed"), 120);
+        });
+    }
     function handleClick(event) {
         if (event.target.classList?.contains("detail-backdrop")) {
             playUxSound("menu_close");
@@ -4257,6 +4277,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return;
         const action = target.dataset.action;
         const id = target.dataset.id;
+        markActionPressed(target);
         if (["eva-click", "eva-autonomy-next", "eva-question-answer"].includes(action) && Date.now() - lastEvaDirectActionAt < 280)
             return;
         // HARD immediate guard for complete lesson buttons: prevents double calls and farming even before complete* func runs.
@@ -5183,6 +5204,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         resetReadingCheck();
         scheduleScrollPageToTop();
         renderImmediate();
+        if (routeNeedsDeferredData(state.route))
+            scheduleDeferredDataLoad({ route: state.route, delay: 0 });
         if (state.route === "eva-room")
             dispatchEvaEvent("room_opened");
     }

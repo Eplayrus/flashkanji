@@ -53,10 +53,7 @@
         '<link rel="icon" href="assets/favicon.png" type="image/png" />',
         '<link rel="apple-touch-icon" href="assets/icon-192.png" sizes="192x192" />',
         '<link rel="manifest" href="manifest.webmanifest" />',
-        '<link rel="preload" href="assets/brand/flash-kanji-logo.webp" as="image" fetchpriority="high" />',
-        '<link rel="preload" href="assets/brand/study-room.webp" as="image" fetchpriority="high" />',
-        '<link rel="preload" href="assets/brand/eva-mentor.webp" as="image" />',
-        '<link rel="preload" href="assets/decor/elements/crescent-moon.webp" as="image" />'
+        '<link rel="preload" href="assets/brand/study-room.webp" as="image" fetchpriority="high" />'
       ].join(""));
     })();
   </script>
@@ -91,14 +88,44 @@
   </script>
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript">
-    (function(m,e,t,r,i,k,a){
-        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=109492033', 'ym');
-
-    ym(109492033, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    (function (m, e, t, r, i) {
+      var loaded = false;
+      var scheduled = false;
+      m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); };
+      m[i].l = 1 * new Date();
+      function loadMetrika() {
+        if (loaded) return;
+        loaded = true;
+        for (var j = 0; j < e.scripts.length; j++) {
+          if (e.scripts[j].src === r) return;
+        }
+        var k = e.createElement(t);
+        var a = e.getElementsByTagName(t)[0];
+        k.async = true;
+        k.src = r;
+        a.parentNode.insertBefore(k, a);
+        m[i](109492033, "init", { ssr: true, webvisor: true, clickmap: true, ecommerce: "dataLayer", referrer: e.referrer, url: location.href, accurateTrackBounce: true, trackLinks: true });
+      }
+      function scheduleMetrika(delay) {
+        if (scheduled) return;
+        scheduled = true;
+        var run = function () {
+          m.setTimeout(function () {
+            if ("requestIdleCallback" in m) {
+              m.requestIdleCallback(loadMetrika, { timeout: 6500 });
+            } else {
+              loadMetrika();
+            }
+          }, delay || 0);
+        };
+        if (e.readyState === "complete") run();
+        else m.addEventListener("load", run, { once: true });
+      }
+      m.addEventListener("pointerdown", function () { scheduleMetrika(0); }, { once: true, passive: true });
+      m.addEventListener("keydown", function () { scheduleMetrika(0); }, { once: true });
+      if (e.readyState === "complete") scheduleMetrika(5500);
+      else m.addEventListener("load", function () { scheduleMetrika(5500); }, { once: true });
+    })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js?id=109492033", "ym");
   </script>
   <!-- /Yandex.Metrika counter -->
   <script type="module" src="./src/main.ts"></script>
