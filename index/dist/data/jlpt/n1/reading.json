@@ -1,92 +1,362 @@
 {
   "version": 1,
   "level": "N1",
-  "generatedAt": "2026-06-13T00:00:00+03:00",
+  "generatedAt": "2026-07-29T09:38:18.882476+00:00",
   "items": [
     {
-      "id": "n1-reading-lesson-01",
+      "id": "n1-reading-textbook-1",
+      "lessonId": "bulk-n1-01",
       "title": {
-        "ru": "Урок 1: политика защиты и вывод",
-        "en": "Lesson 1: protection policy and conclusion"
+        "ru": "Текст 1: 技術と責任",
+        "en": "Text 1: 技術と責任"
       },
-      "jp": "委員会は、氏名の確認から保護方針の統一に至るまでを第一段階と位置づけた。各派の意見に即して対策を講じるべきだという案は採用されたものの、実施には制度全体の再検討が必要だ、という結論に至った。",
-      "reading": "いいんかいは、しめいのかくにんからほごほうしんのとういつにいたるまでをだいいちだんかいといちづけた。かくはのいけんにそくしてたいさくをこうじるべきだというあんはさいようされたものの、じっしにはせいどぜんたいのさいけんとうがひつようだ、というけつろんにいたった。",
-      "ru": "Комитет определил первым этапом всё от проверки имён до унификации политики защиты. Предложение принимать меры с учётом мнений каждой фракции было принято, однако в итоге был сделан вывод, что для реализации нужен пересмотр всей системы.",
-      "en": "The committee defined the first stage as everything from name verification to unifying protection policy. The proposal to take measures in line with each faction's views was accepted, but the final conclusion was that implementation requires a review of the entire system.",
-      "source": "Flash Kanji N1 validated working layer",
+      "jp": "新しい技術は生活を便利にする一方で、利用者に見えにくい責任を生み出す。たとえば、情報を素早く共有できることは利点だが、誤った情報が広がる速度も同時に高まる。したがって、技術そのものを評価するだけでは不十分であり、それを使う側の判断力も問われる。",
+      "reading": "",
+      "ru": "Новая технология делает жизнь удобнее, но одновременно создаёт ответственность, которую пользователь не всегда видит.",
+      "en": "Новая технология делает жизнь удобнее, но одновременно создаёт ответственность, которую пользователь не всегда видит.",
+      "source": "Flash Kanji N1 PDF, section 8",
       "questions": [
         {
-          "id": "n1-reading-lesson-01-q1",
           "prompt": {
-            "ru": "Что является первым этапом?",
-            "en": "What is defined as the first stage?"
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
           },
-          "answer": "verification-to-unification",
+          "answer": "main",
           "options": [
             {
-              "value": "verification-to-unification",
+              "value": "main",
               "label": {
-                "ru": "от проверки имён до унификации политики защиты",
-                "en": "from name verification to unifying protection policy"
+                "ru": "Новая технология делает жизнь удобнее, но одновременно создаёт ответственность, которую пользователь не всегда видит.",
+                "en": "Новая технология делает жизнь удобнее, но одновременно создаёт ответственность, которую пользователь не всегда видит."
               }
             },
             {
-              "value": "only-dispatch",
+              "value": "detail",
               "label": {
-                "ru": "только отправка сотрудников",
-                "en": "only dispatching staff"
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
               }
             },
             {
-              "value": "final-test",
+              "value": "opposite",
               "label": {
-                "ru": "финальный экзамен",
-                "en": "the final test"
-              }
-            },
-            {
-              "value": "no-policy",
-              "label": {
-                "ru": "отказ от политики",
-                "en": "abandoning policy"
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-2",
+      "lessonId": "bulk-n1-02",
+      "title": {
+        "ru": "Текст 2: 学習の継続",
+        "en": "Text 2: 学習の継続"
+      },
+      "jp": "学習を続ける上で重要なのは、完璧な計画を作ることではなく、計画が崩れた後に戻れる仕組みを持つことだ。失敗を記録することは恥ではない。むしろ、何を優先すべきかを明らかにする手がかりとなる。",
+      "reading": "",
+      "ru": "Для продолжения учёбы важен не идеальный план, а система возвращения после срыва.",
+      "en": "Для продолжения учёбы важен не идеальный план, а система возвращения после срыва.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
         {
-          "id": "n1-reading-lesson-01-q2",
           "prompt": {
-            "ru": "Какой вывод делает текст?",
-            "en": "What conclusion does the text reach?"
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
           },
-          "answer": "system-review-needed",
+          "answer": "main",
           "options": [
             {
-              "value": "system-review-needed",
+              "value": "main",
               "label": {
-                "ru": "для реализации нужен пересмотр всей системы",
-                "en": "implementation requires a review of the entire system"
+                "ru": "Для продолжения учёбы важен не идеальный план, а система возвращения после срыва.",
+                "en": "Для продолжения учёбы важен не идеальный план, а система возвращения после срыва."
               }
             },
             {
-              "value": "proposal-rejected",
+              "value": "detail",
               "label": {
-                "ru": "предложение отклонено полностью",
-                "en": "the proposal was fully rejected"
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
               }
             },
             {
-              "value": "no-discussion",
+              "value": "opposite",
               "label": {
-                "ru": "обсуждение не требуется",
-                "en": "no discussion is needed"
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-3",
+      "lessonId": "bulk-n1-03",
+      "title": {
+        "ru": "Текст 3: 社会の合意",
+        "en": "Text 3: 社会の合意"
+      },
+      "jp": "社会的な合意は、単に多数決によって成立するものではない。反対意見をどのように扱うかによって、その合意の質が決まる。少数派の声を無視した決定は、短期的には効率的に見えても、長期的には不信を招きかねない。",
+      "reading": "",
+      "ru": "Качество общественного согласия зависит от отношения к возражениям и меньшинству.",
+      "en": "Качество общественного согласия зависит от отношения к возражениям и меньшинству.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Качество общественного согласия зависит от отношения к возражениям и меньшинству.",
+                "en": "Качество общественного согласия зависит от отношения к возражениям и меньшинству."
               }
             },
             {
-              "value": "names-removed",
+              "value": "detail",
               "label": {
-                "ru": "проверка имён отменена",
-                "en": "name verification was cancelled"
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
+              }
+            },
+            {
+              "value": "opposite",
+              "label": {
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-4",
+      "lessonId": "bulk-n1-04",
+      "title": {
+        "ru": "Текст 4: 伝統と変化",
+        "en": "Text 4: 伝統と変化"
+      },
+      "jp": "伝統を守るとは、昔の形をそのまま残すことだけを意味しない。時代に応じて変化しながらも、中心にある価値を失わないことこそが、伝統を生かす道だと言える。",
+      "reading": "",
+      "ru": "Сохранить традицию значит менять форму, не теряя центральную ценность.",
+      "en": "Сохранить традицию значит менять форму, не теряя центральную ценность.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Сохранить традицию значит менять форму, не теряя центральную ценность.",
+                "en": "Сохранить традицию значит менять форму, не теряя центральную ценность."
+              }
+            },
+            {
+              "value": "detail",
+              "label": {
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
+              }
+            },
+            {
+              "value": "opposite",
+              "label": {
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-5",
+      "lessonId": "bulk-n1-05",
+      "title": {
+        "ru": "Текст 5: 専門家の言葉",
+        "en": "Text 5: 専門家の言葉"
+      },
+      "jp": "専門家の説明は正確であるべきだが、正確さだけを追求すれば、一般の人には伝わりにくくなる。だからといって、内容を単純化しすぎれば誤解を招く。専門性と分かりやすさの間で、どこに線を引くかが問われている。",
+      "reading": "",
+      "ru": "Эксперт должен удержать баланс между точностью и понятностью.",
+      "en": "Эксперт должен удержать баланс между точностью и понятностью.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Эксперт должен удержать баланс между точностью и понятностью.",
+                "en": "Эксперт должен удержать баланс между точностью и понятностью."
+              }
+            },
+            {
+              "value": "detail",
+              "label": {
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
+              }
+            },
+            {
+              "value": "opposite",
+              "label": {
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-6",
+      "lessonId": "bulk-n1-06",
+      "title": {
+        "ru": "Текст 6: 都市と孤独",
+        "en": "Text 6: 都市と孤独"
+      },
+      "jp": "都市には多くの人が集まるにもかかわらず、孤独を感じる人は少なくない。人が近くにいることと、関係があることは同じではない。便利さを追求する都市設計に加えて、人が自然に関われる場をどう作るかが課題である。",
+      "reading": "",
+      "ru": "Город собирает людей, но это не гарантирует отношений и сниженной孤独ности.",
+      "en": "Город собирает людей, но это не гарантирует отношений и сниженной孤独ности.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Город собирает людей, но это не гарантирует отношений и сниженной孤独ности.",
+                "en": "Город собирает людей, но это не гарантирует отношений и сниженной孤独ности."
+              }
+            },
+            {
+              "value": "detail",
+              "label": {
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
+              }
+            },
+            {
+              "value": "opposite",
+              "label": {
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-7",
+      "lessonId": "bulk-n1-07",
+      "title": {
+        "ru": "Текст 7: 判断の速度",
+        "en": "Text 7: 判断の速度"
+      },
+      "jp": "早く決めることが必ずしも良い判断につながるとは限らない。特に、影響が広範囲に及ぶ問題では、時間をかけて前提を確認する必要がある。一方で、決定を先延ばしにすること自体がリスクとなる場合もある。",
+      "reading": "",
+      "ru": "Автор сравнивает риск поспешного решения и риск бесконечного откладывания.",
+      "en": "Автор сравнивает риск поспешного решения и риск бесконечного откладывания.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Автор сравнивает риск поспешного решения и риск бесконечного откладывания.",
+                "en": "Автор сравнивает риск поспешного решения и риск бесконечного откладывания."
+              }
+            },
+            {
+              "value": "detail",
+              "label": {
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
+              }
+            },
+            {
+              "value": "opposite",
+              "label": {
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-reading-textbook-8",
+      "lessonId": "bulk-n1-08",
+      "title": {
+        "ru": "Текст 8: 仕事と評価",
+        "en": "Text 8: 仕事と評価"
+      },
+      "jp": "成果だけで人を評価する仕組みは分かりやすい。しかし、成果が出るまでの過程を無視すれば、短期的な数字だけを追う行動を促しかねない。評価制度は、人を管理するためだけでなく、どのような行動を社会が望むのかを示すものでもある。",
+      "reading": "",
+      "ru": "Система оценки формирует поведение, а не только измеряет результат.",
+      "en": "Система оценки формирует поведение, а не только измеряет результат.",
+      "source": "Flash Kanji N1 PDF, section 8",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Какой главный вывод делает автор?",
+            "en": "What is the author's main conclusion?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Система оценки формирует поведение, а не только измеряет результат.",
+                "en": "Система оценки формирует поведение, а не только измеряет результат."
+              }
+            },
+            {
+              "value": "detail",
+              "label": {
+                "ru": "Автор перечисляет только частные факты.",
+                "en": "The author only lists isolated facts."
+              }
+            },
+            {
+              "value": "opposite",
+              "label": {
+                "ru": "Автор утверждает обратное.",
+                "en": "The author argues the opposite."
               }
             }
           ]

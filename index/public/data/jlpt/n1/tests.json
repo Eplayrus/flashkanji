@@ -1,192 +1,1626 @@
 {
   "version": 1,
   "level": "N1",
-  "generatedAt": "2026-06-11T10:44:21.438595+00:00",
-  "textbook": {
-    "jlpt": "N1",
-    "slug": "n1",
-    "title": {
-      "ru": "N1: тексты и нюансы",
-      "en": "N1: Texts and Nuance"
-    },
-    "displayTitle": {
-      "ru": "Тексты и нюансы",
-      "en": "Texts and Nuance"
-    },
-    "description": {
-      "ru": "Плотные тексты, авторская позиция, абстрактная лексика и продвинутая грамматика. Верхний слой базы.",
-      "en": "Dense texts, author stance, abstract vocabulary, and advanced grammar. The top layer of the base."
-    },
-    "goal": {
-      "ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.",
-      "en": "Break down long phrases, rare readings, and meaning nuance in reading."
-    },
-    "recommendedCycle": {
-      "ru": "Повторяй каждые 5-7 дней с точечным возвратом к слабым карточкам.",
-      "en": "Review every 5-7 days with targeted returns to weak cards."
-    },
-    "previousLevels": [
-      "N5",
-      "N4",
-      "N3",
-      "N2"
-    ],
-    "nextLevels": [],
-    "coverImage": "assets/bg/bg_silent_road.webp",
-    "pdfFile": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-    "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-    "lessonIds": [
-      "bulk-n1-01",
-      "bulk-n1-02",
-      "bulk-n1-03",
-      "bulk-n1-04",
-      "bulk-n1-05",
-      "bulk-n1-06",
-      "bulk-n1-07",
-      "bulk-n1-08",
-      "bulk-n1-09",
-      "bulk-n1-10",
-      "bulk-n1-11"
-    ],
-    "lessonCount": 11,
-    "kanjiCount": 220,
-    "cardCount": 220,
-    "files": {
-      "kanji": "data/jlpt/n1/kanji.json",
-      "lessons": "data/jlpt/n1/lessons.json",
-      "grammar": "data/jlpt/n1/grammar.json",
-      "reading": "data/jlpt/n1/reading.json",
-      "listening": "data/jlpt/n1/listening.json",
-      "tests": "data/jlpt/n1/tests.json"
-    }
-  },
+  "generatedAt": "2026-07-29T09:38:19.449397+00:00",
   "items": [
     {
-      "id": "test-n1-meaning",
-      "kind": "meaning-check",
-      "level": "N1",
-      "items": [
-        {
-          "kanji": "氏",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "он; его; (ср.) …し【…氏】",
-            "en": "он; его; (ср.) …し【…氏】"
-          },
-          "options": [
-            "он; его; (ср.) …し【…氏】"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "統",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "governing, overall, relationship, ruling",
-            "en": "governing, overall, relationship, ruling"
-          },
-          "options": [
-            "governing, overall, relationship, ruling"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "保",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "guarantee, keep, preserve, protect",
-            "en": "guarantee, keep, preserve, protect"
-          },
-          "options": [
-            "guarantee, keep, preserve, protect"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "第",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "No., residence",
-            "en": "No., residence"
-          },
-          "options": [
-            "No., residence"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "結",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "bind, contract, do up hair, fasten",
-            "en": "bind, contract, do up hair, fasten"
-          },
-          "options": [
-            "bind, contract, do up hair, fasten"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "派",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "группировка, группа; течение, школа (в науке, искусстве); ответвление, ветвь; фракция; секта",
-            "en": "группировка, группа; течение, школа (в науке, искусстве); ответвление, ветвь; фракция; секта"
-          },
-          "options": [
-            "группировка, группа; течение, школа (в науке, искусстве); ответвление, ветвь; фракция; секта"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "案",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "проект, план; предложение, мнение; ожидания, предположения",
-            "en": "проект, план; предложение, мнение; ожидания, предположения"
-          },
-          "options": [
-            "проект, план; предложение, мнение; ожидания, предположения"
-          ],
-          "lessonId": "bulk-n1-01"
-        },
-        {
-          "kanji": "策",
-          "question": {
-            "ru": "Что означает этот кандзи?",
-            "en": "What does this kanji mean?"
-          },
-          "answer": {
-            "ru": "курс, политика; план действий; меры, мероприятия",
-            "en": "курс, политика; план действий; меры, мероприятия"
-          },
-          "options": [
-            "курс, политика; план действий; меры, мероприятия"
-          ],
-          "lessonId": "bulk-n1-01"
-        }
-      ]
+      "id": "n1-diagnostic-001",
+      "kanji": "氏",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "family name, surname, clan",
+        "en": "family name, surname, clan"
+      },
+      "options": [
+        "family name, surname, clan",
+        "tailor, judge, decision, cut out (pattern)",
+        "ratio, rate, proportion, %",
+        "evaluate, criticism, comment"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-002",
+      "kanji": "統",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "overall, relationship, ruling, governing",
+        "en": "overall, relationship, ruling, governing"
+      },
+      "options": [
+        "overall, relationship, ruling, governing",
+        "evidence, proof, certificate",
+        "defense, protection",
+        "shadow, silhouette, phantom"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-003",
+      "kanji": "保",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "protect, guarantee, keep, preserve",
+        "en": "protect, guarantee, keep, preserve, sustain"
+      },
+      "options": [
+        "protect, guarantee, keep, preserve",
+        "abet, help, save",
+        "counter for bows & stringed instruments, stretch, spread, put up (tent)",
+        "pine tree"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-004",
+      "kanji": "第",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "No., residence",
+        "en": "No., residence"
+      },
+      "options": [
+        "No., residence",
+        "give, bestow, perform, alms",
+        "oversee, official, govt office, rule",
+        "beat, attack, defeat, conquer"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-005",
+      "kanji": "結",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "tie, bind, contract, join, organize",
+        "en": "tie, bind, contract, join, organize"
+      },
+      "options": [
+        "tie, bind, contract, join, organize",
+        "well, well crib, town, community",
+        "ring, circle, loop",
+        "assistant, help"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-006",
+      "kanji": "派",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "faction, group, party, clique, sect",
+        "en": "faction, group, party, clique, sect"
+      },
+      "options": [
+        "faction, group, party, clique, sect",
+        "safeguard, protect",
+        "hearing, judge, trial",
+        "nucleus, core, kernel"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-007",
+      "kanji": "案",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "plan, suggestion, draft, ponder, fear",
+        "en": "plan, suggestion, draft, ponder, fear"
+      },
+      "options": [
+        "plan, suggestion, draft, ponder, fear",
+        "unfold, expand",
+        "righteousness, justice, morality, honor",
+        "organize, arranging, tune, tone"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-008",
+      "kanji": "策",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "scheme, plan, policy, step, means",
+        "en": "scheme, plan, policy, step, means"
+      },
+      "options": [
+        "scheme, plan, policy, step, means",
+        "attitude, condition, figure, appearance, voice (of verbs)",
+        "accusation, sue, complain of pain, appeal to",
+        "dissolve, melt"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-009",
+      "kanji": "基",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "fundamentals, radical (chem), counter for machines, foundation",
+        "en": "fundamentals, radical (chem), counter for machines, foundation"
+      },
+      "options": [
+        "fundamentals, radical (chem), counter for machines, foundation",
+        "fresh, vivid, clear, brilliant, Korea",
+        "stocks, stump, shares, stock",
+        "made in..., manufacture"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-010",
+      "kanji": "価",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "value, price",
+        "en": "value, price"
+      },
+      "options": [
+        "value, price",
+        "inspection, regard as, see, look at",
+        "figure, form, shape",
+        "ballot, label, ticket, sign"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-011",
+      "kanji": "提",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "propose, take along, carry in hand",
+        "en": "propose, take along, carry in hand"
+      },
+      "options": [
+        "propose, take along, carry in hand",
+        "article, clause, counter for articles, clauses, paragraphs, etc., twig",
+        "tower, tall building, palace",
+        "ford, go cross, transit, ferry"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-012",
+      "kanji": "挙",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "raise, plan, project, behavior, actions",
+        "en": "raise, plan, project, behavior, actions"
+      },
+      "options": [
+        "raise, plan, project, behavior, actions",
+        "tree trunk, main part, talent, capability",
+        "masses, great numbers, multitude, populace",
+        "conjecture, infer, guess, suppose"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-013",
+      "kanji": "応",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "apply, answer, yes, OK, reply",
+        "en": "apply, answer, yes, OK, reply"
+      },
+      "options": [
+        "apply, answer, yes, OK, reply",
+        "single, alone, spontaneously, Germany",
+        "evaluate, criticism, comment",
+        "solicit, invite, ask"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-014",
+      "kanji": "企",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "undertake, scheme, design, attempt",
+        "en": "undertake, scheme, design, attempt, plan"
+      },
+      "options": [
+        "undertake, scheme, design, attempt",
+        "Shinto shrine, constellations, palace, princess",
+        "shadow, silhouette, phantom",
+        "utensil, vessel, receptacle, implement"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-015",
+      "kanji": "検",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "examination, investigate",
+        "en": "examination, investigate"
+      },
+      "options": [
+        "examination, investigate",
+        "ratio, rate, proportion, %",
+        "pine tree",
+        "gentleman, scholar, samurai, samurai radical (no. 33)"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-016",
+      "kanji": "藤",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "wisteria",
+        "en": "wisteria"
+      },
+      "options": [
+        "wisteria",
+        "defense, protection",
+        "beat, attack, defeat, conquer",
+        "chastise, attack, defeat, destroy, conquer"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-017",
+      "kanji": "沢",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "swamp, marsh, brilliance, grace",
+        "en": "swamp, marsh, brilliance, grace"
+      },
+      "options": [
+        "swamp, marsh, brilliance, grace",
+        "counter for bows & stringed instruments, stretch, spread, put up (tent)",
+        "assistant, help",
+        "aggression, attack, criticize, polish"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-018",
+      "kanji": "裁",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "tailor, judge, decision, cut out (pattern)",
+        "en": "tailor, judge, decision, cut out (pattern)"
+      },
+      "options": [
+        "tailor, judge, decision, cut out (pattern)",
+        "oversee, official, govt office, rule",
+        "nucleus, core, kernel",
+        "promontory, cape, spit"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-019",
+      "kanji": "証",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "evidence, proof, certificate",
+        "en": "evidence, proof, certificate"
+      },
+      "options": [
+        "evidence, proof, certificate",
+        "ring, circle, loop",
+        "organize, arranging, tune, tone",
+        "coach, command, urge, lead"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-020",
+      "kanji": "援",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "abet, help, save",
+        "en": "abet, help, save"
+      },
+      "options": [
+        "abet, help, save",
+        "hearing, judge, trial",
+        "dissolve, melt",
+        "impart, instruct, grant, confer"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-diagnostic-021",
+      "kanji": "施",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "give, bestow, perform, alms",
+        "en": "give, bestow, perform, alms"
+      },
+      "options": [
+        "give, bestow, perform, alms",
+        "righteousness, justice, morality, honor",
+        "made in..., manufacture",
+        "sponsor, hold (a meeting), give (a dinner)"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-022",
+      "kanji": "井",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "well, well crib, town, community",
+        "en": "well, well crib, town, community"
+      },
+      "options": [
+        "well, well crib, town, community",
+        "accusation, sue, complain of pain, appeal to",
+        "ballot, label, ticket, sign",
+        "reach out, exert, exercise, cause"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-023",
+      "kanji": "護",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "safeguard, protect",
+        "en": "safeguard, protect"
+      },
+      "options": [
+        "safeguard, protect",
+        "stocks, stump, shares, stock",
+        "ford, go cross, transit, ferry",
+        "constitution, law"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-024",
+      "kanji": "展",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "unfold, expand",
+        "en": "unfold, expand"
+      },
+      "options": [
+        "unfold, expand",
+        "figure, form, shape",
+        "conjecture, infer, guess, suppose",
+        "detach, separation, disjoin, digress"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-025",
+      "kanji": "態",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "attitude, condition, figure, appearance, voice (of verbs)",
+        "en": "attitude, condition, figure, appearance, voice (of verbs)"
+      },
+      "options": [
+        "attitude, condition, figure, appearance, voice (of verbs)",
+        "tower, tall building, palace",
+        "solicit, invite, ask",
+        "violent, get excited, enraged, chafe"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-026",
+      "kanji": "鮮",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "fresh, vivid, clear, brilliant, Korea",
+        "en": "fresh, vivid, clear, brilliant, Korea"
+      },
+      "options": [
+        "fresh, vivid, clear, brilliant, Korea",
+        "masses, great numbers, multitude, populace",
+        "utensil, vessel, receptacle, implement",
+        "pinch, pick, pluck, trim"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-027",
+      "kanji": "視",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "inspection, regard as, see, look at",
+        "en": "inspection, regard as, see, look at"
+      },
+      "options": [
+        "inspection, regard as, see, look at",
+        "evaluate, criticism, comment",
+        "gentleman, scholar, samurai, samurai radical (no. 33)",
+        "lineage, system"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-028",
+      "kanji": "条",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "article, clause, counter for articles, clauses, paragraphs, etc., twig",
+        "en": "article, clause, counter for articles, clauses, paragraphs, etc., twig, item"
+      },
+      "options": [
+        "article, clause, counter for articles, clauses, paragraphs, etc., twig",
+        "shadow, silhouette, phantom",
+        "chastise, attack, defeat, destroy, conquer",
+        "criticism, strike"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-029",
+      "kanji": "幹",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "tree trunk, main part, talent, capability",
+        "en": "tree trunk, main part, talent, capability"
+      },
+      "options": [
+        "tree trunk, main part, talent, capability",
+        "pine tree",
+        "aggression, attack, criticize, polish",
+        "son, counter for sons"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-030",
+      "kanji": "独",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "single, alone, spontaneously, Germany",
+        "en": "single, alone, spontaneously, Germany"
+      },
+      "options": [
+        "single, alone, spontaneously, Germany",
+        "beat, attack, defeat, conquer",
+        "promontory, cape, spit",
+        "healthy, health, strength, persistence"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-031",
+      "kanji": "宮",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "Shinto shrine, constellations, palace, princess",
+        "en": "Shinto shrine, constellations, palace, princess"
+      },
+      "options": [
+        "Shinto shrine, constellations, palace, princess",
+        "assistant, help",
+        "coach, command, urge, lead",
+        "alliance, oath"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-032",
+      "kanji": "率",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "ratio, rate, proportion, %",
+        "en": "ratio, rate, proportion, %, factor"
+      },
+      "options": [
+        "ratio, rate, proportion, %",
+        "nucleus, core, kernel",
+        "impart, instruct, grant, confer",
+        "accompany, obey, submit to, comply, follow"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-033",
+      "kanji": "衛",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "defense, protection",
+        "en": "defense, protection"
+      },
+      "options": [
+        "defense, protection",
+        "organize, arranging, tune, tone",
+        "sponsor, hold (a meeting), give (a dinner)",
+        "discipline, conduct oneself well, study, master"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-034",
+      "kanji": "張",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "counter for bows & stringed instruments, stretch, spread, put up (tent)",
+        "en": "counter for bows & stringed instruments, stretch, spread, put up (tent)"
+      },
+      "options": [
+        "counter for bows & stringed instruments, stretch, spread, put up (tent)",
+        "dissolve, melt",
+        "reach out, exert, exercise, cause",
+        "regiment, party, company, squad"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-035",
+      "kanji": "監",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "oversee, official, govt office, rule",
+        "en": "oversee, official, govt office, rule, administer"
+      },
+      "options": [
+        "oversee, official, govt office, rule",
+        "made in..., manufacture",
+        "constitution, law",
+        "weave, fabric"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-036",
+      "kanji": "環",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "ring, circle, loop",
+        "en": "ring, circle, loop"
+      },
+      "options": [
+        "ring, circle, loop",
+        "ballot, label, ticket, sign",
+        "detach, separation, disjoin, digress",
+        "broaden, extend, expand, enlarge"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-037",
+      "kanji": "審",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "hearing, judge, trial",
+        "en": "hearing, judge, trial"
+      },
+      "options": [
+        "hearing, judge, trial",
+        "ford, go cross, transit, ferry",
+        "violent, get excited, enraged, chafe",
+        "happenstance, especially, intentionally, reason"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-038",
+      "kanji": "義",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "righteousness, justice, morality, honor",
+        "en": "righteousness, justice, morality, honor, loyalty"
+      },
+      "options": [
+        "righteousness, justice, morality, honor",
+        "conjecture, infer, guess, suppose",
+        "pinch, pick, pluck, trim",
+        "shake, wave, wag, swing"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-039",
+      "kanji": "訴",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "accusation, sue, complain of pain, appeal to",
+        "en": "accusation, sue, complain of pain, appeal to"
+      },
+      "options": [
+        "accusation, sue, complain of pain, appeal to",
+        "solicit, invite, ask",
+        "lineage, system",
+        "valve, petal, braid, speech"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-040",
+      "kanji": "株",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "stocks, stump, shares, stock",
+        "en": "stocks, stump, shares, stock, counter for small plants"
+      },
+      "options": [
+        "stocks, stump, shares, stock",
+        "utensil, vessel, receptacle, implement",
+        "criticism, strike",
+        "concerning, settle, take position, depart, study"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-diagnostic-041",
+      "kanji": "姿",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "figure, form, shape",
+        "en": "figure, form, shape"
+      },
+      "options": [
+        "figure, form, shape",
+        "gentleman, scholar, samurai, samurai radical (no. 33)",
+        "son, counter for sons",
+        "uncommon, different, queerness, strangeness"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-042",
+      "kanji": "閣",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "tower, tall building, palace",
+        "en": "tower, tall building, palace"
+      },
+      "options": [
+        "tower, tall building, palace",
+        "chastise, attack, defeat, destroy, conquer",
+        "healthy, health, strength, persistence",
+        "offering, counter for drinks, present, offer"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-043",
+      "kanji": "衆",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "masses, great numbers, multitude, populace",
+        "en": "masses, great numbers, multitude, populace"
+      },
+      "options": [
+        "masses, great numbers, multitude, populace",
+        "aggression, attack, criticize, polish",
+        "alliance, oath",
+        "stern, strictness, severity, rigidity"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-044",
+      "kanji": "評",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "evaluate, criticism, comment",
+        "en": "evaluate, criticism, comment"
+      },
+      "options": [
+        "evaluate, criticism, comment",
+        "promontory, cape, spit",
+        "accompany, obey, submit to, comply, follow",
+        "fiber, tie, rope"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-045",
+      "kanji": "影",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "shadow, silhouette, phantom",
+        "en": "shadow, silhouette, phantom"
+      },
+      "options": [
+        "shadow, silhouette, phantom",
+        "coach, command, urge, lead",
+        "discipline, conduct oneself well, study, master",
+        "seacoast, beach, seashore"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-046",
+      "kanji": "松",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "pine tree",
+        "en": "pine tree"
+      },
+      "options": [
+        "pine tree",
+        "impart, instruct, grant, confer",
+        "regiment, party, company, squad",
+        "bequeath, leave behind, reserve"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-047",
+      "kanji": "撃",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "beat, attack, defeat, conquer",
+        "en": "beat, attack, defeat, conquer"
+      },
+      "options": [
+        "beat, attack, defeat, conquer",
+        "sponsor, hold (a meeting), give (a dinner)",
+        "weave, fabric",
+        "bases, fort, rampart, walls"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-048",
+      "kanji": "佐",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "assistant, help",
+        "en": "assistant, help"
+      },
+      "options": [
+        "assistant, help",
+        "reach out, exert, exercise, cause",
+        "broaden, extend, expand, enlarge",
+        "home country, country, Japan"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-049",
+      "kanji": "核",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "nucleus, core, kernel",
+        "en": "nucleus, core, kernel"
+      },
+      "options": [
+        "nucleus, core, kernel",
+        "constitution, law",
+        "happenstance, especially, intentionally, reason",
+        "elementary, principle, naked, uncovered"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-050",
+      "kanji": "整",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "organize, arranging, tune, tone",
+        "en": "organize, arranging, tune, tone, meter"
+      },
+      "options": [
+        "organize, arranging, tune, tone",
+        "detach, separation, disjoin, digress",
+        "shake, wave, wag, swing",
+        "dispatch, despatch, send, give, donate"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-051",
+      "kanji": "融",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "dissolve, melt",
+        "en": "dissolve, melt"
+      },
+      "options": [
+        "dissolve, melt",
+        "violent, get excited, enraged, chafe",
+        "valve, petal, braid, speech",
+        "confront, resist, defy, oppose"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-052",
+      "kanji": "製",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "made in..., manufacture",
+        "en": "made in..., manufacture"
+      },
+      "options": [
+        "made in..., manufacture",
+        "pinch, pick, pluck, trim",
+        "concerning, settle, take position, depart, study",
+        "imitation, copy, mock"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-053",
+      "kanji": "票",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "ballot, label, ticket, sign",
+        "en": "ballot, label, ticket, sign"
+      },
+      "options": [
+        "ballot, label, ticket, sign",
+        "lineage, system",
+        "uncommon, different, queerness, strangeness",
+        "masculine, male, hero, leader"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-054",
+      "kanji": "渉",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "ford, go cross, transit, ferry",
+        "en": "ford, go cross, transit, ferry, import"
+      },
+      "options": [
+        "ford, go cross, transit, ferry",
+        "criticism, strike",
+        "offering, counter for drinks, present, offer",
+        "benefit, gain, profit, advantage"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-055",
+      "kanji": "推",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "conjecture, infer, guess, suppose",
+        "en": "conjecture, infer, guess, suppose, support"
+      },
+      "options": [
+        "conjecture, infer, guess, suppose",
+        "son, counter for sons",
+        "stern, strictness, severity, rigidity",
+        "tense, solid, hard, reliable, tight"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-056",
+      "kanji": "請",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "solicit, invite, ask",
+        "en": "solicit, invite, ask"
+      },
+      "options": [
+        "solicit, invite, ask",
+        "healthy, health, strength, persistence",
+        "fiber, tie, rope",
+        "signpost, seal, mark, stamp"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-057",
+      "kanji": "器",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "utensil, vessel, receptacle, implement",
+        "en": "utensil, vessel, receptacle, implement, instrument"
+      },
+      "options": [
+        "utensil, vessel, receptacle, implement",
+        "alliance, oath",
+        "seacoast, beach, seashore",
+        "proclaim, say, announce"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-058",
+      "kanji": "士",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "gentleman, scholar, samurai, samurai radical (no. 33)",
+        "en": "gentleman, scholar, samurai, samurai radical (no. 33)"
+      },
+      "options": [
+        "gentleman, scholar, samurai, samurai radical (no. 33)",
+        "accompany, obey, submit to, comply, follow",
+        "bequeath, leave behind, reserve",
+        "shining, bright"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-059",
+      "kanji": "討",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "chastise, attack, defeat, destroy, conquer",
+        "en": "chastise, attack, defeat, destroy, conquer"
+      },
+      "options": [
+        "chastise, attack, defeat, destroy, conquer",
+        "discipline, conduct oneself well, study, master",
+        "bases, fort, rampart, walls",
+        "abolish, obsolete, cessation, discarding"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-diagnostic-060",
+      "kanji": "攻",
+      "question": {
+        "ru": "Что означает этот кандзи?",
+        "en": "What does this kanji mean?"
+      },
+      "answer": {
+        "ru": "aggression, attack, criticize, polish",
+        "en": "aggression, attack, criticize, polish"
+      },
+      "options": [
+        "aggression, attack, criticize, polish",
+        "regiment, party, company, squad",
+        "home country, country, Japan",
+        "Italy, that one"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-grammar-001-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма あえて?",
+        "en": "What does あえて best express?"
+      },
+      "answer": "осмелиться; намеренно",
+      "options": [
+        "осмелиться; намеренно",
+        "не может быть",
+        "поскольку",
+        "примерно"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-grammar-002-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма あくまでも?",
+        "en": "What does あくまでも best express?"
+      },
+      "answer": "до конца; исключительно",
+      "options": [
+        "до конца; исключительно",
+        "хотел бы, но не могу",
+        "без того чтобы",
+        "и... и... повсюду"
+      ],
+      "lessonId": "bulk-n1-01"
+    },
+    {
+      "id": "n1-grammar-003-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 案の定?",
+        "en": "What does 案の定 best express?"
+      },
+      "answer": "как и ожидалось",
+      "options": [
+        "как и ожидалось",
+        "раз уж",
+        "чтобы не",
+        "что касается"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-grammar-004-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜あっての?",
+        "en": "What does 〜あっての best express?"
+      },
+      "answer": "именно благодаря",
+      "options": [
+        "именно благодаря",
+        "не считается",
+        "в том числе из-за",
+        "когда; хотя"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-grammar-005-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜いかんだ?",
+        "en": "What does 〜いかんだ best express?"
+      },
+      "answer": "зависит от",
+      "options": [
+        "зависит от",
+        "ли / или нет",
+        "в итоге дошло до",
+        "даже если предположить"
+      ],
+      "lessonId": "bulk-n1-02"
+    },
+    {
+      "id": "n1-grammar-006-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜いかんで?",
+        "en": "What does 〜いかんで best express?"
+      },
+      "answer": "в зависимости от",
+      "options": [
+        "в зависимости от",
+        "крайне",
+        "сплошь",
+        "даже"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-grammar-007-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜いかんによっては?",
+        "en": "What does 〜いかんによっては best express?"
+      },
+      "answer": "в зависимости от обстоятельств",
+      "options": [
+        "в зависимости от обстоятельств",
+        "насколько",
+        "непременно заставит",
+        "то, что..."
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-grammar-008-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма いかにも?",
+        "en": "What does いかにも best express?"
+      },
+      "answer": "действительно; явно",
+      "options": [
+        "действительно; явно",
+        "если случится, то уже...",
+        "нельзя не",
+        "хотя"
+      ],
+      "lessonId": "bulk-n1-03"
+    },
+    {
+      "id": "n1-grammar-009-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма いずれにせよ?",
+        "en": "What does いずれにせよ best express?"
+      },
+      "answer": "в любом случае",
+      "options": [
+        "в любом случае",
+        "заодно; по случаю",
+        "нет способа",
+        "кто бы мог подумать, что такой..."
+      ],
+      "lessonId": "bulk-n1-04"
+    },
+    {
+      "id": "n1-grammar-010-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 一に〜ない?",
+        "en": "What does 一に〜ない best express?"
+      },
+      "answer": "нельзя однозначно",
+      "options": [
+        "нельзя однозначно",
+        "заодно",
+        "сразу после",
+        "неосознанно"
+      ],
+      "lessonId": "bulk-n1-04"
+    },
+    {
+      "id": "n1-grammar-011-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 今ひとつ?",
+        "en": "What does 今ひとつ best express?"
+      },
+      "answer": "еще не совсем",
+      "options": [
+        "еще не совсем",
+        "думал, что..., но",
+        "упустить возможность",
+        "когда уж становится"
+      ],
+      "lessonId": "bulk-n1-04"
+    },
+    {
+      "id": "n1-grammar-012-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 言わずもがな?",
+        "en": "What does 言わずもがな best express?"
+      },
+      "answer": "само собой; лучше не говорить",
+      "options": [
+        "само собой; лучше не говорить",
+        "затрудняться; не мочь",
+        "только",
+        "непременно заставит"
+      ],
+      "lessonId": "bulk-n1-05"
+    },
+    {
+      "id": "n1-grammar-013-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜得る?",
+        "en": "What does 〜得る best express?"
+      },
+      "answer": "может произойти",
+      "options": [
+        "может произойти",
+        "как только",
+        "не пройдет просто так",
+        "нельзя не"
+      ],
+      "lessonId": "bulk-n1-05"
+    },
+    {
+      "id": "n1-grammar-014-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜得ない?",
+        "en": "What does 〜得ない best express?"
+      },
+      "answer": "не может быть",
+      "options": [
+        "не может быть",
+        "целых",
+        "даже если",
+        "пусть и не"
+      ],
+      "lessonId": "bulk-n1-05"
+    },
+    {
+      "id": "n1-grammar-015-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜うにも〜ない?",
+        "en": "What does 〜うにも〜ない best express?"
+      },
+      "answer": "хотел бы, но не могу",
+      "options": [
+        "хотел бы, но не могу",
+        "уже по одному",
+        "даже",
+        "не то чтобы невозможно"
+      ],
+      "lessonId": "bulk-n1-06"
+    },
+    {
+      "id": "n1-grammar-016-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜上は?",
+        "en": "What does 〜上は best express?"
+      },
+      "answer": "раз уж",
+      "options": [
+        "раз уж",
+        "с точки зрения",
+        "то... то...",
+        "оставаясь"
+      ],
+      "lessonId": "bulk-n1-06"
+    },
+    {
+      "id": "n1-grammar-017-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜うちに入らない?",
+        "en": "What does 〜うちに入らない best express?"
+      },
+      "answer": "не считается",
+      "options": [
+        "не считается",
+        "не значит, что",
+        "будучи",
+        "хотя"
+      ],
+      "lessonId": "bulk-n1-06"
+    },
+    {
+      "id": "n1-grammar-018-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜か否か?",
+        "en": "What does 〜か否か best express?"
+      },
+      "answer": "ли / или нет",
+      "options": [
+        "ли / или нет",
+        "есть склонность",
+        "даже один",
+        "без"
+      ],
+      "lessonId": "bulk-n1-07"
+    },
+    {
+      "id": "n1-grammar-019-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜限りだ?",
+        "en": "What does 〜限りだ best express?"
+      },
+      "answer": "крайне",
+      "options": [
+        "крайне",
+        "то... то...",
+        "без"
+      ],
+      "lessonId": "bulk-n1-07"
+    },
+    {
+      "id": "n1-grammar-020-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜限りでは?",
+        "en": "What does 〜限りでは best express?"
+      },
+      "answer": "насколько",
+      "options": [
+        "насколько",
+        "чрезвычайно",
+        "оставить как есть",
+        "уникально для"
+      ],
+      "lessonId": "bulk-n1-07"
+    },
+    {
+      "id": "n1-grammar-021-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜が最後?",
+        "en": "What does 〜が最後 best express?"
+      },
+      "answer": "если случится, то уже...",
+      "options": [
+        "если случится, то уже...",
+        "хотя сам",
+        "даже если",
+        "как только"
+      ],
+      "lessonId": "bulk-n1-08"
+    },
+    {
+      "id": "n1-grammar-022-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜かたがた?",
+        "en": "What does 〜かたがた best express?"
+      },
+      "answer": "заодно; по случаю",
+      "options": [
+        "заодно; по случаю",
+        "всем вместе",
+        "будь то... или...",
+        "или... или..."
+      ],
+      "lessonId": "bulk-n1-08"
+    },
+    {
+      "id": "n1-grammar-023-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜がてら?",
+        "en": "What does 〜がてら best express?"
+      },
+      "answer": "заодно",
+      "options": [
+        "заодно",
+        "выглядит как",
+        "с тех пор как",
+        "по-своему"
+      ],
+      "lessonId": "bulk-n1-08"
+    },
+    {
+      "id": "n1-grammar-024-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜かと思いきや?",
+        "en": "What does 〜かと思いきや best express?"
+      },
+      "answer": "думал, что..., но",
+      "options": [
+        "думал, что..., но",
+        "тем более что",
+        "следовало бы",
+        "в условиях"
+      ],
+      "lessonId": "bulk-n1-09"
+    },
+    {
+      "id": "n1-grammar-025-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜かねる?",
+        "en": "What does 〜かねる best express?"
+      },
+      "answer": "затрудняться; не мочь",
+      "options": [
+        "затрудняться; не мочь",
+        "поскольку",
+        "не ведь...",
+        "дойти до"
+      ],
+      "lessonId": "bulk-n1-09"
+    },
+    {
+      "id": "n1-grammar-026-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜が早いか?",
+        "en": "What does 〜が早いか best express?"
+      },
+      "answer": "как только",
+      "options": [
+        "как только",
+        "без того чтобы",
+        "невыносимо, если",
+        "на этапе"
+      ],
+      "lessonId": "bulk-n1-09"
+    },
+    {
+      "id": "n1-grammar-027-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からある?",
+        "en": "What does 〜からある best express?"
+      },
+      "answer": "целых",
+      "options": [
+        "целых",
+        "чтобы не",
+        "без колебаний заявлять",
+        "что касается"
+      ],
+      "lessonId": "bulk-n1-10"
+    },
+    {
+      "id": "n1-grammar-028-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からして?",
+        "en": "What does 〜からして best express?"
+      },
+      "answer": "уже по одному",
+      "options": [
+        "уже по одному",
+        "в том числе из-за",
+        "искренне",
+        "вплоть до"
+      ],
+      "lessonId": "bulk-n1-10"
+    },
+    {
+      "id": "n1-grammar-029-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からすると?",
+        "en": "What does 〜からすると best express?"
+      },
+      "answer": "с точки зрения",
+      "options": [
+        "с точки зрения",
+        "в итоге дошло до",
+        "в сочетании с",
+        "по словам / с точки зрения"
+      ],
+      "lessonId": "bulk-n1-10"
+    },
+    {
+      "id": "n1-grammar-030-diagnostic",
+      "kind": "grammar",
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からといって?",
+        "en": "What does 〜からといって best express?"
+      },
+      "answer": "не значит, что",
+      "options": [
+        "не значит, что",
+        "сплошь",
+        "поскольку",
+        "зависит от"
+      ],
+      "lessonId": "bulk-n1-11"
     }
   ]
 }

@@ -2,6 +2,13 @@ import { ROUTES, createRenderCoordinator, installHashRouter, parseHash } from ".
 import { calculateNextProgress, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
+import {
+    CHANGELOG_LAST_SEEN_VERSION_KEY,
+    FLASH_KANJI_HAS_VISITED_KEY,
+    decideChangelogVisibility,
+    markChangelogHandled,
+    normalizeChangelogPayload
+} from "./services/changelog";
 
 (() => {
     "use strict";
@@ -79,7 +86,13 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         n2Listening: "data/jlpt/n2/listening.json",
         n2FinalTest: "data/jlpt/n2/final-test.json",
         n1Meta: "data/jlpt/n1/meta.json",
+        n1Lessons: "data/jlpt/n1/lessons.json",
+        n1Kanji: "data/jlpt/n1/kanji.json",
+        n1Grammar: "data/jlpt/n1/grammar.json",
+        n1Exercises: "data/jlpt/n1/exercises.json",
         n1Reading: "data/jlpt/n1/reading.json",
+        n1Listening: "data/jlpt/n1/listening.json",
+        n1FinalTest: "data/jlpt/n1/final-test.json",
         jlptReadingMarkdown: "data/jlpt/reading-texts_N5_N1.md",
         jlptReadingTranslations: "data/jlpt/reading-texts_N5_N1.translations.json",
         monetization: "data/monetization/catalog.json",
@@ -90,7 +103,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         evaAutonomyLines: "data/eva-autonomy-lines.json",
         evaExpandedDialogues: "data/eva-expanded-dialogues.json",
         evaFisPersonality: "data/eva-fis-personality.json",
-        evaPresence: "data/eva-presence.json"
+        evaPresence: "data/eva-presence.json",
+        changelog: "data/changelog.json"
     };
     const ratingLabels = { forgot: "Forgot", remember: "Remember", again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
     const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
@@ -232,7 +246,13 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         n2Listening: [],
         n2FinalTest: null,
         n1Meta: null,
+        n1Textbook: null,
+        n1KanjiCatalog: [],
+        n1Grammar: [],
+        n1Exercises: null,
         n1Reading: [],
+        n1Listening: [],
+        n1FinalTest: null,
         jlptReadingMarkdown: "",
         jlptReadingByLevel: { N5: [], N4: [], N3: [], N2: [], N1: [] },
         jlptReadingTranslations: {},
@@ -290,6 +310,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         pwaInstallPrompt: loadPwaInstallPromptState(),
         notificationPrompt: loadNotificationPromptState(),
         notificationPromptVisible: false,
+        changelog: null,
+        changelogModal: null,
         deferredDataLoaded: false,
         deferredDataLoading: false
     };
@@ -309,6 +331,9 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     let evaSaveQueued = false;
     let customizationSaveTimer = 0;
     let customizationSaveQueued = false;
+    let changelogLoadStarted = false;
+    let pendingChangelogExistingUser = false;
+    let changelogFocusTimer = 0;
     let reviewQueueCountRenderActive = false;
     let reviewQueueCountRenderCache = null;
     let deferredPwaInstallPrompt = null;
@@ -333,6 +358,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     let deferredDataPromise = null;
     let deferredDataScheduleTimer = 0;
     let deferredDataScheduleToken = 0;
+    let n1CourseDataPromise = null;
+    let n1CourseDataError = null;
     let learningPathMapPromise = null;
     let learningPathMetaPromise = null;
     const learningPathLessonPromises = new Map();
@@ -344,6 +371,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     let recentEvaMascotLineIds = [];
     const notificationTimers = new Map();
     const mascotSpeechTimers = new Map();
+    const activeStudyActionLocks = new Set();
     const notificationUsageStartedAt = Date.now();
     if (typeof history !== "undefined" && "scrollRestoration" in history) {
         history.scrollRestoration = "manual";
@@ -471,19 +499,20 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
             state.rewards.achievements = state.achievements;
+            const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             hydrateProgress();
             clearLegacyFlashKanjiOnboardingState();
             hydrateCustomization();
             hydrateEvaState();
             applyTheme();
             syncPwaInstallInstalledFlag();
-            const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             recordAppOpen();
             refreshFlashKanjiOnboardingAudience(hadPriorVisit);
             claimDailyBonus();
             evaluateAchievements();
             saveProgress();
             render();
+            scheduleChangelogCheck(hadPriorVisit);
             loadDeferredEnhancements();
             scheduleDeferredDataLoad({ route: state.route, delay: routeNeedsDeferredData(state.route) ? 0 : DEFERRED_DATA_START_DELAY_MS });
             registerServiceWorker();
@@ -519,6 +548,58 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         if (app)
             app.setAttribute("aria-busy", isBooting ? "true" : "false");
+    }
+    function scheduleChangelogCheck(hadPriorVisit = false) {
+        pendingChangelogExistingUser = Boolean(hadPriorVisit);
+        if (changelogLoadStarted)
+            return;
+        changelogLoadStarted = true;
+        requestAnimationFrame(() => {
+            window.setTimeout(() => {
+                maybeLoadChangelog().catch((error) => console.warn("Flash Kanji changelog failed to load.", error));
+            }, 0);
+        });
+    }
+    async function maybeLoadChangelog() {
+        const payload = await fetchJson(DATA_URLS.changelog, () => null);
+        const changelog = normalizeChangelogPayload(payload);
+        if (!changelog)
+            return;
+        state.changelog = changelog;
+        const decision = decideChangelogVisibility(changelog, state.progress, safeLocalStorage(), { hadPriorVisit: pendingChangelogExistingUser, useProgressSignals: false });
+        if (decision.shouldMarkHandled) {
+            markChangelogHandled(decision.currentVersion, safeLocalStorage());
+            return;
+        }
+        if (!decision.shouldShow || !decision.entry)
+            return;
+        state.changelogModal = { version: decision.currentVersion, entry: decision.entry };
+        render();
+        scheduleChangelogFocus();
+    }
+    function safeLocalStorage() {
+        try {
+            return window.localStorage;
+        }
+        catch {
+            return null;
+        }
+    }
+    function scheduleChangelogFocus() {
+        if (changelogFocusTimer)
+            window.clearTimeout(changelogFocusTimer);
+        changelogFocusTimer = window.setTimeout(() => {
+            changelogFocusTimer = 0;
+            const button = document.querySelector('[data-action="close-changelog"]');
+            if (button instanceof HTMLElement)
+                button.focus({ preventScroll: true });
+        }, 0);
+    }
+    function closeChangelog() {
+        const version = state.changelogModal?.version || state.changelog?.currentVersion || "";
+        markChangelogHandled(version, safeLocalStorage());
+        state.changelogModal = null;
+        render();
     }
     function loadDeferredScript(src, id) {
         if (!src)
@@ -736,14 +817,20 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                     ["n2Listening", DATA_URLS.n2Listening],
                     ["n2FinalTest", DATA_URLS.n2FinalTest],
                     ["n1Meta", DATA_URLS.n1Meta],
+                    ["n1Lessons", DATA_URLS.n1Lessons],
+                    ["n1Kanji", DATA_URLS.n1Kanji],
+                    ["n1Grammar", DATA_URLS.n1Grammar],
+                    ["n1Exercises", DATA_URLS.n1Exercises],
                     ["n1Reading", DATA_URLS.n1Reading],
+                    ["n1Listening", DATA_URLS.n1Listening],
+                    ["n1FinalTest", DATA_URLS.n1FinalTest],
                     ["jlptReadingTranslations", DATA_URLS.jlptReadingTranslations],
                     ["n5Reading", DATA_URLS.n5Reading],
                     ["monetization", DATA_URLS.monetization]
                 ]),
                 fetchText(DATA_URLS.jlptReadingMarkdown)
             ]);
-            const { kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, n1Meta, n1Reading, jlptReadingTranslations, n5Reading, monetization } = deferredPayloads;
+            const { kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, n1Meta, n1Lessons, n1Kanji, n1Grammar, n1Exercises, n1Reading, n1Listening, n1FinalTest, jlptReadingTranslations, n5Reading, monetization } = deferredPayloads;
             state.lessons = course.lessons;
             state.cards = course.cards;
             state.jlptPracticeLessons = normalizeJlptPracticeLessons(jlptPracticeLessons);
@@ -784,7 +871,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.n2FinalTest = normalizeN2FinalTest(n2FinalTest);
             applyN2CatalogToCards();
             state.n1Meta = normalizeN1Meta(n1Meta);
-            state.n1Reading = normalizeReadingCollection(n1Reading, "N1");
+            state.n1Textbook = normalizeN1Textbook(n1Lessons);
+            state.n1KanjiCatalog = normalizeN1KanjiCatalog(n1Kanji);
+            state.n1Grammar = normalizeN1Grammar(n1Grammar);
+            state.n1Exercises = normalizeN1ExerciseConfig(n1Exercises);
+            state.n1Reading = normalizeN1Collection(n1Reading);
+            state.n1Listening = normalizeN1Collection(n1Listening);
+            state.n1FinalTest = normalizeN1FinalTest(n1FinalTest);
+            applyN1CatalogToCards();
             state.kanjiMeta = kanjiMeta.items || {};
             state.kanjiHints = kanjiHints.items || {};
             state.kanjiTranslations = kanjiTranslations.items || {};
@@ -808,6 +902,49 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.deferredDataLoading = false;
         });
         return deferredDataPromise;
+    }
+    async function ensureN1CourseData({ renderAfter = true } = {}) {
+        if (state.n1Textbook?.items?.length && state.n1KanjiCatalog?.length)
+            return state.n1Textbook;
+        if (n1CourseDataPromise)
+            return n1CourseDataPromise;
+        n1CourseDataError = null;
+        n1CourseDataPromise = fetchJsonEntriesInBatches([
+            ["n1Meta", DATA_URLS.n1Meta],
+            ["n1Lessons", DATA_URLS.n1Lessons],
+            ["n1Kanji", DATA_URLS.n1Kanji],
+            ["n1Grammar", DATA_URLS.n1Grammar],
+            ["n1Exercises", DATA_URLS.n1Exercises],
+            ["n1Reading", DATA_URLS.n1Reading],
+            ["n1Listening", DATA_URLS.n1Listening],
+            ["n1FinalTest", DATA_URLS.n1FinalTest]
+        ], 4).then((payloads) => {
+            state.n1Meta = normalizeN1Meta(payloads.n1Meta);
+            state.n1Textbook = normalizeN1Textbook(payloads.n1Lessons);
+            state.n1KanjiCatalog = normalizeN1KanjiCatalog(payloads.n1Kanji);
+            state.n1Grammar = normalizeN1Grammar(payloads.n1Grammar);
+            state.n1Exercises = normalizeN1ExerciseConfig(payloads.n1Exercises);
+            state.n1Reading = normalizeN1Collection(payloads.n1Reading);
+            state.n1Listening = normalizeN1Collection(payloads.n1Listening);
+            state.n1FinalTest = normalizeN1FinalTest(payloads.n1FinalTest);
+            applyN1CatalogToCards();
+            if (state.progress) {
+                hydrateProgress();
+                saveProgress();
+            }
+            if (renderAfter && state.route === "textbooks" && state.activeTextbookLevel === "N1")
+                render();
+            return state.n1Textbook;
+        }).catch((error) => {
+            n1CourseDataError = error;
+            console.warn("N1 textbook data failed to load.", error);
+            if (renderAfter && state.route === "textbooks" && state.activeTextbookLevel === "N1")
+                render();
+            throw error;
+        }).finally(() => {
+            n1CourseDataPromise = null;
+        });
+        return n1CourseDataPromise;
     }
     async function refreshStaleAppCache() {
         try {
@@ -2228,20 +2365,190 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             title: payload?.title || { ru: "JLPT N1", en: "JLPT N1" },
             description: payload?.description || { ru: "", en: "" },
             principle: payload?.principle || { ru: "", en: "" },
-            lessonCount: Number(payload?.lessonCount || 0),
-            kanjiCount: Number(payload?.kanjiCount || 0),
-            readingCount: Number(payload?.readingCount || 0),
+            kanjiCount: Number(payload?.kanjiCount || 1047),
+            lessonCount: Number(payload?.lessonCount || 53),
+            kanjiPerLesson: Number(payload?.kanjiPerLesson || 20),
+            grammarCount: Number(payload?.grammarCount || 142),
+            readingCount: Number(payload?.readingCount || 8),
+            listeningCount: Number(payload?.listeningCount || 6),
             pdfUrl: payload?.pdfUrl || "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+            reviewPlan: Array.isArray(payload?.reviewPlan) ? payload.reviewPlan : [],
+            n5Bridge: Array.isArray(payload?.n5Bridge) ? payload.n5Bridge.map(String).filter(Boolean) : [],
             rewards: {
-                addToSrsXp: Number(payload?.rewards?.addToSrsXp || 8),
-                knowXp: Number(payload?.rewards?.knowXp || 11),
-                hardXp: Number(payload?.rewards?.hardXp || 2),
-                exerciseXp: Number(payload?.rewards?.exerciseXp || 13),
-                exerciseMoon: Number(payload?.rewards?.exerciseMoon || 1),
-                readingXp: Number(payload?.rewards?.readingXp || 55),
-                readingMoon: Number(payload?.rewards?.readingMoon || 5),
-                finalTestXp: Number(payload?.rewards?.finalTestXp || 320),
-                finalTestMoon: Number(payload?.rewards?.finalTestMoon || 60)
+                addToSrsXp: 7,
+                knowXp: 9,
+                hardXp: 2,
+                exerciseXp: 11,
+                exerciseMoon: 1,
+                grammarXp: 12,
+                grammarMoon: 1,
+                lessonCompleteXp: 85,
+                lessonCompleteMoon: 10,
+                readingXp: 42,
+                readingMoon: 4,
+                listeningXp: 38,
+                listeningMoon: 4,
+                finalTestXp: 260,
+                finalTestMoon: 48,
+                ...(payload?.rewards || {})
+            }
+        };
+    }
+    function normalizeN1Textbook(payload) {
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        return {
+            version: Number(payload?.version || 1),
+            level: "N1",
+            textbook: payload?.textbook || {},
+            items: items.map((item, index) => ({
+                ...item,
+                id: String(item.id || `n1-lesson-${index + 1}`),
+                order: Number(item.order || index + 1),
+                title: item.title || { ru: `Урок ${index + 1}`, en: `Lesson ${index + 1}` },
+                theme: item.theme || item.title || { ru: "", en: "" },
+                kanji: Array.isArray(item.kanji) ? item.kanji.map(String).filter(Boolean) : [],
+                goal: item.goal || { ru: "", en: "" },
+                durationMinutes: Number(item.durationMinutes || 30),
+                grammarFocus: Array.isArray(item.grammarFocus) ? item.grammarFocus.map(String).filter(Boolean) : [],
+                sentences: Array.isArray(item.sentences) ? item.sentences : [],
+                writing: Array.isArray(item.writing) ? item.writing.map(String).filter(Boolean) : [],
+                reviewAfterDays: Array.isArray(item.reviewAfterDays) ? item.reviewAfterDays.map(Number).filter(Boolean) : [1, 3, 7, 14, 30, 60, 90]
+            })).filter((item) => item.kanji.length)
+        };
+    }
+    function normalizeN1KanjiCatalog(payload) {
+        const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+        return items.map((item) => ({
+            ...item,
+            id: String(item.id || item.courseCardId || item.kanji || ""),
+            courseCardId: String(item.courseCardId || item.id || item.kanji || ""),
+            kanji: String(item.kanji || ""),
+            meaning: item.meaning || { ru: item.meaning_ru || "", en: item.meaning_en || item.meaning_ru || "" },
+            readings: item.readings || {},
+            examples: Array.isArray(item.examples) ? item.examples : Array.isArray(item.words) ? item.words : [],
+            jlpt: "N1",
+            lessonId: item.lessonId || item.lesson_id || null
+        })).filter((item) => item.kanji);
+    }
+    function applyN1CatalogToCards() {
+        if (!Array.isArray(state.n1KanjiCatalog) || !state.n1KanjiCatalog.length)
+            return;
+        const detailsByKanji = new Map(state.n1KanjiCatalog.map((item) => [item.kanji, item]));
+        const n1KanjiInCards = new Set();
+        state.cards = state.cards.map((card) => {
+            const detail = detailsByKanji.get(card.kanji);
+            if (!detail)
+                return card;
+            const level = String(card.jlpt || detail.jlpt || "").toUpperCase();
+            const isN1Card = level === "N1" || String(card.id) === detail.courseCardId || String(card.id) === detail.id;
+            if (!isN1Card)
+                return card;
+            n1KanjiInCards.add(detail.kanji);
+            return mergeN1CardDetail(card, detail);
+        });
+        state.n1KanjiCatalog.forEach((detail) => {
+            if (n1KanjiInCards.has(detail.kanji))
+                return;
+            state.cards.push(mergeN1CardDetail({
+                id: detail.courseCardId || detail.id,
+                kanji: detail.kanji,
+                lessonId: detail.lessonId,
+                jlpt: "N1",
+                examples: [],
+                source: "n1-catalog"
+            }, detail));
+            n1KanjiInCards.add(detail.kanji);
+        });
+    }
+    function mergeN1CardDetail(card, detail) {
+        const readings = detail.readings || {};
+        const arrayText = (value) => Array.isArray(value) ? value.filter(Boolean).join(" / ") : String(value || "");
+        const examples = (detail.examples || []).map((example) => ({
+            ...example,
+            reading: displayHiragana(example.reading || example.hiragana || example.kana || ""),
+            translation: example.translation_ru || example.translation || example.translation_en || ""
+        }));
+        const firstExample = examples[0] || {};
+        const strokeOrder = Array.isArray(detail.strokeOrder)
+            ? detail.strokeOrder.map((step) => typeof step === "string" ? step : step.description_ru || step.description_en || "").filter(Boolean)
+            : card.stroke_order;
+        return {
+            ...card,
+            id: String(card.id || detail.courseCardId || detail.id),
+            jlpt: "N1",
+            lessonId: card.lessonId || detail.lessonId || null,
+            meaning_ru: detail.meaning?.ru || card.meaning_ru || "",
+            meaning_en: detail.meaning?.en || card.meaning_en || detail.meaning?.ru || card.meaning_ru || "",
+            onyomi: displayHiragana(arrayText(readings.onyomi) || card.onyomi || ""),
+            kunyomi: displayHiragana(arrayText(readings.kunyomi) || card.kunyomi || ""),
+            hiragana: displayHiragana((Array.isArray(readings.hiragana) ? readings.hiragana[0] : readings.hiragana) || firstExample.reading || card.hiragana || ""),
+            romaji: (Array.isArray(readings.romaji) ? readings.romaji[0] : readings.romaji) || firstExample.romaji || card.romaji || "",
+            examples: examples.length ? examples : card.examples,
+            apps: Array.isArray(detail.apps) && detail.apps.length ? detail.apps : card.apps,
+            interface_use: detail.interfaceUse || card.interface_use || "",
+            interface_use_en: detail.interfaceUseEn || detail.interfaceUse || card.interface_use_en || card.interface_use || "",
+            strokes: Number(detail.strokes || card.strokes || 0),
+            stroke_order: strokeOrder,
+            meta: { ...(card.meta || {}), ...(detail.meta || {}) },
+            n1Detail: detail
+        };
+    }
+    function normalizeN1Grammar(payload) {
+        const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+        return items.map((item, index) => ({
+            ...item,
+            id: String(item.id || `n1-grammar-${String(index + 1).padStart(2, "0")}`),
+            level: "N1",
+            order: Number(item.order || index + 1),
+            pattern: String(item.pattern || item.id || ""),
+            title: item.title || { ru: item.pattern || "", en: item.pattern || "" },
+            explanation: item.explanation || { ru: "", en: "" },
+            formula: String(item.formula || ""),
+            examples: Array.isArray(item.examples) ? item.examples : [],
+            question: item.question || { ru: "", en: "" },
+            answer: String(item.answer || ""),
+            options: Array.isArray(item.options) ? item.options.map(String).filter(Boolean) : []
+        })).filter((item) => item.pattern);
+    }
+    function normalizeN1ExerciseConfig(payload) {
+        return {
+            version: Number(payload?.version || 1),
+            level: "N1",
+            lessonQuestionCount: Number(payload?.lessonQuestionCount || 10),
+            types: Array.isArray(payload?.types) ? payload.types : [],
+            reviewModes: Array.isArray(payload?.reviewModes) ? payload.reviewModes : []
+        };
+    }
+    function normalizeN1Collection(payload) {
+        const items = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+        return items.map((item, index) => ({
+            ...item,
+            id: String(item.id || `n1-item-${index + 1}`),
+            title: item.title || { ru: item.id || "", en: item.id || "" },
+            questions: Array.isArray(item.questions) ? item.questions : item.question ? [{
+                    prompt: item.question,
+                    answer: item.answer,
+                    options: Array.isArray(item.options) ? item.options : []
+                }] : []
+        })).filter((item) => item.id);
+    }
+    function normalizeN1FinalTest(payload) {
+        return {
+            version: Number(payload?.version || 1),
+            level: "N1",
+            title: payload?.title || { ru: "Финальный тест JLPT N1", en: "JLPT N1 Final Test" },
+            description: payload?.description || { ru: "", en: "" },
+            questionCount: Number(payload?.questionCount || 45),
+            passingPercent: Number(payload?.passingPercent || 82),
+            kanjiPool: Array.isArray(payload?.kanjiPool) ? payload.kanjiPool.map(String).filter(Boolean) : [],
+            grammarPool: Array.isArray(payload?.grammarPool) ? payload.grammarPool.map(String).filter(Boolean) : [],
+            readingPool: Array.isArray(payload?.readingPool) ? payload.readingPool.map(String).filter(Boolean) : [],
+            types: Array.isArray(payload?.types) && payload.types.length ? payload.types : ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"],
+            rewards: {
+                completeXp: Number(payload?.rewards?.xp || payload?.rewards?.completeXp || 320),
+                completeMoon: Number(payload?.rewards?.moon || payload?.rewards?.completeMoon || 60),
+                passXp: Number(payload?.rewards?.passXp || 160),
+                passMoon: Number(payload?.rewards?.passMoon || 25)
             }
         };
     }
@@ -2420,6 +2727,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             n4Course: defaultN4CourseProgress(),
             n3Course: defaultN3CourseProgress(),
             n2Course: defaultN2CourseProgress(),
+            n1Course: defaultN1CourseProgress(),
             unlockedJlptLevels: LEVEL_ORDER.slice(), // JLPT textbooks and lesson modules start fully open; the list stays for compatibility and stats.
             unlockedBackgrounds: ["bg_study_hub"],
             selectedEvaRoomBackground: "bg_study_hub",
@@ -2480,6 +2788,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             n4Course: mergeN4CourseProgress(base.n4Course, saved.n4Course || {}),
             n3Course: mergeN3CourseProgress(base.n3Course, saved.n3Course || {}),
             n2Course: mergeN2CourseProgress(base.n2Course, saved.n2Course || {}),
+            n1Course: mergeN1CourseProgress(base.n1Course, saved.n1Course || {}),
             unlockedJlptLevels: [...new Set([
                     ...(Array.isArray(base.unlockedJlptLevels) ? base.unlockedJlptLevels : []),
                     ...(Array.isArray(saved.unlockedJlptLevels) ? saved.unlockedJlptLevels : []),
@@ -2921,6 +3230,73 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
             exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
             exerciseSrs: mergeTextbookExerciseSrs(base.exerciseSrs, saved?.exerciseSrs || {}, "N2"),
+            completedGrammar: { ...base.completedGrammar, ...(saved?.completedGrammar || {}) },
+            grammarResults: { ...base.grammarResults, ...(saved?.grammarResults || {}) },
+            completedReading: { ...base.completedReading, ...(saved?.completedReading || {}) },
+            readingAnswers: { ...base.readingAnswers, ...(saved?.readingAnswers || {}) },
+            completedListening: { ...base.completedListening, ...(saved?.completedListening || {}) },
+            listeningAnswers: { ...base.listeningAnswers, ...(saved?.listeningAnswers || {}) },
+            writingPractice: { ...base.writingPractice, ...(saved?.writingPractice || {}) },
+            activeReviewMode: saved?.activeReviewMode || base.activeReviewMode,
+            finalTest: {
+                ...base.finalTest,
+                ...(saved?.finalTest || {}),
+                answers: { ...base.finalTest.answers, ...((saved?.finalTest && saved.finalTest.answers) || {}) },
+                mistakes: Array.isArray(saved?.finalTest?.mistakes) ? saved.finalTest.mistakes : base.finalTest.mistakes
+            },
+            customSentences: Array.isArray(saved?.customSentences) ? saved.customSentences : base.customSentences
+        };
+    }
+    function defaultN1CourseProgress() {
+        return {
+            opened: false,
+            currentLessonId: "bulk-n1-01",
+            completedLessons: {},
+            viewedLessons: {},
+            studiedKanji: {},
+            srsKanji: {},
+            difficultKanji: {},
+            kanjiMistakes: {},
+            wordMistakes: {},
+            completedExercises: {},
+            exerciseResults: {},
+            exerciseSrs: {},
+            completedGrammar: {},
+            grammarResults: {},
+            completedReading: {},
+            readingAnswers: {},
+            completedListening: {},
+            listeningAnswers: {},
+            writingPractice: {},
+            activeReviewMode: "due",
+            finalTest: {
+                answers: {},
+                completedAt: null,
+                score: 0,
+                percent: 0,
+                passed: false,
+                mistakes: [],
+                attempts: 0
+            },
+            customSentences: []
+        };
+    }
+    function mergeN1CourseProgress(base, saved) {
+        return {
+            ...base,
+            ...(saved || {}),
+            opened: Boolean(saved?.opened || base.opened),
+            currentLessonId: saved?.currentLessonId || base.currentLessonId,
+            completedLessons: { ...base.completedLessons, ...(saved?.completedLessons || {}) },
+            viewedLessons: mergeJlptLessonViewMap(saved?.viewedLessons || {}),
+            studiedKanji: { ...base.studiedKanji, ...(saved?.studiedKanji || {}) },
+            srsKanji: { ...base.srsKanji, ...(saved?.srsKanji || {}) },
+            difficultKanji: { ...base.difficultKanji, ...(saved?.difficultKanji || {}) },
+            kanjiMistakes: { ...base.kanjiMistakes, ...(saved?.kanjiMistakes || {}) },
+            wordMistakes: { ...base.wordMistakes, ...(saved?.wordMistakes || {}) },
+            completedExercises: { ...base.completedExercises, ...(saved?.completedExercises || {}) },
+            exerciseResults: { ...base.exerciseResults, ...(saved?.exerciseResults || {}) },
+            exerciseSrs: mergeTextbookExerciseSrs(base.exerciseSrs, saved?.exerciseSrs || {}, "N1"),
             completedGrammar: { ...base.completedGrammar, ...(saved?.completedGrammar || {}) },
             grammarResults: { ...base.grammarResults, ...(saved?.grammarResults || {}) },
             completedReading: { ...base.completedReading, ...(saved?.completedReading || {}) },
@@ -3465,6 +3841,54 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             progressSaveTimer = window.setTimeout(run, 120);
         }
         return true;
+    }
+    function scheduleNonCriticalTask(label, task, { timeout = 0 } = {}) {
+        const run = () => {
+            try {
+                const result = task?.();
+                if (result && typeof result.then === "function") {
+                    result.catch((error) => console.warn(`[Flash Kanji] ${label} failed.`, error));
+                }
+            }
+            catch (error) {
+                console.warn(`[Flash Kanji] ${label} failed.`, error);
+            }
+        };
+        requestAnimationFrame(() => window.setTimeout(run, timeout));
+    }
+    function scheduleStudySideEffects(label, task) {
+        scheduleNonCriticalTask(label, () => {
+            const result = task?.();
+            if (result && typeof result.then === "function") {
+                result.catch((error) => console.warn(`[Flash Kanji] ${label} failed.`, error));
+            }
+            saveProgress();
+            renderImmediatePreservingScroll();
+        });
+    }
+    function claimStudyAction(target) {
+        const action = target?.dataset?.action || "";
+        const key = studyActionLockKey(action, target);
+        if (!key)
+            return true;
+        if (activeStudyActionLocks.has(key))
+            return false;
+        activeStudyActionLocks.add(key);
+        requestAnimationFrame(() => window.setTimeout(() => activeStudyActionLocks.delete(key), 0));
+        return true;
+    }
+    function studyActionLockKey(action, target) {
+        if (!action)
+            return "";
+        if (action === "rate")
+            return `rate:${state.activeCardId || ""}:${target?.dataset?.rating || ""}`;
+        if (action === "jlpt-lesson-answer")
+            return `jlpt:${target?.dataset?.level || ""}:${target?.dataset?.lesson || target?.dataset?.lessonId || ""}:${target?.dataset?.card || target?.dataset?.id || ""}`;
+        if (action === "reading-review-answer")
+            return `reading-review:${state.activeExerciseReviewLevel || ""}:${state.activeExerciseReviewId || ""}:${target?.dataset?.question || ""}`;
+        if (/^n[1-5]-(answer|srs|check-input|grammar-complete|reading-complete|listening-complete)$/.test(action))
+            return `${action}:${target?.dataset?.id || ""}:${target?.dataset?.rating || target?.dataset?.value || target?.dataset?.question || ""}`;
+        return "";
     }
     function hydrateProgress() {
         state.cards.forEach((card) => getCardProgress(card.id));
@@ -4266,6 +4690,10 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             scheduleRender();
             return;
         }
+        if (event.target.classList?.contains("changelog-backdrop")) {
+            closeChangelog();
+            return;
+        }
         const clickedNavSurface = event.target.closest(".nav-popover, .bottom-nav");
         if (state.navMenu && !clickedNavSurface && !event.target.closest("[data-action]")) {
             state.navMenu = null;
@@ -4278,6 +4706,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         const action = target.dataset.action;
         const id = target.dataset.id;
         markActionPressed(target);
+        if (!claimStudyAction(target))
+            return;
         if (["eva-click", "eva-autonomy-next", "eva-question-answer"].includes(action) && Date.now() - lastEvaDirectActionAt < 280)
             return;
         // HARD immediate guard for complete lesson buttons: prevents double calls and farming even before complete* func runs.
@@ -4364,6 +4794,10 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         if (action === "close-contact-modal") {
             state.contactModal = false;
             scheduleRender();
+        }
+        if (action === "close-changelog") {
+            closeChangelog();
+            return;
         }
         if (action === "close-pwa-install-help") {
             state.pwaInstallHelpVisible = false;
@@ -4713,6 +5147,44 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             submitN2FinalTest();
         if (action === "n2-final-reset")
             resetN2FinalTest();
+        if (action === "n1-open-lesson")
+            openN1Lesson(id);
+        if (action === "n1-overview")
+            openN1Overview();
+        if (action === "n1-review")
+            openN1Review(target.dataset.mode || null);
+        if (action === "n1-kanji")
+            openN1KanjiList();
+        if (action === "n1-grammar")
+            openN1Grammar();
+        if (action === "n1-reading")
+            openN1Reading();
+        if (action === "n1-listening")
+            openN1Listening();
+        if (action === "n1-final")
+            openN1FinalTest();
+        if (action === "n1-answer")
+            answerN1Exercise(target);
+        if (action === "n1-check-input")
+            checkN1InputExercise(id);
+        if (action === "n1-srs")
+            handleN1SrsAction(id, target.dataset.rating || "good", target.dataset.source || "review");
+        if (action === "n1-writing-done")
+            markN1Writing(id);
+        if (action === "n1-complete-lesson")
+            completeN1Lesson(id);
+        if (action === "n1-grammar-complete")
+            completeN1Grammar(id, target.dataset.value || "");
+        if (action === "n1-reading-complete")
+            completeN1Reading(id, target.dataset.question || "", target.dataset.value || "");
+        if (action === "n1-listening-complete")
+            completeN1Listening(id, target.dataset.question || "", target.dataset.value || "");
+        if (action === "n1-final-answer")
+            answerN1FinalQuestion(target);
+        if (action === "n1-final-submit")
+            submitN1FinalTest();
+        if (action === "n1-final-reset")
+            resetN1FinalTest();
         if (action === "review-exercise-next") {
             clearReviewExerciseState();
             state.pendingFocus = "__scroll-top__";
@@ -4760,7 +5232,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.rewardModal = state.rewardQueue.shift() || null;
             if (state.rewardModal)
                 showRewardFeedback(state.rewardModal);
-            render();
+            renderImmediatePreservingScroll();
         }
         if (action === "set-goal") {
             state.progress.settings.dailyGoal = Number(target.dataset.goal);
@@ -5001,7 +5473,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             playUxSound("notification_soft");
             return;
         }
-        if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate", "open-jlpt-lesson", "n5-open-lesson", "n5-overview", "n5-review", "n4-open-lesson", "n4-overview", "n4-review", "n4-kanji", "n4-grammar", "n4-reading", "n4-listening", "n4-final", "n3-open-lesson", "n3-overview", "n3-review", "n3-kanji", "n3-grammar", "n3-reading", "n3-listening", "n3-final", "n2-open-lesson", "n2-overview", "n2-review", "n2-kanji", "n2-grammar", "n2-reading", "n2-listening", "n2-final"].includes(action)) {
+        if (["start-lesson", "select-lesson", "next-sentence", "study-card", "rate", "open-jlpt-lesson", "n5-open-lesson", "n5-overview", "n5-review", "n4-open-lesson", "n4-overview", "n4-review", "n4-kanji", "n4-grammar", "n4-reading", "n4-listening", "n4-final", "n3-open-lesson", "n3-overview", "n3-review", "n3-kanji", "n3-grammar", "n3-reading", "n3-listening", "n3-final", "n2-open-lesson", "n2-overview", "n2-review", "n2-kanji", "n2-grammar", "n2-reading", "n2-listening", "n2-final", "n1-open-lesson", "n1-overview", "n1-review", "n1-kanji", "n1-grammar", "n1-reading", "n1-listening", "n1-final"].includes(action)) {
             playUxSound("page_turn");
             return;
         }
@@ -5088,14 +5560,17 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return;
         if (handleMoonCheatKey(event))
             return;
-        if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.navMenu)) {
+        if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal || state.navMenu)) {
             state.detailCardId = null;
             state.rewardModal = null;
             state.finalTestModal = null;
             state.contactModal = false;
             state.pwaInstallHelpVisible = false;
             state.navMenu = null;
-            render();
+            if (state.changelogModal)
+                closeChangelog();
+            else
+                render();
             return;
         }
         const readingInput = event.target.closest?.("[data-reading-input]");
@@ -5276,7 +5751,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             if (!renderContext.isCurrent())
                 return;
             app.innerHTML = `${html}${renderSiteFooter()}${renderGlobalOverlays()}`;
-            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible));
+            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal));
             syncMascotSpeechTimers();
             requestAnimationFrame(() => {
                 applyPendingFocus();
@@ -5343,7 +5818,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         return `<section class="page empty-state" data-route-error="${escapeAttr(state.route)}"><h1>${escapeHtml(lang() === "ru" ? "Не удалось открыть раздел" : "Could not open this section")}</h1><p>${escapeHtml(message)}</p><button class="btn primary" type="button" data-action="route" data-route="home">${escapeHtml(lang() === "ru" ? "На главную" : "Home")}</button></section>`;
     }
     function renderGlobalOverlays() {
-        const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderPwaInstallHelpModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
+        const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderChangelogModal()}${renderPwaInstallHelpModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
         return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
     }
     function ensureFlashKanjiOnboardingRoot() {
@@ -5519,7 +5994,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return false;
         if (!document.body || document.visibilityState !== "visible")
             return false;
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.navMenu)
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.changelogModal || state.navMenu)
             return false;
         return true;
     }
@@ -10162,6 +10637,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         if (String(textbook?.jlpt || "").toUpperCase() === "N2" && state.n2Textbook?.items?.length) {
             return renderN2CoursePage(textbook);
         }
+        if (String(textbook?.jlpt || "").toUpperCase() === "N1") {
+            if (state.n1Textbook?.items?.length)
+                return renderN1CoursePage(textbook);
+            void ensureN1CourseData().catch(() => {});
+            if (n1CourseDataError)
+                return renderRouteError(n1CourseDataError);
+            return renderTextbookDataLoadingPage(textbook, "N1");
+        }
         state.activeTextbookLevel = textbook.jlpt;
         state.activeJlptLesson = textbook.jlpt;
         const textbookLessons = (textbook.lessonIds || [])
@@ -10303,6 +10786,45 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         <div class="lesson-grid">
           ${orderedLessons.map((item) => renderLessonTile(item)).join("") || `<article class="empty-state"><h3>${escapeHtml(lang() === "ru" ? "Уроки скоро появятся" : "Lessons will appear soon")}</h3></article>`}
         </div>
+      </section>
+    `;
+    }
+    function renderTextbookDataLoadingPage(textbook, level) {
+        const labels = lang() === "ru"
+            ? {
+                eyebrow: `${level} · Flash Kanji`,
+                title: `Готовлю интерактивный учебник ${level}`,
+                text: "Подгружаю главы, карточки, грамматику и финальный тест. Сейчас откроется рабочая оболочка, не старый экран.",
+                back: "Все учебники"
+            }
+            : {
+                eyebrow: `${level} · Flash Kanji`,
+                title: `Preparing the interactive ${level} textbook`,
+                text: "Loading lessons, cards, grammar, and the final test. The full app shell will open in a moment.",
+                back: "All textbooks"
+            };
+        return `
+      <section class="page textbooks-page n5-course-page textbook-data-loading-page" aria-busy="true">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">${escapeHtml(labels.eyebrow)}</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(labels.text)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.back)}</button>
+            ${textbook?.pdfUrl || textbook?.pdfFile ? `<a class="btn ghost" href="${escapeAttr(textbook.pdfUrl || textbook.pdfFile)}" target="_blank" rel="noopener">${escapeHtml(lang() === "ru" ? "PDF-учебник" : "PDF textbook")}</a>` : ""}
+          </div>
+        </div>
+        <article class="n5-hero n1-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">${escapeHtml(level)} · ${escapeHtml(lang() === "ru" ? "загрузка данных" : "loading data")}</span>
+            <h2>${escapeHtml(localized(textbook?.displayTitle || textbook?.title || { ru: level, en: level }))}</h2>
+            <p>${escapeHtml(localized(textbook?.description || {}))}</p>
+            <div class="achievement-progress" aria-hidden="true"><i style="width:60%"></i></div>
+          </div>
+          ${renderMascot("eva", "calm", "loading", "n5-hero-mascot")}
+        </article>
       </section>
     `;
     }
@@ -11581,7 +12103,6 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 if (rewardXp || rewardMoon)
                     addReward(rewardXp, rewardMoon, options.rewardKey || `exercise:${exercise.id}`);
             }
-            playUxSound("answer_correct");
         }
         else {
             state.progress.totalWrong += 1;
@@ -11593,13 +12114,15 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 if (wordMistakeKey)
                     options.markWordMistake?.(wordMistakeKey);
             }
-            playUxSound("answer_wrong");
         }
-        evaluateAchievements();
-        saveProgress();
         if (inReviewMode)
             state.pendingFocus = "__scroll-top__";
         render();
+        saveProgress();
+        scheduleStudySideEffects("textbook exercise post-render effects", () => {
+            playUxSound(correct ? "answer_correct" : "answer_wrong");
+            evaluateAchievements();
+        });
     }
     function readingExerciseRewardConfig(exercise) {
         const level = canonicalJlptLevel(exercise?.level || "");
@@ -11655,11 +12178,9 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.reviewExerciseResults[exercise.id] = cloneProgress(progress);
             if (correct) {
                 state.progress.totalCorrect += 1;
-                playUxSound("answer_correct");
             }
             else {
                 state.progress.totalWrong += 1;
-                playUxSound("answer_wrong");
             }
             const before = cloneProgress(progress);
             const after = calculateNextProgress(before, correct ? "good" : "again");
@@ -11682,11 +12203,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             else {
                 addReward(Math.max(1, Math.round(rewards.xp * 0.35)), 0, `reading:${exercise.id}:again`);
             }
-            evaluateAchievements();
-            saveProgress();
             if (inReviewMode)
                 state.pendingFocus = "__scroll-top__";
             render();
+            saveProgress();
+            scheduleStudySideEffects("reading cloze post-render effects", () => {
+                playUxSound(correct ? "answer_correct" : "answer_wrong");
+                evaluateAchievements();
+            });
             return;
         }
         const question = exercise.question || exercise.questions?.[0] || null;
@@ -11707,15 +12231,16 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         state.reviewExerciseResults[exercise.id] = cloneProgress(progress);
         if (correct) {
             state.progress.totalCorrect += 1;
-            playUxSound("answer_correct");
         }
         else {
             state.progress.totalWrong += 1;
-            playUxSound("answer_wrong");
         }
         saveProgress();
         if (!progress.completed) {
             render();
+            scheduleStudySideEffects("reading question post-render sound", () => {
+                playUxSound(correct ? "answer_correct" : "answer_wrong");
+            });
             return;
         }
         const before = cloneProgress(progress);
@@ -11738,11 +12263,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         else {
             addReward(Math.max(1, Math.round(rewards.xp * 0.25)), 0, `reading:${exercise.id}:again`);
         }
-        evaluateAchievements();
-        saveProgress();
         if (inReviewMode)
             state.pendingFocus = "__scroll-top__";
         render();
+        saveProgress();
+        scheduleStudySideEffects("reading exercise post-render effects", () => {
+            playUxSound(correct ? "answer_correct" : "answer_wrong");
+            evaluateAchievements();
+        });
     }
     function answerReadingReview(target) {
         const active = activeReviewExerciseItem();
@@ -11884,7 +12412,9 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                     ? n3LessonById(lessonId)
                     : canonical === "N2"
                         ? n2LessonById(lessonId)
-                        : null;
+                        : canonical === "N1"
+                            ? n1LessonById(lessonId)
+                            : null;
         if (!lesson)
             return;
         const cards = jlptCardsForLesson(canonical, lesson);
@@ -11906,26 +12436,23 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         study.session.updatedAt = now;
         if (study.session.phase === "test") {
             study.session.testOpenedAt ||= now;
-            state.pendingFocus = jlptLessonStudySectionId(canonical, lesson.id, "test");
         }
-        else {
-            state.pendingFocus = jlptLessonStudySectionId(canonical, lesson.id, "player");
-        }
-        if (canonical === "N5") {
-            handleN5SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N4") {
-            handleN4SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N3") {
-            handleN3SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N2") {
-            handleN2SrsAction(card.id, remembered ? "good" : "again", "review");
-        }
+        state.pendingFocus = null;
+        renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleNonCriticalTask(`${canonical} lesson SRS post-render commit`, () => {
+            const rating = remembered ? "good" : "again";
+            if (canonical === "N5")
+                handleN5SrsAction(card.id, rating, "review");
+            else if (canonical === "N4")
+                handleN4SrsAction(card.id, rating, "review");
+            else if (canonical === "N3")
+                handleN3SrsAction(card.id, rating, "review");
+            else if (canonical === "N2")
+                handleN2SrsAction(card.id, rating, "review");
+            else if (canonical === "N1")
+                handleN1SrsAction(card.id, rating, "review");
+        });
     }
     function handleN5SrsAction(cardId, rating, source = "review") {
         const card = findCard(cardId);
@@ -11945,22 +12472,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN5KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n5Meta?.rewards?.hardXp || 2, 1, `n5_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN5KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n5Meta?.rewards?.hardXp || 2, 0, `n5_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n5Meta?.rewards?.knowXp || 6) : (state.n5Meta?.rewards?.addToSrsXp || 4), 1, `n5_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N5 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN5Writing(cardId) {
         const card = findCard(cardId);
@@ -13540,22 +14067,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN4KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n4Meta?.rewards?.hardXp || 2, 1, `n4_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN4KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n4Meta?.rewards?.hardXp || 2, 0, `n4_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n4Meta?.rewards?.knowXp || 7) : (state.n4Meta?.rewards?.addToSrsXp || 5), 1, `n4_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N4 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN4Writing(cardId) {
         const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
@@ -15265,22 +15792,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN3KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n3Meta?.rewards?.hardXp || 2, 1, `n3_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN3KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n3Meta?.rewards?.hardXp || 2, 0, `n3_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n3Meta?.rewards?.knowXp || 8) : (state.n3Meta?.rewards?.addToSrsXp || 6), 1, `n3_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N3 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN3Writing(cardId) {
         const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
@@ -16990,22 +17517,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN2KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n2Meta?.rewards?.hardXp || 2, 1, `n2_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN2KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n2Meta?.rewards?.hardXp || 2, 0, `n2_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n2Meta?.rewards?.knowXp || 9) : (state.n2Meta?.rewards?.addToSrsXp || 7), 1, `n2_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N2 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN2Writing(cardId) {
         const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
@@ -17530,6 +18057,1735 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     }
     function n2DomId(id) {
         return `n2-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
+    }
+    function renderN1CoursePage(textbook) {
+        state.activeTextbookLevel = "N1";
+        state.activeJlptLesson = "N1";
+        const course = ensureN1CourseProgress();
+        if (!course.opened) {
+            course.opened = true;
+            evaluateAchievements();
+            saveProgress();
+        }
+        const subroute = String(state.activeTextbookSubroute || "");
+        if (subroute === "final-test")
+            return renderN1FinalTestPage(textbook);
+        if (subroute === "review")
+            return renderN1ReviewPage(textbook);
+        if (subroute === "kanji")
+            return renderN1KanjiListPage(textbook);
+        if (subroute === "grammar")
+            return renderN1GrammarPage(textbook);
+        if (subroute === "reading")
+            return renderN1ReadingPage(textbook);
+        if (subroute === "listening")
+            return renderN1ListeningPage(textbook);
+        const lesson = n1LessonById(subroute);
+        if (lesson) {
+            n1Course().currentLessonId = lesson.id;
+            rememberJlptLessonVisit("N1", lesson.id, "n1_lesson_page");
+            markJlptLessonKanjiSeen("N1", lesson, "n1_lesson_page");
+            return renderN1LessonPage(textbook, lesson);
+        }
+        return renderN1OverviewPage(textbook);
+    }
+    function renderN1OverviewPage(textbook) {
+        const progress = n1ProgressSummary();
+        const labels = n1Labels();
+        const lessons = n1Lessons();
+        const current = n1CurrentLesson();
+        const meta = state.n1Meta || {};
+        const principle = localized(meta.principle || {});
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Flash Kanji</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(localized(meta.description || textbook.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn ghost" href="${escapeAttr(meta.pdfUrl || textbook.pdfUrl || textbook.pdfFile || "")}" download="flashkanji_N1_textbook_flashkanji_space.pdf" target="_blank" rel="noopener">${escapeHtml(labels.pdf)}</a>
+          </div>
+        </div>
+
+        <article class="n5-hero n1-hero">
+          <div class="n5-hero-copy">
+            <span class="pill">${escapeHtml(meta.kanjiCount || 1047)} ${escapeHtml(labels.kanji)} · ${escapeHtml(meta.grammarCount || state.n1Grammar.length || 142)} ${escapeHtml(labels.grammar)}</span>
+            <h2>${escapeHtml(labels.courseMap)}</h2>
+            <p>${escapeHtml(principle)}</p>
+            <div class="textbook-actions">
+              <a class="btn primary" href="#jlpt/n1/${escapeAttr(current?.id || "bulk-n1-01")}" data-action="n1-open-lesson" data-id="${escapeAttr(current?.id || "bulk-n1-01")}">${escapeHtml(labels.continue)}</a>
+              <button class="btn" type="button" data-action="n1-review" data-mode="due">${escapeHtml(labels.review)}</button>
+              <button class="btn ghost" type="button" data-action="n1-kanji">${escapeHtml(labels.openKanji)}</button>
+              <button class="btn ghost" type="button" data-action="n1-grammar">${escapeHtml(labels.grammarN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-reading">${escapeHtml(labels.readingN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-listening">${escapeHtml(labels.listeningN1)}</button>
+              <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+            </div>
+          </div>
+          ${renderMascot("eva", "happy", "lessonComplete", "n5-hero-mascot")}
+        </article>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.studiedKanji, `${progress.studied}/${progress.total}`, labels.kanji, progressWidth(progress.studied, progress.total))}
+          ${renderMetric(labels.completedLessons, `${progress.completedLessons}/${lessons.length}`, labels.lessons, progressWidth(progress.completedLessons, lessons.length))}
+          ${renderMetric(labels.completedGrammar, `${progress.completedGrammar}/${state.n1Meta?.grammarCount || state.n1Grammar.length}`, labels.grammar, progressWidth(progress.completedGrammar, state.n1Meta?.grammarCount || state.n1Grammar.length))}
+          ${renderMetric(labels.completedReading, `${progress.completedReading}/${state.n1Meta?.readingCount || state.n1Reading.length}`, labels.readingN1, progressWidth(progress.completedReading, state.n1Meta?.readingCount || state.n1Reading.length))}
+          ${renderMetric(labels.completedListening, `${progress.completedListening}/${state.n1Meta?.listeningCount || state.n1Listening.length}`, labels.listeningN1, progressWidth(progress.completedListening, state.n1Meta?.listeningCount || state.n1Listening.length))}
+          ${renderMetric(labels.reviews, progress.reviews, labels.srs, progressWidth(progress.reviews, Math.max(progress.total, 1)))}
+        </div>
+
+        <section class="n5-panel n1-bridge">
+          <div>
+            <h2>${escapeHtml(labels.n5Bridge)}</h2>
+            <p>${escapeHtml(labels.n5BridgeText)}</p>
+          </div>
+          <div class="n1-bridge-grid">
+            ${(meta.n5Bridge || []).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+          </div>
+          <div class="textbook-actions">
+            <button class="btn ghost" type="button" data-action="n2-overview">${escapeHtml(labels.reviewN5Base)}</button>
+          </div>
+        </section>
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.lessonsTitle)}</h2>
+            <p>${escapeHtml(labels.lessonsDescription)}</p>
+          </div>
+          <div class="n5-lesson-grid">
+            ${lessons.map((lesson) => renderN1LessonTile(lesson)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel n5-review-plan">
+          <div>
+            <h2>${escapeHtml(labels.reviewPlan)}</h2>
+            <p>${escapeHtml(localized((state.n1Textbook?.textbook || {}).recommendedCycle || meta.recommendedCycle || {}))}</p>
+          </div>
+          <div class="n5-plan-row">
+            ${(meta.reviewPlan || []).map((item) => `<span class="pill">${escapeHtml(labels.day)} ${escapeHtml(item.day)} · ${escapeHtml(localized(item.label || {}))}</span>`).join("")}
+          </div>
+        </section>
+
+        ${renderJlptReadingBlock("N1")}
+      </section>
+    `;
+    }
+    function renderN1LessonTile(lesson) {
+        const status = n1LessonStatus(lesson.id);
+        const labels = n1Labels();
+        let learned = lesson.kanji.filter((kanji) => n1Course().studiedKanji[kanji]).length;
+        if (status === "completed") {
+            learned = lesson.kanji.length;
+        }
+        return `
+      <a class="n5-lesson-tile ${status}" href="#jlpt/n1/${escapeAttr(lesson.id)}" data-action="n1-open-lesson" data-id="${escapeAttr(lesson.id)}">
+        <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
+        <h3>${escapeHtml(localized(lesson.title))}</h3>
+        <p>${escapeHtml(localized(lesson.goal))}</p>
+        <div class="n5-kanji-strip n1-kanji-strip">${lesson.kanji.map((kanji) => `<b>${escapeHtml(kanji)}</b>`).join("")}</div>
+        <div class="achievement-progress" aria-label="${escapeAttr(`${learned}/${lesson.kanji.length}`)}"><i style="width:${progressWidth(learned, lesson.kanji.length)}%"></i></div>
+        <small>${escapeHtml(learned)}/${escapeHtml(lesson.kanji.length)} · ${escapeHtml(n1LessonStatusLabel(status))}</small>
+      </a>
+    `;
+    }
+    function renderN1LessonPage(textbook, lesson) {
+        const labels = n1Labels();
+        const cards = n1CardsForLesson(lesson);
+        const exercises = buildN1LessonExercises(lesson);
+        const status = n1LessonStatus(lesson.id);
+        const study = jlptLessonStudySession("N1", lesson, cards);
+        let complete = status === "completed";
+        // Local session isLessonCompleted (never resets in this page load). Combined with persisted for lock.
+        const n1SessKey = `n1:${lesson.id}`;
+        if (sessionCompletedLessons.has(n1SessKey))
+            complete = true;
+        const isLessonCompleted = complete; // explicit name per requirements. If true => button must be disabled + no complete calls possible.
+        const correct = exercises.filter((exercise) => n1ExerciseResult(exercise.id)?.correct).length;
+        const allExercisesCorrect = exercises.length > 0 && correct === exercises.length;
+        const studiedCount = cards.filter((card) => n1Course().studiedKanji[card.kanji]).length;
+        const totalKanji = lesson.kanji.length;
+        const allKanjiStudied = studiedCount >= totalKanji;
+        const readyToComplete = !complete && allExercisesCorrect && allKanjiStudied;
+        const difficult = lesson.kanji.filter((kanji) => n1Course().difficultKanji[kanji]).join(" · ");
+        const nextLesson = n1Lessons().find((item) => item.order === lesson.order + 1);
+        const miniReadingItem = n1LessonReadingItem(lesson);
+        const miniReadingComplete = miniReadingItem ? Boolean(n1Course().completedReading[miniReadingItem.id]) : false;
+        const playerId = jlptLessonStudySectionId("N1", lesson.id, "player");
+        const testId = jlptLessonStudySectionId("N1", lesson.id, "test");
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page n5-lesson-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · ${escapeHtml(labels.lesson)} ${lesson.order}/53</p>
+            <h1>${escapeHtml(localized(lesson.title))}</h1>
+            <p>${escapeHtml(localized(lesson.goal))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn" type="button" data-action="n1-review" data-mode="difficult">${escapeHtml(labels.difficult)}</button>
+            <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+
+        <article class="n5-lesson-summary">
+          <div>
+            <span class="pill">${escapeHtml(localized(lesson.theme))}</span>
+            <h2>${escapeHtml(labels.lessonChain)}</h2>
+            <p>${escapeHtml(labels.lessonChainText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.duration)}: ${escapeHtml(lesson.durationMinutes || 30)} ${escapeHtml(labels.minutes)}</span>
+              ${lesson.grammarFocus.map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="mini-stat-row">
+            ${renderMetric(labels.studiedKanji, `${Math.min(study.answeredCount, lesson.kanji.length)}/${lesson.kanji.length}`, labels.kanji, progressWidth(study.answeredCount, lesson.kanji.length))}
+            ${renderMetric(labels.exercises, `${correct}/${exercises.length}`, labels.correct, progressWidth(correct, exercises.length))}
+          </div>
+        </article>
+
+        ${renderJlptLessonStudyPlayer("N1", lesson, cards, labels, {
+            playerId,
+            answerAction: "jlpt-lesson-answer",
+            examples: (card) => n1CardExamples(card),
+            sentence: (card) => renderN1CardSentence(card, lesson)
+        })}
+
+        ${renderN1LessonGrammar(lesson)}
+
+        ${renderN1LessonMiniReading(lesson)}
+
+        <section class="n5-panel">
+          <div>
+            <h2>${escapeHtml(labels.sentences)}</h2>
+            <p>${escapeHtml(labels.sentencesText)}</p>
+          </div>
+          <div class="n5-sentence-list">
+            ${lesson.sentences.map((sentence) => `
+              <article>
+                <strong>${escapeHtml(sentence.jp)}</strong>
+                <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
+                <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="n5-panel" id="${escapeAttr(testId)}">
+          <div>
+            <h2>${escapeHtml(labels.exercises)}</h2>
+            <p>${escapeHtml(labels.exercisesText)}</p>
+          </div>
+          <div class="n5-exercise-list">
+            ${exercises.map((exercise) => renderN1Exercise(exercise)).join("")}
+          </div>
+        </section>
+
+        <section class="n5-result-panel ${complete ? "is-complete" : ""}">
+          <div>
+            <h2>${escapeHtml(complete ? labels.lessonComplete : labels.lessonResult)}</h2>
+            <p>${escapeHtml(complete ? labels.lessonCompleteText : labels.lessonResultText)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(labels.studiedKanji)}: ${cards.filter((card) => n1Course().studiedKanji[card.kanji]).length}/${lesson.kanji.length}</span>
+              <span class="pill">${escapeHtml(labels.correct)}: ${correct}/${exercises.length}</span>
+              ${miniReadingItem ? `<span class="pill">${escapeHtml(labels.miniReadingTitle)}: ${escapeHtml(miniReadingComplete ? labels.completed : labels.none)}</span>` : ""}
+              <span class="pill">${escapeHtml(labels.difficult)}: ${escapeHtml(difficult || labels.none)}</span>
+            </div>
+            ${!complete && !readyToComplete ? `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Завершите все кандзи и упражнения урока." : "Complete all kanji and exercises in the lesson.")}</p>` : ""}
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="n1-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
+            <button class="btn" type="button" data-action="n1-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${nextLesson ? `<a class="btn ghost" href="#jlpt/n1/${escapeAttr(nextLesson.id)}" data-action="n1-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>`}
+          </div>
+        </section>
+      </section>
+    `;
+    }
+    function n1LessonReadingItem(lesson) {
+        if (!lesson?.miniReadingId)
+            return null;
+        return state.n1Reading.find((item) => item.id === lesson.miniReadingId) || null;
+    }
+    function renderN1LessonMiniReading(lesson) {
+        const labels = n1Labels();
+        const item = n1LessonReadingItem(lesson);
+        if (!item)
+            return "";
+        return `
+      <section class="n5-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniReadingTitle)}</h2>
+          <p>${escapeHtml(labels.miniReadingText)}</p>
+        </div>
+        ${renderN1ReadingCard(item, "reading")}
+      </section>
+    `;
+    }
+    function renderN1KanjiStudyCard(card, lesson, index) {
+        const labels = n1Labels();
+        const progress = getCardProgress(card.id);
+        const examples = n1CardExamples(card);
+        const hint = n1CardHint(card, examples[0]);
+        const written = Boolean(n1Course().writingPractice[card.kanji]);
+        const difficult = Boolean(n1Course().difficultKanji[card.kanji]);
+        return `
+      <article class="n5-kanji-card ${difficult ? "is-difficult" : ""}">
+        <div class="n5-kanji-topline">
+          <span class="pill">${escapeHtml(labels.step)} ${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <dl class="n5-readings">
+          ${renderKanjiReadingDefinition(card, "onyomi", labels.onyomi, card.onyomi)}
+          ${renderKanjiReadingDefinition(card, "kunyomi", labels.kunyomi, card.kunyomi || card.hiragana)}
+        </dl>
+        <div class="n5-word-list">
+          ${examples.map((example) => `
+            <p><b>${escapeHtml(example.word || card.kanji)}</b><span>${escapeHtml(displayHiragana(example.reading || ""))} · ${escapeHtml(exampleTranslation(example))}</span></p>
+          `).join("")}
+        </div>
+        <p class="n5-hint">${escapeHtml(hint)}</p>
+        ${renderN1CardSentence(card, lesson)}
+        <div class="textbook-actions">
+          <button class="btn primary" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="good" data-source="lesson">${escapeHtml(labels.addToSrs)}</button>
+          <button class="btn success" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="again" data-source="lesson">${escapeHtml(labels.hard)}</button>
+          <button class="btn ghost" type="button" data-action="n1-writing-done" data-id="${escapeAttr(card.id)}">${escapeHtml(written ? labels.written : labels.markWritten)}</button>
+        </div>
+      </article>
+    `;
+    }
+    function renderN1CardSentence(card, lesson) {
+        const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
+        if (!sentence)
+            return "";
+        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[гЂњ~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+        return `
+      <div class="n5-card-sentence">
+        <strong>${escapeHtml(sentence.jp)}</strong>
+        <span>${escapeHtml(displayHiragana(sentence.reading || ""))}</span>
+        <small>${escapeHtml(localized({ ru: sentence.ru, en: sentence.en }))}</small>
+        ${grammar ? `<small>${escapeHtml(n1Labels().grammar)}: ${escapeHtml(grammar)}</small>` : ""}
+      </div>
+    `;
+    }
+    function renderN1LessonGrammar(lesson) {
+        const labels = n1Labels();
+        const grammarItems = (lesson.grammarFocus || []).map((pattern) => n1GrammarByPattern(pattern)).filter(Boolean).slice(0, 3);
+        if (!grammarItems.length)
+            return "";
+        return `
+      <section class="n5-panel n1-grammar-panel">
+        <div>
+          <h2>${escapeHtml(labels.miniGrammar)}</h2>
+          <p>${escapeHtml(labels.miniGrammarText)}</p>
+        </div>
+        <div class="n1-section-grid">
+          ${grammarItems.map((item) => `
+            <article class="n1-grammar-card">
+              <span class="pill">${escapeHtml(item.pattern)}</span>
+              <h3>${escapeHtml(localized(item.title))}</h3>
+              <p>${escapeHtml(localized(item.explanation))}</p>
+              ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+              ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
+              <button class="btn ghost" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n1Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderN1Exercise(exercise) {
+        const labels = n1Labels();
+        const result = n1ExerciseResult(exercise.id);
+        const className = result ? (result.correct ? "is-correct" : "is-wrong") : "";
+        const reviewLocked = state.route === "review" && isReviewExerciseActive("N1", exercise.id) && Boolean(result);
+        if (exercise.type === "active-recall") {
+            return `
+        <article class="n5-exercise-card ${className}">
+          <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+          <h3>${escapeHtml(exercise.prompt)}</h3>
+          <div class="n5-input-row">
+            <input id="${escapeAttr(n1DomId(exercise.id))}" type="text" maxlength="3" autocomplete="off" value="${escapeAttr(result?.selected || "")}" aria-label="${escapeAttr(localized(exercise.title))}" ${reviewLocked ? "disabled" : ""} />
+            <button class="btn primary" type="button" data-action="n1-check-input" data-id="${escapeAttr(exercise.id)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(labels.check)}</button>
+            <button class="btn ghost" type="button" data-action="n1-answer" data-id="${escapeAttr(exercise.id)}" data-value="" ${reviewLocked ? "disabled" : ""}>${escapeHtml(labels.showAnswer)}</button>
+          </div>
+          ${renderN1ExerciseFeedback(exercise, result)}
+        </article>
+      `;
+        }
+        return `
+      <article class="n5-exercise-card ${className}">
+        <span class="pill">${escapeHtml(localized(exercise.title))}</span>
+        <h3>${escapeHtml(exercise.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${exercise.options.map((option) => {
+            const selectedOption = result?.selected === option.value;
+            const answerOption = result && option.value === exercise.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n1-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(option.label)}</button>`;
+        }).join("")}
+        </div>
+        ${renderN1ExerciseFeedback(exercise, result)}
+      </article>
+    `;
+    }
+    function renderN1ExerciseFeedback(exercise, result) {
+        if (!result)
+            return "";
+        const labels = n1Labels();
+        const text = result.correct
+            ? labels.correctAnswer
+            : `${labels.wrongAnswer}: ${exercise.answerLabel || exercise.answer}`;
+        return `<p class="n5-feedback">${escapeHtml(text)}</p>`;
+    }
+    function renderN1ReviewPage(textbook) {
+        const labels = n1Labels();
+        const mode = n1Course().activeReviewMode || "due";
+        const cards = n1ReviewCards(mode);
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Повторение</p>
+            <h1>${escapeHtml(labels.reviewTitle)}</h1>
+            <p>${escapeHtml(labels.reviewDescription)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="jlpt-filter-bar" role="tablist" aria-label="N1 review modes">
+          ${(state.n1Exercises?.reviewModes || []).map((item) => `
+            <button class="btn ${mode === item.id ? "primary" : "ghost"}" type="button" data-action="n1-review" data-mode="${escapeAttr(item.id)}">${escapeHtml(localized(item.title))}</button>
+          `).join("")}
+        </div>
+        <div class="n5-kanji-grid">
+          ${cards.map((card, index) => renderN1ReviewCard(card, index)).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReviewCards)}</h3></article>`}
+        </div>
+      </section>
+    `;
+    }
+    function renderN1ReviewCard(card, index) {
+        const labels = n1Labels();
+        const progress = getCardProgress(card.id);
+        return `
+      <article class="n5-kanji-card n5-review-card">
+        <div class="n5-kanji-topline">
+          <span class="pill">${index + 1}</span>
+          <span class="pill">${escapeHtml(progress.state)} · ${escapeHtml(formatDue(progress.dueAt))}</span>
+        </div>
+        <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+        <h3>${escapeHtml(cardMeaning(card))}</h3>
+        <p>${escapeHtml(n1CardExamples(card)[0]?.word || card.hiragana || "")} · ${escapeHtml(n1CardExamples(card)[0]?.reading || card.romaji || "")}</p>
+        <div class="textbook-actions">
+          <button class="btn success" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="easy">${escapeHtml(labels.know)}</button>
+          <button class="btn warning" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="again">${escapeHtml(labels.hard)}</button>
+        </div>
+      </article>
+    `;
+    }
+    function renderN1KanjiListPage(textbook) {
+        const labels = n1Labels();
+        const cards = n1AllCards();
+        const visibleCards = cards.slice(0, 160);
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · ${escapeHtml(cards.length || 1047)}</p>
+            <h1>${escapeHtml(labels.kanjiListTitle)}</h1>
+            <p>${escapeHtml(labels.kanjiListText)}</p>
+            <p class="muted">${escapeHtml(labels.kanjiListLimit.replace("{shown}", visibleCards.length).replace("{total}", cards.length || 1047))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn" type="button" data-action="n1-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+          </div>
+        </div>
+        <div class="n5-kanji-grid n1-kanji-catalog">
+          ${visibleCards.map((card, index) => `
+            <article class="n5-kanji-card">
+              <div class="n5-kanji-topline"><span class="pill">${index + 1}/${cards.length}</span><span class="pill">${escapeHtml(getCardProgress(card.id).state)}</span></div>
+              <div class="n5-big-kanji">${escapeHtml(card.kanji)}</div>
+              <h3>${escapeHtml(cardMeaning(card))}</h3>
+              <p>${escapeHtml(n1CardExamples(card)[0]?.word || "")} · ${escapeHtml(n1CardExamples(card)[0]?.reading || "")}</p>
+              <div class="textbook-actions">
+                <button class="btn primary" type="button" data-action="n1-srs" data-id="${escapeAttr(card.id)}" data-rating="good">${escapeHtml(labels.addToSrs)}</button>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderN1GrammarPage(textbook) {
+        const labels = n1Labels();
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Grammar</p>
+            <h1>${escapeHtml(labels.grammarTitle)}</h1>
+            <p>${escapeHtml(labels.grammarText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-reading">${escapeHtml(labels.readingN1)}</button>
+          </div>
+        </div>
+        <div class="metric-grid">
+          ${renderMetric(labels.completedGrammar, `${Object.keys(n1Course().completedGrammar || {}).length}/${state.n1Grammar.length}`, labels.grammar, progressWidth(Object.keys(n1Course().completedGrammar || {}).length, state.n1Grammar.length))}
+          ${renderMetric(labels.questions, state.n1Grammar.length, labels.grammar, 100)}
+        </div>
+        <div class="n1-section-grid">
+          ${state.n1Grammar.map((item) => {
+            const result = n1Course().grammarResults?.[item.id];
+            return `
+              <article class="n1-grammar-card ${result ? (result.correct ? "is-correct" : "is-wrong") : ""}">
+                <span class="pill">${escapeHtml(item.order)} · ${escapeHtml(item.pattern)}</span>
+                <h3>${escapeHtml(localized(item.title))}</h3>
+                <p>${escapeHtml(localized(item.explanation))}</p>
+                ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
+                ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
+                ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
+                <div class="n5-option-grid">
+                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                    <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
+                  `).join("")}
+                </div>
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+              </article>
+            `;
+        }).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderN1ReadingPage(textbook) {
+        const labels = n1Labels();
+        const viewedChanged = markJlptReadingViewed("N1", "n1_reading_page");
+        const seededChanged = seedReadingExerciseSrs("N1");
+        if (viewedChanged || seededChanged)
+            saveProgress();
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Reading</p>
+            <h1>${escapeHtml(labels.readingTitle)}</h1>
+            <p>${escapeHtml(labels.readingText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-listening">${escapeHtml(labels.listeningN1)}</button>
+          </div>
+        </div>
+        <div class="n1-section-grid">
+          ${state.n1Reading.map((item) => renderN1ReadingCard(item, "reading")).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderN1ListeningPage(textbook) {
+        const labels = n1Labels();
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Listening</p>
+            <h1>${escapeHtml(labels.listeningTitle)}</h1>
+            <p>${escapeHtml(labels.listeningText)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn ghost" type="button" data-action="n1-final">${escapeHtml(labels.finalTest)}</button>
+          </div>
+        </div>
+        <div class="n1-section-grid">
+          ${state.n1Listening.map((item) => renderN1ReadingCard(item, "listening")).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderN1ReadingCard(item, mode) {
+        const labels = n1Labels();
+        const completed = mode === "reading" ? n1Course().completedReading[item.id] : n1Course().completedListening[item.id];
+        const answerStore = mode === "reading" ? n1Course().readingAnswers : n1Course().listeningAnswers;
+        const action = mode === "reading" ? "n1-reading-complete" : "n1-listening-complete";
+        return `
+      <article class="n1-reading-card ${completed ? "is-correct" : ""}">
+        <span class="pill">${escapeHtml(localized(item.title))}</span>
+        ${Array.isArray(item.dialogue) ? `<div class="n5-sentence-list">${item.dialogue.map((line) => `<article><strong>${escapeHtml(line)}</strong></article>`).join("")}</div>` : `<p class="n1-jp-text">${escapeHtml(item.jp || "")}</p>`}
+        ${item.ru ? `<p>${escapeHtml(item.ru)}</p>` : ""}
+        ${(item.questions || []).map((question, index) => {
+            const key = `${item.id}:${index}`;
+            const result = answerStore?.[key];
+            const options = Array.isArray(question.options) ? question.options : [];
+            return `
+            <div class="n1-question-block">
+              <h3>${escapeHtml(localized(question.prompt || item.question || {}))}</h3>
+              <div class="n5-option-grid">
+                ${options.map((option) => `<button class="btn ${result?.selected === option.value ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="${escapeAttr(action)}" data-id="${escapeAttr(item.id)}" data-question="${escapeAttr(index)}" data-value="${escapeAttr(option.value)}">${escapeHtml(localized(option.label || option))}</button>`).join("")}
+              </div>
+              ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : labels.wrongAnswer)}</p>` : ""}
+            </div>
+          `;
+        }).join("")}
+      </article>
+    `;
+    }
+    function renderN1FinalTestPage(textbook) {
+        const labels = n1Labels();
+        const config = state.n1FinalTest || {};
+        const questions = buildN1FinalQuestions();
+        const test = n1Course().finalTest;
+        const stats = finalTestQuestionStats(test, questions);
+        const answered = stats.answered;
+        const ready = stats.ready;
+        // AGGRESSIVE FIX for final test result display bug (same as N5):
+        if (test && typeof test.score === 'number' && test.score > 0 && test.totalQuestions > 0) {
+            const calc = Math.round((test.score / test.totalQuestions) * 100);
+            if (!test.percent || test.percent === 0 || test.percent !== calc) {
+                test.percent = calc;
+            }
+            if (!test.completedAt) {
+                test.completedAt = new Date().toISOString();
+            }
+            saveProgress();
+        }
+        const completed = Boolean(test.completedAt) || (typeof test.percent === "number" && test.percent > 0) || (typeof test.score === "number" && test.score > 0);
+        const displayPercent = (typeof test.percent === "number" && test.percent > 0) ? test.percent : (Number(test.score || 0) && test.totalQuestions ? Math.round((test.score / test.totalQuestions) * 100) : 0);
+        return `
+      <section class="page textbooks-page n5-course-page n1-course-page n5-final-page">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">JLPT N1 · Final</p>
+            <h1>${escapeHtml(localized(config.title || {}))}</h1>
+            <p>${escapeHtml(localized(config.description || {}))}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="n1-overview">${escapeHtml(labels.backToN1)}</button>
+            <button class="btn" type="button" data-action="n1-final-reset">${escapeHtml(labels.resetTest)}</button>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          ${renderMetric(labels.questions, `${answered}/${questions.length}`, labels.finalTest, progressWidth(answered, questions.length))}
+          ${renderMetric(labels.score, completed || displayPercent > 0 ? `${displayPercent}%` : "—", `${config.passingPercent || 80}%`, completed || displayPercent > 0 ? displayPercent : 0)}
+          ${renderMetric(labels.mistakes, completed ? (test.mistakes || []).length : 0, labels.difficult, completed ? progressWidth((test.mistakes || []).length, questions.length) : 0)}
+        </div>
+
+        ${completed ? `
+          <section class="n5-result-panel ${test.passed ? "is-complete" : ""}">
+            <div>
+              <h2>${escapeHtml(test.passed ? labels.finalPassed : labels.finalNeedsReview)}</h2>
+              <p>${escapeHtml(test.passed ? labels.finalPassedText : labels.finalNeedsReviewText)}</p>
+            </div>
+            <button class="btn primary" type="button" data-action="n1-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
+            ${renderJlptNextLevelButton("N1", "btn primary")}
+          </section>
+        ` : ""}
+
+        <div class="n5-exercise-list">
+          ${questions.map((question, index) => renderN1FinalQuestion(question, index)).join("")}
+        </div>
+        ${ready ? "" : `<p class="n5-feedback">${escapeHtml(lang() === "ru" ? "Ответь на все вопросы перед завершением теста." : "Answer all questions before finishing the test.")}</p>`}
+        <div class="n5-final-actions">
+          <button class="btn primary" type="button" data-action="n1-final-submit" ${state.finalTestBusy ? "disabled" : ""}>${escapeHtml(labels.submitFinal)}</button>
+          ${renderJlptNextLevelButton("N1", "btn ghost")}
+          <button class="btn ghost" type="button" data-action="n1-review" data-mode="all">${escapeHtml(labels.reviewAll)}</button>
+        </div>
+      </section>
+    `;
+    }
+    function renderN1FinalQuestion(question, index) {
+        const answer = n1Course().finalTest.answers?.[question.id];
+        const complete = Boolean(n1Course().finalTest.completedAt);
+        return `
+      <article class="n5-exercise-card ${complete ? (answer === question.answer ? "is-correct" : "is-wrong") : ""}">
+        <span class="pill">${index + 1} · ${escapeHtml(question.type)}</span>
+        <h3>${escapeHtml(question.prompt)}</h3>
+        <div class="n5-option-grid">
+          ${question.options.map((option) => {
+            const selectedOption = answer === option.value;
+            const answerOption = complete && option.value === question.answer;
+            return `<button class="btn ${answerOption ? "success" : selectedOption ? "primary" : "ghost"}" type="button" data-action="n1-final-answer" data-id="${escapeAttr(question.id)}" data-value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</button>`;
+        }).join("")}
+        </div>
+        ${complete && answer !== question.answer ? `<p class="n5-feedback">${escapeHtml(n1Labels().wrongAnswer)}: ${escapeHtml(question.answerLabel)}</p>` : ""}
+      </article>
+    `;
+    }
+    function n1Labels() {
+        return lang() === "ru"
+            ? {
+                title: "JLPT N1",
+                allTextbooks: "Все учебники",
+                pdf: "PDF-учебник",
+                kanji: "кандзи",
+                grammar: "грамматика",
+                courseMap: "Интерактивный учебник N1: редкие знаки, формальная лексика, плотные тексты и выводы",
+                continue: "Продолжить",
+                review: "Повторять N1",
+                openKanji: "Открыть список кандзи",
+                grammarN1: "Грамматика N1",
+                readingN1: "Чтение N1",
+                listeningN1: "Аудирование N1",
+                finalTest: "Финальный тест",
+                studiedKanji: "Изучено",
+                completedLessons: "Уроки",
+                completedGrammar: "Грамматика",
+                completedReading: "Чтение",
+                completedListening: "Аудирование",
+                reviews: "Повторения",
+                difficult: "Сложные",
+                srs: "SRS",
+                lessons: "уроков",
+                lessonsTitle: "53 урока: 52×20 кандзи и финальный урок на 7 знаков",
+                lessonsDescription: "Каждый урок связывает кандзи, реальные слова, грамматику, мини-текст, позицию автора, письмо и повторение.",
+                reviewPlan: "План повторения на 120 дней",
+                day: "день",
+                lesson: "Урок",
+                backToN1: "К N1",
+                n5Bridge: "База перед N1",
+                n5BridgeText: "N1 стоит на N2: формальные связки, длинные фразы, авторская позиция, уступка, причина и вывод. Если проседает N2, лучше быстро освежить его перед рывком.",
+                reviewN5Base: "Повторить N2 перед N1",
+                lessonChain: "Кандзи -> слово -> чтение -> грамматика -> абзац -> позиция автора -> вывод -> SRS",
+                lessonChainText: "N1 не живёт списком знаков: каждый знак сразу входит в слово, формальную связку, мини-абзац и логику аргумента.",
+                duration: "Длительность",
+                minutes: "мин",
+                exercises: "Упражнения",
+                correct: "верно",
+                sentences: "Примеры предложений",
+                sentencesText: "Прочитай вслух и отметь, где грамматика удерживает смысл и связь между словами.",
+                exercisesText: "Смешанные задания проверяют кандзи, слова, чтение, перевод, грамматику, структуру абзаца, позицию автора и активное вспоминание.",
+                lessonComplete: "Урок завершён",
+                lessonCompleteText: "Кандзи урока добавлены в повторение.",
+                lessonResult: "Итог урока",
+                lessonResultText: "Заверши урок, когда карточки и упражнения готовы к повторению.",
+                completeLesson: "Завершить урок",
+                refreshLesson: "Обновить итог",
+                repeatMistakes: "Повторить ошибки",
+                nextLesson: "Следующий урок",
+                none: "нет",
+                step: "Шаг",
+                onyomi: "онъёми",
+                kunyomi: "кунъёми",
+                addToSrs: "В повторение",
+                know: "Знаю",
+                hard: "Сложно",
+                writingPractice: "Практика письма",
+                markWritten: "Написано",
+                written: "Письмо засчитано",
+                miniGrammar: "Мини-грамматика урока",
+                miniGrammarText: "1–3 конструкции, которые связывают кандзи с точкой зрения, причиной или выводом.",
+                miniReadingTitle: "Мини-reading урока",
+                miniReadingText: "Пойми тему, причину, уступку, противопоставление и вывод внутри короткого N1-абзаца.",
+                markGrammar: "Засчитать конструкцию",
+                completed: "Пройдено",
+                check: "Проверить",
+                showAnswer: "Сложно: показать ответ",
+                correctAnswer: "Верно. XP и Moon Fragment начислены.",
+                wrongAnswer: "Пока нет",
+                reviewTitle: "N1-повторение",
+                reviewDescription: "Повтори due-карточки, сложные кандзи или весь набор N1.",
+                noReviewCards: "Сейчас нет карточек в этом фильтре.",
+                kanjiListTitle: "1047 кандзи N1",
+                kanjiListText: "Список из учебника: карточки можно быстро добавить в повторение или открыть для письма. На странице показывается облегчённая витрина, чтобы не перегружать DOM.",
+                kanjiListLimit: "Показано {shown} из {total}; полный набор доступен по урокам, повторению и поиску приложения.",
+                grammarTitle: "142 грамматические конструкции N1",
+                grammarText: "Карточки с функцией, формулой, примером и проверкой понимания в письменном аргументе.",
+                readingTitle: "Тексты для чтения N1",
+                readingText: "Короткие тексты и mini-readings связывают кандзи, слова, грамматику, авторскую позицию и выводы.",
+                listeningTitle: "Скрипты для аудирования N1",
+                listeningText: "Скрипты можно читать вслух, озвучивать через TTS и использовать для shadowing.",
+                questions: "Вопросы",
+                score: "Результат",
+                mistakes: "Ошибки",
+                resetTest: "Сбросить тест",
+                submitFinal: "Завершить тест",
+                reviewAll: "Повторить весь N1",
+                finalPassed: "N1 пройден",
+                finalPassedText: "Отлично. Ошибки можно отдельно вернуть в повторение.",
+                finalNeedsReview: "Нужно повторить",
+                finalNeedsReviewText: "Ошибки помечены как сложные и подняты в повторение."
+            }
+            : {
+                title: "JLPT N1",
+                allTextbooks: "All textbooks",
+                pdf: "PDF textbook",
+                kanji: "kanji",
+                grammar: "grammar",
+                courseMap: "Interactive N1 textbook: rare kanji, formal vocabulary, dense texts, and conclusions",
+                continue: "Continue",
+                review: "Review N1",
+                openKanji: "Open kanji list",
+                grammarN1: "N1 grammar",
+                readingN1: "N1 reading",
+                listeningN1: "N1 listening",
+                finalTest: "Final test",
+                studiedKanji: "Studied",
+                completedLessons: "Lessons",
+                completedGrammar: "Grammar",
+                completedReading: "Reading",
+                completedListening: "Listening",
+                reviews: "Reviews",
+                difficult: "Difficult",
+                srs: "SRS",
+                lessons: "lessons",
+                lessonsTitle: "53 lessons: 52×20 kanji and a final 7-kanji lesson",
+                lessonsDescription: "Each lesson connects kanji, real words, grammar, mini reading, author stance, writing, and SRS.",
+                reviewPlan: "120-day review plan",
+                day: "day",
+                lesson: "Lesson",
+                backToN1: "To N1",
+                n5Bridge: "Base before N1",
+                n5BridgeText: "N1 stands on N2: formal links, long phrases, author stance, concession, cause, and conclusion.",
+                reviewN5Base: "Review N2 before N1",
+                lessonChain: "Kanji -> word -> reading -> grammar -> paragraph -> author stance -> conclusion -> SRS",
+                lessonChainText: "N1 is not a bare list: every sign gets a word, formal link, mini paragraph, and argument flow.",
+                duration: "Duration",
+                minutes: "min",
+                exercises: "Exercises",
+                correct: "correct",
+                sentences: "Example sentences",
+                sentencesText: "Read aloud and notice where grammar carries meaning and argument flow.",
+                exercisesText: "Mixed tasks check kanji, words, reading, translation, grammar, paragraph structure, author stance, and active recall.",
+                lessonComplete: "Lesson complete",
+                lessonCompleteText: "Lesson kanji are available in N1 review and shared SRS.",
+                lessonResult: "Lesson result",
+                lessonResultText: "Complete the lesson when cards and exercises are ready for review.",
+                completeLesson: "Complete lesson",
+                refreshLesson: "Refresh result",
+                repeatMistakes: "Repeat mistakes",
+                nextLesson: "Next lesson",
+                none: "none",
+                step: "Step",
+                onyomi: "onyomi",
+                kunyomi: "kunyomi",
+                addToSrs: "Send to review",
+                know: "I know",
+                hard: "Hard",
+                writingPractice: "Writing practice",
+                markWritten: "Written",
+                written: "Writing counted",
+                miniGrammar: "Lesson mini grammar",
+                miniGrammarText: "1–3 constructions that push kanji into viewpoint, cause, or conclusion.",
+                miniReadingTitle: "Lesson mini reading",
+                miniReadingText: "Understand the topic, cause, concession, contrast, and conclusion inside the short N1 paragraph.",
+                markGrammar: "Mark construction",
+                completed: "Completed",
+                check: "Check",
+                showAnswer: "Hard: show answer",
+                correctAnswer: "Correct. XP and Moon Fragment awarded.",
+                wrongAnswer: "Not yet",
+                reviewTitle: "N1 review",
+                reviewDescription: "Review due cards, difficult kanji, or the full N1 set.",
+                noReviewCards: "No cards in this filter right now.",
+                kanjiListTitle: "1047 N1 kanji",
+                kanjiListText: "Textbook list: quickly add cards to review or open writing practice. This page renders a light showcase to avoid overloading the DOM.",
+                kanjiListLimit: "Showing {shown} of {total}; the full set is available through lessons, review, and app search.",
+                grammarTitle: "142 N1 grammar constructions",
+                grammarText: "Cards with function, formula, example, and a comprehension check for written arguments.",
+                readingTitle: "N1 reading texts",
+                readingText: "Short texts and mini-readings connect kanji, words, grammar, author stance, and conclusions.",
+                listeningTitle: "N1 listening scripts",
+                listeningText: "Read scripts aloud, speak them with TTS, and use them for shadowing.",
+                questions: "Questions",
+                score: "Score",
+                mistakes: "Mistakes",
+                resetTest: "Reset test",
+                submitFinal: "Finish test",
+                reviewAll: "Review all N1",
+                finalPassed: "N1 passed",
+                finalPassedText: "Excellent. You can send mistakes back to review separately.",
+                finalNeedsReview: "Review needed",
+                finalNeedsReviewText: "Mistakes were marked as difficult and raised in review."
+            };
+    }
+    function ensureN1CourseProgress() {
+        state.progress.n1Course = mergeN1CourseProgress(defaultN1CourseProgress(), state.progress.n1Course || {});
+        const lessons = n1Lessons();
+        const active = n1LessonById(state.progress.n1Course.currentLessonId);
+        if (!active && lessons[0])
+            state.progress.n1Course.currentLessonId = lessons[0].id;
+        const firstOpen = lessons.find((lesson) => !state.progress.n1Course.completedLessons[lesson.id]);
+        if (!state.progress.n1Course.currentLessonId && firstOpen)
+            state.progress.n1Course.currentLessonId = firstOpen.id;
+        return state.progress.n1Course;
+    }
+    function n1Course() {
+        return ensureN1CourseProgress();
+    }
+    function n1Lessons() {
+        return state.n1Textbook?.items || [];
+    }
+    function n1LessonById(id) {
+        const raw = String(id || "");
+        if (!raw)
+            return null;
+        return n1Lessons().find((lesson) => lesson.id === raw
+            || lesson.id === `n1-${raw}`
+            || lesson.id.endsWith(`-${raw}`)) || null;
+    }
+    function n1CurrentLesson() {
+        return n1LessonById(n1Course().currentLessonId) || n1Lessons().find((lesson) => !n1Course().completedLessons[lesson.id]) || n1Lessons()[0] || null;
+    }
+    function n1CardsForLesson(lesson) {
+        return (lesson?.kanji || []).map((kanji) => n1CardByKanji(kanji)).filter(Boolean);
+    }
+    function n1AllCards() {
+        const seen = new Set();
+        return (state.n1KanjiCatalog || []).map((detail) => n1CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
+            if (seen.has(card.kanji))
+                return false;
+            seen.add(card.kanji);
+            return true;
+        });
+    }
+    function n1CardByKanji(kanji) {
+        const literal = String(kanji || "");
+        const detail = state.n1KanjiCatalog?.find((item) => item.kanji === literal) || null;
+        const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N1")
+            || (detail ? state.cards.find((item) => String(item.id) === String(detail.courseCardId || detail.id)) : null)
+            || null;
+        if (card && detail)
+            return mergeN1CardDetail(card, detail);
+        if (card)
+            return card;
+        if (!detail)
+            return null;
+        return mergeN1CardDetail({
+            id: detail.courseCardId || detail.id,
+            kanji: detail.kanji,
+            lessonId: detail.lessonId,
+            jlpt: "N1",
+            examples: []
+        }, detail);
+    }
+    function n1GrammarByPattern(pattern) {
+        const raw = String(pattern || "");
+        return state.n1Grammar.find((item) => item.pattern === raw || item.id === raw || item.pattern.includes(raw) || raw.includes(item.pattern)) || null;
+    }
+    function n1CardExamples(card) {
+        return normalizedCardExamples(card, card.examples);
+    }
+    function n1CardHint(card, example) {
+        if (lang() === "ru" && card.n1Detail?.hintRu)
+            return card.n1Detail.hintRu;
+        const word = example?.word || card.kanji;
+        const reading = displayHiragana(example?.reading || card.hiragana || "");
+        return lang() === "ru"
+            ? `Свяжи ${card.kanji} со значением «${cardMeaning(card)}», затем сразу проговори слово и пример: ${word}${reading ? ` (${reading})` : ""}.`
+            : `Connect ${card.kanji} with "${cardMeaning(card)}", then say the word and example: ${word}${reading ? ` (${reading})` : ""}.`;
+    }
+    function n1ProgressSummary() {
+        const cards = n1AllCards();
+        const course = n1Course();
+        const studied = new Set(Object.keys(course.studiedKanji || {}));
+        cards.forEach((card) => {
+            if (getCardProgress(card.id).state !== "New")
+                studied.add(card.kanji);
+        });
+        const effectiveCompleted = { ...(course.completedLessons || {}) };
+        for (const k of sessionCompletedLessons) {
+            if (k.startsWith("n1:")) {
+                const id = k.slice(3);
+                effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
+            }
+        }
+        return {
+            total: state.n1Meta?.kanjiCount || cards.length || 1047,
+            studied: studied.size,
+            completedLessons: Object.keys(effectiveCompleted).length,
+            completedGrammar: Object.keys(course.completedGrammar || {}).length,
+            completedReading: Object.keys(course.completedReading || {}).length,
+            completedListening: Object.keys(course.completedListening || {}).length,
+            reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviewCount || 0), 0),
+            difficult: Object.keys(course.difficultKanji || {}).length
+        };
+    }
+    function n1LessonStatus(lessonId) {
+        const course = n1Course();
+        const sessKey = `n1:${lessonId}`;
+        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId])
+            return "completed";
+        const lesson = n1LessonById(lessonId);
+        if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji]))
+            return "started";
+        return "new";
+    }
+    function n1LessonStatusLabel(status) {
+        if (status === "completed")
+            return lang() === "ru" ? "завершён" : "completed";
+        if (status === "started")
+            return lang() === "ru" ? "начат" : "started";
+        return lang() === "ru" ? "не начат" : "new";
+    }
+    function buildN1LessonExercises(lesson) {
+        const cards = n1CardsForLesson(lesson);
+        if (!cards.length)
+            return [];
+        const sentences = lesson.sentences || [];
+        const exerciseTitles = Object.fromEntries((state.n1Exercises?.types || []).map((item) => [item.type, item.title]));
+        const rewardByType = Object.fromEntries((state.n1Exercises?.types || []).map((item) => [item.type, item]));
+        const getReward = (type) => rewardByType[type] || { rewardXp: state.n1Meta?.rewards?.exerciseXp || 11, rewardMoon: state.n1Meta?.rewards?.exerciseMoon || 1 };
+        const exercises = [];
+        const meaningCard = cards[0];
+        exercises.push({
+            id: `${lesson.id}-meaning-0`,
+            type: "meaning",
+            title: exerciseTitles.meaning || { ru: "Узнавание значения", en: "Meaning recognition" },
+            prompt: meaningCard.kanji,
+            answer: meaningCard.id,
+            answerLabel: cardMeaning(meaningCard),
+            kanji: meaningCard.kanji,
+            cardId: meaningCard.id,
+            options: n1OptionSet({ value: meaningCard.id, label: cardMeaning(meaningCard) }, cards.slice(1).map((card) => ({ value: card.id, label: cardMeaning(card) })), 1),
+            ...getReward("meaning")
+        });
+        const kanjiCard = cards[1] || cards[0];
+        exercises.push({
+            id: `${lesson.id}-kanji-1`,
+            type: "kanji",
+            title: exerciseTitles.kanji || { ru: "Кандзи по значению", en: "Kanji from meaning" },
+            prompt: cardMeaning(kanjiCard),
+            answer: kanjiCard.kanji,
+            answerLabel: kanjiCard.kanji,
+            kanji: kanjiCard.kanji,
+            cardId: kanjiCard.id,
+            options: n1OptionSet({ value: kanjiCard.kanji, label: kanjiCard.kanji }, cards.filter((card) => card.id !== kanjiCard.id).map((card) => ({ value: card.kanji, label: card.kanji })), 2),
+            ...getReward("kanji")
+        });
+        const readingCard = cards[2] || cards[0];
+        const readingExample = n1CardExamples(readingCard)[0];
+        exercises.push({
+            id: `${lesson.id}-reading-2`,
+            type: "reading",
+            title: exerciseTitles.reading || { ru: "Чтение слова", en: "Word reading" },
+            prompt: readingExample.word || readingCard.kanji,
+            answer: readingExample.reading || readingCard.hiragana || "",
+            answerLabel: readingExample.reading || readingCard.hiragana || "",
+            kanji: readingCard.kanji,
+            cardId: readingCard.id,
+            options: n1OptionSet({ value: readingExample.reading || readingCard.hiragana || "", label: readingExample.reading || readingCard.hiragana || "" }, cards.flatMap((card) => n1CardExamples(card).map((example) => ({ value: example.reading, label: example.reading }))).filter((item) => item.value && item.value !== readingExample.reading), 3),
+            ...getReward("reading")
+        });
+        const sentence = sentences[0];
+        if (sentence) {
+            exercises.push({
+                id: `${lesson.id}-sentence-3`,
+                type: "sentence",
+                title: exerciseTitles.sentence || { ru: "Перевод предложения", en: "Sentence translation" },
+                prompt: sentence.jp,
+                answer: localized({ ru: sentence.ru, en: sentence.en }),
+                answerLabel: localized({ ru: sentence.ru, en: sentence.en }),
+                kanji: cards[0].kanji,
+                cardId: cards[0].id,
+                options: n1OptionSet({ value: localized({ ru: sentence.ru, en: sentence.en }), label: localized({ ru: sentence.ru, en: sentence.en }) }, sentences.slice(1).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })), 1),
+                ...getReward("sentence")
+            });
+        }
+        const wordCard = cards[3] || cards[0];
+        const wordExample = n1CardExamples(wordCard)[0];
+        exercises.push({
+            id: `${lesson.id}-word-4`,
+            type: "missing-word",
+            title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
+            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}В»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            answer: wordExample.word || wordCard.kanji,
+            answerLabel: wordExample.word || wordCard.kanji,
+            kanji: wordCard.kanji,
+            cardId: wordCard.id,
+            options: n1OptionSet({ value: wordExample.word || wordCard.kanji, label: wordExample.word || wordCard.kanji }, cards.flatMap((card) => n1CardExamples(card).map((example) => ({ value: example.word, label: example.word }))).filter((item) => item.value && item.value !== wordExample.word), 2),
+            ...getReward("missing-word")
+        });
+        const recallCard = cards[4] || cards[0];
+        exercises.push({
+            id: `${lesson.id}-active-5`,
+            type: "active-recall",
+            title: exerciseTitles["active-recall"] || { ru: "Активное вспоминание", en: "Active recall" },
+            prompt: lang() === "ru" ? `Введи кандзи для значения: ${cardMeaning(recallCard)}` : `Type the kanji for: ${cardMeaning(recallCard)}`,
+            answer: recallCard.kanji,
+            answerLabel: recallCard.kanji,
+            kanji: recallCard.kanji,
+            cardId: recallCard.id,
+            options: [],
+            ...getReward("active-recall")
+        });
+        const grammar = n1GrammarByPattern(lesson.grammarFocus?.[0]);
+        if (grammar) {
+            exercises.push({
+                id: `${lesson.id}-grammar-6`,
+                type: "grammar-link",
+                title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
+                prompt: localized(grammar.question || grammar.explanation),
+                answer: grammar.answer,
+                answerLabel: grammar.answer,
+                kanji: cards[0].kanji,
+                cardId: cards[0].id,
+                grammarId: grammar.id,
+                options: n1OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+                ...getReward("grammar-link")
+            });
+        }
+        const miniSentence = sentences[1] || sentences[0];
+        if (miniSentence) {
+            exercises.push({
+                id: `${lesson.id}-mini-reading-7`,
+                type: "mini-reading",
+                title: exerciseTitles["mini-reading"] || { ru: "Мини-чтение", en: "Mini reading" },
+                prompt: miniSentence.jp,
+                answer: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+                answerLabel: localized({ ru: miniSentence.ru, en: miniSentence.en }),
+                kanji: cards[1]?.kanji || cards[0].kanji,
+                cardId: cards[1]?.id || cards[0].id,
+                options: n1OptionSet({ value: localized({ ru: miniSentence.ru, en: miniSentence.en }), label: localized({ ru: miniSentence.ru, en: miniSentence.en }) }, sentences.filter((item) => item.jp !== miniSentence.jp).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })), 2),
+                ...getReward("mini-reading")
+            });
+        }
+        return exercises.slice(0, state.n1Exercises?.lessonQuestionCount || 8).map((exercise) => ({
+            ...exercise,
+            level: "N1",
+            lessonId: lesson.id
+        }));
+    }
+    function n1OptionSet(correct, distractors, rotateBy = 0) {
+        const seen = new Set([String(correct.value)]);
+        const options = [correct].filter((item) => String(item.value || ""));
+        distractors.forEach((option) => {
+            const value = String(option.value || "");
+            if (!value || seen.has(value) || options.length >= 4)
+                return;
+            seen.add(value);
+            options.push(option);
+        });
+        n1AllCards().forEach((card) => {
+            if (options.length >= 4)
+                return;
+            const fallback = { value: card.kanji, label: card.kanji };
+            if (!seen.has(String(fallback.value))) {
+                seen.add(String(fallback.value));
+                options.push(fallback);
+            }
+        });
+        if (options.length <= 1)
+            return options;
+        const shift = rotateBy % options.length;
+        return [...options.slice(shift), ...options.slice(0, shift)];
+    }
+    function findN1Exercise(id) {
+        for (const lesson of n1Lessons()) {
+            const exercise = buildN1LessonExercises(lesson).find((item) => item.id === id);
+            if (exercise)
+                return exercise;
+        }
+        return null;
+    }
+    function n1ExerciseResult(id) {
+        return textbookExerciseResult("N1", n1Course(), id);
+    }
+    function answerN1Exercise(target) {
+        const exercise = findN1Exercise(target.dataset.id);
+        if (!exercise)
+            return;
+        const value = target.dataset.value || "";
+        const selected = value || exercise.answer;
+        const correct = selected === exercise.answer;
+        recordN1ExerciseResult(exercise, selected, correct);
+    }
+    function checkN1InputExercise(id) {
+        const exercise = findN1Exercise(id);
+        if (!exercise)
+            return;
+        const input = document.getElementById(n1DomId(exercise.id));
+        const value = input ? String(input.value || "").trim() : "";
+        recordN1ExerciseResult(exercise, value, value === exercise.answer);
+    }
+    function recordN1ExerciseResult(exercise, selectedValue, correct) {
+        const course = n1Course();
+        recordTextbookExerciseResult("N1", course, exercise, selectedValue, correct, {
+            rewardXp: Number(exercise.rewardXp || state.n1Meta?.rewards?.exerciseXp || 11),
+            rewardMoon: Number(exercise.rewardMoon || state.n1Meta?.rewards?.exerciseMoon || 1),
+            rewardKey: `n1_exercise:${exercise.id}`,
+            markStudied: () => markN1KanjiStudied(exercise.kanji, exercise.cardId),
+            markDifficult: () => markN1KanjiDifficult(exercise.kanji, exercise.cardId),
+            markCompleted: () => {
+                if (exercise.grammarId)
+                    course.completedGrammar[exercise.grammarId] = course.completedGrammar[exercise.grammarId] || new Date().toISOString();
+            },
+            markWrong: () => {
+                course.kanjiMistakes[exercise.kanji] = Number(course.kanjiMistakes[exercise.kanji] || 0) + 1;
+            },
+            markWordMistake: (key) => {
+                course.wordMistakes[key] = Number(course.wordMistakes[key] || 0) + 1;
+            }
+        });
+    }
+    function handleN1SrsAction(cardId, rating, source = "review") {
+        const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
+        if (!card)
+            return;
+        const lessonHard = source === "lesson" && rating === "again";
+        const progressRating = lessonHard ? "good" : rating;
+        const displayRating = lessonHard ? "hard" : rating;
+        const before = cloneProgress(getCardProgress(card.id));
+        const after = calculateNextProgress(before, progressRating, displayRating);
+        state.progress.cards[card.id] = after;
+        updateDailyStats(before, after, displayRating);
+        updateStreak();
+        markN1KanjiStudied(card.kanji, card.id);
+        n1Course().srsKanji[card.kanji] = new Date().toISOString();
+        if (lessonHard) {
+            markN1KanjiDifficult(card.kanji, card.id, false);
+            state.progress.totalCorrect += 1;
+            addReward(state.n1Meta?.rewards?.hardXp || 2, 1, `n1_srs_lesson_hard:${card.id}`);
+        }
+        else if (isForgottenRating(rating)) {
+            markN1KanjiDifficult(card.kanji, card.id);
+            state.progress.totalWrong += 1;
+            addReward(state.n1Meta?.rewards?.hardXp || 2, 0, `n1_srs_hard:${card.id}`);
+        }
+        else {
+            state.progress.totalCorrect += 1;
+            addReward(rating === "easy" ? (state.n1Meta?.rewards?.knowXp || 9) : (state.n1Meta?.rewards?.addToSrsXp || 7), 1, `n1_srs:${card.id}`);
+        }
+        renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N1 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
+    }
+    function markN1Writing(cardId) {
+        const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
+        if (!card)
+            return;
+        const course = n1Course();
+        if (!course.writingPractice[card.kanji]) {
+            course.writingPractice[card.kanji] = new Date().toISOString();
+            state.progress.writingPractice.completed = Number(state.progress.writingPractice.completed || 0) + 1;
+            state.progress.writingPractice.cards[card.id] = {
+                completed: Number(state.progress.writingPractice.cards[card.id]?.completed || 0) + 1,
+                lastAt: new Date().toISOString()
+            };
+            markN1KanjiStudied(card.kanji, card.id);
+            addReward(9, 1, `n1_writing:${card.id}`);
+        }
+        evaluateAchievements();
+        saveProgress();
+        render();
+    }
+    function completeN1Lesson(lessonId) {
+        const lesson = n1LessonById(lessonId);
+        if (!lesson)
+            return;
+        const course = n1Course();
+        const sessKey = `n1:${lesson.id}`;
+        // isLessonCompleted local session guard (aggressive): never allows re-call in this page session even if persisted flag was cleared via storage hack.
+        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lesson.id]) {
+            render();
+            return;
+        }
+        const lessonCards = n1CardsForLesson(lesson);
+        const studiedCount = lessonCards.filter((card) => course.studiedKanji[card.kanji]).length;
+        if (studiedCount < lesson.kanji.length) {
+            const msg = lang() === "ru" ? "Сначала изучите все кандзи урока." : "Study all kanji in the lesson first.";
+            if (typeof toast === "function")
+                toast(msg);
+            return;
+        }
+        const exercises = buildN1LessonExercises(lesson);
+        const allCorrect = exercises.length > 0 && exercises.every((ex) => n1ExerciseResult(ex.id)?.correct);
+        if (!allCorrect) {
+            const msg = lang() === "ru" ? "Сначала выполните все упражнения правильно." : "Complete all exercises correctly first.";
+            if (typeof toast === "function")
+                toast(msg);
+            return;
+        }
+        // LOCK IMMEDIATELY in local session state BEFORE any reward/mutation. This is the core isLessonCompleted protection.
+        // Button render will now see this and render disabled + "Урок завершён". Handler also blocks.
+        // This survives only until full reload; on reload persisted completedLessons + exercise re-do req will gate.
+        sessionCompletedLessons.add(sessKey);
+        n1CardsForLesson(lesson).forEach((card) => {
+            markN1KanjiStudied(card.kanji, card.id);
+            course.srsKanji[card.kanji] = course.srsKanji[card.kanji] || new Date().toISOString();
+            const progress = getCardProgress(card.id);
+            if (progress.state === "New")
+                state.progress.cards[card.id] = calculateNextProgress(cloneProgress(progress), "good");
+        });
+        (lesson.grammarFocus || []).map((pattern) => n1GrammarByPattern(pattern)).filter(Boolean).forEach((item) => {
+            course.completedGrammar[item.id] = course.completedGrammar[item.id] || new Date().toISOString();
+        });
+        course.completedLessons[lesson.id] = new Date().toISOString();
+        course.currentLessonId = n1Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
+        const n1StudyProgress = jlptLessonStudyProgress();
+        const n1StudySession = n1StudyProgress.sessions[n1SessKey];
+        if (n1StudySession) {
+            const doneAt = new Date().toISOString();
+            n1StudySession.phase = "done";
+            n1StudySession.completedAt = doneAt;
+            n1StudySession.updatedAt = doneAt;
+            n1StudySession.currentIndex = lessonCards.length;
+            n1StudyProgress.activeSessionKey = n1SessKey;
+            n1StudyProgress.lastUpdatedAt = doneAt;
+        }
+        n1Course();
+        // Force unlock N1 on N1 full complete
+        const n1Count = Object.keys(course.completedLessons || {}).length;
+        if (n1Count >= 53) {
+            state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
+            ["N1", "N1"].forEach(l => {
+                if (!state.progress.unlockedJlptLevels.includes(l))
+                    state.progress.unlockedJlptLevels.push(l);
+            });
+        }
+        const xp = state.n1Meta?.rewards?.lessonCompleteXp || 85;
+        const coins = state.n1Meta?.rewards?.lessonCompleteMoon || 10;
+        addReward(xp, coins, `n1_lesson:${lesson.id}`);
+        queueReward({
+            title: `${n1Labels().lessonComplete}: ${localized(lesson.title)}`,
+            message: n1Labels().lessonCompleteText,
+            xp,
+            coins,
+            mascot: "eva",
+            mood: "happy",
+            dialog: "lessonComplete"
+        });
+        playUxSound("lesson_complete");
+        evaluateAchievements();
+        saveProgress();
+        render();
+    }
+    function markN1KanjiStudied(kanji, cardId = null) {
+        if (!kanji)
+            return;
+        const course = n1Course();
+        syncJlptCourseStudyState(course, kanji);
+    }
+    function markN1KanjiDifficult(kanji, cardId = null, updateProgress = true) {
+        if (!kanji)
+            return;
+        n1Course().difficultKanji[kanji] = new Date().toISOString();
+        if (updateProgress && cardId) {
+            const progress = getCardProgress(cardId);
+            if (progress.state !== "New")
+                state.progress.cards[cardId] = calculateNextProgress(cloneProgress(progress), "again");
+        }
+    }
+    function completeN1Grammar(id, value = "") {
+        const item = state.n1Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
+        if (!item)
+            return;
+        const selected = value || item.answer;
+        const correct = selected === item.answer;
+        const course = n1Course();
+        course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
+        if (correct && !course.completedGrammar[item.id]) {
+            course.completedGrammar[item.id] = new Date().toISOString();
+            addReward(state.n1Meta?.rewards?.grammarXp || 12, state.n1Meta?.rewards?.grammarMoon || 1, `n1_grammar:${item.id}`);
+            state.progress.totalCorrect += 1;
+            playUxSound("answer_correct");
+        }
+        else if (!correct) {
+            state.progress.totalWrong += 1;
+            playUxSound("answer_wrong");
+        }
+        updateStreak();
+        evaluateAchievements();
+        saveProgress();
+        render();
+    }
+    function completeN1Reading(id, questionIndex = "0", value = "") {
+        completeN1Comprehension("reading", id, questionIndex, value);
+    }
+    function completeN1Listening(id, questionIndex = "0", value = "") {
+        completeN1Comprehension("listening", id, questionIndex, value);
+    }
+    function completeN1Comprehension(mode, id, questionIndex = "0", value = "") {
+        const collection = mode === "reading" ? state.n1Reading : state.n1Listening;
+        const item = collection.find((entry) => entry.id === id);
+        if (!item)
+            return;
+        const index = Number(questionIndex || 0);
+        const question = (item.questions || [])[index];
+        if (!question)
+            return;
+        const correct = value === question.answer;
+        const key = `${item.id}:${index}`;
+        const course = n1Course();
+        const answers = mode === "reading" ? course.readingAnswers : course.listeningAnswers;
+        const completed = mode === "reading" ? course.completedReading : course.completedListening;
+        const wasCompleted = Boolean(completed[item.id]);
+        answers[key] = { selected: value, correct, checkedAt: new Date().toISOString() };
+        const allCorrect = (item.questions || []).every((_, itemIndex) => answers[`${item.id}:${itemIndex}`]?.correct);
+        if (correct) {
+            state.progress.totalCorrect += 1;
+            playUxSound("answer_correct");
+        }
+        else {
+            state.progress.totalWrong += 1;
+            playUxSound("answer_wrong");
+        }
+        if (allCorrect && !wasCompleted) {
+            completed[item.id] = new Date().toISOString();
+            const xp = mode === "reading" ? state.n1Meta?.rewards?.readingXp || 55 : state.n1Meta?.rewards?.listeningXp || 50;
+            const coins = mode === "reading" ? state.n1Meta?.rewards?.readingMoon || 4 : state.n1Meta?.rewards?.listeningMoon || 4;
+            addReward(xp, coins, `n1_${mode}:${item.id}`);
+        }
+        updateStreak();
+        evaluateAchievements();
+        saveProgress();
+        render();
+    }
+    function openN1Lesson(id) {
+        const lesson = n1LessonById(id);
+        if (!lesson)
+            return;
+        n1Course().currentLessonId = lesson.id;
+        rememberJlptLessonVisit("N1", lesson.id, "n1_lesson_open");
+        markJlptLessonKanjiSeen("N1", lesson, "n1_lesson_open");
+        setN1Hash(lesson.id);
+    }
+    function openN1Overview() {
+        setN1Hash("");
+    }
+    function openN1Review(mode = null) {
+        if (mode)
+            n1Course().activeReviewMode = mode;
+        setN1Hash("review");
+    }
+    function openN1KanjiList() {
+        setN1Hash("kanji");
+    }
+    function openN1Grammar() {
+        setN1Hash("grammar");
+    }
+    function openN1Reading() {
+        setN1Hash("reading");
+    }
+    function openN1Listening() {
+        setN1Hash("listening");
+    }
+    function openN1FinalTest() {
+        setN1Hash("final-test");
+    }
+    function setN1Hash(subroute) {
+        state.route = "textbooks";
+        state.activeTextbookLevel = "N1";
+        state.activeTextbookSubroute = subroute || null;
+        n1Course().opened = true;
+        const nextHash = subroute ? `#jlpt/n1/${encodeURIComponent(subroute)}` : "#jlpt/n1";
+        replaceRouteUrl(nextHash);
+        evaluateAchievements();
+        saveProgress();
+        scheduleRender();
+        scheduleScrollPageToTop();
+    }
+    function n1ReviewCards(mode = "due") {
+        const now = Date.now();
+        const course = n1Course();
+        const cards = n1AllCards();
+        if (mode === "difficult")
+            return cards.filter((card) => course.difficultKanji[card.kanji]);
+        if (mode === "all")
+            return cards;
+        return cards.filter((card) => {
+            const progress = getCardProgress(card.id);
+            return progress.state !== "New" && (!progress.dueAt || new Date(progress.dueAt).getTime() <= now);
+        });
+    }
+    function buildN1FinalQuestions() {
+        const cards = n1AllCards();
+        if (!cards.length)
+            return [];
+        const types = state.n1FinalTest?.types || ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"];
+        const count = Math.min(state.n1FinalTest?.questionCount || 32, Math.max(cards.length, 1));
+        const questions = [];
+        for (let index = 0; index < count; index += 1) {
+            const card = cards[(index * 11) % cards.length] || cards[index % cards.length];
+            const type = types[index % types.length];
+            const lesson = n1Lessons().find((item) => item.kanji.includes(card.kanji)) || n1Lessons()[0];
+            questions.push(buildN1FinalQuestion(type, card, lesson, index));
+        }
+        return questions.filter(Boolean);
+    }
+    function buildN1FinalQuestion(type, card, lesson, index) {
+        const examples = n1CardExamples(card);
+        const example = examples[0] || {};
+        const sentence = (lesson?.sentences || []).find((item) => item.jp.includes(card.kanji)) || lesson?.sentences?.[0];
+        if (type === "meaning") {
+            return {
+                id: `n1-final-${index}`,
+                type,
+                cardId: card.id,
+                kanji: card.kanji,
+                prompt: card.kanji,
+                answer: card.id,
+                answerLabel: cardMeaning(card),
+                options: n1OptionSet({ value: card.id, label: cardMeaning(card) }, n1AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.id, label: cardMeaning(item) })), index)
+            };
+        }
+        if (type === "reading") {
+            return {
+                id: `n1-final-${index}`,
+                type,
+                cardId: card.id,
+                kanji: card.kanji,
+                prompt: example.word || card.kanji,
+                answer: example.reading || card.hiragana || "",
+                answerLabel: example.reading || card.hiragana || "",
+                options: n1OptionSet({ value: example.reading || card.hiragana || "", label: example.reading || card.hiragana || "" }, n1AllCards().flatMap((item) => n1CardExamples(item).map((word) => ({ value: word.reading, label: word.reading }))).filter((item) => item.value && item.value !== example.reading), index)
+            };
+        }
+        if (type === "sentence" && sentence) {
+            const answer = localized({ ru: sentence.ru, en: sentence.en });
+            return {
+                id: `n1-final-${index}`,
+                type,
+                cardId: card.id,
+                kanji: card.kanji,
+                prompt: sentence.jp,
+                answer,
+                answerLabel: answer,
+                options: n1OptionSet({ value: answer, label: answer }, n1Lessons().flatMap((item) => item.sentences || []).map((item) => ({ value: localized({ ru: item.ru, en: item.en }), label: localized({ ru: item.ru, en: item.en }) })).filter((item) => item.value !== answer), index)
+            };
+        }
+        if (type === "word") {
+            const answer = example.word || card.kanji;
+            return {
+                id: `n1-final-${index}`,
+                type,
+                cardId: card.id,
+                kanji: card.kanji,
+                prompt: exampleTranslation(example),
+                answer,
+                answerLabel: answer,
+                options: n1OptionSet({ value: answer, label: answer }, n1AllCards().flatMap((item) => n1CardExamples(item).map((word) => ({ value: word.word, label: word.word }))).filter((item) => item.value && item.value !== answer), index)
+            };
+        }
+        if (type === "grammar") {
+            const grammar = state.n1Grammar[index % Math.max(state.n1Grammar.length, 1)];
+            if (grammar) {
+                return {
+                    id: `n1-final-${index}`,
+                    type,
+                    grammarId: grammar.id,
+                    prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
+                    answer: grammar.answer,
+                    answerLabel: grammar.answer,
+                    options: n1OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+                };
+            }
+        }
+        if (type === "mini-reading") {
+            const reading = state.n1Reading[index % Math.max(state.n1Reading.length, 1)];
+            const question = reading?.questions?.[0];
+            if (reading && question) {
+                return {
+                    id: `n1-final-${index}`,
+                    type,
+                    readingId: reading.id,
+                    prompt: `${reading.jp || localized(reading.title)} ${localized(question.prompt)}`,
+                    answer: question.answer,
+                    answerLabel: localized((question.options || []).find((item) => item.value === question.answer)?.label || question.answer),
+                    options: (question.options || []).map((option) => ({ value: option.value, label: localized(option.label || option) }))
+                };
+            }
+        }
+        if (type === "srs") {
+            return {
+                id: `n1-final-${index}`,
+                type,
+                cardId: card.id,
+                kanji: card.kanji,
+                prompt: lang() === "ru" ? `Мини-повторение: ${card.kanji} — ${cardMeaning(card)}. Что нажмёшь, если помнишь?` : `Mini review: ${card.kanji} — ${cardMeaning(card)}. What do you press if you remember?`,
+                answer: "remember",
+                answerLabel: lang() === "ru" ? "Помню" : "Remember",
+                options: [
+                    { value: "again", label: lang() === "ru" ? "Сложно" : "Hard" },
+                    { value: "remember", label: lang() === "ru" ? "Помню" : "Remember" },
+                    { value: "skip", label: lang() === "ru" ? "Пропустить" : "Skip" }
+                ]
+            };
+        }
+        return {
+            id: `n1-final-${index}`,
+            type: "kanji",
+            cardId: card.id,
+            kanji: card.kanji,
+            prompt: cardMeaning(card),
+            answer: card.kanji,
+            answerLabel: card.kanji,
+            options: n1OptionSet({ value: card.kanji, label: card.kanji }, n1AllCards().filter((item) => item.id !== card.id).map((item) => ({ value: item.kanji, label: item.kanji })), index)
+        };
+    }
+    function answerN1FinalQuestion(target) {
+        const id = target.dataset.id;
+        const value = target.dataset.value || "";
+        if (!id)
+            return;
+        n1Course().finalTest.answers[id] = value;
+        saveProgress();
+        render();
+    }
+    function submitN1FinalTest(force = false) {
+        if (state.finalTestBusy)
+            return;
+        const test = n1Course().finalTest;
+        // Radical persistent anti-farm: if already completed (from previous session or current), block re-call and re-render to keep button disabled.
+        if (test.completedAt || (typeof test.percent === 'number' && test.percent > 0)) {
+            render();
+            return;
+        }
+        state.finalTestBusy = true;
+        try {
+            const questions = buildN1FinalQuestions();
+            const config = state.n1FinalTest || {};
+            const labels = n1Labels();
+            const stats = finalTestQuestionStats(test, questions);
+            const threshold = Number(config?.passingPercent ?? config?.passThreshold ?? 80);
+            const allowIncomplete = Boolean(config.allowIncompleteFinish || config.allowUnansweredFinish);
+            const now = new Date().toISOString();
+            test.attempts = Number(test.attempts || 0) + 1;
+            if (stats.missingCount && !force && !allowIncomplete) {
+                const focusSelector = stats.firstMissingId ? `#${finalTestQuestionDomId("n1", stats.firstMissingId)}` : null;
+                state.finalTestModal = {
+                    kind: "warning",
+                    level: "N1",
+                    title: lang() === "ru" ? "Ответь на все вопросы" : "Answer all questions",
+                    message: lang() === "ru"
+                        ? `Вы ответили не на все вопросы. Пропусков: ${stats.missingCount}.`
+                        : `You left some questions unanswered. Missing: ${stats.missingCount}.`,
+                    answered: stats.answered,
+                    missingCount: stats.missingCount,
+                    totalQuestions: stats.totalQuestions,
+                    threshold,
+                    focusSelector,
+                    focusLabel: lang() === "ru" ? "К первому пропуску" : "Jump to first missing",
+                    closeLabel: lang() === "ru" ? "Продолжить" : "Continue",
+                    forceLabel: lang() === "ru" ? "Завершить без ответов" : "Finish anyway",
+                    allowIncomplete
+                };
+                state.pendingFocus = focusSelector;
+                saveProgress();
+                return;
+            }
+            let score = 0;
+            const mistakes = [];
+            const unanswered = [];
+            questions.forEach((question) => {
+                const selected = String(test.answers?.[question.id] || "").trim();
+                if (selected === question.answer) {
+                    score += 1;
+                    if (question.kanji)
+                        markN1KanjiStudied(question.kanji, question.cardId);
+                    if (question.grammarId) {
+                        const course = n1Course();
+                        course.completedGrammar[question.grammarId] = course.completedGrammar[question.grammarId] || now;
+                    }
+                }
+                else {
+                    if (!selected)
+                        unanswered.push(question);
+                    mistakes.push({
+                        id: question.id,
+                        kanji: question.kanji || "",
+                        answer: question.answerLabel,
+                        selected
+                    });
+                    if (question.kanji)
+                        markN1KanjiDifficult(question.kanji, question.cardId);
+                }
+            });
+            const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+            const wasCompleted = Boolean(test.completedAt);
+            const wasPassed = Boolean(test.passed);
+            const answeredWrong = Math.max(0, mistakes.length - unanswered.length);
+            let rewardXp = 0;
+            let rewardMoon = 0;
+            test.answers = test.answers || {};
+            test.score = score;
+            test.percent = percent;
+            test.passed = percent >= threshold;
+            test.correctAnswers = score;
+            test.incorrectAnswers = answeredWrong;
+            test.unansweredAnswers = unanswered.length;
+            test.totalQuestions = questions.length;
+            test.mistakes = mistakes;
+            test.mistakeQuestionIds = mistakes.map((item) => item.id);
+            test.completedAt = now;
+            test.lastScore = percent;
+            test.bestScore = Math.max(Number(test.bestScore || 0), percent);
+            test.passedAt = test.passed ? (wasPassed ? (test.passedAt || now) : now) : test.passedAt || null;
+            if (!wasCompleted) {
+                const completeXp = Number(config?.rewards?.completeXp || 220);
+                const completeMoon = Number(config?.rewards?.completeMoon || 40);
+                rewardXp += completeXp;
+                rewardMoon += completeMoon;
+                addReward(completeXp, completeMoon, "n1_final_complete");
+            }
+            if (test.passed && !wasPassed) {
+                const passXp = Number(config?.rewards?.passXp || 110);
+                const passMoon = Number(config?.rewards?.passMoon || 18);
+                rewardXp += passXp;
+                rewardMoon += passMoon;
+                addReward(passXp, passMoon, "n1_final_pass");
+            }
+            test.lastRewardXp = rewardXp;
+            test.lastRewardMoon = rewardMoon;
+            // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
+            // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
+            n1Course();
+            state.pendingFocus = null;
+            state.finalTestModal = {
+                kind: "result",
+                level: "N1",
+                title: test.passed ? labels.finalPassed : labels.finalNeedsReview,
+                message: test.passed ? labels.finalPassedText : labels.finalNeedsReviewText,
+                passed: test.passed,
+                percent,
+                correct: score,
+                incorrect: answeredWrong,
+                unanswered: unanswered.length,
+                totalQuestions: questions.length,
+                rewardXp,
+                rewardMoon,
+                attempts: test.attempts,
+                threshold,
+                reviewAction: "n1-review",
+                reviewAllAction: "n1-review",
+                closeLabel: lang() === "ru" ? "OK" : "OK",
+                repeatLabel: labels.repeatMistakes,
+                reviewAllLabel: labels.reviewAll
+            };
+            evaluateAchievements();
+            saveProgress();
+        }
+        catch (error) {
+            console.error(error);
+            toast(lang() === "ru" ? "Не удалось завершить тест." : "Could not finish the test.");
+        }
+        finally {
+            state.finalTestBusy = false;
+            render();
+        }
+    }
+    function resetN1FinalTest() {
+        n1Course().finalTest = defaultN1CourseProgress().finalTest;
+        state.finalTestModal = null;
+        state.finalTestBusy = false;
+        saveProgress();
+        render();
+    }
+    function n1DomId(id) {
+        return `n1-input-${String(id || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
     }
     function renderJlptPracticeModule(lesson) {
         const module = jlptPracticeModuleByLevel(lesson.jlpt);
@@ -20176,6 +22432,40 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
       </div>
     `;
     }
+    function renderChangelogModal() {
+        const modal = state.changelogModal;
+        if (!modal?.entry)
+            return "";
+        const entry = modal.entry;
+        const currentLang = lang();
+        const title = localized(entry.title || {}) || (currentLang === "ru" ? "Что нового во Flash Kanji" : "What’s new in Flash Kanji");
+        const items = Array.isArray(entry.items?.[currentLang]) && entry.items[currentLang].length
+            ? entry.items[currentLang]
+            : entry.items?.ru || entry.items?.en || [];
+        const intro = currentLang === "ru"
+            ? "Мы обновили учебники и ускорили учебные действия. Это окно появится только один раз для этой версии."
+            : "Textbooks were updated and study actions are faster. This window appears only once for this version.";
+        const button = currentLang === "ru" ? "Понятно" : "Got it";
+        return `
+      <div class="reward-backdrop changelog-backdrop">
+        <article class="reward-modal changelog-modal" role="dialog" aria-modal="true" aria-labelledby="changelogTitle" aria-describedby="changelogDescription">
+          <div class="changelog-kicker">Flash Kanji · ${escapeHtml(entry.version || modal.version || "")}</div>
+          <h2 id="changelogTitle">${escapeHtml(title)}</h2>
+          ${entry.date ? `<p class="changelog-date">${escapeHtml(entry.date)}</p>` : ""}
+          <p id="changelogDescription">${escapeHtml(intro)}</p>
+          <ul class="changelog-list">
+            ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          </ul>
+          <p class="changelog-storage-note">${escapeHtml(currentLang === "ru"
+            ? `Статус хранится локально: ${FLASH_KANJI_HAS_VISITED_KEY}, ${CHANGELOG_LAST_SEEN_VERSION_KEY}.`
+            : `Saved locally: ${FLASH_KANJI_HAS_VISITED_KEY}, ${CHANGELOG_LAST_SEEN_VERSION_KEY}.`)}</p>
+          <div class="actions changelog-actions">
+            <button class="btn primary" type="button" data-action="close-changelog">${escapeHtml(button)}</button>
+          </div>
+        </article>
+      </div>
+    `;
+    }
     function renderPwaInstallHelpModal() {
         if (!state.pwaInstallHelpVisible)
             return "";
@@ -20239,7 +22529,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return "";
         if (!canShowPwaInstallPrompt())
             return "";
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal)
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.changelogModal)
             return "";
         const copy = pwaInstallCopy();
         const isInstruction = !deferredPwaInstallPrompt && isIosSafari();
@@ -20264,7 +22554,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return "";
         if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible"))
             return "";
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || canShowPwaInstallPrompt())
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.changelogModal || state.pwaInstallHelpVisible || canShowPwaInstallPrompt())
             return "";
         const copy = notificationPromptCopy();
         return `
@@ -20425,19 +22715,18 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         if (!card || !ratingLabels[rating])
             return;
         markKanjiSeen(card, "srs_rating");
-        stopKanjiAudio();
         const before = cloneProgress(getCardProgress(card.id));
         const after = calculateNextProgress(before, rating);
         state.progress.cards[card.id] = after;
         updateDailyStats(before, after, rating);
         updateStreak();
         const previousCombo = Number(state.progress.correctCombo || 0);
+        const answerTone = isForgottenRating(rating) ? "again" : "ok";
         if (isForgottenRating(rating)) {
             state.progress.totalWrong += 1;
             state.progress.correctCombo = 0;
             adjustEvaRelationship({ discipline: -0.8, trust: -0.2 }, "answer_again");
             dispatchEvaEvent("answer_wrong", { cardId: card.id, kanji: card.kanji, rating, comboLost: previousCombo > 0 });
-            playTone("again");
             toast(dialogueText("eva", "wrong"));
         }
         else {
@@ -20447,7 +22736,6 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
             adjustEvaRelationship({ trust: 0.35, discipline: 0.25, curiosity: after.lastDecision === "Easy" ? 0.2 : 0 }, `answer_${rating}`);
             dispatchEvaEvent("answer_correct", { cardId: card.id, kanji: card.kanji, rating, combo: state.progress.correctCombo });
-            playTone("ok");
             toast(dialogueText("eva", "correct"));
             if (state.progress.correctCombo > 0 && state.progress.correctCombo % 5 === 0) {
                 addReward(state.rewards.rewards.comboXp, 0, "combo_bonus");
@@ -20462,17 +22750,21 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 });
             }
         }
-        syncEvaRelationshipFromProgress();
-        checkLessonCompletion(card.lessonId);
-        checkDailyGoal();
-        evaluateAchievements();
         state.reviewQueueLastKind = "card";
-        saveProgress();
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
         state.pendingFocus = null;
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("review card post-render effects", () => {
+            stopKanjiAudio();
+            playTone(answerTone);
+            syncEvaRelationshipFromProgress();
+            checkLessonCompletion(card.lessonId);
+            checkDailyGoal();
+            evaluateAchievements();
+        });
     }
     function srsButtonLabels() {
         return lang() === "ru"
@@ -20603,6 +22895,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return n3Course();
         if (key === "N2")
             return n2Course();
+        if (key === "N1")
+            return n1Course();
         return null;
     }
     function textbookLessonsByLevel(level) {
@@ -20615,6 +22909,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return n3Lessons();
         if (key === "N2")
             return n2Lessons();
+        if (key === "N1")
+            return n1Lessons();
         return [];
     }
     function textbookLessonByLevel(level, lessonId) {
@@ -20636,6 +22932,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return buildN3LessonExercises;
         if (key === "N2")
             return buildN2LessonExercises;
+        if (key === "N1")
+            return buildN1LessonExercises;
         return null;
     }
     function findTextbookExerciseById(level, exerciseId, lessonId = "") {
@@ -22990,6 +25288,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return n3Course();
         if (key === "N2")
             return n2Course();
+        if (key === "N1")
+            return n1Course();
         return null;
     }
     function markJlptLessonViewed(level, lessonId, source = "open") {

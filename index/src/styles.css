@@ -5597,6 +5597,87 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   min-width: 138px;
 }
 
+.changelog-backdrop {
+  z-index: 5;
+}
+
+.changelog-modal {
+  width: min(100%, 560px);
+  text-align: left;
+}
+
+.changelog-modal h2 {
+  margin: 6px 0 4px;
+  text-align: left;
+}
+
+.changelog-modal p {
+  text-align: left;
+}
+
+.changelog-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent-2), transparent 42%);
+  border-radius: 999px;
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.changelog-date {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.changelog-list {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.changelog-list li {
+  position: relative;
+  padding: 10px 12px 10px 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text), transparent 95%);
+  line-height: 1.45;
+}
+
+.changelog-list li::before {
+  content: "月";
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  color: var(--accent-2);
+  font-family: var(--kanji-font);
+  font-weight: 900;
+}
+
+.changelog-storage-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.changelog-actions {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.changelog-actions .btn {
+  min-width: 138px;
+}
+
 .pwa-install-banner {
   position: fixed;
   right: 12px;

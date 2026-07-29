@@ -1,375 +1,5543 @@
 {
   "version": 1,
   "level": "N1",
-  "generatedAt": "2026-06-11T10:44:21.438595+00:00",
-  "textbook": {
-    "jlpt": "N1",
-    "slug": "n1",
-    "title": {
-      "ru": "N1: тексты и нюансы",
-      "en": "N1: Texts and Nuance"
-    },
-    "displayTitle": {
-      "ru": "Тексты и нюансы",
-      "en": "Texts and Nuance"
-    },
-    "description": {
-      "ru": "Плотные тексты, авторская позиция, абстрактная лексика и продвинутая грамматика. Верхний слой базы.",
-      "en": "Dense texts, author stance, abstract vocabulary, and advanced grammar. The top layer of the base."
-    },
-    "goal": {
-      "ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.",
-      "en": "Break down long phrases, rare readings, and meaning nuance in reading."
-    },
-    "recommendedCycle": {
-      "ru": "Повторяй каждые 5-7 дней с точечным возвратом к слабым карточкам.",
-      "en": "Review every 5-7 days with targeted returns to weak cards."
-    },
-    "previousLevels": [
-      "N5",
-      "N4",
-      "N3",
-      "N2"
-    ],
-    "nextLevels": [],
-    "coverImage": "assets/bg/bg_silent_road.webp",
-    "pdfFile": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-    "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-    "lessonIds": [
-      "bulk-n1-01",
-      "bulk-n1-02",
-      "bulk-n1-03",
-      "bulk-n1-04",
-      "bulk-n1-05",
-      "bulk-n1-06",
-      "bulk-n1-07",
-      "bulk-n1-08",
-      "bulk-n1-09",
-      "bulk-n1-10",
-      "bulk-n1-11"
-    ],
-    "lessonCount": 11,
-    "kanjiCount": 220,
-    "cardCount": 220,
-    "files": {
-      "kanji": "data/jlpt/n1/kanji.json",
-      "lessons": "data/jlpt/n1/lessons.json",
-      "grammar": "data/jlpt/n1/grammar.json",
-      "reading": "data/jlpt/n1/reading.json",
-      "listening": "data/jlpt/n1/listening.json",
-      "tests": "data/jlpt/n1/tests.json"
-    }
-  },
+  "generatedAt": "2026-07-29T09:38:18.882476+00:00",
   "items": [
     {
-      "id": "grammar-n1-overview",
-      "kind": "overview",
+      "id": "n1-grammar-001",
       "level": "N1",
+      "order": 1,
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "あえて",
       "title": {
-        "ru": "JLPT N1: редкие кандзи, нюансы и чтение без опоры",
-        "en": "JLPT N1: Rare Kanji, Nuance, and Independent Reading"
+        "ru": "осмелиться; намеренно",
+        "en": "осмелиться; намеренно"
       },
-      "summary": {
-        "ru": "Высший уровень: редкие символы, книжная лексика, официальные тексты, нюансы оттенков значения.",
-        "en": "The highest level: rare characters, literary vocabulary, official texts, and nuanced meanings."
+      "explanation": {
+        "ru": "あえて помогает читать N1-текст: показывает осмелиться; намеренно и связывает аргумент с выводом.",
+        "en": "あえて helps read N1 texts by expressing осмелиться; намеренно and linking an argument to a conclusion."
       },
-      "goals": [
+      "formula": "あえて",
+      "examples": [
         {
-          "ru": "Стабильно узнавать редкие формы и похожие компоненты.",
-          "en": "Recognize rare forms and similar components consistently."
-        },
-        {
-          "ru": "Строить значение слова из контекста, даже если чтение не идеально.",
-          "en": "Infer word meaning from context even when the reading is not perfect."
-        },
-        {
-          "ru": "Держать повторения без перегруза за счёт честной двухкнопочной SRS.",
-          "en": "Keep reviews manageable through honest two-button SRS."
+          "jp": "反されるのを承知で、あえて意見を述べた。",
+          "reading": "",
+          "ru": "Зная, что будут против, я все же высказал мнение.",
+          "en": "Зная, что будут против, я все же высказал мнение."
         }
       ],
-      "sections": [
+      "question": {
+        "ru": "Что лучше всего передаёт форма あえて?",
+        "en": "What does あえて best express?"
+      },
+      "answer": "осмелиться; намеренно",
+      "options": [
+        "осмелиться; намеренно",
+        "не может быть",
+        "поскольку",
+        "примерно"
+      ],
+      "sourcePage": 106
+    },
+    {
+      "id": "n1-grammar-002",
+      "level": "N1",
+      "order": 2,
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "あくまでも",
+      "title": {
+        "ru": "до конца; исключительно",
+        "en": "до конца; исключительно"
+      },
+      "explanation": {
+        "ru": "あくまでも помогает читать N1-текст: показывает до конца; исключительно и связывает аргумент с выводом.",
+        "en": "あくまでも helps read N1 texts by expressing до конца; исключительно and linking an argument to a conclusion."
+      },
+      "formula": "あくまでも",
+      "examples": [
         {
-          "title": {
-            "ru": "Что меняется на N1",
-            "en": "What Changes At N1"
-          },
-          "body": {
-            "ru": "N1 меньше похож на список символов и больше на чтение реальных текстов. Важны оттенки: 称, 納, 樹, 論, 認, 議, 影 и похожие семейства.",
-            "en": "N1 is less a list of characters and more real reading. Nuance matters: 称, 納, 樹, 論, 認, 議, 影, and related families."
-          },
-          "points": [
-            {
-              "ru": "Сравнивай близкие слова и не бойся возвращать карточку в повтор.",
-              "en": "Compare close words and do not fear sending a card back to review."
-            },
-            {
-              "ru": "Используй предложения и собственные источники как главный режим практики.",
-              "en": "Use sentence practice and custom sources as your main practice mode."
-            }
-          ]
-        },
-        {
-          "title": {
-            "ru": "Стратегия удержания",
-            "en": "Retention Strategy"
-          },
-          "body": {
-            "ru": "На N1 лучше меньше новых карточек, но больше контекста. Если 4 раза подряд попался один и тот же тип, меняй режим: письмо, предложения, словарь.",
-            "en": "At N1, fewer new cards and more context often works better. If the same type repeats too often, switch modes: writing, sentences, dictionary."
-          },
-          "points": [
-            {
-              "ru": "Избранное и письмо нужны для визуально похожих символов.",
-              "en": "Favorites and writing help with visually similar characters."
-            },
-            {
-              "ru": "Система сама растянет интервалы, когда успешность будет высокой.",
-              "en": "The system stretches intervals automatically when success becomes high."
-            }
-          ]
+          "jp": "これはあくまでも個人の見解にすぎない。",
+          "reading": "",
+          "ru": "Это всего лишь личное мнение.",
+          "en": "Это всего лишь личное мнение."
         }
       ],
-      "practice": [
-        {
-          "ru": "Добавь сложные предложения из новостей, документации или интерфейсов.",
-          "en": "Add complex sentences from news, documentation, or interfaces."
-        },
-        {
-          "ru": "Проверяй не только значение, но и уверенность чтения.",
-          "en": "Check both meaning and reading confidence."
-        }
+      "question": {
+        "ru": "Что лучше всего передаёт форма あくまでも?",
+        "en": "What does あくまでも best express?"
+      },
+      "answer": "до конца; исключительно",
+      "options": [
+        "до конца; исключительно",
+        "хотел бы, но не могу",
+        "без того чтобы",
+        "и... и... повсюду"
       ],
-      "checkpoint": [
-        {
-          "ru": "Можешь читать длинное предложение, не теряя грамматическую структуру.",
-          "en": "You can read a long sentence without losing its grammatical structure."
-        },
-        {
-          "ru": "Удерживаешь N1-карточки в Review/Mastered без лавины ошибок.",
-          "en": "You keep N1 cards in Review/Mastered without an error avalanche."
-        }
-      ]
+      "sourcePage": 106
     },
     {
-      "id": "grammar-n1-01",
-      "kind": "section",
-      "level": "N1",
-      "title": {
-        "ru": "Что меняется на N1",
-        "en": "What Changes At N1"
-      },
-      "body": {
-        "ru": "N1 меньше похож на список символов и больше на чтение реальных текстов. Важны оттенки: 称, 納, 樹, 論, 認, 議, 影 и похожие семейства.",
-        "en": "N1 is less a list of characters and more real reading. Nuance matters: 称, 納, 樹, 論, 認, 議, 影, and related families."
-      },
-      "points": [
-        {
-          "ru": "Сравнивай близкие слова и не бойся возвращать карточку в повтор.",
-          "en": "Compare close words and do not fear sending a card back to review."
-        },
-        {
-          "ru": "Используй предложения и собственные источники как главный режим практики.",
-          "en": "Use sentence practice and custom sources as your main practice mode."
-        }
-      ]
-    },
-    {
-      "id": "grammar-n1-02",
-      "kind": "section",
-      "level": "N1",
-      "title": {
-        "ru": "Стратегия удержания",
-        "en": "Retention Strategy"
-      },
-      "body": {
-        "ru": "На N1 лучше меньше новых карточек, но больше контекста. Если 4 раза подряд попался один и тот же тип, меняй режим: письмо, предложения, словарь.",
-        "en": "At N1, fewer new cards and more context often works better. If the same type repeats too often, switch modes: writing, sentences, dictionary."
-      },
-      "points": [
-        {
-          "ru": "Избранное и письмо нужны для визуально похожих символов.",
-          "en": "Favorites and writing help with visually similar characters."
-        },
-        {
-          "ru": "Система сама растянет интервалы, когда успешность будет высокой.",
-          "en": "The system stretches intervals automatically when success becomes high."
-        }
-      ]
-    },
-    {
-      "id": "n1-overlay-itaru",
-      "kind": "pattern",
+      "id": "n1-grammar-003",
       "level": "N1",
       "order": 3,
-      "pattern": "に至るまで",
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "案の定",
       "title": {
-        "ru": "до самой крайней точки",
-        "en": "up to the final point"
+        "ru": "как и ожидалось",
+        "en": "как и ожидалось"
       },
       "explanation": {
-        "ru": "Показывает полный диапазон: от начальной точки до предела. В N1-текстах часто используется для официального охвата темы.",
-        "en": "Marks a full range from the starting point to the limit. In N1 texts it often frames official coverage."
+        "ru": "案の定 помогает читать N1-текст: показывает как и ожидалось и связывает аргумент с выводом.",
+        "en": "案の定 helps read N1 texts by expressing как и ожидалось and linking an argument to a conclusion."
       },
-      "formula": "A から B に至るまで",
+      "formula": "案の定",
       "examples": [
         {
-          "jp": "氏名の確認から保護方針の統一に至るまでを第一段階とした。",
-          "reading": "しめいのかくにんからほごほうしんのとういつにいたるまでをだいいちだんかいとした。",
-          "ru": "Первым этапом сделали всё от проверки имён до унификации политики защиты.",
-          "en": "Everything from name verification to unified protection policy was set as the first stage."
+          "jp": "準備不足だったので、案の定うまくいかなかった。",
+          "reading": "",
+          "ru": "Подготовки не хватило, и, как ожидалось, не получилось.",
+          "en": "Подготовки не хватило, и, как ожидалось, не получилось."
         }
       ],
       "question": {
-        "ru": "Какая функция у に至るまで?",
-        "en": "What does に至るまで do?"
+        "ru": "Что лучше всего передаёт форма 案の定?",
+        "en": "What does 案の定 best express?"
       },
-      "answer": "range",
+      "answer": "как и ожидалось",
       "options": [
-        "range",
-        "quote",
-        "place",
-        "owner"
-      ]
+        "как и ожидалось",
+        "раз уж",
+        "чтобы не",
+        "что касается"
+      ],
+      "sourcePage": 106
     },
     {
-      "id": "n1-overlay-motte",
-      "kind": "pattern",
+      "id": "n1-grammar-004",
       "level": "N1",
       "order": 4,
-      "pattern": "をもって",
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "〜あっての",
       "title": {
-        "ru": "посредством / на основании",
-        "en": "by means of / on the basis of"
+        "ru": "именно благодаря",
+        "en": "именно благодаря"
       },
       "explanation": {
-        "ru": "Формальная связка для средства, основания или момента завершения.",
-        "en": "A formal connector for means, basis, or point of completion."
+        "ru": "〜あっての помогает читать N1-текст: показывает именно благодаря и связывает аргумент с выводом.",
+        "en": "〜あっての helps read N1 texts by expressing именно благодаря and linking an argument to a conclusion."
       },
-      "formula": "N をもって",
+      "formula": "〜あっての",
       "examples": [
         {
-          "jp": "本案をもって第一段階を終了する。",
-          "reading": "ほんあんをもってだいいちだんかいをしゅうりょうする。",
-          "ru": "Этим планом завершается первый этап.",
-          "en": "The first stage concludes with this proposal."
+          "jp": "協力あっての成功だ。",
+          "reading": "",
+          "ru": "Успех стал возможен благодаря сотрудничеству.",
+          "en": "Успех стал возможен благодаря сотрудничеству."
         }
       ],
       "question": {
-        "ru": "Что подчёркивает をもって?",
-        "en": "What does をもって emphasize?"
+        "ru": "Что лучше всего передаёт форма 〜あっての?",
+        "en": "What does 〜あっての best express?"
       },
-      "answer": "formal-basis",
+      "answer": "именно благодаря",
       "options": [
-        "formal-basis",
-        "casual-emotion",
-        "simple-place",
-        "question"
-      ]
+        "именно благодаря",
+        "не считается",
+        "в том числе из-за",
+        "когда; хотя"
+      ],
+      "sourcePage": 106
     },
     {
-      "id": "n1-overlay-sokushite",
-      "kind": "pattern",
+      "id": "n1-grammar-005",
       "level": "N1",
       "order": 5,
-      "pattern": "に即して",
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "〜いかんだ",
       "title": {
-        "ru": "в соответствии с",
-        "en": "in line with"
+        "ru": "зависит от",
+        "en": "зависит от"
       },
       "explanation": {
-        "ru": "Показывает, что действие строится по фактам, правилам или позиции.",
-        "en": "Shows that an action follows facts, rules, or a stated position."
+        "ru": "〜いかんだ помогает читать N1-текст: показывает зависит от и связывает аргумент с выводом.",
+        "en": "〜いかんだ helps read N1 texts by expressing зависит от and linking an argument to a conclusion."
       },
-      "formula": "N に即して",
+      "formula": "〜いかんだ",
       "examples": [
         {
-          "jp": "各派の意見に即して対策を講じる。",
-          "reading": "かくはのいけんにそくしてたいさくをこうじる。",
-          "ru": "Принять меры в соответствии с мнениями каждой фракции.",
-          "en": "Take countermeasures in line with each faction's views."
+          "jp": "結果は今後のいかんだ。",
+          "reading": "",
+          "ru": "Результат зависит от дальнейших действий.",
+          "en": "Результат зависит от дальнейших действий."
         }
       ],
       "question": {
-        "ru": "Какую связь даёт に即して?",
-        "en": "What relation does に即して express?"
+        "ru": "Что лучше всего передаёт форма 〜いかんだ?",
+        "en": "What does 〜いかんだ best express?"
       },
-      "answer": "according-to",
+      "answer": "зависит от",
       "options": [
-        "according-to",
-        "because-of-emotion",
-        "before-time",
-        "speaker-quote"
-      ]
+        "зависит от",
+        "ли / или нет",
+        "в итоге дошло до",
+        "даже если предположить"
+      ],
+      "sourcePage": 106
     },
     {
-      "id": "n1-overlay-yogi",
-      "kind": "pattern",
+      "id": "n1-grammar-006",
       "level": "N1",
       "order": 6,
-      "pattern": "を余儀なくされる",
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "〜いかんで",
       "title": {
-        "ru": "быть вынужденным",
-        "en": "be forced to"
+        "ru": "в зависимости от",
+        "en": "в зависимости от"
       },
       "explanation": {
-        "ru": "Формально показывает, что субъект вынужден принять действие из-за обстоятельств.",
-        "en": "Formally states that the subject is forced into an action by circumstances."
+        "ru": "〜いかんで помогает читать N1-текст: показывает в зависимости от и связывает аргумент с выводом.",
+        "en": "〜いかんで helps read N1 texts by expressing в зависимости от and linking an argument to a conclusion."
       },
-      "formula": "N を余儀なくされる",
+      "formula": "〜いかんで",
       "examples": [
         {
-          "jp": "制度の再検討を余儀なくされた。",
-          "reading": "せいどのさいけんとうをよぎなくされた。",
-          "ru": "Пришлось пересмотреть систему.",
-          "en": "They were forced to review the system."
+          "jp": "況いかんで計を更する。",
+          "reading": "",
+          "ru": "В зависимости от ситуации изменим план.",
+          "en": "В зависимости от ситуации изменим план."
         }
       ],
       "question": {
-        "ru": "Что показывает を余儀なくされる?",
-        "en": "What does を余儀なくされる show?"
+        "ru": "Что лучше всего передаёт форма 〜いかんで?",
+        "en": "What does 〜いかんで best express?"
       },
-      "answer": "forced-action",
+      "answer": "в зависимости от",
       "options": [
-        "forced-action",
-        "free-choice",
-        "small-place",
-        "polite-request"
-      ]
+        "в зависимости от",
+        "крайне",
+        "сплошь",
+        "даже"
+      ],
+      "sourcePage": 106
     },
     {
-      "id": "n1-overlay-kakawaru",
-      "kind": "pattern",
+      "id": "n1-grammar-007",
       "level": "N1",
       "order": 7,
-      "pattern": "にかかわる",
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "〜いかんによっては",
       "title": {
-        "ru": "касаться / быть связанным с",
-        "en": "concern / be connected with"
+        "ru": "в зависимости от обстоятельств",
+        "en": "в зависимости от обстоятельств"
       },
       "explanation": {
-        "ru": "Связывает тему с важным вопросом, областью ответственности или риском.",
-        "en": "Connects a topic to an important matter, responsibility area, or risk."
+        "ru": "〜いかんによっては помогает читать N1-текст: показывает в зависимости от обстоятельств и связывает аргумент с выводом.",
+        "en": "〜いかんによっては helps read N1 texts by expressing в зависимости от обстоятельств and linking an argument to a conclusion."
       },
-      "formula": "N にかかわる",
+      "formula": "〜いかんによっては",
       "examples": [
         {
-          "jp": "保護方針にかかわる問題を整理する。",
-          "reading": "ほごほうしんにかかわるもんだいをせいりする。",
-          "ru": "Упорядочить вопросы, связанные с политикой защиты.",
-          "en": "Organize issues related to the protection policy."
+          "jp": "結果いかんによっては再調査が必要だ。",
+          "reading": "",
+          "ru": "В зависимости от результата потребуется повторное расследование.",
+          "en": "В зависимости от результата потребуется повторное расследование."
         }
       ],
       "question": {
-        "ru": "Что делает にかかわる?",
-        "en": "What does にかかわる do?"
+        "ru": "Что лучше всего передаёт форма 〜いかんによっては?",
+        "en": "What does 〜いかんによっては best express?"
       },
-      "answer": "related-topic",
+      "answer": "в зависимости от обстоятельств",
       "options": [
-        "related-topic",
-        "counting",
-        "weather",
-        "direct-quote"
-      ]
+        "в зависимости от обстоятельств",
+        "насколько",
+        "непременно заставит",
+        "то, что..."
+      ],
+      "sourcePage": 106
+    },
+    {
+      "id": "n1-grammar-008",
+      "level": "N1",
+      "order": 8,
+      "group": {
+        "ru": "Грамматический блок 1",
+        "en": "Grammar block 1"
+      },
+      "pattern": "いかにも",
+      "title": {
+        "ru": "действительно; явно",
+        "en": "действительно; явно"
+      },
+      "explanation": {
+        "ru": "いかにも помогает читать N1-текст: показывает действительно; явно и связывает аргумент с выводом.",
+        "en": "いかにも helps read N1 texts by expressing действительно; явно and linking an argument to a conclusion."
+      },
+      "formula": "いかにも",
+      "examples": [
+        {
+          "jp": "彼の明はいかにも不自然だった。",
+          "reading": "",
+          "ru": "Его объяснение было явно неестественным.",
+          "en": "Его объяснение было явно неестественным."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма いかにも?",
+        "en": "What does いかにも best express?"
+      },
+      "answer": "действительно; явно",
+      "options": [
+        "действительно; явно",
+        "если случится, то уже...",
+        "нельзя не",
+        "хотя"
+      ],
+      "sourcePage": 106
+    },
+    {
+      "id": "n1-grammar-009",
+      "level": "N1",
+      "order": 9,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "いずれにせよ",
+      "title": {
+        "ru": "в любом случае",
+        "en": "в любом случае"
+      },
+      "explanation": {
+        "ru": "いずれにせよ помогает читать N1-текст: показывает в любом случае и связывает аргумент с выводом.",
+        "en": "いずれにせよ helps read N1 texts by expressing в любом случае and linking an argument to a conclusion."
+      },
+      "formula": "いずれにせよ",
+      "examples": [
+        {
+          "jp": "いずれにせよ、確認は必要だ。",
+          "reading": "",
+          "ru": "В любом случае проверка нужна.",
+          "en": "В любом случае проверка нужна."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма いずれにせよ?",
+        "en": "What does いずれにせよ best express?"
+      },
+      "answer": "в любом случае",
+      "options": [
+        "в любом случае",
+        "заодно; по случаю",
+        "нет способа",
+        "кто бы мог подумать, что такой..."
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-010",
+      "level": "N1",
+      "order": 10,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "一に〜ない",
+      "title": {
+        "ru": "нельзя однозначно",
+        "en": "нельзя однозначно"
+      },
+      "explanation": {
+        "ru": "一に〜ない помогает читать N1-текст: показывает нельзя однозначно и связывает аргумент с выводом.",
+        "en": "一に〜ない helps read N1 texts by expressing нельзя однозначно and linking an argument to a conclusion."
+      },
+      "formula": "一に〜ない",
+      "examples": [
+        {
+          "jp": "この方法がいとは一に言えない。",
+          "reading": "",
+          "ru": "Нельзя однозначно сказать, что метод плох.",
+          "en": "Нельзя однозначно сказать, что метод плох."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 一に〜ない?",
+        "en": "What does 一に〜ない best express?"
+      },
+      "answer": "нельзя однозначно",
+      "options": [
+        "нельзя однозначно",
+        "заодно",
+        "сразу после",
+        "неосознанно"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-011",
+      "level": "N1",
+      "order": 11,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "今ひとつ",
+      "title": {
+        "ru": "еще не совсем",
+        "en": "еще не совсем"
+      },
+      "explanation": {
+        "ru": "今ひとつ помогает читать N1-текст: показывает еще не совсем и связывает аргумент с выводом.",
+        "en": "今ひとつ helps read N1 texts by expressing еще не совсем and linking an argument to a conclusion."
+      },
+      "formula": "今ひとつ",
+      "examples": [
+        {
+          "jp": "明は分かったが、今ひとつ納得できない。",
+          "reading": "",
+          "ru": "Понял объяснение, но не совсем убежден.",
+          "en": "Понял объяснение, но не совсем убежден."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 今ひとつ?",
+        "en": "What does 今ひとつ best express?"
+      },
+      "answer": "еще не совсем",
+      "options": [
+        "еще не совсем",
+        "думал, что..., но",
+        "упустить возможность",
+        "когда уж становится"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-012",
+      "level": "N1",
+      "order": 12,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "言わずもがな",
+      "title": {
+        "ru": "само собой; лучше не говорить",
+        "en": "само собой; лучше не говорить"
+      },
+      "explanation": {
+        "ru": "言わずもがな помогает читать N1-текст: показывает само собой; лучше не говорить и связывает аргумент с выводом.",
+        "en": "言わずもがな helps read N1 texts by expressing само собой; лучше не говорить and linking an argument to a conclusion."
+      },
+      "formula": "言わずもがな",
+      "examples": [
+        {
+          "jp": "安全確認が大切なのは言わずもがなだ。",
+          "reading": "",
+          "ru": "Важность проверки безопасности очевидна.",
+          "en": "Важность проверки безопасности очевидна."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 言わずもがな?",
+        "en": "What does 言わずもがな best express?"
+      },
+      "answer": "само собой; лучше не говорить",
+      "options": [
+        "само собой; лучше не говорить",
+        "затрудняться; не мочь",
+        "только",
+        "непременно заставит"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-013",
+      "level": "N1",
+      "order": 13,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "〜得る",
+      "title": {
+        "ru": "может произойти",
+        "en": "может произойти"
+      },
+      "explanation": {
+        "ru": "〜得る помогает читать N1-текст: показывает может произойти и связывает аргумент с выводом.",
+        "en": "〜得る helps read N1 texts by expressing может произойти and linking an argument to a conclusion."
+      },
+      "formula": "〜得る",
+      "examples": [
+        {
+          "jp": "その判は誤解を招き得る。",
+          "reading": "",
+          "ru": "Такое решение может вызвать недоразумение.",
+          "en": "Такое решение может вызвать недоразумение."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜得る?",
+        "en": "What does 〜得る best express?"
+      },
+      "answer": "может произойти",
+      "options": [
+        "может произойти",
+        "как только",
+        "не пройдет просто так",
+        "нельзя не"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-014",
+      "level": "N1",
+      "order": 14,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "〜得ない",
+      "title": {
+        "ru": "не может быть",
+        "en": "не может быть"
+      },
+      "explanation": {
+        "ru": "〜得ない помогает читать N1-текст: показывает не может быть и связывает аргумент с выводом.",
+        "en": "〜得ない helps read N1 texts by expressing не может быть and linking an argument to a conclusion."
+      },
+      "formula": "〜得ない",
+      "examples": [
+        {
+          "jp": "このだけでは定し得ない。",
+          "reading": "",
+          "ru": "По одному этому доказательству нельзя утверждать.",
+          "en": "По одному этому доказательству нельзя утверждать."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜得ない?",
+        "en": "What does 〜得ない best express?"
+      },
+      "answer": "не может быть",
+      "options": [
+        "не может быть",
+        "целых",
+        "даже если",
+        "пусть и не"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-015",
+      "level": "N1",
+      "order": 15,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "〜うにも〜ない",
+      "title": {
+        "ru": "хотел бы, но не могу",
+        "en": "хотел бы, но не могу"
+      },
+      "explanation": {
+        "ru": "〜うにも〜ない помогает читать N1-текст: показывает хотел бы, но не могу и связывает аргумент с выводом.",
+        "en": "〜うにも〜ない helps read N1 texts by expressing хотел бы, но не могу and linking an argument to a conclusion."
+      },
+      "formula": "〜うにも〜ない",
+      "examples": [
+        {
+          "jp": "謝ろうにも連絡先が分からない。",
+          "reading": "",
+          "ru": "Хотел извиниться, но не знаю контактов.",
+          "en": "Хотел извиниться, но не знаю контактов."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜うにも〜ない?",
+        "en": "What does 〜うにも〜ない best express?"
+      },
+      "answer": "хотел бы, но не могу",
+      "options": [
+        "хотел бы, но не могу",
+        "уже по одному",
+        "даже",
+        "не то чтобы невозможно"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-016",
+      "level": "N1",
+      "order": 16,
+      "group": {
+        "ru": "Грамматический блок 2",
+        "en": "Grammar block 2"
+      },
+      "pattern": "〜上は",
+      "title": {
+        "ru": "раз уж",
+        "en": "раз уж"
+      },
+      "explanation": {
+        "ru": "〜上は помогает читать N1-текст: показывает раз уж и связывает аргумент с выводом.",
+        "en": "〜上は helps read N1 texts by expressing раз уж and linking an argument to a conclusion."
+      },
+      "formula": "〜上は",
+      "examples": [
+        {
+          "jp": "約束した上は、最後までやるべきだ。",
+          "reading": "",
+          "ru": "Раз уж пообещал, нужно довести до конца.",
+          "en": "Раз уж пообещал, нужно довести до конца."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜上は?",
+        "en": "What does 〜上は best express?"
+      },
+      "answer": "раз уж",
+      "options": [
+        "раз уж",
+        "с точки зрения",
+        "то... то...",
+        "оставаясь"
+      ],
+      "sourcePage": 107
+    },
+    {
+      "id": "n1-grammar-017",
+      "level": "N1",
+      "order": 17,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜うちに入らない",
+      "title": {
+        "ru": "не считается",
+        "en": "не считается"
+      },
+      "explanation": {
+        "ru": "〜うちに入らない помогает читать N1-текст: показывает не считается и связывает аргумент с выводом.",
+        "en": "〜うちに入らない helps read N1 texts by expressing не считается and linking an argument to a conclusion."
+      },
+      "formula": "〜うちに入らない",
+      "examples": [
+        {
+          "jp": "この程度の失敗は失敗のうちに入らない。",
+          "reading": "",
+          "ru": "Такой промах даже не считается провалом.",
+          "en": "Такой промах даже не считается провалом."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜うちに入らない?",
+        "en": "What does 〜うちに入らない best express?"
+      },
+      "answer": "не считается",
+      "options": [
+        "не считается",
+        "не значит, что",
+        "будучи",
+        "хотя"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-018",
+      "level": "N1",
+      "order": 18,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜か否か",
+      "title": {
+        "ru": "ли / или нет",
+        "en": "ли / или нет"
+      },
+      "explanation": {
+        "ru": "〜か否か помогает читать N1-текст: показывает ли / или нет и связывает аргумент с выводом.",
+        "en": "〜か否か helps read N1 texts by expressing ли / или нет and linking an argument to a conclusion."
+      },
+      "formula": "〜か否か",
+      "examples": [
+        {
+          "jp": "加するか否かを明日までに決めてください。",
+          "reading": "",
+          "ru": "Решите до завтра, участвуете или нет.",
+          "en": "Решите до завтра, участвуете или нет."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜か否か?",
+        "en": "What does 〜か否か best express?"
+      },
+      "answer": "ли / или нет",
+      "options": [
+        "ли / или нет",
+        "есть склонность",
+        "даже один",
+        "без"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-019",
+      "level": "N1",
+      "order": 19,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜限りだ",
+      "title": {
+        "ru": "крайне",
+        "en": "крайне"
+      },
+      "explanation": {
+        "ru": "〜限りだ помогает читать N1-текст: показывает крайне и связывает аргумент с выводом.",
+        "en": "〜限りだ helps read N1 texts by expressing крайне and linking an argument to a conclusion."
+      },
+      "formula": "〜限りだ",
+      "examples": [
+        {
+          "jp": "皆が無事で、うれしい限りだ。",
+          "reading": "",
+          "ru": "Я крайне рад, что все целы.",
+          "en": "Я крайне рад, что все целы."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜限りだ?",
+        "en": "What does 〜限りだ best express?"
+      },
+      "answer": "крайне",
+      "options": [
+        "крайне",
+        "то... то...",
+        "без"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-020",
+      "level": "N1",
+      "order": 20,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜限りでは",
+      "title": {
+        "ru": "насколько",
+        "en": "насколько"
+      },
+      "explanation": {
+        "ru": "〜限りでは помогает читать N1-текст: показывает насколько и связывает аргумент с выводом.",
+        "en": "〜限りでは helps read N1 texts by expressing насколько and linking an argument to a conclusion."
+      },
+      "formula": "〜限りでは",
+      "examples": [
+        {
+          "jp": "私が知る限りでは、その話は事ではない。",
+          "reading": "",
+          "ru": "Насколько я знаю, это неправда.",
+          "en": "Насколько я знаю, это неправда."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜限りでは?",
+        "en": "What does 〜限りでは best express?"
+      },
+      "answer": "насколько",
+      "options": [
+        "насколько",
+        "чрезвычайно",
+        "оставить как есть",
+        "уникально для"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-021",
+      "level": "N1",
+      "order": 21,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜が最後",
+      "title": {
+        "ru": "если случится, то уже...",
+        "en": "если случится, то уже..."
+      },
+      "explanation": {
+        "ru": "〜が最後 помогает читать N1-текст: показывает если случится, то уже... и связывает аргумент с выводом.",
+        "en": "〜が最後 helps read N1 texts by expressing если случится, то уже... and linking an argument to a conclusion."
+      },
+      "formula": "〜が最後",
+      "examples": [
+        {
+          "jp": "一度始めたが最後、途中ではやめられない。",
+          "reading": "",
+          "ru": "Если начнешь, уже не бросишь на полпути.",
+          "en": "Если начнешь, уже не бросишь на полпути."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜が最後?",
+        "en": "What does 〜が最後 best express?"
+      },
+      "answer": "если случится, то уже...",
+      "options": [
+        "если случится, то уже...",
+        "хотя сам",
+        "даже если",
+        "как только"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-022",
+      "level": "N1",
+      "order": 22,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜かたがた",
+      "title": {
+        "ru": "заодно; по случаю",
+        "en": "заодно; по случаю"
+      },
+      "explanation": {
+        "ru": "〜かたがた помогает читать N1-текст: показывает заодно; по случаю и связывает аргумент с выводом.",
+        "en": "〜かたがた helps read N1 texts by expressing заодно; по случаю and linking an argument to a conclusion."
+      },
+      "formula": "〜かたがた",
+      "examples": [
+        {
+          "jp": "おかたがた、ご報告に伺いました。",
+          "reading": "",
+          "ru": "Зашел сообщить и заодно поблагодарить.",
+          "en": "Зашел сообщить и заодно поблагодарить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜かたがた?",
+        "en": "What does 〜かたがた best express?"
+      },
+      "answer": "заодно; по случаю",
+      "options": [
+        "заодно; по случаю",
+        "всем вместе",
+        "будь то... или...",
+        "или... или..."
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-023",
+      "level": "N1",
+      "order": 23,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜がてら",
+      "title": {
+        "ru": "заодно",
+        "en": "заодно"
+      },
+      "explanation": {
+        "ru": "〜がてら помогает читать N1-текст: показывает заодно и связывает аргумент с выводом.",
+        "en": "〜がてら helps read N1 texts by expressing заодно and linking an argument to a conclusion."
+      },
+      "formula": "〜がてら",
+      "examples": [
+        {
+          "jp": "散がてら郵便局に寄った。",
+          "reading": "",
+          "ru": "Во время прогулки заодно зашел на почту.",
+          "en": "Во время прогулки заодно зашел на почту."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜がてら?",
+        "en": "What does 〜がてら best express?"
+      },
+      "answer": "заодно",
+      "options": [
+        "заодно",
+        "выглядит как",
+        "с тех пор как",
+        "по-своему"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-024",
+      "level": "N1",
+      "order": 24,
+      "group": {
+        "ru": "Грамматический блок 3",
+        "en": "Grammar block 3"
+      },
+      "pattern": "〜かと思いきや",
+      "title": {
+        "ru": "думал, что..., но",
+        "en": "думал, что..., но"
+      },
+      "explanation": {
+        "ru": "〜かと思いきや помогает читать N1-текст: показывает думал, что..., но и связывает аргумент с выводом.",
+        "en": "〜かと思いきや helps read N1 texts by expressing думал, что..., но and linking an argument to a conclusion."
+      },
+      "formula": "〜かと思いきや",
+      "examples": [
+        {
+          "jp": "解決したかと思いきや、新しい問題が出た。",
+          "reading": "",
+          "ru": "Думал, решилось, но появилась новая проблема.",
+          "en": "Думал, решилось, но появилась новая проблема."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜かと思いきや?",
+        "en": "What does 〜かと思いきや best express?"
+      },
+      "answer": "думал, что..., но",
+      "options": [
+        "думал, что..., но",
+        "тем более что",
+        "следовало бы",
+        "в условиях"
+      ],
+      "sourcePage": 108
+    },
+    {
+      "id": "n1-grammar-025",
+      "level": "N1",
+      "order": 25,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜かねる",
+      "title": {
+        "ru": "затрудняться; не мочь",
+        "en": "затрудняться; не мочь"
+      },
+      "explanation": {
+        "ru": "〜かねる помогает читать N1-текст: показывает затрудняться; не мочь и связывает аргумент с выводом.",
+        "en": "〜かねる helps read N1 texts by expressing затрудняться; не мочь and linking an argument to a conclusion."
+      },
+      "formula": "〜かねる",
+      "examples": [
+        {
+          "jp": "その件では承認しかねます。",
+          "reading": "",
+          "ru": "На таких условиях не могу одобрить.",
+          "en": "На таких условиях не могу одобрить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜かねる?",
+        "en": "What does 〜かねる best express?"
+      },
+      "answer": "затрудняться; не мочь",
+      "options": [
+        "затрудняться; не мочь",
+        "поскольку",
+        "не ведь...",
+        "дойти до"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-026",
+      "level": "N1",
+      "order": 26,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜が早いか",
+      "title": {
+        "ru": "как только",
+        "en": "как только"
+      },
+      "explanation": {
+        "ru": "〜が早いか помогает читать N1-текст: показывает как только и связывает аргумент с выводом.",
+        "en": "〜が早いか helps read N1 texts by expressing как только and linking an argument to a conclusion."
+      },
+      "formula": "〜が早いか",
+      "examples": [
+        {
+          "jp": "ベルが鳴るが早いか、生たちは立ち上がった。",
+          "reading": "",
+          "ru": "Едва прозвенел звонок, студенты встали.",
+          "en": "Едва прозвенел звонок, студенты встали."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜が早いか?",
+        "en": "What does 〜が早いか best express?"
+      },
+      "answer": "как только",
+      "options": [
+        "как только",
+        "без того чтобы",
+        "невыносимо, если",
+        "на этапе"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-027",
+      "level": "N1",
+      "order": 27,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜からある",
+      "title": {
+        "ru": "целых",
+        "en": "целых"
+      },
+      "explanation": {
+        "ru": "〜からある помогает читать N1-текст: показывает целых и связывает аргумент с выводом.",
+        "en": "〜からある helps read N1 texts by expressing целых and linking an argument to a conclusion."
+      },
+      "formula": "〜からある",
+      "examples": [
+        {
+          "jp": "その橋は百メートルからある。",
+          "reading": "",
+          "ru": "Этот мост длиной целых сто метров.",
+          "en": "Этот мост длиной целых сто метров."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からある?",
+        "en": "What does 〜からある best express?"
+      },
+      "answer": "целых",
+      "options": [
+        "целых",
+        "чтобы не",
+        "без колебаний заявлять",
+        "что касается"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-028",
+      "level": "N1",
+      "order": 28,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜からして",
+      "title": {
+        "ru": "уже по одному",
+        "en": "уже по одному"
+      },
+      "explanation": {
+        "ru": "〜からして помогает читать N1-текст: показывает уже по одному и связывает аргумент с выводом.",
+        "en": "〜からして helps read N1 texts by expressing уже по одному and linking an argument to a conclusion."
+      },
+      "formula": "〜からして",
+      "examples": [
+        {
+          "jp": "態度からして、彼は本ではない。",
+          "reading": "",
+          "ru": "Уже по отношению видно, что он несерьезен.",
+          "en": "Уже по отношению видно, что он несерьезен."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からして?",
+        "en": "What does 〜からして best express?"
+      },
+      "answer": "уже по одному",
+      "options": [
+        "уже по одному",
+        "в том числе из-за",
+        "искренне",
+        "вплоть до"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-029",
+      "level": "N1",
+      "order": 29,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜からすると",
+      "title": {
+        "ru": "с точки зрения",
+        "en": "с точки зрения"
+      },
+      "explanation": {
+        "ru": "〜からすると помогает читать N1-текст: показывает с точки зрения и связывает аргумент с выводом.",
+        "en": "〜からすると helps read N1 texts by expressing с точки зрения and linking an argument to a conclusion."
+      },
+      "formula": "〜からすると",
+      "examples": [
+        {
+          "jp": "門家からすると、まだ不十分だ。",
+          "reading": "",
+          "ru": "С точки зрения специалиста, этого пока недостаточно.",
+          "en": "С точки зрения специалиста, этого пока недостаточно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からすると?",
+        "en": "What does 〜からすると best express?"
+      },
+      "answer": "с точки зрения",
+      "options": [
+        "с точки зрения",
+        "в итоге дошло до",
+        "в сочетании с",
+        "по словам / с точки зрения"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-030",
+      "level": "N1",
+      "order": 30,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜からといって",
+      "title": {
+        "ru": "не значит, что",
+        "en": "не значит, что"
+      },
+      "explanation": {
+        "ru": "〜からといって помогает читать N1-текст: показывает не значит, что и связывает аргумент с выводом.",
+        "en": "〜からといって helps read N1 texts by expressing не значит, что and linking an argument to a conclusion."
+      },
+      "formula": "〜からといって",
+      "examples": [
+        {
+          "jp": "高いからといって品質がいいとは限らない。",
+          "reading": "",
+          "ru": "Дорогое не обязательно качественное.",
+          "en": "Дорогое не обязательно качественное."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜からといって?",
+        "en": "What does 〜からといって best express?"
+      },
+      "answer": "не значит, что",
+      "options": [
+        "не значит, что",
+        "сплошь",
+        "поскольку",
+        "зависит от"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-031",
+      "level": "N1",
+      "order": 31,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜きらいがある",
+      "title": {
+        "ru": "есть склонность",
+        "en": "есть склонность"
+      },
+      "explanation": {
+        "ru": "〜きらいがある помогает читать N1-текст: показывает есть склонность и связывает аргумент с выводом.",
+        "en": "〜きらいがある helps read N1 texts by expressing есть склонность and linking an argument to a conclusion."
+      },
+      "formula": "〜きらいがある",
+      "examples": [
+        {
+          "jp": "彼の明は抽象的になりすぎるきらいがある。",
+          "reading": "",
+          "ru": "Его объяснения склонны быть слишком абстрактными.",
+          "en": "Его объяснения склонны быть слишком абстрактными."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜きらいがある?",
+        "en": "What does 〜きらいがある best express?"
+      },
+      "answer": "есть склонность",
+      "options": [
+        "есть склонность",
+        "непременно заставит",
+        "если уж",
+        "нетрудно"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-032",
+      "level": "N1",
+      "order": 32,
+      "group": {
+        "ru": "Грамматический блок 4",
+        "en": "Grammar block 4"
+      },
+      "pattern": "〜極まりない",
+      "title": {
+        "ru": "крайне",
+        "en": "крайне"
+      },
+      "explanation": {
+        "ru": "〜極まりない помогает читать N1-текст: показывает крайне и связывает аргумент с выводом.",
+        "en": "〜極まりない helps read N1 texts by expressing крайне and linking an argument to a conclusion."
+      },
+      "formula": "〜極まりない",
+      "examples": [
+        {
+          "jp": "無責任極まりない言だ。",
+          "reading": "",
+          "ru": "Это крайне безответственное высказывание.",
+          "en": "Это крайне безответственное высказывание."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜極まりない?",
+        "en": "What does 〜極まりない best express?"
+      },
+      "answer": "крайне",
+      "options": [
+        "крайне",
+        "нельзя не",
+        "и..., и...",
+        "даже на уровне; и"
+      ],
+      "sourcePage": 109
+    },
+    {
+      "id": "n1-grammar-033",
+      "level": "N1",
+      "order": 33,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜極まる",
+      "title": {
+        "ru": "чрезвычайно",
+        "en": "чрезвычайно"
+      },
+      "explanation": {
+        "ru": "〜極まる помогает читать N1-текст: показывает чрезвычайно и связывает аргумент с выводом.",
+        "en": "〜極まる helps read N1 texts by expressing чрезвычайно and linking an argument to a conclusion."
+      },
+      "formula": "〜極まる",
+      "examples": [
+        {
+          "jp": "失極まる態度だった。",
+          "reading": "",
+          "ru": "Это было крайне невежливое поведение.",
+          "en": "Это было крайне невежливое поведение."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜極まる?",
+        "en": "What does 〜極まる best express?"
+      },
+      "answer": "чрезвычайно",
+      "options": [
+        "чрезвычайно",
+        "нет способа",
+        "примерно",
+        "даже"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-034",
+      "level": "N1",
+      "order": 34,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜くせに",
+      "title": {
+        "ru": "хотя сам",
+        "en": "хотя сам"
+      },
+      "explanation": {
+        "ru": "〜くせに помогает читать N1-текст: показывает хотя сам и связывает аргумент с выводом.",
+        "en": "〜くせに helps read N1 texts by expressing хотя сам and linking an argument to a conclusion."
+      },
+      "formula": "〜くせに",
+      "examples": [
+        {
+          "jp": "何も知らないくせに、批判ばかりしている。",
+          "reading": "",
+          "ru": "Ничего не знает, а только критикует.",
+          "en": "Ничего не знает, а только критикует."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜くせに?",
+        "en": "What does 〜くせに best express?"
+      },
+      "answer": "хотя сам",
+      "options": [
+        "хотя сам",
+        "сразу после",
+        "даже",
+        "в соответствии с"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-035",
+      "level": "N1",
+      "order": 35,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜ぐるみ",
+      "title": {
+        "ru": "всем вместе",
+        "en": "всем вместе"
+      },
+      "explanation": {
+        "ru": "〜ぐるみ помогает читать N1-текст: показывает всем вместе и связывает аргумент с выводом.",
+        "en": "〜ぐるみ helps read N1 texts by expressing всем вместе and linking an argument to a conclusion."
+      },
+      "formula": "〜ぐるみ",
+      "examples": [
+        {
+          "jp": "社ぐるみで不正をしていた。",
+          "reading": "",
+          "ru": "Нарушение скрывали всей компанией.",
+          "en": "Нарушение скрывали всей компанией."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ぐるみ?",
+        "en": "What does 〜ぐるみ best express?"
+      },
+      "answer": "всем вместе",
+      "options": [
+        "всем вместе",
+        "упустить возможность",
+        "примерно",
+        "достойный; выдерживает"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-036",
+      "level": "N1",
+      "order": 36,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜げ",
+      "title": {
+        "ru": "выглядит как",
+        "en": "выглядит как"
+      },
+      "explanation": {
+        "ru": "〜げ помогает читать N1-текст: показывает выглядит как и связывает аргумент с выводом.",
+        "en": "〜げ helps read N1 texts by expressing выглядит как and linking an argument to a conclusion."
+      },
+      "formula": "〜げ",
+      "examples": [
+        {
+          "jp": "彼は不安げに周りを見た。",
+          "reading": "",
+          "ru": "Он тревожно оглянулся.",
+          "en": "Он тревожно оглянулся."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜げ?",
+        "en": "What does 〜げ best express?"
+      },
+      "answer": "выглядит как",
+      "options": [
+        "выглядит как",
+        "только",
+        "и... и... повсюду",
+        "невыносимый; не в состоянии"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-037",
+      "level": "N1",
+      "order": 37,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜ことだし",
+      "title": {
+        "ru": "тем более что",
+        "en": "тем более что"
+      },
+      "explanation": {
+        "ru": "〜ことだし помогает читать N1-текст: показывает тем более что и связывает аргумент с выводом.",
+        "en": "〜ことだし helps read N1 texts by expressing тем более что and linking an argument to a conclusion."
+      },
+      "formula": "〜ことだし",
+      "examples": [
+        {
+          "jp": "時間もあることだし、もう少し話そう。",
+          "reading": "",
+          "ru": "Тем более время есть, поговорим еще.",
+          "en": "Тем более время есть, поговорим еще."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ことだし?",
+        "en": "What does 〜ことだし best express?"
+      },
+      "answer": "тем более что",
+      "options": [
+        "тем более что",
+        "не пройдет просто так",
+        "что касается",
+        "достаточный для"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-038",
+      "level": "N1",
+      "order": 38,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜こととて",
+      "title": {
+        "ru": "поскольку",
+        "en": "поскольку"
+      },
+      "explanation": {
+        "ru": "〜こととて помогает читать N1-текст: показывает поскольку и связывает аргумент с выводом.",
+        "en": "〜こととて helps read N1 texts by expressing поскольку and linking an argument to a conclusion."
+      },
+      "formula": "〜こととて",
+      "examples": [
+        {
+          "jp": "初めてのこととて、不手際が多かった。",
+          "reading": "",
+          "ru": "Поскольку это впервые, было много ошибок.",
+          "en": "Поскольку это впервые, было много ошибок."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜こととて?",
+        "en": "What does 〜こととて best express?"
+      },
+      "answer": "поскольку",
+      "options": [
+        "поскольку",
+        "даже если",
+        "когда; хотя",
+        "в отличие от"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-039",
+      "level": "N1",
+      "order": 39,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜ことなしに",
+      "title": {
+        "ru": "без того чтобы",
+        "en": "без того чтобы"
+      },
+      "explanation": {
+        "ru": "〜ことなしに помогает читать N1-текст: показывает без того чтобы и связывает аргумент с выводом.",
+        "en": "〜ことなしに helps read N1 texts by expressing без того чтобы and linking an argument to a conclusion."
+      },
+      "formula": "〜ことなしに",
+      "examples": [
+        {
+          "jp": "努力することなしに成果は出ない。",
+          "reading": "",
+          "ru": "Без усилий результата не будет.",
+          "en": "Без усилий результата не будет."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ことなしに?",
+        "en": "What does 〜ことなしに best express?"
+      },
+      "answer": "без того чтобы",
+      "options": [
+        "без того чтобы",
+        "даже",
+        "даже если предположить",
+        "больше, чем"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-040",
+      "level": "N1",
+      "order": 40,
+      "group": {
+        "ru": "Грамматический блок 5",
+        "en": "Grammar block 5"
+      },
+      "pattern": "〜ことのないよう",
+      "title": {
+        "ru": "чтобы не",
+        "en": "чтобы не"
+      },
+      "explanation": {
+        "ru": "〜ことのないよう помогает читать N1-текст: показывает чтобы не и связывает аргумент с выводом.",
+        "en": "〜ことのないよう helps read N1 texts by expressing чтобы не and linking an argument to a conclusion."
+      },
+      "formula": "〜ことのないよう",
+      "examples": [
+        {
+          "jp": "同じ間違いを繰り返すことのないよう注意する。",
+          "reading": "",
+          "ru": "Буду внимателен, чтобы не повторить ошибку.",
+          "en": "Буду внимателен, чтобы не повторить ошибку."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ことのないよう?",
+        "en": "What does 〜ことのないよう best express?"
+      },
+      "answer": "чтобы не",
+      "options": [
+        "чтобы не",
+        "то... то...",
+        "даже",
+        "независимо от"
+      ],
+      "sourcePage": 110
+    },
+    {
+      "id": "n1-grammar-041",
+      "level": "N1",
+      "order": 41,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜こともあって",
+      "title": {
+        "ru": "в том числе из-за",
+        "en": "в том числе из-за"
+      },
+      "explanation": {
+        "ru": "〜こともあって помогает читать N1-текст: показывает в том числе из-за и связывает аргумент с выводом.",
+        "en": "〜こともあって helps read N1 texts by expressing в том числе из-за and linking an argument to a conclusion."
+      },
+      "formula": "〜こともあって",
+      "examples": [
+        {
+          "jp": "雨だったこともあって、加者は少なかった。",
+          "reading": "",
+          "ru": "В том числе из-за дождя участников было мало.",
+          "en": "В том числе из-за дождя участников было мало."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜こともあって?",
+        "en": "What does 〜こともあって best express?"
+      },
+      "answer": "в том числе из-за",
+      "options": [
+        "в том числе из-за",
+        "будучи",
+        "то, что...",
+        "без"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-042",
+      "level": "N1",
+      "order": 42,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜始末だ",
+      "title": {
+        "ru": "в итоге дошло до",
+        "en": "в итоге дошло до"
+      },
+      "explanation": {
+        "ru": "〜始末だ помогает читать N1-текст: показывает в итоге дошло до и связывает аргумент с выводом.",
+        "en": "〜始末だ helps read N1 texts by expressing в итоге дошло до and linking an argument to a conclusion."
+      },
+      "formula": "〜始末だ",
+      "examples": [
+        {
+          "jp": "彼は刻した上に資料まで忘れる始末だ。",
+          "reading": "",
+          "ru": "Он опоздал, да еще и материалы забыл.",
+          "en": "Он опоздал, да еще и материалы забыл."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜始末だ?",
+        "en": "What does 〜始末だ best express?"
+      },
+      "answer": "в итоге дошло до",
+      "options": [
+        "в итоге дошло до",
+        "даже один",
+        "хотя",
+        "до конца"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-043",
+      "level": "N1",
+      "order": 43,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜ずくめ",
+      "title": {
+        "ru": "сплошь",
+        "en": "сплошь"
+      },
+      "explanation": {
+        "ru": "〜ずくめ помогает читать N1-текст: показывает сплошь и связывает аргумент с выводом.",
+        "en": "〜ずくめ helps read N1 texts by expressing сплошь and linking an argument to a conclusion."
+      },
+      "formula": "〜ずくめ",
+      "examples": [
+        {
+          "jp": "今日はうれしいことずくめだった。",
+          "reading": "",
+          "ru": "Сегодня был день сплошных радостей.",
+          "en": "Сегодня был день сплошных радостей."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ずくめ?",
+        "en": "What does 〜ずくめ best express?"
+      },
+      "answer": "сплошь",
+      "options": [
+        "сплошь",
+        "то... то...",
+        "кто бы мог подумать, что такой...",
+        "крайне"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-044",
+      "level": "N1",
+      "order": 44,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜ずにはおかない",
+      "title": {
+        "ru": "непременно заставит",
+        "en": "непременно заставит"
+      },
+      "explanation": {
+        "ru": "〜ずにはおかない помогает читать N1-текст: показывает непременно заставит и связывает аргумент с выводом.",
+        "en": "〜ずにはおかない helps read N1 texts by expressing непременно заставит and linking an argument to a conclusion."
+      },
+      "formula": "〜ずにはおかない",
+      "examples": [
+        {
+          "jp": "この作品は人の心を動かさずにはおかない。",
+          "reading": "",
+          "ru": "Это произведение непременно тронет сердца.",
+          "en": "Это произведение непременно тронет сердца."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ずにはおかない?",
+        "en": "What does 〜ずにはおかない best express?"
+      },
+      "answer": "непременно заставит",
+      "options": [
+        "непременно заставит",
+        "оставить как есть",
+        "неосознанно",
+        "крайне"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-045",
+      "level": "N1",
+      "order": 45,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜ずにはすまない",
+      "title": {
+        "ru": "нельзя не",
+        "en": "нельзя не"
+      },
+      "explanation": {
+        "ru": "〜ずにはすまない помогает читать N1-текст: показывает нельзя не и связывает аргумент с выводом.",
+        "en": "〜ずにはすまない helps read N1 texts by expressing нельзя не and linking an argument to a conclusion."
+      },
+      "formula": "〜ずにはすまない",
+      "examples": [
+        {
+          "jp": "迷惑をかけた以上、謝らずにはすまない。",
+          "reading": "",
+          "ru": "Раз доставил неудобства, нельзя не извиниться.",
+          "en": "Раз доставил неудобства, нельзя не извиниться."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ずにはすまない?",
+        "en": "What does 〜ずにはすまない best express?"
+      },
+      "answer": "нельзя не",
+      "options": [
+        "нельзя не",
+        "даже если",
+        "когда уж становится",
+        "и прочее"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-046",
+      "level": "N1",
+      "order": 46,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜術がない",
+      "title": {
+        "ru": "нет способа",
+        "en": "нет способа"
+      },
+      "explanation": {
+        "ru": "〜術がない помогает читать N1-текст: показывает нет способа и связывает аргумент с выводом.",
+        "en": "〜術がない helps read N1 texts by expressing нет способа and linking an argument to a conclusion."
+      },
+      "formula": "〜術がない",
+      "examples": [
+        {
+          "jp": "がなければ、確認する術がない。",
+          "reading": "",
+          "ru": "Без доказательств нет способа проверить.",
+          "en": "Без доказательств нет способа проверить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜術がない?",
+        "en": "What does 〜術がない best express?"
+      },
+      "answer": "нет способа",
+      "options": [
+        "нет способа",
+        "будь то... или...",
+        "непременно заставит",
+        "не говоря уже о"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-047",
+      "level": "N1",
+      "order": 47,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜そばから",
+      "title": {
+        "ru": "сразу после",
+        "en": "сразу после"
+      },
+      "explanation": {
+        "ru": "〜そばから помогает читать N1-текст: показывает сразу после и связывает аргумент с выводом.",
+        "en": "〜そばから helps read N1 texts by expressing сразу после and linking an argument to a conclusion."
+      },
+      "formula": "〜そばから",
+      "examples": [
+        {
+          "jp": "えたそばから忘れてしまう。",
+          "reading": "",
+          "ru": "Только выучил - тут же забыл.",
+          "en": "Только выучил - тут же забыл."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜そばから?",
+        "en": "What does 〜そばから best express?"
+      },
+      "answer": "сразу после",
+      "options": [
+        "сразу после",
+        "с тех пор как",
+        "нельзя не",
+        "не только"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-048",
+      "level": "N1",
+      "order": 48,
+      "group": {
+        "ru": "Грамматический блок 6",
+        "en": "Grammar block 6"
+      },
+      "pattern": "〜そびれる",
+      "title": {
+        "ru": "упустить возможность",
+        "en": "упустить возможность"
+      },
+      "explanation": {
+        "ru": "〜そびれる помогает читать N1-текст: показывает упустить возможность и связывает аргумент с выводом.",
+        "en": "〜そびれる helps read N1 texts by expressing упустить возможность and linking an argument to a conclusion."
+      },
+      "formula": "〜そびれる",
+      "examples": [
+        {
+          "jp": "忙しくて食を食べそびれた。",
+          "reading": "",
+          "ru": "Был занят и не успел пообедать.",
+          "en": "Был занят и не успел пообедать."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜そびれる?",
+        "en": "What does 〜そびれる best express?"
+      },
+      "answer": "упустить возможность",
+      "options": [
+        "упустить возможность",
+        "следовало бы",
+        "пусть и не",
+        "именно потому что"
+      ],
+      "sourcePage": 111
+    },
+    {
+      "id": "n1-grammar-049",
+      "level": "N1",
+      "order": 49,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "ただ〜のみ",
+      "title": {
+        "ru": "только",
+        "en": "только"
+      },
+      "explanation": {
+        "ru": "ただ〜のみ помогает читать N1-текст: показывает только и связывает аргумент с выводом.",
+        "en": "ただ〜のみ helps read N1 texts by expressing только and linking an argument to a conclusion."
+      },
+      "formula": "ただ〜のみ",
+      "examples": [
+        {
+          "jp": "今はただ結果を待つのみだ。",
+          "reading": "",
+          "ru": "Сейчас остается только ждать результата.",
+          "en": "Сейчас остается только ждать результата."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма ただ〜のみ?",
+        "en": "What does ただ〜のみ best express?"
+      },
+      "answer": "только",
+      "options": [
+        "только",
+        "не ведь...",
+        "не то чтобы невозможно",
+        "оставляя в стороне"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-050",
+      "level": "N1",
+      "order": 50,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "ただではすまない",
+      "title": {
+        "ru": "не пройдет просто так",
+        "en": "не пройдет просто так"
+      },
+      "explanation": {
+        "ru": "ただではすまない помогает читать N1-текст: показывает не пройдет просто так и связывает аргумент с выводом.",
+        "en": "ただではすまない helps read N1 texts by expressing не пройдет просто так and linking an argument to a conclusion."
+      },
+      "formula": "ただではすまない",
+      "examples": [
+        {
+          "jp": "この失敗はただではすまないだろう。",
+          "reading": "",
+          "ru": "Этот провал не пройдет без последствий.",
+          "en": "Этот провал не пройдет без последствий."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма ただではすまない?",
+        "en": "What does ただではすまない best express?"
+      },
+      "answer": "не пройдет просто так",
+      "options": [
+        "не пройдет просто так",
+        "невыносимо, если",
+        "оставаясь",
+        "не говоря о"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-051",
+      "level": "N1",
+      "order": 51,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "〜たところで",
+      "title": {
+        "ru": "даже если",
+        "en": "даже если"
+      },
+      "explanation": {
+        "ru": "〜たところで помогает читать N1-текст: показывает даже если и связывает аргумент с выводом.",
+        "en": "〜たところで helps read N1 texts by expressing даже если and linking an argument to a conclusion."
+      },
+      "formula": "〜たところで",
+      "examples": [
+        {
+          "jp": "今さら謝ったところで、信はらない。",
+          "reading": "",
+          "ru": "Даже если теперь извиниться, доверие не вернется.",
+          "en": "Даже если теперь извиниться, доверие не вернется."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜たところで?",
+        "en": "What does 〜たところで best express?"
+      },
+      "answer": "даже если",
+      "options": [
+        "даже если",
+        "без колебаний заявлять",
+        "хотя",
+        "недопустимый для"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-052",
+      "level": "N1",
+      "order": 52,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "〜だに",
+      "title": {
+        "ru": "даже",
+        "en": "даже"
+      },
+      "explanation": {
+        "ru": "〜だに помогает читать N1-текст: показывает даже и связывает аргумент с выводом.",
+        "en": "〜だに helps read N1 texts by expressing даже and linking an argument to a conclusion."
+      },
+      "formula": "〜だに",
+      "examples": [
+        {
+          "jp": "そんな結果は想像だにしなかった。",
+          "reading": "",
+          "ru": "Такого результата я даже представить не мог.",
+          "en": "Такого результата я даже представить не мог."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜だに?",
+        "en": "What does 〜だに best express?"
+      },
+      "answer": "даже",
+      "options": [
+        "даже",
+        "искренне",
+        "без",
+        "только и остается"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-053",
+      "level": "N1",
+      "order": 53,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "〜だの〜だの",
+      "title": {
+        "ru": "то... то...",
+        "en": "то... то..."
+      },
+      "explanation": {
+        "ru": "〜だの〜だの помогает читать N1-текст: показывает то... то... и связывает аргумент с выводом.",
+        "en": "〜だの〜だの helps read N1 texts by expressing то... то... and linking an argument to a conclusion."
+      },
+      "formula": "〜だの〜だの",
+      "examples": [
+        {
+          "jp": "忙しいだの疲れただのと言いばかりだ。",
+          "reading": "",
+          "ru": "Только и оправдывается: занят, устал и т.д.",
+          "en": "Только и оправдывается: занят, устал и т.д."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜だの〜だの?",
+        "en": "What does 〜だの〜だの best express?"
+      },
+      "answer": "то... то...",
+      "options": [
+        "то... то...",
+        "в сочетании с",
+        "без",
+        "нет необходимости"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-054",
+      "level": "N1",
+      "order": 54,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "〜たる",
+      "title": {
+        "ru": "будучи",
+        "en": "будучи"
+      },
+      "explanation": {
+        "ru": "〜たる помогает читать N1-текст: показывает будучи и связывает аргумент с выводом.",
+        "en": "〜たる helps read N1 texts by expressing будучи and linking an argument to a conclusion."
+      },
+      "formula": "〜たる",
+      "examples": [
+        {
+          "jp": "指導者たる者、責任を負うべきだ。",
+          "reading": "",
+          "ru": "Будучи лидером, надо брать ответственность.",
+          "en": "Будучи лидером, надо брать ответственность."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜たる?",
+        "en": "What does 〜たる best express?"
+      },
+      "answer": "будучи",
+      "options": [
+        "будучи",
+        "поскольку",
+        "уникально для",
+        "весь в"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-055",
+      "level": "N1",
+      "order": 55,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "〜たりとも",
+      "title": {
+        "ru": "даже один",
+        "en": "даже один"
+      },
+      "explanation": {
+        "ru": "〜たりとも помогает читать N1-текст: показывает даже один и связывает аргумент с выводом.",
+        "en": "〜たりとも helps read N1 texts by expressing даже один and linking an argument to a conclusion."
+      },
+      "formula": "〜たりとも",
+      "examples": [
+        {
+          "jp": "一円たりとも無にできない。",
+          "reading": "",
+          "ru": "Нельзя потратить впустую даже одну иену.",
+          "en": "Нельзя потратить впустую даже одну иену."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜たりとも?",
+        "en": "What does 〜たりとも best express?"
+      },
+      "answer": "даже один",
+      "options": [
+        "даже один",
+        "если уж",
+        "как только",
+        "приобретать оттенок"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-056",
+      "level": "N1",
+      "order": 56,
+      "group": {
+        "ru": "Грамматический блок 7",
+        "en": "Grammar block 7"
+      },
+      "pattern": "〜つ〜つ",
+      "title": {
+        "ru": "то... то...",
+        "en": "то... то..."
+      },
+      "explanation": {
+        "ru": "〜つ〜つ помогает читать N1-текст: показывает то... то... и связывает аргумент с выводом.",
+        "en": "〜つ〜つ helps read N1 texts by expressing то... то... and linking an argument to a conclusion."
+      },
+      "formula": "〜つ〜つ",
+      "examples": [
+        {
+          "jp": "行きつりつしながら考えた。",
+          "reading": "",
+          "ru": "Думал, ходя туда-сюда.",
+          "en": "Думал, ходя туда-сюда."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜つ〜つ?",
+        "en": "What does 〜つ〜つ best express?"
+      },
+      "answer": "то... то...",
+      "options": [
+        "то... то...",
+        "и..., и...",
+        "или... или...",
+        "почти то же самое"
+      ],
+      "sourcePage": 112
+    },
+    {
+      "id": "n1-grammar-057",
+      "level": "N1",
+      "order": 57,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜っぱなし",
+      "title": {
+        "ru": "оставить как есть",
+        "en": "оставить как есть"
+      },
+      "explanation": {
+        "ru": "〜っぱなし помогает читать N1-текст: показывает оставить как есть и связывает аргумент с выводом.",
+        "en": "〜っぱなし helps read N1 texts by expressing оставить как есть and linking an argument to a conclusion."
+      },
+      "formula": "〜っぱなし",
+      "examples": [
+        {
+          "jp": "電をつけっぱなしにしないでください。",
+          "reading": "",
+          "ru": "Не оставляйте свет включенным.",
+          "en": "Не оставляйте свет включенным."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜っぱなし?",
+        "en": "What does 〜っぱなし best express?"
+      },
+      "answer": "оставить как есть",
+      "options": [
+        "оставить как есть",
+        "примерно",
+        "по-своему",
+        "не говоря уже о"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-058",
+      "level": "N1",
+      "order": 58,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜であれ",
+      "title": {
+        "ru": "даже если",
+        "en": "даже если"
+      },
+      "explanation": {
+        "ru": "〜であれ помогает читать N1-текст: показывает даже если и связывает аргумент с выводом.",
+        "en": "〜であれ helps read N1 texts by expressing даже если and linking an argument to a conclusion."
+      },
+      "formula": "〜であれ",
+      "examples": [
+        {
+          "jp": "門家であれ、間違えることはある。",
+          "reading": "",
+          "ru": "Даже эксперт может ошибиться.",
+          "en": "Даже эксперт может ошибиться."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜であれ?",
+        "en": "What does 〜であれ best express?"
+      },
+      "answer": "даже если",
+      "options": [
+        "даже если",
+        "даже",
+        "в условиях",
+        "а ведь мог бы"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-059",
+      "level": "N1",
+      "order": 59,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜であれ〜であれ",
+      "title": {
+        "ru": "будь то... или...",
+        "en": "будь то... или..."
+      },
+      "explanation": {
+        "ru": "〜であれ〜であれ помогает читать N1-текст: показывает будь то... или... и связывает аргумент с выводом.",
+        "en": "〜であれ〜であれ helps read N1 texts by expressing будь то... или... and linking an argument to a conclusion."
+      },
+      "formula": "〜であれ〜であれ",
+      "examples": [
+        {
+          "jp": "成であれ反であれ、理由を述べるべきだ。",
+          "reading": "",
+          "ru": "Будь то за или против, нужно назвать причину.",
+          "en": "Будь то за или против, нужно назвать причину."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜であれ〜であれ?",
+        "en": "What does 〜であれ〜であれ best express?"
+      },
+      "answer": "будь то... или...",
+      "options": [
+        "будь то... или...",
+        "примерно",
+        "дойти до",
+        "как только"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-060",
+      "level": "N1",
+      "order": 60,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜てからというもの",
+      "title": {
+        "ru": "с тех пор как",
+        "en": "с тех пор как"
+      },
+      "explanation": {
+        "ru": "〜てからというもの помогает читать N1-текст: показывает с тех пор как и связывает аргумент с выводом.",
+        "en": "〜てからというもの helps read N1 texts by expressing с тех пор как and linking an argument to a conclusion."
+      },
+      "formula": "〜てからというもの",
+      "examples": [
+        {
+          "jp": "彼にってからというもの、考え方がわった。",
+          "reading": "",
+          "ru": "С тех пор как встретил его, изменился взгляд.",
+          "en": "С тех пор как встретил его, изменился взгляд."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜てからというもの?",
+        "en": "What does 〜てからというもの best express?"
+      },
+      "answer": "с тех пор как",
+      "options": [
+        "с тех пор как",
+        "и... и... повсюду",
+        "на этапе",
+        "из-за; поскольку"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-061",
+      "level": "N1",
+      "order": 61,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜てしかるべき",
+      "title": {
+        "ru": "следовало бы",
+        "en": "следовало бы"
+      },
+      "explanation": {
+        "ru": "〜てしかるべき помогает читать N1-текст: показывает следовало бы и связывает аргумент с выводом.",
+        "en": "〜てしかるべき helps read N1 texts by expressing следовало бы and linking an argument to a conclusion."
+      },
+      "formula": "〜てしかるべき",
+      "examples": [
+        {
+          "jp": "責任者なら明してしかるべきだ。",
+          "reading": "",
+          "ru": "Ответственный должен был объяснить.",
+          "en": "Ответственный должен был объяснить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜てしかるべき?",
+        "en": "What does 〜てしかるべき best express?"
+      },
+      "answer": "следовало бы",
+      "options": [
+        "следовало бы",
+        "что касается",
+        "в зависимости от способа"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-062",
+      "level": "N1",
+      "order": 62,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜ではあるまいし",
+      "title": {
+        "ru": "не ведь...",
+        "en": "не ведь..."
+      },
+      "explanation": {
+        "ru": "〜ではあるまいし помогает читать N1-текст: показывает не ведь... и связывает аргумент с выводом.",
+        "en": "〜ではあるまいし helps read N1 texts by expressing не ведь... and linking an argument to a conclusion."
+      },
+      "formula": "〜ではあるまいし",
+      "examples": [
+        {
+          "jp": "子どもではあるまいし、自分で決めなさい。",
+          "reading": "",
+          "ru": "Ты же не ребенок, решай сам.",
+          "en": "Ты же не ребенок, решай сам."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ではあるまいし?",
+        "en": "What does 〜ではあるまいし best express?"
+      },
+      "answer": "не ведь...",
+      "options": [
+        "не ведь...",
+        "когда; хотя",
+        "вплоть до",
+        "кроме"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-063",
+      "level": "N1",
+      "order": 63,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜てはかなわない",
+      "title": {
+        "ru": "невыносимо, если",
+        "en": "невыносимо, если"
+      },
+      "explanation": {
+        "ru": "〜てはかなわない помогает читать N1-текст: показывает невыносимо, если и связывает аргумент с выводом.",
+        "en": "〜てはかなわない helps read N1 texts by expressing невыносимо, если and linking an argument to a conclusion."
+      },
+      "formula": "〜てはかなわない",
+      "examples": [
+        {
+          "jp": "日業させられてはかなわない。",
+          "reading": "",
+          "ru": "Невыносимо, если каждый день заставляют перерабатывать.",
+          "en": "Невыносимо, если каждый день заставляют перерабатывать."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜てはかなわない?",
+        "en": "What does 〜てはかなわない best express?"
+      },
+      "answer": "невыносимо, если",
+      "options": [
+        "невыносимо, если",
+        "даже если предположить",
+        "по словам / с точки зрения",
+        "начиная с момента; на этом"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-064",
+      "level": "N1",
+      "order": 64,
+      "group": {
+        "ru": "Грамматический блок 8",
+        "en": "Grammar block 8"
+      },
+      "pattern": "〜てはばからない",
+      "title": {
+        "ru": "без колебаний заявлять",
+        "en": "без колебаний заявлять"
+      },
+      "explanation": {
+        "ru": "〜てはばからない помогает читать N1-текст: показывает без колебаний заявлять и связывает аргумент с выводом.",
+        "en": "〜てはばからない helps read N1 texts by expressing без колебаний заявлять and linking an argument to a conclusion."
+      },
+      "formula": "〜てはばからない",
+      "examples": [
+        {
+          "jp": "彼は自分が正しいと言ってはばからない。",
+          "reading": "",
+          "ru": "Он без стеснения заявляет, что прав.",
+          "en": "Он без стеснения заявляет, что прав."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜てはばからない?",
+        "en": "What does 〜てはばからない best express?"
+      },
+      "answer": "без колебаний заявлять",
+      "options": [
+        "без колебаний заявлять",
+        "даже",
+        "зависит от",
+        "начиная с"
+      ],
+      "sourcePage": 113
+    },
+    {
+      "id": "n1-grammar-065",
+      "level": "N1",
+      "order": 65,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜てやまない",
+      "title": {
+        "ru": "искренне",
+        "en": "искренне"
+      },
+      "explanation": {
+        "ru": "〜てやまない помогает читать N1-текст: показывает искренне и связывает аргумент с выводом.",
+        "en": "〜てやまない helps read N1 texts by expressing искренне and linking an argument to a conclusion."
+      },
+      "formula": "〜てやまない",
+      "examples": [
+        {
+          "jp": "皆の成功を願ってやみません。",
+          "reading": "",
+          "ru": "Искренне желаю вам успеха.",
+          "en": "Искренне желаю вам успеха."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜てやまない?",
+        "en": "What does 〜てやまない best express?"
+      },
+      "answer": "искренне",
+      "options": [
+        "искренне",
+        "то, что...",
+        "нетрудно",
+        "не могу не"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-066",
+      "level": "N1",
+      "order": 66,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜と相まって",
+      "title": {
+        "ru": "в сочетании с",
+        "en": "в сочетании с"
+      },
+      "explanation": {
+        "ru": "〜と相まって помогает читать N1-текст: показывает в сочетании с и связывает аргумент с выводом.",
+        "en": "〜と相まって helps read N1 texts by expressing в сочетании с and linking an argument to a conclusion."
+      },
+      "formula": "〜と相まって",
+      "examples": [
+        {
+          "jp": "努力と環境が相まって、成果が出た。",
+          "reading": "",
+          "ru": "Усилия в сочетании с условиями дали результат.",
+          "en": "Усилия в сочетании с условиями дали результат."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜と相まって?",
+        "en": "What does 〜と相まって best express?"
+      },
+      "answer": "в сочетании с",
+      "options": [
+        "в сочетании с",
+        "хотя",
+        "даже на уровне; и",
+        "с помощью; на основании; с"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-067",
+      "level": "N1",
+      "order": 67,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜とあって",
+      "title": {
+        "ru": "поскольку",
+        "en": "поскольку"
+      },
+      "explanation": {
+        "ru": "〜とあって помогает читать N1-текст: показывает поскольку и связывает аргумент с выводом.",
+        "en": "〜とあって helps read N1 texts by expressing поскольку and linking an argument to a conclusion."
+      },
+      "formula": "〜とあって",
+      "examples": [
+        {
+          "jp": "連休とあって、は混していた。",
+          "reading": "",
+          "ru": "Поскольку были праздники, станция была переполнена.",
+          "en": "Поскольку были праздники, станция была переполнена."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜とあって?",
+        "en": "What does 〜とあって best express?"
+      },
+      "answer": "поскольку",
+      "options": [
+        "поскольку",
+        "кто бы мог подумать, что такой...",
+        "даже",
+        "не обращая внимания"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-068",
+      "level": "N1",
+      "order": 68,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜とあれば",
+      "title": {
+        "ru": "если уж",
+        "en": "если уж"
+      },
+      "explanation": {
+        "ru": "〜とあれば помогает читать N1-текст: показывает если уж и связывает аргумент с выводом.",
+        "en": "〜とあれば helps read N1 texts by expressing если уж and linking an argument to a conclusion."
+      },
+      "formula": "〜とあれば",
+      "examples": [
+        {
+          "jp": "必要とあれば、私も協力します。",
+          "reading": "",
+          "ru": "Если потребуется, я тоже помогу.",
+          "en": "Если потребуется, я тоже помогу."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜とあれば?",
+        "en": "What does 〜とあれば best express?"
+      },
+      "answer": "если уж",
+      "options": [
+        "если уж",
+        "неосознанно",
+        "в соответствии с",
+        "быть вынужденным"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-069",
+      "level": "N1",
+      "order": 69,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜といい〜といい",
+      "title": {
+        "ru": "и..., и...",
+        "en": "и..., и..."
+      },
+      "explanation": {
+        "ru": "〜といい〜といい помогает читать N1-текст: показывает и..., и... и связывает аргумент с выводом.",
+        "en": "〜といい〜といい helps read N1 texts by expressing и..., и... and linking an argument to a conclusion."
+      },
+      "formula": "〜といい〜といい",
+      "examples": [
+        {
+          "jp": "デザインといい機能といい、よくできている。",
+          "reading": "",
+          "ru": "И дизайн, и функции сделаны хорошо.",
+          "en": "И дизайн, и функции сделаны хорошо."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜といい〜といい?",
+        "en": "What does 〜といい〜といい best express?"
+      },
+      "answer": "и..., и...",
+      "options": [
+        "и..., и...",
+        "когда уж становится",
+        "достойный; выдерживает",
+        "не обращая внимания"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-070",
+      "level": "N1",
+      "order": 70,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜というところだ",
+      "title": {
+        "ru": "примерно",
+        "en": "примерно"
+      },
+      "explanation": {
+        "ru": "〜というところだ помогает читать N1-текст: показывает примерно и связывает аргумент с выводом.",
+        "en": "〜というところだ helps read N1 texts by expressing примерно and linking an argument to a conclusion."
+      },
+      "formula": "〜というところだ",
+      "examples": [
+        {
+          "jp": "完成度は七割というところだ。",
+          "reading": "",
+          "ru": "Готовность примерно семьдесят процентов.",
+          "en": "Готовность примерно семьдесят процентов."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜というところだ?",
+        "en": "What does 〜というところだ best express?"
+      },
+      "answer": "примерно",
+      "options": [
+        "примерно",
+        "непременно заставит",
+        "невыносимый; не в состоянии",
+        "ради того, чтобы"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-071",
+      "level": "N1",
+      "order": 71,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜といえども",
+      "title": {
+        "ru": "даже",
+        "en": "даже"
+      },
+      "explanation": {
+        "ru": "〜といえども помогает читать N1-текст: показывает даже и связывает аргумент с выводом.",
+        "en": "〜といえども helps read N1 texts by expressing даже and linking an argument to a conclusion."
+      },
+      "formula": "〜といえども",
+      "examples": [
+        {
+          "jp": "者といえども油はできない。",
+          "reading": "",
+          "ru": "Даже опытному нельзя терять бдительность.",
+          "en": "Даже опытному нельзя терять бдительность."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜といえども?",
+        "en": "What does 〜といえども best express?"
+      },
+      "answer": "даже",
+      "options": [
+        "даже",
+        "нельзя не",
+        "достаточный для",
+        "словно сейчас"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-072",
+      "level": "N1",
+      "order": 72,
+      "group": {
+        "ru": "Грамматический блок 9",
+        "en": "Grammar block 9"
+      },
+      "pattern": "〜といったところだ",
+      "title": {
+        "ru": "примерно",
+        "en": "примерно"
+      },
+      "explanation": {
+        "ru": "〜といったところだ помогает читать N1-текст: показывает примерно и связывает аргумент с выводом.",
+        "en": "〜といったところだ helps read N1 texts by expressing примерно and linking an argument to a conclusion."
+      },
+      "formula": "〜といったところだ",
+      "examples": [
+        {
+          "jp": "費用は一万円といったところだ。",
+          "reading": "",
+          "ru": "Расходы около десяти тысяч иен.",
+          "en": "Расходы около десяти тысяч иен."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜といったところだ?",
+        "en": "What does 〜といったところだ best express?"
+      },
+      "answer": "примерно",
+      "options": [
+        "примерно",
+        "пусть и не",
+        "в отличие от",
+        "осмелиться; намеренно"
+      ],
+      "sourcePage": 114
+    },
+    {
+      "id": "n1-grammar-073",
+      "level": "N1",
+      "order": 73,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜といわず〜といわず",
+      "title": {
+        "ru": "и... и... повсюду",
+        "en": "и... и... повсюду"
+      },
+      "explanation": {
+        "ru": "〜といわず〜といわず помогает читать N1-текст: показывает и... и... повсюду и связывает аргумент с выводом.",
+        "en": "〜といわず〜といわず helps read N1 texts by expressing и... и... повсюду and linking an argument to a conclusion."
+      },
+      "formula": "〜といわず〜といわず",
+      "examples": [
+        {
+          "jp": "部屋といわず廊下といわず、人でいっぱいだった。",
+          "reading": "",
+          "ru": "И комнаты, и коридоры были полны людей.",
+          "en": "И комнаты, и коридоры были полны людей."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜といわず〜といわず?",
+        "en": "What does 〜といわず〜といわず best express?"
+      },
+      "answer": "и... и... повсюду",
+      "options": [
+        "и... и... повсюду",
+        "не то чтобы невозможно",
+        "больше, чем",
+        "до конца; исключительно"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-074",
+      "level": "N1",
+      "order": 74,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜ときたら",
+      "title": {
+        "ru": "что касается",
+        "en": "что касается"
+      },
+      "explanation": {
+        "ru": "〜ときたら помогает читать N1-текст: показывает что касается и связывает аргумент с выводом.",
+        "en": "〜ときたら helps read N1 texts by expressing что касается and linking an argument to a conclusion."
+      },
+      "formula": "〜ときたら",
+      "examples": [
+        {
+          "jp": "彼ときたら、また約束を忘れた。",
+          "reading": "",
+          "ru": "А он опять забыл обещание.",
+          "en": "А он опять забыл обещание."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ときたら?",
+        "en": "What does 〜ときたら best express?"
+      },
+      "answer": "что касается",
+      "options": [
+        "что касается",
+        "оставаясь",
+        "независимо от",
+        "как и ожидалось"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-075",
+      "level": "N1",
+      "order": 75,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜ところを",
+      "title": {
+        "ru": "когда; хотя",
+        "en": "когда; хотя"
+      },
+      "explanation": {
+        "ru": "〜ところを помогает читать N1-текст: показывает когда; хотя и связывает аргумент с выводом.",
+        "en": "〜ところを helps read N1 texts by expressing когда; хотя and linking an argument to a conclusion."
+      },
+      "formula": "〜ところを",
+      "examples": [
+        {
+          "jp": "お忙しいところをありがとうございます。",
+          "reading": "",
+          "ru": "Спасибо, что нашли время, хотя заняты.",
+          "en": "Спасибо, что нашли время, хотя заняты."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ところを?",
+        "en": "What does 〜ところを best express?"
+      },
+      "answer": "когда; хотя",
+      "options": [
+        "когда; хотя",
+        "хотя",
+        "без",
+        "именно благодаря"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-076",
+      "level": "N1",
+      "order": 76,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜としたところで",
+      "title": {
+        "ru": "даже если предположить",
+        "en": "даже если предположить"
+      },
+      "explanation": {
+        "ru": "〜としたところで помогает читать N1-текст: показывает даже если предположить и связывает аргумент с выводом.",
+        "en": "〜としたところで helps read N1 texts by expressing даже если предположить and linking an argument to a conclusion."
+      },
+      "formula": "〜としたところで",
+      "examples": [
+        {
+          "jp": "成功したところで、問題はる。",
+          "reading": "",
+          "ru": "Даже если получится, проблема останется.",
+          "en": "Даже если получится, проблема останется."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜としたところで?",
+        "en": "What does 〜としたところで best express?"
+      },
+      "answer": "даже если предположить",
+      "options": [
+        "даже если предположить",
+        "без",
+        "до конца",
+        "зависит от"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-077",
+      "level": "N1",
+      "order": 77,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜とて",
+      "title": {
+        "ru": "даже",
+        "en": "даже"
+      },
+      "explanation": {
+        "ru": "〜とて помогает читать N1-текст: показывает даже и связывает аргумент с выводом.",
+        "en": "〜とて helps read N1 texts by expressing даже and linking an argument to a conclusion."
+      },
+      "formula": "〜とて",
+      "examples": [
+        {
+          "jp": "門家とて失敗することはある。",
+          "reading": "",
+          "ru": "Даже специалисты ошибаются.",
+          "en": "Даже специалисты ошибаются."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜とて?",
+        "en": "What does 〜とて best express?"
+      },
+      "answer": "даже",
+      "options": [
+        "даже",
+        "без",
+        "крайне",
+        "в зависимости от"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-078",
+      "level": "N1",
+      "order": 78,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜とは",
+      "title": {
+        "ru": "то, что...",
+        "en": "то, что..."
+      },
+      "explanation": {
+        "ru": "〜とは помогает читать N1-текст: показывает то, что... и связывает аргумент с выводом.",
+        "en": "〜とは helps read N1 texts by expressing то, что... and linking an argument to a conclusion."
+      },
+      "formula": "〜とは",
+      "examples": [
+        {
+          "jp": "彼がめるとは思わなかった。",
+          "reading": "",
+          "ru": "Не думал, что он уйдет.",
+          "en": "Не думал, что он уйдет."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜とは?",
+        "en": "What does 〜とは best express?"
+      },
+      "answer": "то, что...",
+      "options": [
+        "то, что...",
+        "уникально для",
+        "крайне",
+        "в зависимости от обстоятельств"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-079",
+      "level": "N1",
+      "order": 79,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜とはいえ",
+      "title": {
+        "ru": "хотя",
+        "en": "хотя"
+      },
+      "explanation": {
+        "ru": "〜とはいえ помогает читать N1-текст: показывает хотя и связывает аргумент с выводом.",
+        "en": "〜とはいえ helps read N1 texts by expressing хотя and linking an argument to a conclusion."
+      },
+      "formula": "〜とはいえ",
+      "examples": [
+        {
+          "jp": "春とはいえ、まだ寒い。",
+          "reading": "",
+          "ru": "Хотя весна, все еще холодно.",
+          "en": "Хотя весна, все еще холодно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜とはいえ?",
+        "en": "What does 〜とはいえ best express?"
+      },
+      "answer": "хотя",
+      "options": [
+        "хотя",
+        "как только",
+        "и прочее",
+        "действительно; явно"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-080",
+      "level": "N1",
+      "order": 80,
+      "group": {
+        "ru": "Грамматический блок 10",
+        "en": "Grammar block 10"
+      },
+      "pattern": "〜ともあろうものが",
+      "title": {
+        "ru": "кто бы мог подумать, что такой...",
+        "en": "кто бы мог подумать, что такой..."
+      },
+      "explanation": {
+        "ru": "〜ともあろうものが помогает читать N1-текст: показывает кто бы мог подумать, что такой... и связывает аргумент с выводом.",
+        "en": "〜ともあろうものが helps read N1 texts by expressing кто бы мог подумать, что такой... and linking an argument to a conclusion."
+      },
+      "formula": "〜ともあろうものが",
+      "examples": [
+        {
+          "jp": "師ともあろうものが、その言は問題だ。",
+          "reading": "",
+          "ru": "Для учителя такое высказывание проблемно.",
+          "en": "Для учителя такое высказывание проблемно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ともあろうものが?",
+        "en": "What does 〜ともあろうものが best express?"
+      },
+      "answer": "кто бы мог подумать, что такой...",
+      "options": [
+        "кто бы мог подумать, что такой...",
+        "или... или...",
+        "не говоря уже о",
+        "в любом случае"
+      ],
+      "sourcePage": 115
+    },
+    {
+      "id": "n1-grammar-081",
+      "level": "N1",
+      "order": 81,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ともなく",
+      "title": {
+        "ru": "неосознанно",
+        "en": "неосознанно"
+      },
+      "explanation": {
+        "ru": "〜ともなく помогает читать N1-текст: показывает неосознанно и связывает аргумент с выводом.",
+        "en": "〜ともなく helps read N1 texts by expressing неосознанно and linking an argument to a conclusion."
+      },
+      "formula": "〜ともなく",
+      "examples": [
+        {
+          "jp": "見るともなく窓の外を見ていた。",
+          "reading": "",
+          "ru": "Смотрел в окно неосознанно.",
+          "en": "Смотрел в окно неосознанно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ともなく?",
+        "en": "What does 〜ともなく best express?"
+      },
+      "answer": "неосознанно",
+      "options": [
+        "неосознанно",
+        "по-своему",
+        "не только",
+        "нельзя однозначно"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-082",
+      "level": "N1",
+      "order": 82,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ともなると",
+      "title": {
+        "ru": "когда уж становится",
+        "en": "когда уж становится"
+      },
+      "explanation": {
+        "ru": "〜ともなると помогает читать N1-текст: показывает когда уж становится и связывает аргумент с выводом.",
+        "en": "〜ともなると helps read N1 texts by expressing когда уж становится and linking an argument to a conclusion."
+      },
+      "formula": "〜ともなると",
+      "examples": [
+        {
+          "jp": "N1ともなると、解量が大きくえる。",
+          "reading": "",
+          "ru": "Когда речь о N1, объем чтения сильно растет.",
+          "en": "Когда речь о N1, объем чтения сильно растет."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ともなると?",
+        "en": "What does 〜ともなると best express?"
+      },
+      "answer": "когда уж становится",
+      "options": [
+        "когда уж становится",
+        "в условиях",
+        "именно потому что",
+        "еще не совсем"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-083",
+      "level": "N1",
+      "order": 83,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ないではおかない",
+      "title": {
+        "ru": "непременно заставит",
+        "en": "непременно заставит"
+      },
+      "explanation": {
+        "ru": "〜ないではおかない помогает читать N1-текст: показывает непременно заставит и связывает аргумент с выводом.",
+        "en": "〜ないではおかない helps read N1 texts by expressing непременно заставит and linking an argument to a conclusion."
+      },
+      "formula": "〜ないではおかない",
+      "examples": [
+        {
+          "jp": "このニュースは社を動かさないではおかない。",
+          "reading": "",
+          "ru": "Эта новость обязательно всколыхнет общество.",
+          "en": "Эта новость обязательно всколыхнет общество."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ないではおかない?",
+        "en": "What does 〜ないではおかない best express?"
+      },
+      "answer": "непременно заставит",
+      "options": [
+        "непременно заставит",
+        "дойти до",
+        "оставляя в стороне",
+        "само собой; лучше не говорить"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-084",
+      "level": "N1",
+      "order": 84,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ないではすまない",
+      "title": {
+        "ru": "нельзя не",
+        "en": "нельзя не"
+      },
+      "explanation": {
+        "ru": "〜ないではすまない помогает читать N1-текст: показывает нельзя не и связывает аргумент с выводом.",
+        "en": "〜ないではすまない helps read N1 texts by expressing нельзя не and linking an argument to a conclusion."
+      },
+      "formula": "〜ないではすまない",
+      "examples": [
+        {
+          "jp": "迷惑をかけたなら、謝らないではすまない。",
+          "reading": "",
+          "ru": "Если доставил неудобства, нельзя не извиниться.",
+          "en": "Если доставил неудобства, нельзя не извиниться."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ないではすまない?",
+        "en": "What does 〜ないではすまない best express?"
+      },
+      "answer": "нельзя не",
+      "options": [
+        "нельзя не",
+        "на этапе",
+        "не говоря о",
+        "может произойти"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-085",
+      "level": "N1",
+      "order": 85,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ないまでも",
+      "title": {
+        "ru": "пусть и не",
+        "en": "пусть и не"
+      },
+      "explanation": {
+        "ru": "〜ないまでも помогает читать N1-текст: показывает пусть и не и связывает аргумент с выводом.",
+        "en": "〜ないまでも helps read N1 texts by expressing пусть и не and linking an argument to a conclusion."
+      },
+      "formula": "〜ないまでも",
+      "examples": [
+        {
+          "jp": "完璧でないまでも、十分に使える。",
+          "reading": "",
+          "ru": "Пусть не идеально, но вполне пригодно.",
+          "en": "Пусть не идеально, но вполне пригодно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ないまでも?",
+        "en": "What does 〜ないまでも best express?"
+      },
+      "answer": "пусть и не",
+      "options": [
+        "пусть и не",
+        "что касается",
+        "недопустимый для",
+        "не может быть"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-086",
+      "level": "N1",
+      "order": 86,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ないものでもない",
+      "title": {
+        "ru": "не то чтобы невозможно",
+        "en": "не то чтобы невозможно"
+      },
+      "explanation": {
+        "ru": "〜ないものでもない помогает читать N1-текст: показывает не то чтобы невозможно и связывает аргумент с выводом.",
+        "en": "〜ないものでもない helps read N1 texts by expressing не то чтобы невозможно and linking an argument to a conclusion."
+      },
+      "formula": "〜ないものでもない",
+      "examples": [
+        {
+          "jp": "件次第では協力しないものでもない。",
+          "reading": "",
+          "ru": "В зависимости от условий не исключено, что помогу.",
+          "en": "В зависимости от условий не исключено, что помогу."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ないものでもない?",
+        "en": "What does 〜ないものでもない best express?"
+      },
+      "answer": "не то чтобы невозможно",
+      "options": [
+        "не то чтобы невозможно",
+        "вплоть до",
+        "только и остается",
+        "хотел бы, но не могу"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-087",
+      "level": "N1",
+      "order": 87,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ながらに",
+      "title": {
+        "ru": "оставаясь",
+        "en": "оставаясь"
+      },
+      "explanation": {
+        "ru": "〜ながらに помогает читать N1-текст: показывает оставаясь и связывает аргумент с выводом.",
+        "en": "〜ながらに helps read N1 texts by expressing оставаясь and linking an argument to a conclusion."
+      },
+      "formula": "〜ながらに",
+      "examples": [
+        {
+          "jp": "昔ながらの方法で作られている。",
+          "reading": "",
+          "ru": "Сделано старым традиционным способом.",
+          "en": "Сделано старым традиционным способом."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ながらに?",
+        "en": "What does 〜ながらに best express?"
+      },
+      "answer": "оставаясь",
+      "options": [
+        "оставаясь",
+        "по словам / с точки зрения",
+        "нет необходимости",
+        "раз уж"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-088",
+      "level": "N1",
+      "order": 88,
+      "group": {
+        "ru": "Грамматический блок 11",
+        "en": "Grammar block 11"
+      },
+      "pattern": "〜ながらも",
+      "title": {
+        "ru": "хотя",
+        "en": "хотя"
+      },
+      "explanation": {
+        "ru": "〜ながらも помогает читать N1-текст: показывает хотя и связывает аргумент с выводом.",
+        "en": "〜ながらも helps read N1 texts by expressing хотя and linking an argument to a conclusion."
+      },
+      "formula": "〜ながらも",
+      "examples": [
+        {
+          "jp": "不安を感じながらも挑した。",
+          "reading": "",
+          "ru": "Хотя волновался, попробовал.",
+          "en": "Хотя волновался, попробовал."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ながらも?",
+        "en": "What does 〜ながらも best express?"
+      },
+      "answer": "хотя",
+      "options": [
+        "хотя",
+        "зависит от",
+        "весь в",
+        "не считается"
+      ],
+      "sourcePage": 116
+    },
+    {
+      "id": "n1-grammar-089",
+      "level": "N1",
+      "order": 89,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜なくして",
+      "title": {
+        "ru": "без",
+        "en": "без"
+      },
+      "explanation": {
+        "ru": "〜なくして помогает читать N1-текст: показывает без и связывает аргумент с выводом.",
+        "en": "〜なくして helps read N1 texts by expressing без and linking an argument to a conclusion."
+      },
+      "formula": "〜なくして",
+      "examples": [
+        {
+          "jp": "信なくして協力は成り立たない。",
+          "reading": "",
+          "ru": "Без доверия сотрудничество невозможно.",
+          "en": "Без доверия сотрудничество невозможно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜なくして?",
+        "en": "What does 〜なくして best express?"
+      },
+      "answer": "без",
+      "options": [
+        "без",
+        "нетрудно",
+        "приобретать оттенок",
+        "ли / или нет"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-090",
+      "level": "N1",
+      "order": 90,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜なしに",
+      "title": {
+        "ru": "без",
+        "en": "без"
+      },
+      "explanation": {
+        "ru": "〜なしに помогает читать N1-текст: показывает без и связывает аргумент с выводом.",
+        "en": "〜なしに helps read N1 texts by expressing без and linking an argument to a conclusion."
+      },
+      "formula": "〜なしに",
+      "examples": [
+        {
+          "jp": "準備なしに成功はない。",
+          "reading": "",
+          "ru": "Без подготовки успеха не бывает.",
+          "en": "Без подготовки успеха не бывает."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜なしに?",
+        "en": "What does 〜なしに best express?"
+      },
+      "answer": "без",
+      "options": [
+        "без",
+        "даже на уровне; и",
+        "почти то же самое",
+        "крайне"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-091",
+      "level": "N1",
+      "order": 91,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜ならでは",
+      "title": {
+        "ru": "уникально для",
+        "en": "уникально для"
+      },
+      "explanation": {
+        "ru": "〜ならでは помогает читать N1-текст: показывает уникально для и связывает аргумент с выводом.",
+        "en": "〜ならでは helps read N1 texts by expressing уникально для and linking an argument to a conclusion."
+      },
+      "formula": "〜ならでは",
+      "examples": [
+        {
+          "jp": "京都ならではの雰がある。",
+          "reading": "",
+          "ru": "Есть атмосфера, характерная только для Киото.",
+          "en": "Есть атмосфера, характерная только для Киото."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ならでは?",
+        "en": "What does 〜ならでは best express?"
+      },
+      "answer": "уникально для",
+      "options": [
+        "уникально для",
+        "даже",
+        "не говоря уже о",
+        "насколько"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-092",
+      "level": "N1",
+      "order": 92,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜なり",
+      "title": {
+        "ru": "как только",
+        "en": "как только"
+      },
+      "explanation": {
+        "ru": "〜なり помогает читать N1-текст: показывает как только и связывает аргумент с выводом.",
+        "en": "〜なり helps read N1 texts by expressing как только and linking an argument to a conclusion."
+      },
+      "formula": "〜なり",
+      "examples": [
+        {
+          "jp": "彼は部屋に入るなり話し始めた。",
+          "reading": "",
+          "ru": "Как только вошел, начал говорить.",
+          "en": "Как только вошел, начал говорить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜なり?",
+        "en": "What does 〜なり best express?"
+      },
+      "answer": "как только",
+      "options": [
+        "как только",
+        "в соответствии с",
+        "а ведь мог бы",
+        "если случится, то уже..."
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-093",
+      "level": "N1",
+      "order": 93,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜なり〜なり",
+      "title": {
+        "ru": "или... или...",
+        "en": "или... или..."
+      },
+      "explanation": {
+        "ru": "〜なり〜なり помогает читать N1-текст: показывает или... или... и связывает аргумент с выводом.",
+        "en": "〜なり〜なり helps read N1 texts by expressing или... или... and linking an argument to a conclusion."
+      },
+      "formula": "〜なり〜なり",
+      "examples": [
+        {
+          "jp": "電話なりメールなりで連絡してください。",
+          "reading": "",
+          "ru": "Свяжитесь по телефону или email.",
+          "en": "Свяжитесь по телефону или email."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜なり〜なり?",
+        "en": "What does 〜なり〜なり best express?"
+      },
+      "answer": "или... или...",
+      "options": [
+        "или... или...",
+        "достойный; выдерживает",
+        "как только",
+        "заодно; по случаю"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-094",
+      "level": "N1",
+      "order": 94,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜なりに",
+      "title": {
+        "ru": "по-своему",
+        "en": "по-своему"
+      },
+      "explanation": {
+        "ru": "〜なりに помогает читать N1-текст: показывает по-своему и связывает аргумент с выводом.",
+        "en": "〜なりに helps read N1 texts by expressing по-своему and linking an argument to a conclusion."
+      },
+      "formula": "〜なりに",
+      "examples": [
+        {
+          "jp": "初心者なりによく考えている。",
+          "reading": "",
+          "ru": "Для новичка он хорошо думает.",
+          "en": "Для новичка он хорошо думает."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜なりに?",
+        "en": "What does 〜なりに best express?"
+      },
+      "answer": "по-своему",
+      "options": [
+        "по-своему",
+        "невыносимый; не в состоянии",
+        "из-за; поскольку",
+        "заодно"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-095",
+      "level": "N1",
+      "order": 95,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜にあって",
+      "title": {
+        "ru": "в условиях",
+        "en": "в условиях"
+      },
+      "explanation": {
+        "ru": "〜にあって помогает читать N1-текст: показывает в условиях и связывает аргумент с выводом.",
+        "en": "〜にあって helps read N1 texts by expressing в условиях and linking an argument to a conclusion."
+      },
+      "formula": "〜にあって",
+      "examples": [
+        {
+          "jp": "しい況にあっても希望を失わなかった。",
+          "reading": "",
+          "ru": "Даже в тяжелых условиях не потерял надежды.",
+          "en": "Даже в тяжелых условиях не потерял надежды."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にあって?",
+        "en": "What does 〜にあって best express?"
+      },
+      "answer": "в условиях",
+      "options": [
+        "в условиях",
+        "достаточный для",
+        "в зависимости от способа",
+        "думал, что..., но"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-096",
+      "level": "N1",
+      "order": 96,
+      "group": {
+        "ru": "Грамматический блок 12",
+        "en": "Grammar block 12"
+      },
+      "pattern": "〜に至る",
+      "title": {
+        "ru": "дойти до",
+        "en": "дойти до"
+      },
+      "explanation": {
+        "ru": "〜に至る помогает читать N1-текст: показывает дойти до и связывает аргумент с выводом.",
+        "en": "〜に至る helps read N1 texts by expressing дойти до and linking an argument to a conclusion."
+      },
+      "formula": "〜に至る",
+      "examples": [
+        {
+          "jp": "議論は最終的な合意に至った。",
+          "reading": "",
+          "ru": "Дискуссия дошла до согласия.",
+          "en": "Дискуссия дошла до согласия."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜に至る?",
+        "en": "What does 〜に至る best express?"
+      },
+      "answer": "дойти до",
+      "options": [
+        "дойти до",
+        "в отличие от",
+        "кроме",
+        "затрудняться; не мочь"
+      ],
+      "sourcePage": 117
+    },
+    {
+      "id": "n1-grammar-097",
+      "level": "N1",
+      "order": 97,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜に至って",
+      "title": {
+        "ru": "на этапе",
+        "en": "на этапе"
+      },
+      "explanation": {
+        "ru": "〜に至って помогает читать N1-текст: показывает на этапе и связывает аргумент с выводом.",
+        "en": "〜に至って helps read N1 texts by expressing на этапе and linking an argument to a conclusion."
+      },
+      "formula": "〜に至って",
+      "examples": [
+        {
+          "jp": "問題が大きくなったに至って、策が取られた。",
+          "reading": "",
+          "ru": "Меры приняли лишь когда проблема выросла.",
+          "en": "Меры приняли лишь когда проблема выросла."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜に至って?",
+        "en": "What does 〜に至って best express?"
+      },
+      "answer": "на этапе",
+      "options": [
+        "на этапе",
+        "больше, чем",
+        "начиная с момента; на этом",
+        "как только"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-098",
+      "level": "N1",
+      "order": 98,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜に至っては",
+      "title": {
+        "ru": "что касается",
+        "en": "что касается"
+      },
+      "explanation": {
+        "ru": "〜に至っては помогает читать N1-текст: показывает что касается и связывает аргумент с выводом.",
+        "en": "〜に至っては helps read N1 texts by expressing что касается and linking an argument to a conclusion."
+      },
+      "formula": "〜に至っては",
+      "examples": [
+        {
+          "jp": "費用に至っては、まだ見通しが立たない。",
+          "reading": "",
+          "ru": "Что касается расходов, пока ясности нет.",
+          "en": "Что касается расходов, пока ясности нет."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜に至っては?",
+        "en": "What does 〜に至っては best express?"
+      },
+      "answer": "что касается",
+      "options": [
+        "что касается",
+        "независимо от",
+        "начиная с",
+        "целых"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-099",
+      "level": "N1",
+      "order": 99,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜に至るまで",
+      "title": {
+        "ru": "вплоть до",
+        "en": "вплоть до"
+      },
+      "explanation": {
+        "ru": "〜に至るまで помогает читать N1-текст: показывает вплоть до и связывает аргумент с выводом.",
+        "en": "〜に至るまで helps read N1 texts by expressing вплоть до and linking an argument to a conclusion."
+      },
+      "formula": "〜に至るまで",
+      "examples": [
+        {
+          "jp": "準備から施に至るまで確認した。",
+          "reading": "",
+          "ru": "Проверили от подготовки до выполнения.",
+          "en": "Проверили от подготовки до выполнения."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜に至るまで?",
+        "en": "What does 〜に至るまで best express?"
+      },
+      "answer": "вплоть до",
+      "options": [
+        "вплоть до",
+        "без",
+        "не могу не",
+        "уже по одному"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-100",
+      "level": "N1",
+      "order": 100,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜に言わせれば",
+      "title": {
+        "ru": "по словам / с точки зрения",
+        "en": "по словам / с точки зрения"
+      },
+      "explanation": {
+        "ru": "〜に言わせれば помогает читать N1-текст: показывает по словам / с точки зрения и связывает аргумент с выводом.",
+        "en": "〜に言わせれば helps read N1 texts by expressing по словам / с точки зрения and linking an argument to a conclusion."
+      },
+      "formula": "〜に言わせれば",
+      "examples": [
+        {
+          "jp": "門家に言わせれば、まだ危だ。",
+          "reading": "",
+          "ru": "По мнению эксперта, это все еще опасно.",
+          "en": "По мнению эксперта, это все еще опасно."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜に言わせれば?",
+        "en": "What does 〜に言わせれば best express?"
+      },
+      "answer": "по словам / с точки зрения",
+      "options": [
+        "по словам / с точки зрения",
+        "до конца",
+        "с помощью; на основании; с",
+        "с точки зрения"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-101",
+      "level": "N1",
+      "order": 101,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜にかかっている",
+      "title": {
+        "ru": "зависит от",
+        "en": "зависит от"
+      },
+      "explanation": {
+        "ru": "〜にかかっている помогает читать N1-текст: показывает зависит от и связывает аргумент с выводом.",
+        "en": "〜にかかっている helps read N1 texts by expressing зависит от and linking an argument to a conclusion."
+      },
+      "formula": "〜にかかっている",
+      "examples": [
+        {
+          "jp": "成功は準備にかかっている。",
+          "reading": "",
+          "ru": "Успех зависит от подготовки.",
+          "en": "Успех зависит от подготовки."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にかかっている?",
+        "en": "What does 〜にかかっている best express?"
+      },
+      "answer": "зависит от",
+      "options": [
+        "зависит от",
+        "крайне",
+        "не обращая внимания",
+        "не значит, что"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-102",
+      "level": "N1",
+      "order": 102,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜にかたくない",
+      "title": {
+        "ru": "нетрудно",
+        "en": "нетрудно"
+      },
+      "explanation": {
+        "ru": "〜にかたくない помогает читать N1-текст: показывает нетрудно и связывает аргумент с выводом.",
+        "en": "〜にかたくない helps read N1 texts by expressing нетрудно and linking an argument to a conclusion."
+      },
+      "formula": "〜にかたくない",
+      "examples": [
+        {
+          "jp": "彼の苦は想像にかたくない。",
+          "reading": "",
+          "ru": "Нетрудно представить его трудности.",
+          "en": "Нетрудно представить его трудности."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にかたくない?",
+        "en": "What does 〜にかたくない best express?"
+      },
+      "answer": "нетрудно",
+      "options": [
+        "нетрудно",
+        "крайне",
+        "быть вынужденным",
+        "есть склонность"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-103",
+      "level": "N1",
+      "order": 103,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜にして",
+      "title": {
+        "ru": "даже на уровне; и",
+        "en": "даже на уровне; и"
+      },
+      "explanation": {
+        "ru": "〜にして помогает читать N1-текст: показывает даже на уровне; и и связывает аргумент с выводом.",
+        "en": "〜にして helps read N1 texts by expressing даже на уровне; и and linking an argument to a conclusion."
+      },
+      "formula": "〜にして",
+      "examples": [
+        {
+          "jp": "彼は若くして大きな成果を出した。",
+          "reading": "",
+          "ru": "Он добился большого результата еще молодым.",
+          "en": "Он добился большого результата еще молодым."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にして?",
+        "en": "What does 〜にして best express?"
+      },
+      "answer": "даже на уровне; и",
+      "options": [
+        "даже на уровне; и",
+        "и прочее",
+        "не обращая внимания",
+        "крайне"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-104",
+      "level": "N1",
+      "order": 104,
+      "group": {
+        "ru": "Грамматический блок 13",
+        "en": "Grammar block 13"
+      },
+      "pattern": "〜にしてからが",
+      "title": {
+        "ru": "даже",
+        "en": "даже"
+      },
+      "explanation": {
+        "ru": "〜にしてからが помогает читать N1-текст: показывает даже и связывает аргумент с выводом.",
+        "en": "〜にしてからが helps read N1 texts by expressing даже and linking an argument to a conclusion."
+      },
+      "formula": "〜にしてからが",
+      "examples": [
+        {
+          "jp": "社長にしてからが、この問題を理解していない。",
+          "reading": "",
+          "ru": "Даже директор не понимает эту проблему.",
+          "en": "Даже директор не понимает эту проблему."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にしてからが?",
+        "en": "What does 〜にしてからが best express?"
+      },
+      "answer": "даже",
+      "options": [
+        "даже",
+        "не говоря уже о",
+        "ради того, чтобы",
+        "чрезвычайно"
+      ],
+      "sourcePage": 118
+    },
+    {
+      "id": "n1-grammar-105",
+      "level": "N1",
+      "order": 105,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜にして",
+      "title": {
+        "ru": "в соответствии с",
+        "en": "в соответствии с"
+      },
+      "explanation": {
+        "ru": "〜にして помогает читать N1-текст: показывает в соответствии с и связывает аргумент с выводом.",
+        "en": "〜にして helps read N1 texts by expressing в соответствии с and linking an argument to a conclusion."
+      },
+      "formula": "〜にして",
+      "examples": [
+        {
+          "jp": "現にして計を見直す。",
+          "reading": "",
+          "ru": "Пересмотреть план в соответствии с реальностью.",
+          "en": "Пересмотреть план в соответствии с реальностью."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にして?",
+        "en": "What does 〜にして best express?"
+      },
+      "answer": "в соответствии с",
+      "options": [
+        "в соответствии с",
+        "не только",
+        "словно сейчас",
+        "хотя сам"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-106",
+      "level": "N1",
+      "order": 106,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜にたえる",
+      "title": {
+        "ru": "достойный; выдерживает",
+        "en": "достойный; выдерживает"
+      },
+      "explanation": {
+        "ru": "〜にたえる помогает читать N1-текст: показывает достойный; выдерживает и связывает аргумент с выводом.",
+        "en": "〜にたえる helps read N1 texts by expressing достойный; выдерживает and linking an argument to a conclusion."
+      },
+      "formula": "〜にたえる",
+      "examples": [
+        {
+          "jp": "この作品は鑑賞にたえる。",
+          "reading": "",
+          "ru": "Это произведение достойно просмотра.",
+          "en": "Это произведение достойно просмотра."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にたえる?",
+        "en": "What does 〜にたえる best express?"
+      },
+      "answer": "достойный; выдерживает",
+      "options": [
+        "достойный; выдерживает",
+        "именно потому что",
+        "осмелиться; намеренно",
+        "всем вместе"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-107",
+      "level": "N1",
+      "order": 107,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜にたえない",
+      "title": {
+        "ru": "невыносимый; не в состоянии",
+        "en": "невыносимый; не в состоянии"
+      },
+      "explanation": {
+        "ru": "〜にたえない помогает читать N1-текст: показывает невыносимый; не в состоянии и связывает аргумент с выводом.",
+        "en": "〜にたえない helps read N1 texts by expressing невыносимый; не в состоянии and linking an argument to a conclusion."
+      },
+      "formula": "〜にたえない",
+      "examples": [
+        {
+          "jp": "その話は聞くにたえない。",
+          "reading": "",
+          "ru": "Эту историю невозможно слушать.",
+          "en": "Эту историю невозможно слушать."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にたえない?",
+        "en": "What does 〜にたえない best express?"
+      },
+      "answer": "невыносимый; не в состоянии",
+      "options": [
+        "невыносимый; не в состоянии",
+        "оставляя в стороне",
+        "до конца; исключительно",
+        "выглядит как"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-108",
+      "level": "N1",
+      "order": 108,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜に足る",
+      "title": {
+        "ru": "достаточный для",
+        "en": "достаточный для"
+      },
+      "explanation": {
+        "ru": "〜に足る помогает читать N1-текст: показывает достаточный для и связывает аргумент с выводом.",
+        "en": "〜に足る helps read N1 texts by expressing достаточный для and linking an argument to a conclusion."
+      },
+      "formula": "〜に足る",
+      "examples": [
+        {
+          "jp": "信に足るがある。",
+          "reading": "",
+          "ru": "Есть доказательства, заслуживающие доверия.",
+          "en": "Есть доказательства, заслуживающие доверия."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜に足る?",
+        "en": "What does 〜に足る best express?"
+      },
+      "answer": "достаточный для",
+      "options": [
+        "достаточный для",
+        "не говоря о",
+        "как и ожидалось",
+        "тем более что"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-109",
+      "level": "N1",
+      "order": 109,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜にひきかえ",
+      "title": {
+        "ru": "в отличие от",
+        "en": "в отличие от"
+      },
+      "explanation": {
+        "ru": "〜にひきかえ помогает читать N1-текст: показывает в отличие от и связывает аргумент с выводом.",
+        "en": "〜にひきかえ helps read N1 texts by expressing в отличие от and linking an argument to a conclusion."
+      },
+      "formula": "〜にひきかえ",
+      "examples": [
+        {
+          "jp": "兄にひきかえ、弟はかだ。",
+          "reading": "",
+          "ru": "В отличие от старшего брата, младший тихий.",
+          "en": "В отличие от старшего брата, младший тихий."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にひきかえ?",
+        "en": "What does 〜にひきかえ best express?"
+      },
+      "answer": "в отличие от",
+      "options": [
+        "в отличие от",
+        "недопустимый для",
+        "именно благодаря",
+        "поскольку"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-110",
+      "level": "N1",
+      "order": 110,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜にもまして",
+      "title": {
+        "ru": "больше, чем",
+        "en": "больше, чем"
+      },
+      "explanation": {
+        "ru": "〜にもまして помогает читать N1-текст: показывает больше, чем и связывает аргумент с выводом.",
+        "en": "〜にもまして helps read N1 texts by expressing больше, чем and linking an argument to a conclusion."
+      },
+      "formula": "〜にもまして",
+      "examples": [
+        {
+          "jp": "今年は去年にもまして忙しい。",
+          "reading": "",
+          "ru": "В этом году еще занятые, чем в прошлом.",
+          "en": "В этом году еще занятые, чем в прошлом."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜にもまして?",
+        "en": "What does 〜にもまして best express?"
+      },
+      "answer": "больше, чем",
+      "options": [
+        "больше, чем",
+        "только и остается",
+        "зависит от",
+        "без того чтобы"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-111",
+      "level": "N1",
+      "order": 111,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜によらず",
+      "title": {
+        "ru": "независимо от",
+        "en": "независимо от"
+      },
+      "explanation": {
+        "ru": "〜によらず помогает читать N1-текст: показывает независимо от и связывает аргумент с выводом.",
+        "en": "〜によらず helps read N1 texts by expressing независимо от and linking an argument to a conclusion."
+      },
+      "formula": "〜によらず",
+      "examples": [
+        {
+          "jp": "年によらず加できる。",
+          "reading": "",
+          "ru": "Можно участвовать независимо от возраста.",
+          "en": "Можно участвовать независимо от возраста."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜によらず?",
+        "en": "What does 〜によらず best express?"
+      },
+      "answer": "независимо от",
+      "options": [
+        "независимо от",
+        "нет необходимости",
+        "в зависимости от",
+        "чтобы не"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-112",
+      "level": "N1",
+      "order": 112,
+      "group": {
+        "ru": "Грамматический блок 14",
+        "en": "Grammar block 14"
+      },
+      "pattern": "〜ぬきに",
+      "title": {
+        "ru": "без",
+        "en": "без"
+      },
+      "explanation": {
+        "ru": "〜ぬきに помогает читать N1-текст: показывает без и связывает аргумент с выводом.",
+        "en": "〜ぬきに helps read N1 texts by expressing без and linking an argument to a conclusion."
+      },
+      "formula": "〜ぬきに",
+      "examples": [
+        {
+          "jp": "冗談ぬきに考えよう。",
+          "reading": "",
+          "ru": "Давай подумаем без шуток.",
+          "en": "Давай подумаем без шуток."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ぬきに?",
+        "en": "What does 〜ぬきに best express?"
+      },
+      "answer": "без",
+      "options": [
+        "без",
+        "весь в",
+        "в зависимости от обстоятельств",
+        "в том числе из-за"
+      ],
+      "sourcePage": 119
+    },
+    {
+      "id": "n1-grammar-113",
+      "level": "N1",
+      "order": 113,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜ぬく",
+      "title": {
+        "ru": "до конца",
+        "en": "до конца"
+      },
+      "explanation": {
+        "ru": "〜ぬく помогает читать N1-текст: показывает до конца и связывает аргумент с выводом.",
+        "en": "〜ぬく helps read N1 texts by expressing до конца and linking an argument to a conclusion."
+      },
+      "formula": "〜ぬく",
+      "examples": [
+        {
+          "jp": "最後までやりぬく悟だ。",
+          "reading": "",
+          "ru": "Готов довести до конца.",
+          "en": "Готов довести до конца."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ぬく?",
+        "en": "What does 〜ぬく best express?"
+      },
+      "answer": "до конца",
+      "options": [
+        "до конца",
+        "приобретать оттенок",
+        "действительно; явно",
+        "в итоге дошло до"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-114",
+      "level": "N1",
+      "order": 114,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜の至り",
+      "title": {
+        "ru": "крайне",
+        "en": "крайне"
+      },
+      "explanation": {
+        "ru": "〜の至り помогает читать N1-текст: показывает крайне и связывает аргумент с выводом.",
+        "en": "〜の至り helps read N1 texts by expressing крайне and linking an argument to a conclusion."
+      },
+      "formula": "〜の至り",
+      "examples": [
+        {
+          "jp": "光の至りです。",
+          "reading": "",
+          "ru": "Это высшая честь.",
+          "en": "Это высшая честь."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜の至り?",
+        "en": "What does 〜の至り best express?"
+      },
+      "answer": "крайне",
+      "options": [
+        "крайне",
+        "почти то же самое",
+        "в любом случае",
+        "сплошь"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-115",
+      "level": "N1",
+      "order": 115,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜の極み",
+      "title": {
+        "ru": "крайне",
+        "en": "крайне"
+      },
+      "explanation": {
+        "ru": "〜の極み помогает читать N1-текст: показывает крайне и связывает аргумент с выводом.",
+        "en": "〜の極み helps read N1 texts by expressing крайне and linking an argument to a conclusion."
+      },
+      "formula": "〜の極み",
+      "examples": [
+        {
+          "jp": "感激の極みです。",
+          "reading": "",
+          "ru": "Я крайне тронут.",
+          "en": "Я крайне тронут."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜の極み?",
+        "en": "What does 〜の極み best express?"
+      },
+      "answer": "крайне",
+      "options": [
+        "крайне",
+        "не говоря уже о",
+        "нельзя однозначно",
+        "непременно заставит"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-116",
+      "level": "N1",
+      "order": 116,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜のなんの",
+      "title": {
+        "ru": "и прочее",
+        "en": "и прочее"
+      },
+      "explanation": {
+        "ru": "〜のなんの помогает читать N1-текст: показывает и прочее и связывает аргумент с выводом.",
+        "en": "〜のなんの helps read N1 texts by expressing и прочее and linking an argument to a conclusion."
+      },
+      "formula": "〜のなんの",
+      "examples": [
+        {
+          "jp": "忙しいのなんのと言ってった。",
+          "reading": "",
+          "ru": "Отказался, говоря, что занят и т.п.",
+          "en": "Отказался, говоря, что занят и т.п."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜のなんの?",
+        "en": "What does 〜のなんの best express?"
+      },
+      "answer": "и прочее",
+      "options": [
+        "и прочее",
+        "а ведь мог бы",
+        "еще не совсем",
+        "нельзя не"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-117",
+      "level": "N1",
+      "order": 117,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜はおろか",
+      "title": {
+        "ru": "не говоря уже о",
+        "en": "не говоря уже о"
+      },
+      "explanation": {
+        "ru": "〜はおろか помогает читать N1-текст: показывает не говоря уже о и связывает аргумент с выводом.",
+        "en": "〜はおろか helps read N1 texts by expressing не говоря уже о and linking an argument to a conclusion."
+      },
+      "formula": "〜はおろか",
+      "examples": [
+        {
+          "jp": "漢字はおろか、ひらがなもめなかった。",
+          "reading": "",
+          "ru": "Он не мог читать даже хирагану, не говоря о кандзи.",
+          "en": "Он не мог читать даже хирагану, не говоря о кандзи."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜はおろか?",
+        "en": "What does 〜はおろか best express?"
+      },
+      "answer": "не говоря уже о",
+      "options": [
+        "не говоря уже о",
+        "как только",
+        "само собой; лучше не говорить",
+        "нет способа"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-118",
+      "level": "N1",
+      "order": 118,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜ばかりか",
+      "title": {
+        "ru": "не только",
+        "en": "не только"
+      },
+      "explanation": {
+        "ru": "〜ばかりか помогает читать N1-текст: показывает не только и связывает аргумент с выводом.",
+        "en": "〜ばかりか helps read N1 texts by expressing не только and linking an argument to a conclusion."
+      },
+      "formula": "〜ばかりか",
+      "examples": [
+        {
+          "jp": "刻したばかりか、資料も忘れた。",
+          "reading": "",
+          "ru": "Он не только опоздал, но и забыл материалы.",
+          "en": "Он не только опоздал, но и забыл материалы."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ばかりか?",
+        "en": "What does 〜ばかりか best express?"
+      },
+      "answer": "не только",
+      "options": [
+        "не только",
+        "из-за; поскольку",
+        "может произойти",
+        "сразу после"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-119",
+      "level": "N1",
+      "order": 119,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜ばこそ",
+      "title": {
+        "ru": "именно потому что",
+        "en": "именно потому что"
+      },
+      "explanation": {
+        "ru": "〜ばこそ помогает читать N1-текст: показывает именно потому что и связывает аргумент с выводом.",
+        "en": "〜ばこそ helps read N1 texts by expressing именно потому что and linking an argument to a conclusion."
+      },
+      "formula": "〜ばこそ",
+      "examples": [
+        {
+          "jp": "大切に思えばこそ、しく言った。",
+          "reading": "",
+          "ru": "Сказал строго именно потому, что дорожу.",
+          "en": "Сказал строго именно потому, что дорожу."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ばこそ?",
+        "en": "What does 〜ばこそ best express?"
+      },
+      "answer": "именно потому что",
+      "options": [
+        "именно потому что",
+        "в зависимости от способа",
+        "не может быть",
+        "упустить возможность"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-120",
+      "level": "N1",
+      "order": 120,
+      "group": {
+        "ru": "Грамматический блок 15",
+        "en": "Grammar block 15"
+      },
+      "pattern": "〜はさておき",
+      "title": {
+        "ru": "оставляя в стороне",
+        "en": "оставляя в стороне"
+      },
+      "explanation": {
+        "ru": "〜はさておき помогает читать N1-текст: показывает оставляя в стороне и связывает аргумент с выводом.",
+        "en": "〜はさておき helps read N1 texts by expressing оставляя в стороне and linking an argument to a conclusion."
+      },
+      "formula": "〜はさておき",
+      "examples": [
+        {
+          "jp": "費用はさておき、まず必要性を考えよう。",
+          "reading": "",
+          "ru": "Оставим расходы, сначала подумаем о необходимости.",
+          "en": "Оставим расходы, сначала подумаем о необходимости."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜はさておき?",
+        "en": "What does 〜はさておき best express?"
+      },
+      "answer": "оставляя в стороне",
+      "options": [
+        "оставляя в стороне",
+        "кроме",
+        "хотел бы, но не могу",
+        "только"
+      ],
+      "sourcePage": 120
+    },
+    {
+      "id": "n1-grammar-121",
+      "level": "N1",
+      "order": 121,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜はともかく",
+      "title": {
+        "ru": "не говоря о",
+        "en": "не говоря о"
+      },
+      "explanation": {
+        "ru": "〜はともかく помогает читать N1-текст: показывает не говоря о и связывает аргумент с выводом.",
+        "en": "〜はともかく helps read N1 texts by expressing не говоря о and linking an argument to a conclusion."
+      },
+      "formula": "〜はともかく",
+      "examples": [
+        {
+          "jp": "結果はともかく、努力は評したい。",
+          "reading": "",
+          "ru": "Результат в сторону, усилия стоит оценить.",
+          "en": "Результат в сторону, усилия стоит оценить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜はともかく?",
+        "en": "What does 〜はともかく best express?"
+      },
+      "answer": "не говоря о",
+      "options": [
+        "не говоря о",
+        "начиная с момента; на этом",
+        "раз уж",
+        "не пройдет просто так"
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-122",
+      "level": "N1",
+      "order": 122,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜まじき",
+      "title": {
+        "ru": "недопустимый для",
+        "en": "недопустимый для"
+      },
+      "explanation": {
+        "ru": "〜まじき помогает читать N1-текст: показывает недопустимый для и связывает аргумент с выводом.",
+        "en": "〜まじき helps read N1 texts by expressing недопустимый для and linking an argument to a conclusion."
+      },
+      "formula": "〜まじき",
+      "examples": [
+        {
+          "jp": "師にあるまじき行だ。",
+          "reading": "",
+          "ru": "Поступок, недопустимый для учителя.",
+          "en": "Поступок, недопустимый для учителя."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜まじき?",
+        "en": "What does 〜まじき best express?"
+      },
+      "answer": "недопустимый для",
+      "options": [
+        "недопустимый для",
+        "начиная с",
+        "не считается",
+        "даже если"
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-123",
+      "level": "N1",
+      "order": 123,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜までだ",
+      "title": {
+        "ru": "только и остается",
+        "en": "только и остается"
+      },
+      "explanation": {
+        "ru": "〜までだ помогает читать N1-текст: показывает только и остается и связывает аргумент с выводом.",
+        "en": "〜までだ helps read N1 texts by expressing только и остается and linking an argument to a conclusion."
+      },
+      "formula": "〜までだ",
+      "examples": [
+        {
+          "jp": "無理ならるまでだ。",
+          "reading": "",
+          "ru": "Если невозможно, остается отказать.",
+          "en": "Если невозможно, остается отказать."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜までだ?",
+        "en": "What does 〜までだ best express?"
+      },
+      "answer": "только и остается",
+      "options": [
+        "только и остается",
+        "не могу не",
+        "ли / или нет",
+        "даже"
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-124",
+      "level": "N1",
+      "order": 124,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜までもない",
+      "title": {
+        "ru": "нет необходимости",
+        "en": "нет необходимости"
+      },
+      "explanation": {
+        "ru": "〜までもない помогает читать N1-текст: показывает нет необходимости и связывает аргумент с выводом.",
+        "en": "〜までもない helps read N1 texts by expressing нет необходимости and linking an argument to a conclusion."
+      },
+      "formula": "〜までもない",
+      "examples": [
+        {
+          "jp": "言うまでもないことだ。",
+          "reading": "",
+          "ru": "Нет необходимости говорить.",
+          "en": "Нет необходимости говорить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜までもない?",
+        "en": "What does 〜までもない best express?"
+      },
+      "answer": "нет необходимости",
+      "options": [
+        "нет необходимости",
+        "с помощью; на основании; с",
+        "крайне",
+        "то... то..."
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-125",
+      "level": "N1",
+      "order": 125,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜まみれ",
+      "title": {
+        "ru": "весь в",
+        "en": "весь в"
+      },
+      "explanation": {
+        "ru": "〜まみれ помогает читать N1-текст: показывает весь в и связывает аргумент с выводом.",
+        "en": "〜まみれ helps read N1 texts by expressing весь в and linking an argument to a conclusion."
+      },
+      "formula": "〜まみれ",
+      "examples": [
+        {
+          "jp": "服が泥まみれになった。",
+          "reading": "",
+          "ru": "Одежда вся в грязи.",
+          "en": "Одежда вся в грязи."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜まみれ?",
+        "en": "What does 〜まみれ best express?"
+      },
+      "answer": "весь в",
+      "options": [
+        "весь в",
+        "не обращая внимания",
+        "насколько",
+        "будучи"
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-126",
+      "level": "N1",
+      "order": 126,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜めく",
+      "title": {
+        "ru": "приобретать оттенок",
+        "en": "приобретать оттенок"
+      },
+      "explanation": {
+        "ru": "〜めく помогает читать N1-текст: показывает приобретать оттенок и связывает аргумент с выводом.",
+        "en": "〜めく helps read N1 texts by expressing приобретать оттенок and linking an argument to a conclusion."
+      },
+      "formula": "〜めく",
+      "examples": [
+        {
+          "jp": "春めいてきた。",
+          "reading": "",
+          "ru": "Стало похоже на весну.",
+          "en": "Стало похоже на весну."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜めく?",
+        "en": "What does 〜めく best express?"
+      },
+      "answer": "приобретать оттенок",
+      "options": [
+        "приобретать оттенок",
+        "быть вынужденным",
+        "если случится, то уже...",
+        "даже один"
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-127",
+      "level": "N1",
+      "order": 127,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜も同然だ",
+      "title": {
+        "ru": "почти то же самое",
+        "en": "почти то же самое"
+      },
+      "explanation": {
+        "ru": "〜も同然だ помогает читать N1-текст: показывает почти то же самое и связывает аргумент с выводом.",
+        "en": "〜も同然だ helps read N1 texts by expressing почти то же самое and linking an argument to a conclusion."
+      },
+      "formula": "〜も同然だ",
+      "examples": [
+        {
+          "jp": "準備しないのは失敗したも同然だ。",
+          "reading": "",
+          "ru": "Не подготовиться - почти то же, что провалиться.",
+          "en": "Не подготовиться - почти то же, что провалиться."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜も同然だ?",
+        "en": "What does 〜も同然だ best express?"
+      },
+      "answer": "почти то же самое",
+      "options": [
+        "почти то же самое",
+        "не обращая внимания",
+        "заодно; по случаю",
+        "то... то..."
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-128",
+      "level": "N1",
+      "order": 128,
+      "group": {
+        "ru": "Грамматический блок 16",
+        "en": "Grammar block 16"
+      },
+      "pattern": "〜もさることながら",
+      "title": {
+        "ru": "не говоря уже о",
+        "en": "не говоря уже о"
+      },
+      "explanation": {
+        "ru": "〜もさることながら помогает читать N1-текст: показывает не говоря уже о и связывает аргумент с выводом.",
+        "en": "〜もさることながら helps read N1 texts by expressing не говоря уже о and linking an argument to a conclusion."
+      },
+      "formula": "〜もさることながら",
+      "examples": [
+        {
+          "jp": "性能もさることながら、デザインもいい。",
+          "reading": "",
+          "ru": "Не говоря уже о функциях, дизайн тоже хорош.",
+          "en": "Не говоря уже о функциях, дизайн тоже хорош."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜もさることながら?",
+        "en": "What does 〜もさることながら best express?"
+      },
+      "answer": "не говоря уже о",
+      "options": [
+        "не говоря уже о",
+        "ради того, чтобы",
+        "заодно",
+        "оставить как есть"
+      ],
+      "sourcePage": 121
+    },
+    {
+      "id": "n1-grammar-129",
+      "level": "N1",
+      "order": 129,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜ものを",
+      "title": {
+        "ru": "а ведь мог бы",
+        "en": "а ведь мог бы"
+      },
+      "explanation": {
+        "ru": "〜ものを помогает читать N1-текст: показывает а ведь мог бы и связывает аргумент с выводом.",
+        "en": "〜ものを helps read N1 texts by expressing а ведь мог бы and linking an argument to a conclusion."
+      },
+      "formula": "〜ものを",
+      "examples": [
+        {
+          "jp": "早く相談すればよかったものを。",
+          "reading": "",
+          "ru": "А ведь нужно было раньше посоветоваться.",
+          "en": "А ведь нужно было раньше посоветоваться."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ものを?",
+        "en": "What does 〜ものを best express?"
+      },
+      "answer": "а ведь мог бы",
+      "options": [
+        "а ведь мог бы",
+        "словно сейчас",
+        "думал, что..., но",
+        "даже если"
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-130",
+      "level": "N1",
+      "order": 130,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜や否や",
+      "title": {
+        "ru": "как только",
+        "en": "как только"
+      },
+      "explanation": {
+        "ru": "〜や否や помогает читать N1-текст: показывает как только и связывает аргумент с выводом.",
+        "en": "〜や否や helps read N1 texts by expressing как только and linking an argument to a conclusion."
+      },
+      "formula": "〜や否や",
+      "examples": [
+        {
+          "jp": "表が終わるや否や質問が出た。",
+          "reading": "",
+          "ru": "Как только презентация закончилась, посыпались вопросы.",
+          "en": "Как только презентация закончилась, посыпались вопросы."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜や否や?",
+        "en": "What does 〜や否や best express?"
+      },
+      "answer": "как только",
+      "options": [
+        "как только",
+        "осмелиться; намеренно",
+        "затрудняться; не мочь",
+        "будь то... или..."
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-131",
+      "level": "N1",
+      "order": 131,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜ゆえに",
+      "title": {
+        "ru": "из-за; поскольку",
+        "en": "из-за; поскольку"
+      },
+      "explanation": {
+        "ru": "〜ゆえに помогает читать N1-текст: показывает из-за; поскольку и связывает аргумент с выводом.",
+        "en": "〜ゆえに helps read N1 texts by expressing из-за; поскольку and linking an argument to a conclusion."
+      },
+      "formula": "〜ゆえに",
+      "examples": [
+        {
+          "jp": "がいゆえに判を誤った。",
+          "reading": "",
+          "ru": "Ошибся в решении из-за малого опыта.",
+          "en": "Ошибся в решении из-за малого опыта."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ゆえに?",
+        "en": "What does 〜ゆえに best express?"
+      },
+      "answer": "из-за; поскольку",
+      "options": [
+        "из-за; поскольку",
+        "до конца; исключительно",
+        "как только",
+        "с тех пор как"
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-132",
+      "level": "N1",
+      "order": 132,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜ようによっては",
+      "title": {
+        "ru": "в зависимости от способа",
+        "en": "в зависимости от способа"
+      },
+      "explanation": {
+        "ru": "〜ようによっては помогает читать N1-текст: показывает в зависимости от способа и связывает аргумент с выводом.",
+        "en": "〜ようによっては helps read N1 texts by expressing в зависимости от способа and linking an argument to a conclusion."
+      },
+      "formula": "〜ようによっては",
+      "examples": [
+        {
+          "jp": "考えようによっては、これは好機だ。",
+          "reading": "",
+          "ru": "В зависимости от взгляда, это шанс.",
+          "en": "В зависимости от взгляда, это шанс."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜ようによっては?",
+        "en": "What does 〜ようによっては best express?"
+      },
+      "answer": "в зависимости от способа",
+      "options": [
+        "в зависимости от способа",
+        "как и ожидалось",
+        "целых",
+        "следовало бы"
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-133",
+      "level": "N1",
+      "order": 133,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜をおいて",
+      "title": {
+        "ru": "кроме",
+        "en": "кроме"
+      },
+      "explanation": {
+        "ru": "〜をおいて помогает читать N1-текст: показывает кроме и связывает аргумент с выводом.",
+        "en": "〜をおいて helps read N1 texts by expressing кроме and linking an argument to a conclusion."
+      },
+      "formula": "〜をおいて",
+      "examples": [
+        {
+          "jp": "この仕事を任せられる人は彼をおいていない。",
+          "reading": "",
+          "ru": "Кроме него, некому поручить эту работу.",
+          "en": "Кроме него, некому поручить эту работу."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜をおいて?",
+        "en": "What does 〜をおいて best express?"
+      },
+      "answer": "кроме",
+      "options": [
+        "кроме",
+        "именно благодаря",
+        "уже по одному",
+        "не ведь..."
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-134",
+      "level": "N1",
+      "order": 134,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜を限りに",
+      "title": {
+        "ru": "начиная с момента; на этом",
+        "en": "начиная с момента; на этом"
+      },
+      "explanation": {
+        "ru": "〜を限りに помогает читать N1-текст: показывает начиная с момента; на этом и связывает аргумент с выводом.",
+        "en": "〜を限りに helps read N1 texts by expressing начиная с момента; на этом and linking an argument to a conclusion."
+      },
+      "formula": "〜を限りに",
+      "examples": [
+        {
+          "jp": "今日を限りにその習慣をやめる。",
+          "reading": "",
+          "ru": "С сегодняшнего дня прекращаю эту привычку.",
+          "en": "С сегодняшнего дня прекращаю эту привычку."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜を限りに?",
+        "en": "What does 〜を限りに best express?"
+      },
+      "answer": "начиная с момента; на этом",
+      "options": [
+        "начиная с момента; на этом",
+        "зависит от",
+        "с точки зрения",
+        "невыносимо, если"
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-135",
+      "level": "N1",
+      "order": 135,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜を皮切りに",
+      "title": {
+        "ru": "начиная с",
+        "en": "начиная с"
+      },
+      "explanation": {
+        "ru": "〜を皮切りに помогает читать N1-текст: показывает начиная с и связывает аргумент с выводом.",
+        "en": "〜を皮切りに helps read N1 texts by expressing начиная с and linking an argument to a conclusion."
+      },
+      "formula": "〜を皮切りに",
+      "examples": [
+        {
+          "jp": "東京を皮切りに全で行われた。",
+          "reading": "",
+          "ru": "Началось в Токио и прошло по всей стране.",
+          "en": "Началось в Токио и прошло по всей стране."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜を皮切りに?",
+        "en": "What does 〜を皮切りに best express?"
+      },
+      "answer": "начиная с",
+      "options": [
+        "начиная с",
+        "в зависимости от",
+        "не значит, что",
+        "без колебаний заявлять"
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-136",
+      "level": "N1",
+      "order": 136,
+      "group": {
+        "ru": "Грамматический блок 17",
+        "en": "Grammar block 17"
+      },
+      "pattern": "〜を禁じ得ない",
+      "title": {
+        "ru": "не могу не",
+        "en": "не могу не"
+      },
+      "explanation": {
+        "ru": "〜を禁じ得ない помогает читать N1-текст: показывает не могу не и связывает аргумент с выводом.",
+        "en": "〜を禁じ得ない helps read N1 texts by expressing не могу не and linking an argument to a conclusion."
+      },
+      "formula": "〜を禁じ得ない",
+      "examples": [
+        {
+          "jp": "その知らせに驚きを禁じ得なかった。",
+          "reading": "",
+          "ru": "Не мог не удивиться этой новости.",
+          "en": "Не мог не удивиться этой новости."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜を禁じ得ない?",
+        "en": "What does 〜を禁じ得ない best express?"
+      },
+      "answer": "не могу не",
+      "options": [
+        "не могу не",
+        "в зависимости от обстоятельств",
+        "есть склонность",
+        "искренне"
+      ],
+      "sourcePage": 122
+    },
+    {
+      "id": "n1-grammar-137",
+      "level": "N1",
+      "order": 137,
+      "group": {
+        "ru": "Грамматический блок 18",
+        "en": "Grammar block 18"
+      },
+      "pattern": "〜をもって",
+      "title": {
+        "ru": "с помощью; на основании; с",
+        "en": "с помощью; на основании; с"
+      },
+      "explanation": {
+        "ru": "〜をもって помогает читать N1-текст: показывает с помощью; на основании; с и связывает аргумент с выводом.",
+        "en": "〜をもって helps read N1 texts by expressing с помощью; на основании; с and linking an argument to a conclusion."
+      },
+      "formula": "〜をもって",
+      "examples": [
+        {
+          "jp": "本日をもって終了します。",
+          "reading": "",
+          "ru": "С сегодняшнего дня заканчиваем.",
+          "en": "С сегодняшнего дня заканчиваем."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜をもって?",
+        "en": "What does 〜をもって best express?"
+      },
+      "answer": "с помощью; на основании; с",
+      "options": [
+        "с помощью; на основании; с",
+        "действительно; явно",
+        "крайне",
+        "в сочетании с"
+      ],
+      "sourcePage": 123
+    },
+    {
+      "id": "n1-grammar-138",
+      "level": "N1",
+      "order": 138,
+      "group": {
+        "ru": "Грамматический блок 18",
+        "en": "Grammar block 18"
+      },
+      "pattern": "〜をものともせず",
+      "title": {
+        "ru": "не обращая внимания",
+        "en": "не обращая внимания"
+      },
+      "explanation": {
+        "ru": "〜をものともせず помогает читать N1-текст: показывает не обращая внимания и связывает аргумент с выводом.",
+        "en": "〜をものともせず helps read N1 texts by expressing не обращая внимания and linking an argument to a conclusion."
+      },
+      "formula": "〜をものともせず",
+      "examples": [
+        {
+          "jp": "天候をものともせず試合はいた。",
+          "reading": "",
+          "ru": "Матч продолжался несмотря на плохую погоду.",
+          "en": "Матч продолжался несмотря на плохую погоду."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜をものともせず?",
+        "en": "What does 〜をものともせず best express?"
+      },
+      "answer": "не обращая внимания",
+      "options": [
+        "не обращая внимания",
+        "в любом случае",
+        "чрезвычайно",
+        "поскольку"
+      ],
+      "sourcePage": 123
+    },
+    {
+      "id": "n1-grammar-139",
+      "level": "N1",
+      "order": 139,
+      "group": {
+        "ru": "Грамматический блок 18",
+        "en": "Grammar block 18"
+      },
+      "pattern": "〜を余儀なくされる",
+      "title": {
+        "ru": "быть вынужденным",
+        "en": "быть вынужденным"
+      },
+      "explanation": {
+        "ru": "〜を余儀なくされる помогает читать N1-текст: показывает быть вынужденным и связывает аргумент с выводом.",
+        "en": "〜を余儀なくされる helps read N1 texts by expressing быть вынужденным and linking an argument to a conclusion."
+      },
+      "formula": "〜を余儀なくされる",
+      "examples": [
+        {
+          "jp": "台風で中止を余儀なくされた。",
+          "reading": "",
+          "ru": "Из-за тайфуна были вынуждены отменить.",
+          "en": "Из-за тайфуна были вынуждены отменить."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜を余儀なくされる?",
+        "en": "What does 〜を余儀なくされる best express?"
+      },
+      "answer": "быть вынужденным",
+      "options": [
+        "быть вынужденным",
+        "нельзя однозначно",
+        "хотя сам",
+        "если уж"
+      ],
+      "sourcePage": 123
+    },
+    {
+      "id": "n1-grammar-140",
+      "level": "N1",
+      "order": 140,
+      "group": {
+        "ru": "Грамматический блок 18",
+        "en": "Grammar block 18"
+      },
+      "pattern": "〜をよそに",
+      "title": {
+        "ru": "не обращая внимания",
+        "en": "не обращая внимания"
+      },
+      "explanation": {
+        "ru": "〜をよそに помогает читать N1-текст: показывает не обращая внимания и связывает аргумент с выводом.",
+        "en": "〜をよそに helps read N1 texts by expressing не обращая внимания and linking an argument to a conclusion."
+      },
+      "formula": "〜をよそに",
+      "examples": [
+        {
+          "jp": "周の心配をよそに、彼はけた。",
+          "reading": "",
+          "ru": "Не обращая внимания на тревогу окружающих, он продолжил.",
+          "en": "Не обращая внимания на тревогу окружающих, он продолжил."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜をよそに?",
+        "en": "What does 〜をよそに best express?"
+      },
+      "answer": "не обращая внимания",
+      "options": [
+        "не обращая внимания",
+        "еще не совсем",
+        "всем вместе",
+        "и..., и..."
+      ],
+      "sourcePage": 123
+    },
+    {
+      "id": "n1-grammar-141",
+      "level": "N1",
+      "order": 141,
+      "group": {
+        "ru": "Грамматический блок 18",
+        "en": "Grammar block 18"
+      },
+      "pattern": "〜んがため",
+      "title": {
+        "ru": "ради того, чтобы",
+        "en": "ради того, чтобы"
+      },
+      "explanation": {
+        "ru": "〜んがため помогает читать N1-текст: показывает ради того, чтобы и связывает аргумент с выводом.",
+        "en": "〜んがため helps read N1 texts by expressing ради того, чтобы and linking an argument to a conclusion."
+      },
+      "formula": "〜んがため",
+      "examples": [
+        {
+          "jp": "成功せんがために努力した。",
+          "reading": "",
+          "ru": "Старался ради успеха.",
+          "en": "Старался ради успеха."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜んがため?",
+        "en": "What does 〜んがため best express?"
+      },
+      "answer": "ради того, чтобы",
+      "options": [
+        "ради того, чтобы",
+        "само собой; лучше не говорить",
+        "выглядит как",
+        "примерно"
+      ],
+      "sourcePage": 123
+    },
+    {
+      "id": "n1-grammar-142",
+      "level": "N1",
+      "order": 142,
+      "group": {
+        "ru": "Грамматический блок 18",
+        "en": "Grammar block 18"
+      },
+      "pattern": "〜んばかり",
+      "title": {
+        "ru": "словно сейчас",
+        "en": "словно сейчас"
+      },
+      "explanation": {
+        "ru": "〜んばかり помогает читать N1-текст: показывает словно сейчас и связывает аргумент с выводом.",
+        "en": "〜んばかり helps read N1 texts by expressing словно сейчас and linking an argument to a conclusion."
+      },
+      "formula": "〜んばかり",
+      "examples": [
+        {
+          "jp": "彼は泣き出さんばかりの顔をしていた。",
+          "reading": "",
+          "ru": "У него был вид, будто он вот-вот заплачет.",
+          "en": "У него был вид, будто он вот-вот заплачет."
+        }
+      ],
+      "question": {
+        "ru": "Что лучше всего передаёт форма 〜んばかり?",
+        "en": "What does 〜んばかり best express?"
+      },
+      "answer": "словно сейчас",
+      "options": [
+        "словно сейчас",
+        "может произойти",
+        "тем более что",
+        "даже"
+      ],
+      "sourcePage": 123
     }
   ]
 }

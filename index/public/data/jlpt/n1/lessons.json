@@ -1,7 +1,7 @@
 {
   "version": 1,
   "level": "N1",
-  "generatedAt": "2026-06-11T10:44:21.438595+00:00",
+  "generatedAt": "2026-07-29T09:38:18.882476+00:00",
   "textbook": {
     "jlpt": "N1",
     "slug": "n1",
@@ -14,16 +14,16 @@
       "en": "Texts and nuance"
     },
     "description": {
-      "ru": "Плотные тексты, авторская позиция, абстрактная лексика и продвинутая грамматика. Верхний слой базы.",
-      "en": "Dense texts, author stance, abstract vocabulary, and advanced grammar. The top layer of the base."
+      "ru": "Верхний уровень Flash Kanji: редкие кандзи, формальные слова, плотные абзацы, позиция автора и выводы.",
+      "en": "The top Flash Kanji layer: rare kanji, formal vocabulary, dense paragraphs, author stance, and conclusions."
     },
     "goal": {
       "ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.",
       "en": "Break down long phrases, rare readings, and meaning nuance in reading."
     },
     "recommendedCycle": {
-      "ru": "Повторяй каждые 5-7 дней, вернись к слабым карточкам.",
-      "en": "Review every 5-7 days with targeted returns to weak cards."
+      "ru": "Повторяй каждые 5–7 дней с точечным возвратом к слабым карточкам.",
+      "en": "Review every 5–7 days with targeted returns to weak cards."
     },
     "previousLevels": [
       "N5",
@@ -46,41 +46,140 @@
       "bulk-n1-08",
       "bulk-n1-09",
       "bulk-n1-10",
-      "bulk-n1-11"
+      "bulk-n1-11",
+      "bulk-n1-12",
+      "bulk-n1-13",
+      "bulk-n1-14",
+      "bulk-n1-15",
+      "bulk-n1-16",
+      "bulk-n1-17",
+      "bulk-n1-18",
+      "bulk-n1-19",
+      "bulk-n1-20",
+      "bulk-n1-21",
+      "bulk-n1-22",
+      "bulk-n1-23",
+      "bulk-n1-24",
+      "bulk-n1-25",
+      "bulk-n1-26",
+      "bulk-n1-27",
+      "bulk-n1-28",
+      "bulk-n1-29",
+      "bulk-n1-30",
+      "bulk-n1-31",
+      "bulk-n1-32",
+      "bulk-n1-33",
+      "bulk-n1-34",
+      "bulk-n1-35",
+      "bulk-n1-36",
+      "bulk-n1-37",
+      "bulk-n1-38",
+      "bulk-n1-39",
+      "bulk-n1-40",
+      "bulk-n1-41",
+      "bulk-n1-42",
+      "bulk-n1-43",
+      "bulk-n1-44",
+      "bulk-n1-45",
+      "bulk-n1-46",
+      "bulk-n1-47",
+      "bulk-n1-48",
+      "bulk-n1-49",
+      "bulk-n1-50",
+      "bulk-n1-51",
+      "bulk-n1-52",
+      "bulk-n1-53"
     ],
     "lessonCount": 53,
-    "currentLessonCount": 11,
     "kanjiCount": 1047,
-    "currentKanjiCount": 220,
     "cardCount": 1047,
-    "currentCardCount": 220,
+    "grammarCount": 142,
+    "readingCount": 8,
+    "listeningCount": 6,
     "files": {
-      "meta": "data/jlpt/n1/meta.json",
       "kanji": "data/jlpt/n1/kanji.json",
       "lessons": "data/jlpt/n1/lessons.json",
       "grammar": "data/jlpt/n1/grammar.json",
-      "exercises": "data/jlpt/n1/exercises.json",
       "reading": "data/jlpt/n1/reading.json",
       "listening": "data/jlpt/n1/listening.json",
       "tests": "data/jlpt/n1/tests.json",
-      "finalTest": "data/jlpt/n1/final-test.json"
+      "finalTest": "data/jlpt/n1/final-test.json",
+      "meta": "data/jlpt/n1/meta.json",
+      "exercises": "data/jlpt/n1/exercises.json"
     }
   },
   "items": [
     {
       "id": "bulk-n1-01",
-      "title": "N1: продвинутый корпус 01",
-      "titleEn": "N1: Advanced corpus 01",
-      "jlpt": "N1",
-      "order": 56,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-01.json",
-      "unlockLevel": 28,
-      "mascot": "eva",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 1,
+      "title": {
+        "ru": "Урок 1. N1 кандзи 1-20",
+        "en": "N1 Lesson 1"
+      },
+      "theme": {
+        "ru": "N1 кандзи 1-20",
+        "en": "N1 kanji 1-20"
+      },
+      "kanji": [
+        "氏",
+        "統",
+        "保",
+        "第",
+        "結",
+        "派",
+        "案",
+        "策",
+        "基",
+        "価",
+        "提",
+        "挙",
+        "応",
+        "企",
+        "検",
+        "藤",
+        "沢",
+        "裁",
+        "証",
+        "援"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "あえて",
+        "あくまでも",
+        "案の定"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「氏」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 氏.",
+          "en": "This material checks words that contain 氏."
+        },
+        {
+          "jp": "著者の主張を理解するには、「統」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 統 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 統 in context."
+        },
+        {
+          "jp": "「保」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 保 лучше закрепляется вместе со сложными словами.",
+          "en": "保 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "氏",
         "統",
         "保",
@@ -90,29 +189,89 @@
         "案",
         "策"
       ],
-      "focusWords": [
-        "氏族",
-        "氏名",
-        "統理",
-        "統べる",
-        "保延",
-        "隣保"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
     },
     {
       "id": "bulk-n1-02",
-      "title": "N1: продвинутый корпус 02",
-      "titleEn": "N1: Advanced corpus 02",
-      "jlpt": "N1",
-      "order": 57,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-02.json",
-      "unlockLevel": 29,
-      "mascot": "leya",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 2,
+      "title": {
+        "ru": "Урок 2. N1 кандзи 21-40",
+        "en": "N1 Lesson 2"
+      },
+      "theme": {
+        "ru": "N1 кандзи 21-40",
+        "en": "N1 kanji 21-40"
+      },
+      "kanji": [
+        "施",
+        "井",
+        "護",
+        "展",
+        "態",
+        "鮮",
+        "視",
+        "条",
+        "幹",
+        "独",
+        "宮",
+        "率",
+        "衛",
+        "張",
+        "監",
+        "環",
+        "審",
+        "義",
+        "訴",
+        "株"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜あっての",
+        "〜いかんだ",
+        "〜いかんで"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「施」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 施.",
+          "en": "This material checks words that contain 施."
+        },
+        {
+          "jp": "著者の主張を理解するには、「井」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 井 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 井 in context."
+        },
+        {
+          "jp": "「護」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 護 лучше закрепляется вместе со сложными словами.",
+          "en": "護 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "施",
         "井",
         "護",
@@ -122,29 +281,89 @@
         "視",
         "条"
       ],
-      "focusWords": [
-        "施政",
-        "布施",
-        "天井",
-        "井筒",
-        "護法",
-        "護送車"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
     },
     {
       "id": "bulk-n1-03",
-      "title": "N1: продвинутый корпус 03",
-      "titleEn": "N1: Advanced corpus 03",
-      "jlpt": "N1",
-      "order": 58,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-03.json",
-      "unlockLevel": 29,
-      "mascot": "eva",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 3,
+      "title": {
+        "ru": "Урок 3. N1 кандзи 41-60",
+        "en": "N1 Lesson 3"
+      },
+      "theme": {
+        "ru": "N1 кандзи 41-60",
+        "en": "N1 kanji 41-60"
+      },
+      "kanji": [
+        "姿",
+        "閣",
+        "衆",
+        "評",
+        "影",
+        "松",
+        "撃",
+        "佐",
+        "核",
+        "整",
+        "融",
+        "製",
+        "票",
+        "渉",
+        "推",
+        "請",
+        "器",
+        "士",
+        "討",
+        "攻"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜いかんによっては",
+        "いかにも",
+        "いずれにせよ"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「姿」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 姿.",
+          "en": "This material checks words that contain 姿."
+        },
+        {
+          "jp": "著者の主張を理解するには、「閣」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 閣 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 閣 in context."
+        },
+        {
+          "jp": "「衆」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 衆 лучше закрепляется вместе со сложными словами.",
+          "en": "衆 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "姿",
         "閣",
         "衆",
@@ -154,29 +373,89 @@
         "撃",
         "佐"
       ],
-      "focusWords": [
-        "容姿",
-        "旅姿",
-        "閣議",
-        "仏閣",
-        "若衆",
-        "俗衆"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
     },
     {
       "id": "bulk-n1-04",
-      "title": "N1: продвинутый корпус 04",
-      "titleEn": "N1: Advanced corpus 04",
-      "jlpt": "N1",
-      "order": 59,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-04.json",
-      "unlockLevel": 30,
-      "mascot": "leya",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 4,
+      "title": {
+        "ru": "Урок 4. N1 кандзи 61-80",
+        "en": "N1 Lesson 4"
+      },
+      "theme": {
+        "ru": "N1 кандзи 61-80",
+        "en": "N1 kanji 61-80"
+      },
+      "kanji": [
+        "崎",
+        "督",
+        "授",
+        "催",
+        "及",
+        "憲",
+        "離",
+        "激",
+        "摘",
+        "系",
+        "批",
+        "郎",
+        "健",
+        "盟",
+        "従",
+        "修",
+        "隊",
+        "織",
+        "拡",
+        "故"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "一に〜ない",
+        "今ひとつ",
+        "言わずもがな"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「崎」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 崎.",
+          "en": "This material checks words that contain 崎."
+        },
+        {
+          "jp": "著者の主張を理解するには、「督」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 督 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 督 in context."
+        },
+        {
+          "jp": "「授」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 授 лучше закрепляется вместе со сложными словами.",
+          "en": "授 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "崎",
         "督",
         "授",
@@ -186,29 +465,89 @@
         "離",
         "激"
       ],
-      "focusWords": [
-        "宮崎",
-        "川崎",
-        "総督",
-        "提督",
-        "授戒",
-        "助教授"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
     },
     {
       "id": "bulk-n1-05",
-      "title": "N1: продвинутый корпус 05",
-      "titleEn": "N1: Advanced corpus 05",
-      "jlpt": "N1",
-      "order": 60,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-05.json",
-      "unlockLevel": 30,
-      "mascot": "eva",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 5,
+      "title": {
+        "ru": "Урок 5. N1 кандзи 81-100",
+        "en": "N1 Lesson 5"
+      },
+      "theme": {
+        "ru": "N1 кандзи 81-100",
+        "en": "N1 kanji 81-100"
+      },
+      "kanji": [
+        "振",
+        "弁",
+        "就",
+        "異",
+        "献",
+        "厳",
+        "維",
+        "浜",
+        "遺",
+        "塁",
+        "邦",
+        "素",
+        "遣",
+        "抗",
+        "模",
+        "雄",
+        "益",
+        "緊",
+        "標",
+        "宣"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜得る",
+        "〜得ない",
+        "〜うにも〜ない"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「振」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 振.",
+          "en": "This material checks words that contain 振."
+        },
+        {
+          "jp": "著者の主張を理解するには、「弁」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 弁 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 弁 in context."
+        },
+        {
+          "jp": "「就」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 就 лучше закрепляется вместе со сложными словами.",
+          "en": "就 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "振",
         "弁",
         "就",
@@ -218,29 +557,89 @@
         "維",
         "浜"
       ],
-      "focusWords": [
-        "振鈴",
-        "振幅",
-        "用弁",
-        "熱弁",
-        "就中",
-        "就航"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
     },
     {
       "id": "bulk-n1-06",
-      "title": "N1: продвинутый корпус 06",
-      "titleEn": "N1: Advanced corpus 06",
-      "jlpt": "N1",
-      "order": 61,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-06.json",
-      "unlockLevel": 31,
-      "mascot": "leya",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 6,
+      "title": {
+        "ru": "Урок 6. N1 кандзи 101-120",
+        "en": "N1 Lesson 6"
+      },
+      "theme": {
+        "ru": "N1 кандзи 101-120",
+        "en": "N1 kanji 101-120"
+      },
+      "kanji": [
+        "昭",
+        "廃",
+        "伊",
+        "江",
+        "僚",
+        "吉",
+        "盛",
+        "皇",
+        "臨",
+        "踏",
+        "壊",
+        "債",
+        "興",
+        "源",
+        "儀",
+        "創",
+        "障",
+        "継",
+        "筋",
+        "闘"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜上は",
+        "〜うちに入らない",
+        "〜か否か"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「昭」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 昭.",
+          "en": "This material checks words that contain 昭."
+        },
+        {
+          "jp": "著者の主張を理解するには、「廃」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 廃 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 廃 in context."
+        },
+        {
+          "jp": "「伊」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 伊 лучше закрепляется вместе со сложными словами.",
+          "en": "伊 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "昭",
         "廃",
         "伊",
@@ -250,29 +649,89 @@
         "盛",
         "皇"
       ],
-      "focusWords": [
-        "昭代",
-        "昭和",
-        "廃石",
-        "廃鶏",
-        "紀伊",
-        "伊語"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-6"
     },
     {
       "id": "bulk-n1-07",
-      "title": "N1: продвинутый корпус 07",
-      "titleEn": "N1: Advanced corpus 07",
-      "jlpt": "N1",
-      "order": 62,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-07.json",
-      "unlockLevel": 31,
-      "mascot": "eva",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 7,
+      "title": {
+        "ru": "Урок 7. N1 кандзи 121-140",
+        "en": "N1 Lesson 7"
+      },
+      "theme": {
+        "ru": "N1 кандзи 121-140",
+        "en": "N1 kanji 121-140"
+      },
+      "kanji": [
+        "葬",
+        "避",
+        "司",
+        "康",
+        "善",
+        "逮",
+        "迫",
+        "惑",
+        "崩",
+        "紀",
+        "聴",
+        "脱",
+        "級",
+        "博",
+        "締",
+        "救",
+        "執",
+        "房",
+        "撤",
+        "削"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜限りだ",
+        "〜限りでは",
+        "〜が最後"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「葬」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 葬.",
+          "en": "This material checks words that contain 葬."
+        },
+        {
+          "jp": "著者の主張を理解するには、「避」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 避 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 避 in context."
+        },
+        {
+          "jp": "「司」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 司 лучше закрепляется вместе со сложными словами.",
+          "en": "司 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "葬",
         "避",
         "司",
@@ -282,29 +741,89 @@
         "迫",
         "惑"
       ],
-      "focusWords": [
-        "葬る",
-        "本葬",
-        "避妊",
-        "避暑客",
-        "司る",
-        "島司"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-7"
     },
     {
       "id": "bulk-n1-08",
-      "title": "N1: продвинутый корпус 08",
-      "titleEn": "N1: Advanced corpus 08",
-      "jlpt": "N1",
-      "order": 63,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-08.json",
-      "unlockLevel": 32,
-      "mascot": "leya",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 8,
+      "title": {
+        "ru": "Урок 8. N1 кандзи 141-160",
+        "en": "N1 Lesson 8"
+      },
+      "theme": {
+        "ru": "N1 кандзи 141-160",
+        "en": "N1 kanji 141-160"
+      },
+      "kanji": [
+        "密",
+        "措",
+        "志",
+        "載",
+        "陣",
+        "我",
+        "為",
+        "抑",
+        "幕",
+        "染",
+        "奈",
+        "傷",
+        "択",
+        "秀",
+        "徴",
+        "弾",
+        "償",
+        "功",
+        "拠",
+        "秘"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜かたがた",
+        "〜がてら",
+        "〜かと思いきや"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「密」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 密.",
+          "en": "This material checks words that contain 密."
+        },
+        {
+          "jp": "著者の主張を理解するには、「措」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 措 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 措 in context."
+        },
+        {
+          "jp": "「志」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 志 лучше закрепляется вместе со сложными словами.",
+          "en": "志 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "密",
         "措",
         "志",
@@ -314,29 +833,89 @@
         "為",
         "抑"
       ],
-      "focusWords": [
-        "密猟",
-        "密書",
-        "措置",
-        "措く",
-        "初志",
-        "異志"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-8"
     },
     {
       "id": "bulk-n1-09",
-      "title": "N1: продвинутый корпус 09",
-      "titleEn": "N1: Advanced corpus 09",
-      "jlpt": "N1",
-      "order": 64,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-09.json",
-      "unlockLevel": 32,
-      "mascot": "eva",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 9,
+      "title": {
+        "ru": "Урок 9. N1 кандзи 161-180",
+        "en": "N1 Lesson 9"
+      },
+      "theme": {
+        "ru": "N1 кандзи 161-180",
+        "en": "N1 kanji 161-180"
+      },
+      "kanji": [
+        "拒",
+        "刑",
+        "塚",
+        "致",
+        "繰",
+        "尾",
+        "描",
+        "鈴",
+        "盤",
+        "項",
+        "喪",
+        "伴",
+        "養",
+        "懸",
+        "街",
+        "契",
+        "掲",
+        "躍",
+        "棄",
+        "邸"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜かねる",
+        "〜が早いか",
+        "〜からある"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「拒」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 拒.",
+          "en": "This material checks words that contain 拒."
+        },
+        {
+          "jp": "著者の主張を理解するには、「刑」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 刑 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 刑 in context."
+        },
+        {
+          "jp": "「塚」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 塚 лучше закрепляется вместе со сложными словами.",
+          "en": "塚 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "拒",
         "刑",
         "塚",
@@ -346,29 +925,89 @@
         "描",
         "鈴"
       ],
-      "focusWords": [
-        "拒む",
-        "拒否者",
-        "刑場",
-        "刑期",
-        "筆塚",
-        "塵塚"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
     },
     {
       "id": "bulk-n1-10",
-      "title": "N1: продвинутый корпус 10",
-      "titleEn": "N1: Advanced corpus 10",
-      "jlpt": "N1",
-      "order": 65,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-10.json",
-      "unlockLevel": 33,
-      "mascot": "leya",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 10,
+      "title": {
+        "ru": "Урок 10. N1 кандзи 181-200",
+        "en": "N1 Lesson 10"
+      },
+      "theme": {
+        "ru": "N1 кандзи 181-200",
+        "en": "N1 kanji 181-200"
+      },
+      "kanji": [
+        "縮",
+        "還",
+        "属",
+        "慮",
+        "枠",
+        "恵",
+        "露",
+        "沖",
+        "緩",
+        "節",
+        "需",
+        "射",
+        "購",
+        "揮",
+        "充",
+        "貢",
+        "鹿",
+        "却",
+        "端",
+        "賃"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜からして",
+        "〜からすると",
+        "〜からといって"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「縮」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 縮.",
+          "en": "This material checks words that contain 縮."
+        },
+        {
+          "jp": "著者の主張を理解するには、「還」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 還 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 還 in context."
+        },
+        {
+          "jp": "「属」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 属 лучше закрепляется вместе со сложными словами.",
+          "en": "属 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "縮",
         "還",
         "属",
@@ -378,29 +1017,89 @@
         "露",
         "沖"
       ],
-      "focusWords": [
-        "縮む",
-        "縮める",
-        "還暦",
-        "奉還",
-        "属地",
-        "属名"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
     },
     {
       "id": "bulk-n1-11",
-      "title": "N1: продвинутый корпус 11",
-      "titleEn": "N1: Advanced corpus 11",
-      "jlpt": "N1",
-      "order": 66,
-      "summary": "20 кандзи уровня N1 для SRS-практики, словаря и повторений.",
-      "summaryEn": "20 N1 kanji for SRS drills, dictionary use, and reviews.",
-      "file": "data/lessons/generated/bulk-n1-11.json",
-      "unlockLevel": 33,
-      "mascot": "eva",
-      "cardCount": 20,
-      "kanjiCount": 20,
-      "sampleKanji": [
+      "level": "N1",
+      "order": 11,
+      "title": {
+        "ru": "Урок 11. N1 кандзи 201-220",
+        "en": "N1 Lesson 11"
+      },
+      "theme": {
+        "ru": "N1 кандзи 201-220",
+        "en": "N1 kanji 201-220"
+      },
+      "kanji": [
+        "獲",
+        "郡",
+        "併",
+        "徹",
+        "貴",
+        "衝",
+        "焦",
+        "奪",
+        "災",
+        "浦",
+        "析",
+        "譲",
+        "称",
+        "納",
+        "樹",
+        "挑",
+        "誘",
+        "紛",
+        "至",
+        "宗"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜きらいがある",
+        "〜極まりない",
+        "〜極まる"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「獲」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 獲.",
+          "en": "This material checks words that contain 獲."
+        },
+        {
+          "jp": "著者の主張を理解するには、「郡」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 郡 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 郡 in context."
+        },
+        {
+          "jp": "「併」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 併 лучше закрепляется вместе со сложными словами.",
+          "en": "併 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
         "獲",
         "郡",
         "併",
@@ -410,14 +1109,3867 @@
         "焦",
         "奪"
       ],
-      "focusWords": [
-        "獲物",
-        "漁獲",
-        "郡県",
-        "郡制",
-        "併合罪",
-        "合併号"
-      ]
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
+    },
+    {
+      "id": "bulk-n1-12",
+      "level": "N1",
+      "order": 12,
+      "title": {
+        "ru": "Урок 12. N1 кандзи 221-240",
+        "en": "N1 Lesson 12"
+      },
+      "theme": {
+        "ru": "N1 кандзи 221-240",
+        "en": "N1 kanji 221-240"
+      },
+      "kanji": [
+        "扱",
+        "顧",
+        "弘",
+        "看",
+        "訟",
+        "戒",
+        "祉",
+        "奏",
+        "閥",
+        "甲",
+        "免",
+        "薦",
+        "隣",
+        "華",
+        "嫌",
+        "僕",
+        "玄",
+        "津",
+        "徳",
+        "敵"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜くせに",
+        "〜ぐるみ",
+        "〜げ"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「扱」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 扱.",
+          "en": "This material checks words that contain 扱."
+        },
+        {
+          "jp": "著者の主張を理解するには、「顧」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 顧 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 顧 in context."
+        },
+        {
+          "jp": "「弘」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 弘 лучше закрепляется вместе со сложными словами.",
+          "en": "弘 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "扱",
+        "顧",
+        "弘",
+        "看",
+        "訟",
+        "戒",
+        "祉",
+        "奏"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
+    },
+    {
+      "id": "bulk-n1-13",
+      "level": "N1",
+      "order": 13,
+      "title": {
+        "ru": "Урок 13. N1 кандзи 241-260",
+        "en": "N1 Lesson 13"
+      },
+      "theme": {
+        "ru": "N1 кандзи 241-260",
+        "en": "N1 kanji 241-260"
+      },
+      "kanji": [
+        "範",
+        "己",
+        "妥",
+        "威",
+        "豪",
+        "熊",
+        "微",
+        "隆",
+        "症",
+        "暫",
+        "忠",
+        "倉",
+        "彦",
+        "肝",
+        "妙",
+        "唱",
+        "阿",
+        "驚",
+        "響",
+        "刀"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ことだし",
+        "〜こととて",
+        "〜ことなしに"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「範」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 範.",
+          "en": "This material checks words that contain 範."
+        },
+        {
+          "jp": "著者の主張を理解するには、「己」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 己 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 己 in context."
+        },
+        {
+          "jp": "「妥」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 妥 лучше закрепляется вместе со сложными словами.",
+          "en": "妥 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "範",
+        "己",
+        "妥",
+        "威",
+        "豪",
+        "熊",
+        "微",
+        "隆"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
+    },
+    {
+      "id": "bulk-n1-14",
+      "level": "N1",
+      "order": 14,
+      "title": {
+        "ru": "Урок 14. N1 кандзи 261-280",
+        "en": "N1 Lesson 14"
+      },
+      "theme": {
+        "ru": "N1 кандзи 261-280",
+        "en": "N1 kanji 261-280"
+      },
+      "kanji": [
+        "索",
+        "誠",
+        "襲",
+        "懇",
+        "俳",
+        "柄",
+        "隠",
+        "麻",
+        "李",
+        "浩",
+        "貫",
+        "仙",
+        "慰",
+        "序",
+        "旬",
+        "兼",
+        "聖",
+        "旨",
+        "瞬",
+        "壁"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ことのないよう",
+        "〜こともあって",
+        "〜始末だ"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「索」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 索.",
+          "en": "This material checks words that contain 索."
+        },
+        {
+          "jp": "著者の主張を理解するには、「誠」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 誠 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 誠 in context."
+        },
+        {
+          "jp": "「襲」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 襲 лучше закрепляется вместе со сложными словами.",
+          "en": "襲 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "索",
+        "誠",
+        "襲",
+        "懇",
+        "俳",
+        "柄",
+        "隠",
+        "麻"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-6"
+    },
+    {
+      "id": "bulk-n1-15",
+      "level": "N1",
+      "order": 15,
+      "title": {
+        "ru": "Урок 15. N1 кандзи 281-300",
+        "en": "N1 Lesson 15"
+      },
+      "theme": {
+        "ru": "N1 кандзи 281-300",
+        "en": "N1 kanji 281-300"
+      },
+      "kanji": [
+        "柳",
+        "詳",
+        "抵",
+        "脅",
+        "茂",
+        "旗",
+        "距",
+        "雅",
+        "飾",
+        "網",
+        "詩",
+        "繁",
+        "魅",
+        "典",
+        "敷",
+        "賀",
+        "訳",
+        "黙",
+        "握",
+        "操"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ずくめ",
+        "〜ずにはおかない",
+        "〜ずにはすまない"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「柳」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 柳.",
+          "en": "This material checks words that contain 柳."
+        },
+        {
+          "jp": "著者の主張を理解するには、「詳」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 詳 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 詳 in context."
+        },
+        {
+          "jp": "「抵」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 抵 лучше закрепляется вместе со сложными словами.",
+          "en": "抵 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "柳",
+        "詳",
+        "抵",
+        "脅",
+        "茂",
+        "旗",
+        "距",
+        "雅"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-7"
+    },
+    {
+      "id": "bulk-n1-16",
+      "level": "N1",
+      "order": 16,
+      "title": {
+        "ru": "Урок 16. N1 кандзи 301-320",
+        "en": "N1 Lesson 16"
+      },
+      "theme": {
+        "ru": "N1 кандзи 301-320",
+        "en": "N1 kanji 301-320"
+      },
+      "kanji": [
+        "擁",
+        "酸",
+        "罰",
+        "滅",
+        "礎",
+        "腐",
+        "脚",
+        "潮",
+        "梅",
+        "滑",
+        "孤",
+        "炎",
+        "賠",
+        "句",
+        "鋼",
+        "頑",
+        "鎖",
+        "彩",
+        "奇",
+        "縁"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜術がない",
+        "〜そばから",
+        "〜そびれる"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「擁」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 擁.",
+          "en": "This material checks words that contain 擁."
+        },
+        {
+          "jp": "著者の主張を理解するには、「酸」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 酸 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 酸 in context."
+        },
+        {
+          "jp": "「罰」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 罰 лучше закрепляется вместе со сложными словами.",
+          "en": "罰 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "擁",
+        "酸",
+        "罰",
+        "滅",
+        "礎",
+        "腐",
+        "脚",
+        "潮"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-8"
+    },
+    {
+      "id": "bulk-n1-17",
+      "level": "N1",
+      "order": 17,
+      "title": {
+        "ru": "Урок 17. N1 кандзи 321-340",
+        "en": "N1 Lesson 17"
+      },
+      "theme": {
+        "ru": "N1 кандзи 321-340",
+        "en": "N1 kanji 321-340"
+      },
+      "kanji": [
+        "摩",
+        "輝",
+        "蓄",
+        "撮",
+        "砲",
+        "噴",
+        "誇",
+        "祥",
+        "牲",
+        "秩",
+        "帝",
+        "宏",
+        "唆",
+        "阻",
+        "泰",
+        "賄",
+        "撲",
+        "駆",
+        "藩",
+        "銃"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "ただ〜のみ",
+        "ただではすまない",
+        "〜たところで"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「摩」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 摩.",
+          "en": "This material checks words that contain 摩."
+        },
+        {
+          "jp": "著者の主張を理解するには、「輝」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 輝 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 輝 in context."
+        },
+        {
+          "jp": "「蓄」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 蓄 лучше закрепляется вместе со сложными словами.",
+          "en": "蓄 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "摩",
+        "輝",
+        "蓄",
+        "撮",
+        "砲",
+        "噴",
+        "誇",
+        "祥"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
+    },
+    {
+      "id": "bulk-n1-18",
+      "level": "N1",
+      "order": 18,
+      "title": {
+        "ru": "Урок 18. N1 кандзи 341-360",
+        "en": "N1 Lesson 18"
+      },
+      "theme": {
+        "ru": "N1 кандзи 341-360",
+        "en": "N1 kanji 341-360"
+      },
+      "kanji": [
+        "唯",
+        "膨",
+        "矢",
+        "耐",
+        "塾",
+        "漏",
+        "慶",
+        "猛",
+        "芳",
+        "懲",
+        "彰",
+        "棋",
+        "丁",
+        "揚",
+        "冒",
+        "之",
+        "倫",
+        "陳",
+        "憶",
+        "謝"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜だに",
+        "〜だの〜だの",
+        "〜たる"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「唯」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 唯.",
+          "en": "This material checks words that contain 唯."
+        },
+        {
+          "jp": "著者の主張を理解するには、「膨」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 膨 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 膨 in context."
+        },
+        {
+          "jp": "「矢」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 矢 лучше закрепляется вместе со сложными словами.",
+          "en": "矢 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "唯",
+        "膨",
+        "矢",
+        "耐",
+        "塾",
+        "漏",
+        "慶",
+        "猛"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
+    },
+    {
+      "id": "bulk-n1-19",
+      "level": "N1",
+      "order": 19,
+      "title": {
+        "ru": "Урок 19. N1 кандзи 361-380",
+        "en": "N1 Lesson 19"
+      },
+      "theme": {
+        "ru": "N1 кандзи 361-380",
+        "en": "N1 kanji 361-380"
+      },
+      "kanji": [
+        "梨",
+        "仁",
+        "克",
+        "岳",
+        "拘",
+        "墓",
+        "雰",
+        "遇",
+        "諮",
+        "卓",
+        "糧",
+        "簿",
+        "牧",
+        "殊",
+        "剣",
+        "弥",
+        "郷",
+        "俊",
+        "宙",
+        "奉"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜たりとも",
+        "〜つ〜つ",
+        "〜っぱなし"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「梨」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 梨.",
+          "en": "This material checks words that contain 梨."
+        },
+        {
+          "jp": "著者の主張を理解するには、「仁」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 仁 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 仁 in context."
+        },
+        {
+          "jp": "「克」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 克 лучше закрепляется вместе со сложными словами.",
+          "en": "克 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "梨",
+        "仁",
+        "克",
+        "岳",
+        "拘",
+        "墓",
+        "雰",
+        "遇"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
+    },
+    {
+      "id": "bulk-n1-20",
+      "level": "N1",
+      "order": 20,
+      "title": {
+        "ru": "Урок 20. N1 кандзи 381-400",
+        "en": "N1 Lesson 20"
+      },
+      "theme": {
+        "ru": "N1 кандзи 381-400",
+        "en": "N1 kanji 381-400"
+      },
+      "kanji": [
+        "殖",
+        "艦",
+        "輩",
+        "穴",
+        "謀",
+        "暖",
+        "昌",
+        "拍",
+        "朗",
+        "覆",
+        "胞",
+        "泣",
+        "隔",
+        "暇",
+        "靖",
+        "鑑",
+        "飼",
+        "侵",
+        "裂",
+        "堀"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜であれ",
+        "〜であれ〜であれ",
+        "〜てからというもの"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「殖」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 殖.",
+          "en": "This material checks words that contain 殖."
+        },
+        {
+          "jp": "著者の主張を理解するには、「艦」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 艦 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 艦 in context."
+        },
+        {
+          "jp": "「輩」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 輩 лучше закрепляется вместе со сложными словами.",
+          "en": "輩 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "殖",
+        "艦",
+        "輩",
+        "穴",
+        "謀",
+        "暖",
+        "昌",
+        "拍"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
+    },
+    {
+      "id": "bulk-n1-21",
+      "level": "N1",
+      "order": 21,
+      "title": {
+        "ru": "Урок 21. N1 кандзи 401-420",
+        "en": "N1 Lesson 21"
+      },
+      "theme": {
+        "ru": "N1 кандзи 401-420",
+        "en": "N1 kanji 401-420"
+      },
+      "kanji": [
+        "陰",
+        "銘",
+        "烈",
+        "尋",
+        "稿",
+        "丹",
+        "啓",
+        "也",
+        "丘",
+        "棟",
+        "粘",
+        "悟",
+        "妊",
+        "熟",
+        "旭",
+        "恩",
+        "騰",
+        "往",
+        "敏",
+        "綱"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜てしかるべき",
+        "〜ではあるまいし",
+        "〜てはかなわない"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「陰」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 陰.",
+          "en": "This material checks words that contain 陰."
+        },
+        {
+          "jp": "著者の主張を理解するには、「銘」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 銘 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 銘 in context."
+        },
+        {
+          "jp": "「烈」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 烈 лучше закрепляется вместе со сложными словами.",
+          "en": "烈 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "陰",
+        "銘",
+        "烈",
+        "尋",
+        "稿",
+        "丹",
+        "啓",
+        "也"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
+    },
+    {
+      "id": "bulk-n1-22",
+      "level": "N1",
+      "order": 22,
+      "title": {
+        "ru": "Урок 22. N1 кандзи 421-440",
+        "en": "N1 Lesson 22"
+      },
+      "theme": {
+        "ru": "N1 кандзи 421-440",
+        "en": "N1 kanji 421-440"
+      },
+      "kanji": [
+        "豆",
+        "遂",
+        "狂",
+        "岐",
+        "陛",
+        "艇",
+        "屈",
+        "淡",
+        "抽",
+        "披",
+        "廷",
+        "錦",
+        "准",
+        "暑",
+        "磯",
+        "浸",
+        "芝",
+        "那",
+        "騒",
+        "魔"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜てはばからない",
+        "〜てやまない",
+        "〜と相まって"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「豆」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 豆.",
+          "en": "This material checks words that contain 豆."
+        },
+        {
+          "jp": "著者の主張を理解するには、「遂」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 遂 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 遂 in context."
+        },
+        {
+          "jp": "「狂」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 狂 лучше закрепляется вместе со сложными словами.",
+          "en": "狂 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "豆",
+        "遂",
+        "狂",
+        "岐",
+        "陛",
+        "艇",
+        "屈",
+        "淡"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-6"
+    },
+    {
+      "id": "bulk-n1-23",
+      "level": "N1",
+      "order": 23,
+      "title": {
+        "ru": "Урок 23. N1 кандзи 441-460",
+        "en": "N1 Lesson 23"
+      },
+      "theme": {
+        "ru": "N1 кандзи 441-460",
+        "en": "N1 kanji 441-460"
+      },
+      "kanji": [
+        "帳",
+        "悔",
+        "諭",
+        "虐",
+        "墜",
+        "沼",
+        "据",
+        "肥",
+        "徐",
+        "糖",
+        "搭",
+        "軌",
+        "俵",
+        "妨",
+        "擦",
+        "鯨",
+        "携",
+        "誕",
+        "釣",
+        "透"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜とあって",
+        "〜とあれば",
+        "〜といい〜といい"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「帳」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 帳.",
+          "en": "This material checks words that contain 帳."
+        },
+        {
+          "jp": "著者の主張を理解するには、「悔」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 悔 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 悔 in context."
+        },
+        {
+          "jp": "「諭」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 諭 лучше закрепляется вместе со сложными словами.",
+          "en": "諭 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "帳",
+        "悔",
+        "諭",
+        "虐",
+        "墜",
+        "沼",
+        "据",
+        "肥"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-7"
+    },
+    {
+      "id": "bulk-n1-24",
+      "level": "N1",
+      "order": 24,
+      "title": {
+        "ru": "Урок 24. N1 кандзи 461-480",
+        "en": "N1 Lesson 24"
+      },
+      "theme": {
+        "ru": "N1 кандзи 461-480",
+        "en": "N1 kanji 461-480"
+      },
+      "kanji": [
+        "諾",
+        "雷",
+        "漂",
+        "勘",
+        "栽",
+        "拐",
+        "斜",
+        "鏡",
+        "浪",
+        "詐",
+        "壇",
+        "促",
+        "酬",
+        "紫",
+        "哲",
+        "仰",
+        "瀬",
+        "伏",
+        "杉",
+        "揺"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜というところだ",
+        "〜といえども",
+        "〜といったところだ"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「諾」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 諾.",
+          "en": "This material checks words that contain 諾."
+        },
+        {
+          "jp": "著者の主張を理解するには、「雷」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 雷 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 雷 in context."
+        },
+        {
+          "jp": "「漂」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 漂 лучше закрепляется вместе со сложными словами.",
+          "en": "漂 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "諾",
+        "雷",
+        "漂",
+        "勘",
+        "栽",
+        "拐",
+        "斜",
+        "鏡"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-8"
+    },
+    {
+      "id": "bulk-n1-25",
+      "level": "N1",
+      "order": 25,
+      "title": {
+        "ru": "Урок 25. N1 кандзи 481-500",
+        "en": "N1 Lesson 25"
+      },
+      "theme": {
+        "ru": "N1 кандзи 481-500",
+        "en": "N1 kanji 481-500"
+      },
+      "kanji": [
+        "曙",
+        "紋",
+        "奮",
+        "涯",
+        "拓",
+        "眼",
+        "獄",
+        "彫",
+        "巧",
+        "矛",
+        "垣",
+        "欺",
+        "畑",
+        "萩",
+        "栗",
+        "裕",
+        "鬼",
+        "渋",
+        "縄",
+        "控"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜といわず〜といわず",
+        "〜ときたら",
+        "〜ところを"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「曙」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 曙.",
+          "en": "This material checks words that contain 曙."
+        },
+        {
+          "jp": "著者の主張を理解するには、「紋」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 紋 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 紋 in context."
+        },
+        {
+          "jp": "「奮」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 奮 лучше закрепляется вместе со сложными словами.",
+          "en": "奮 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "曙",
+        "紋",
+        "奮",
+        "涯",
+        "拓",
+        "眼",
+        "獄",
+        "彫"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
+    },
+    {
+      "id": "bulk-n1-26",
+      "level": "N1",
+      "order": 26,
+      "title": {
+        "ru": "Урок 26. N1 кандзи 501-520",
+        "en": "N1 Lesson 26"
+      },
+      "theme": {
+        "ru": "N1 кандзи 501-520",
+        "en": "N1 kanji 501-520"
+      },
+      "kanji": [
+        "愚",
+        "没",
+        "庶",
+        "稚",
+        "滋",
+        "幻",
+        "煮",
+        "誓",
+        "把",
+        "呈",
+        "疎",
+        "既",
+        "剛",
+        "嫁",
+        "謙",
+        "后",
+        "嘆",
+        "仮",
+        "吐",
+        "眺"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜としたところで",
+        "〜とて",
+        "〜とは"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「愚」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 愚.",
+          "en": "This material checks words that contain 愚."
+        },
+        {
+          "jp": "著者の主張を理解するには、「没」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 没 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 没 in context."
+        },
+        {
+          "jp": "「庶」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 庶 лучше закрепляется вместе со сложными словами.",
+          "en": "庶 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "愚",
+        "没",
+        "庶",
+        "稚",
+        "滋",
+        "幻",
+        "煮",
+        "誓"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
+    },
+    {
+      "id": "bulk-n1-27",
+      "level": "N1",
+      "order": 27,
+      "title": {
+        "ru": "Урок 27. N1 кандзи 521-540",
+        "en": "N1 Lesson 27"
+      },
+      "theme": {
+        "ru": "N1 кандзи 521-540",
+        "en": "N1 kanji 521-540"
+      },
+      "kanji": [
+        "菌",
+        "鎌",
+        "頻",
+        "琴",
+        "班",
+        "棚",
+        "潔",
+        "酷",
+        "宰",
+        "霞",
+        "股",
+        "碁",
+        "俗",
+        "漠",
+        "邪",
+        "晶",
+        "墨",
+        "洞",
+        "斎",
+        "征"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜とはいえ",
+        "〜ともあろうものが",
+        "〜ともなく"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「菌」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 菌.",
+          "en": "This material checks words that contain 菌."
+        },
+        {
+          "jp": "著者の主張を理解するには、「鎌」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 鎌 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 鎌 in context."
+        },
+        {
+          "jp": "「頻」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 頻 лучше закрепляется вместе со сложными словами.",
+          "en": "頻 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "菌",
+        "鎌",
+        "頻",
+        "琴",
+        "班",
+        "棚",
+        "潔",
+        "酷"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
+    },
+    {
+      "id": "bulk-n1-28",
+      "level": "N1",
+      "order": 28,
+      "title": {
+        "ru": "Урок 28. N1 кандзи 541-560",
+        "en": "N1 Lesson 28"
+      },
+      "theme": {
+        "ru": "N1 кандзи 541-560",
+        "en": "N1 kanji 541-560"
+      },
+      "kanji": [
+        "履",
+        "劣",
+        "託",
+        "朴",
+        "亭",
+        "淳",
+        "怪",
+        "鳩",
+        "惜",
+        "穫",
+        "佳",
+        "潤",
+        "悼",
+        "乏",
+        "該",
+        "桂",
+        "虎",
+        "舎",
+        "唇",
+        "忍"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ともなると",
+        "〜ないではおかない",
+        "〜ないではすまない"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「履」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 履.",
+          "en": "This material checks words that contain 履."
+        },
+        {
+          "jp": "著者の主張を理解するには、「劣」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 劣 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 劣 in context."
+        },
+        {
+          "jp": "「託」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 託 лучше закрепляется вместе со сложными словами.",
+          "en": "託 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "履",
+        "劣",
+        "託",
+        "朴",
+        "亭",
+        "淳",
+        "怪",
+        "鳩"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
+    },
+    {
+      "id": "bulk-n1-29",
+      "level": "N1",
+      "order": 29,
+      "title": {
+        "ru": "Урок 29. N1 кандзи 561-580",
+        "en": "N1 Lesson 29"
+      },
+      "theme": {
+        "ru": "N1 кандзи 561-580",
+        "en": "N1 kanji 561-580"
+      },
+      "kanji": [
+        "盆",
+        "晋",
+        "堤",
+        "飢",
+        "傍",
+        "疫",
+        "累",
+        "痴",
+        "搬",
+        "晃",
+        "癒",
+        "郭",
+        "尿",
+        "凶",
+        "慎",
+        "宴",
+        "鷹",
+        "賓",
+        "診",
+        "竜"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ないまでも",
+        "〜ないものでもない",
+        "〜ながらに"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「盆」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 盆.",
+          "en": "This material checks words that contain 盆."
+        },
+        {
+          "jp": "著者の主張を理解するには、「晋」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 晋 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 晋 in context."
+        },
+        {
+          "jp": "「堤」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 堤 лучше закрепляется вместе со сложными словами.",
+          "en": "堤 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "盆",
+        "晋",
+        "堤",
+        "飢",
+        "傍",
+        "疫",
+        "累",
+        "痴"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
+    },
+    {
+      "id": "bulk-n1-30",
+      "level": "N1",
+      "order": 30,
+      "title": {
+        "ru": "Урок 30. N1 кандзи 581-600",
+        "en": "N1 Lesson 30"
+      },
+      "theme": {
+        "ru": "N1 кандзи 581-600",
+        "en": "N1 kanji 581-600"
+      },
+      "kanji": [
+        "虜",
+        "陶",
+        "鐘",
+        "憾",
+        "猪",
+        "紘",
+        "磁",
+        "昆",
+        "芽",
+        "庄",
+        "傘",
+        "敦",
+        "騎",
+        "寧",
+        "循",
+        "悠",
+        "怠",
+        "如",
+        "寮",
+        "僧"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ながらも",
+        "〜なくして",
+        "〜なしに"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「虜」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 虜.",
+          "en": "This material checks words that contain 虜."
+        },
+        {
+          "jp": "著者の主張を理解するには、「陶」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 陶 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 陶 in context."
+        },
+        {
+          "jp": "「鐘」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 鐘 лучше закрепляется вместе со сложными словами.",
+          "en": "鐘 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "虜",
+        "陶",
+        "鐘",
+        "憾",
+        "猪",
+        "紘",
+        "磁",
+        "昆"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-6"
+    },
+    {
+      "id": "bulk-n1-31",
+      "level": "N1",
+      "order": 31,
+      "title": {
+        "ru": "Урок 31. N1 кандзи 601-620",
+        "en": "N1 Lesson 31"
+      },
+      "theme": {
+        "ru": "N1 кандзи 601-620",
+        "en": "N1 kanji 601-620"
+      },
+      "kanji": [
+        "祐",
+        "鵬",
+        "鉛",
+        "哀",
+        "跳",
+        "匠",
+        "垂",
+        "蛇",
+        "澄",
+        "縫",
+        "概",
+        "挨",
+        "亘",
+        "凡",
+        "恭",
+        "刈",
+        "睡",
+        "錯",
+        "拶",
+        "伯"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ならでは",
+        "〜なり",
+        "〜なり〜なり"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「祐」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 祐.",
+          "en": "This material checks words that contain 祐."
+        },
+        {
+          "jp": "著者の主張を理解するには、「鵬」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 鵬 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 鵬 in context."
+        },
+        {
+          "jp": "「鉛」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 鉛 лучше закрепляется вместе со сложными словами.",
+          "en": "鉛 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "祐",
+        "鵬",
+        "鉛",
+        "哀",
+        "跳",
+        "匠",
+        "垂",
+        "蛇"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-7"
+    },
+    {
+      "id": "bulk-n1-32",
+      "level": "N1",
+      "order": 32,
+      "title": {
+        "ru": "Урок 32. N1 кандзи 621-640",
+        "en": "N1 Lesson 32"
+      },
+      "theme": {
+        "ru": "N1 кандзи 621-640",
+        "en": "N1 kanji 621-640"
+      },
+      "kanji": [
+        "荘",
+        "笹",
+        "穀",
+        "陵",
+        "霧",
+        "魂",
+        "弊",
+        "妃",
+        "舶",
+        "餓",
+        "窮",
+        "掌",
+        "臭",
+        "刃",
+        "縛",
+        "宜",
+        "盲",
+        "滞",
+        "霊",
+        "慢"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜なりに",
+        "〜にあって",
+        "〜に至る"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「荘」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 荘.",
+          "en": "This material checks words that contain 荘."
+        },
+        {
+          "jp": "著者の主張を理解するには、「笹」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 笹 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 笹 in context."
+        },
+        {
+          "jp": "「穀」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 穀 лучше закрепляется вместе со сложными словами.",
+          "en": "穀 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "荘",
+        "笹",
+        "穀",
+        "陵",
+        "霧",
+        "魂",
+        "弊",
+        "妃"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-8"
+    },
+    {
+      "id": "bulk-n1-33",
+      "level": "N1",
+      "order": 33,
+      "title": {
+        "ru": "Урок 33. N1 кандзи 641-660",
+        "en": "N1 Lesson 33"
+      },
+      "theme": {
+        "ru": "N1 кандзи 641-660",
+        "en": "N1 kanji 641-660"
+      },
+      "kanji": [
+        "辱",
+        "毅",
+        "轄",
+        "猿",
+        "弦",
+        "稔",
+        "窒",
+        "飽",
+        "冗",
+        "桃",
+        "狩",
+        "朱",
+        "渦",
+        "紳",
+        "碑",
+        "鍛",
+        "嬢",
+        "鼓",
+        "裸",
+        "陥"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜に至って",
+        "〜に至っては",
+        "〜に至るまで"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「辱」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 辱.",
+          "en": "This material checks words that contain 辱."
+        },
+        {
+          "jp": "著者の主張を理解するには、「毅」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 毅 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 毅 in context."
+        },
+        {
+          "jp": "「轄」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 轄 лучше закрепляется вместе со сложными словами.",
+          "en": "轄 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "辱",
+        "毅",
+        "轄",
+        "猿",
+        "弦",
+        "稔",
+        "窒",
+        "飽"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
+    },
+    {
+      "id": "bulk-n1-34",
+      "level": "N1",
+      "order": 34,
+      "title": {
+        "ru": "Урок 34. N1 кандзи 661-680",
+        "en": "N1 Lesson 34"
+      },
+      "theme": {
+        "ru": "N1 кандзи 661-680",
+        "en": "N1 kanji 661-680"
+      },
+      "kanji": [
+        "猶",
+        "塊",
+        "旋",
+        "膜",
+        "扇",
+        "腸",
+        "槽",
+        "慈",
+        "楊",
+        "伐",
+        "駿",
+        "漬",
+        "糾",
+        "亮",
+        "墳",
+        "坪",
+        "紺",
+        "椿",
+        "俸",
+        "旦"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜に言わせれば",
+        "〜にかかっている",
+        "〜にかたくない"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「猶」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 猶.",
+          "en": "This material checks words that contain 猶."
+        },
+        {
+          "jp": "著者の主張を理解するには、「塊」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 塊 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 塊 in context."
+        },
+        {
+          "jp": "「旋」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 旋 лучше закрепляется вместе со сложными словами.",
+          "en": "旋 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "猶",
+        "塊",
+        "旋",
+        "膜",
+        "扇",
+        "腸",
+        "槽",
+        "慈"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
+    },
+    {
+      "id": "bulk-n1-35",
+      "level": "N1",
+      "order": 35,
+      "title": {
+        "ru": "Урок 35. N1 кандзи 681-700",
+        "en": "N1 Lesson 35"
+      },
+      "theme": {
+        "ru": "N1 кандзи 681-700",
+        "en": "N1 kanji 681-700"
+      },
+      "kanji": [
+        "厘",
+        "峰",
+        "圭",
+        "蓮",
+        "弔",
+        "乙",
+        "汁",
+        "尼",
+        "遍",
+        "衡",
+        "偵",
+        "喝",
+        "敢",
+        "胎",
+        "酵",
+        "憤",
+        "豚",
+        "懐",
+        "舌",
+        "駄"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜にして",
+        "〜にしてからが",
+        "〜にして"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「厘」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 厘.",
+          "en": "This material checks words that contain 厘."
+        },
+        {
+          "jp": "著者の主張を理解するには、「峰」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 峰 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 峰 in context."
+        },
+        {
+          "jp": "「圭」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 圭 лучше закрепляется вместе со сложными словами.",
+          "en": "圭 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "厘",
+        "峰",
+        "圭",
+        "蓮",
+        "弔",
+        "乙",
+        "汁",
+        "尼"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
+    },
+    {
+      "id": "bulk-n1-36",
+      "level": "N1",
+      "order": 36,
+      "title": {
+        "ru": "Урок 36. N1 кандзи 701-720",
+        "en": "N1 Lesson 36"
+      },
+      "theme": {
+        "ru": "N1 кандзи 701-720",
+        "en": "N1 kanji 701-720"
+      },
+      "kanji": [
+        "遮",
+        "扉",
+        "硫",
+        "赦",
+        "泡",
+        "瑞",
+        "又",
+        "肪",
+        "扶",
+        "伍",
+        "忌",
+        "濁",
+        "奔",
+        "斗",
+        "蘭",
+        "迅",
+        "肖",
+        "鉢",
+        "奴",
+        "銭"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「遮」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 遮.",
+          "en": "This material checks words that contain 遮."
+        },
+        {
+          "jp": "著者の主張を理解するには、「扉」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 扉 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 扉 in context."
+        },
+        {
+          "jp": "「硫」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 硫 лучше закрепляется вместе со сложными словами.",
+          "en": "硫 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "遮",
+        "扉",
+        "硫",
+        "赦",
+        "泡",
+        "瑞",
+        "又",
+        "肪"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
+    },
+    {
+      "id": "bulk-n1-37",
+      "level": "N1",
+      "order": 37,
+      "title": {
+        "ru": "Урок 37. N1 кандзи 721-740",
+        "en": "N1 Lesson 37"
+      },
+      "theme": {
+        "ru": "N1 кандзи 721-740",
+        "en": "N1 kanji 721-740"
+      },
+      "kanji": [
+        "朽",
+        "享",
+        "勧",
+        "沙",
+        "輔",
+        "媒",
+        "胴",
+        "迭",
+        "嵐",
+        "椎",
+        "絹",
+        "陪",
+        "剖",
+        "譜",
+        "帆",
+        "侍",
+        "潜",
+        "酔",
+        "呂",
+        "亜"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜にひきかえ",
+        "〜にもまして",
+        "〜によらず"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「朽」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 朽.",
+          "en": "This material checks words that contain 朽."
+        },
+        {
+          "jp": "著者の主張を理解するには、「享」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 享 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 享 in context."
+        },
+        {
+          "jp": "「勧」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 勧 лучше закрепляется вместе со сложными словами.",
+          "en": "勧 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "朽",
+        "享",
+        "勧",
+        "沙",
+        "輔",
+        "媒",
+        "胴",
+        "迭"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
+    },
+    {
+      "id": "bulk-n1-38",
+      "level": "N1",
+      "order": 38,
+      "title": {
+        "ru": "Урок 38. N1 кандзи 741-760",
+        "en": "N1 Lesson 38"
+      },
+      "theme": {
+        "ru": "N1 кандзи 741-760",
+        "en": "N1 kanji 741-760"
+      },
+      "kanji": [
+        "傑",
+        "楠",
+        "笛",
+        "玲",
+        "稼",
+        "錠",
+        "拳",
+        "翔",
+        "遷",
+        "拙",
+        "随",
+        "尺",
+        "峠",
+        "叔",
+        "雌",
+        "亨",
+        "堪",
+        "亀",
+        "巡",
+        "釈"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ぬきに",
+        "〜ぬく",
+        "〜の至り"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「傑」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 傑.",
+          "en": "This material checks words that contain 傑."
+        },
+        {
+          "jp": "著者の主張を理解するには、「楠」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 楠 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 楠 in context."
+        },
+        {
+          "jp": "「笛」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 笛 лучше закрепляется вместе со сложными словами.",
+          "en": "笛 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "傑",
+        "楠",
+        "笛",
+        "玲",
+        "稼",
+        "錠",
+        "拳",
+        "翔"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-6"
+    },
+    {
+      "id": "bulk-n1-39",
+      "level": "N1",
+      "order": 39,
+      "title": {
+        "ru": "Урок 39. N1 кандзи 761-780",
+        "en": "N1 Lesson 39"
+      },
+      "theme": {
+        "ru": "N1 кандзи 761-780",
+        "en": "N1 kanji 761-780"
+      },
+      "kanji": [
+        "酢",
+        "吟",
+        "嶺",
+        "甚",
+        "喬",
+        "崇",
+        "漆",
+        "岬",
+        "寅",
+        "礁",
+        "乃",
+        "洲",
+        "屯",
+        "樺",
+        "姻",
+        "擬",
+        "羅",
+        "稲",
+        "曹",
+        "尽"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜の極み",
+        "〜のなんの",
+        "〜はおろか"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「酢」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 酢.",
+          "en": "This material checks words that contain 酢."
+        },
+        {
+          "jp": "著者の主張を理解するには、「吟」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 吟 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 吟 in context."
+        },
+        {
+          "jp": "「嶺」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 嶺 лучше закрепляется вместе со сложными словами.",
+          "en": "嶺 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "酢",
+        "吟",
+        "嶺",
+        "甚",
+        "喬",
+        "崇",
+        "漆",
+        "岬"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-7"
+    },
+    {
+      "id": "bulk-n1-40",
+      "level": "N1",
+      "order": 40,
+      "title": {
+        "ru": "Урок 40. N1 кандзи 781-800",
+        "en": "N1 Lesson 40"
+      },
+      "theme": {
+        "ru": "N1 кандзи 781-800",
+        "en": "N1 kanji 781-800"
+      },
+      "kanji": [
+        "翼",
+        "睦",
+        "閑",
+        "胡",
+        "詠",
+        "卑",
+        "侮",
+        "抹",
+        "尉",
+        "槻",
+        "隷",
+        "禍",
+        "蝶",
+        "酪",
+        "帥",
+        "逝",
+        "襟",
+        "即",
+        "沿",
+        "凄"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜ばかりか",
+        "〜ばこそ",
+        "〜はさておき"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「翼」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 翼.",
+          "en": "This material checks words that contain 翼."
+        },
+        {
+          "jp": "著者の主張を理解するには、「睦」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 睦 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 睦 in context."
+        },
+        {
+          "jp": "「閑」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 閑 лучше закрепляется вместе со сложными словами.",
+          "en": "閑 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "翼",
+        "睦",
+        "閑",
+        "胡",
+        "詠",
+        "卑",
+        "侮",
+        "抹"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-8"
+    },
+    {
+      "id": "bulk-n1-41",
+      "level": "N1",
+      "order": 41,
+      "title": {
+        "ru": "Урок 41. N1 кандзи 801-820",
+        "en": "N1 Lesson 41"
+      },
+      "theme": {
+        "ru": "N1 кандзи 801-820",
+        "en": "N1 kanji 801-820"
+      },
+      "kanji": [
+        "蕉",
+        "寡",
+        "琉",
+        "痢",
+        "庸",
+        "朋",
+        "坑",
+        "藍",
+        "賊",
+        "搾",
+        "畔",
+        "遼",
+        "唄",
+        "孔",
+        "拷",
+        "苑",
+        "巽",
+        "杜",
+        "是",
+        "唐"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜はともかく",
+        "〜まじき",
+        "〜までだ"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「蕉」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 蕉.",
+          "en": "This material checks words that contain 蕉."
+        },
+        {
+          "jp": "著者の主張を理解するには、「寡」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 寡 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 寡 in context."
+        },
+        {
+          "jp": "「琉」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 琉 лучше закрепляется вместе со сложными словами.",
+          "en": "琉 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "蕉",
+        "寡",
+        "琉",
+        "痢",
+        "庸",
+        "朋",
+        "坑",
+        "藍"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
+    },
+    {
+      "id": "bulk-n1-42",
+      "level": "N1",
+      "order": 42,
+      "title": {
+        "ru": "Урок 42. N1 кандзи 821-840",
+        "en": "N1 Lesson 42"
+      },
+      "theme": {
+        "ru": "N1 кандзи 821-840",
+        "en": "N1 kanji 821-840"
+      },
+      "kanji": [
+        "翁",
+        "廉",
+        "謹",
+        "瞳",
+        "湧",
+        "欣",
+        "窯",
+        "褒",
+        "煩",
+        "巴",
+        "禎",
+        "劾",
+        "租",
+        "稜",
+        "倭",
+        "慕",
+        "斐",
+        "狭",
+        "添",
+        "剤"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜までもない",
+        "〜まみれ",
+        "〜めく"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「翁」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 翁.",
+          "en": "This material checks words that contain 翁."
+        },
+        {
+          "jp": "著者の主張を理解するには、「廉」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 廉 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 廉 in context."
+        },
+        {
+          "jp": "「謹」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 謹 лучше закрепляется вместе со сложными словами.",
+          "en": "謹 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "翁",
+        "廉",
+        "謹",
+        "瞳",
+        "湧",
+        "欣",
+        "窯",
+        "褒"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
+    },
+    {
+      "id": "bulk-n1-43",
+      "level": "N1",
+      "order": 43,
+      "title": {
+        "ru": "Урок 43. N1 кандзи 841-860",
+        "en": "N1 Lesson 43"
+      },
+      "theme": {
+        "ru": "N1 кандзи 841-860",
+        "en": "N1 kanji 841-860"
+      },
+      "kanji": [
+        "罷",
+        "矯",
+        "虹",
+        "鴻",
+        "泌",
+        "於",
+        "赳",
+        "漸",
+        "蚊",
+        "葵",
+        "厄",
+        "藻",
+        "孟",
+        "嫡",
+        "凸",
+        "暢",
+        "韻",
+        "霜",
+        "寸",
+        "爵"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜も同然だ",
+        "〜もさることながら",
+        "〜ものを"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「罷」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 罷.",
+          "en": "This material checks words that contain 罷."
+        },
+        {
+          "jp": "著者の主張を理解するには、「矯」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 矯 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 矯 in context."
+        },
+        {
+          "jp": "「虹」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 虹 лучше закрепляется вместе со сложными словами.",
+          "en": "虹 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "罷",
+        "矯",
+        "虹",
+        "鴻",
+        "泌",
+        "於",
+        "赳",
+        "漸"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
+    },
+    {
+      "id": "bulk-n1-44",
+      "level": "N1",
+      "order": 44,
+      "title": {
+        "ru": "Урок 44. N1 кандзи 861-880",
+        "en": "N1 Lesson 44"
+      },
+      "theme": {
+        "ru": "N1 кандзи 861-880",
+        "en": "N1 kanji 861-880"
+      },
+      "kanji": [
+        "硝",
+        "勅",
+        "芹",
+        "杏",
+        "棺",
+        "儒",
+        "鳳",
+        "馨",
+        "慧",
+        "愁",
+        "眉",
+        "欽",
+        "薪",
+        "褐",
+        "賜",
+        "嵯",
+        "綜",
+        "繕",
+        "栓",
+        "惨"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜や否や",
+        "〜ゆえに",
+        "〜ようによっては"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「硝」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 硝.",
+          "en": "This material checks words that contain 硝."
+        },
+        {
+          "jp": "著者の主張を理解するには、「勅」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 勅 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 勅 in context."
+        },
+        {
+          "jp": "「芹」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 芹 лучше закрепляется вместе со сложными словами.",
+          "en": "芹 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "硝",
+        "勅",
+        "芹",
+        "杏",
+        "棺",
+        "儒",
+        "鳳",
+        "馨"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
+    },
+    {
+      "id": "bulk-n1-45",
+      "level": "N1",
+      "order": 45,
+      "title": {
+        "ru": "Урок 45. N1 кандзи 881-900",
+        "en": "N1 Lesson 45"
+      },
+      "theme": {
+        "ru": "N1 кандзи 881-900",
+        "en": "N1 kanji 881-900"
+      },
+      "kanji": [
+        "翠",
+        "鮎",
+        "榛",
+        "凹",
+        "艶",
+        "渚",
+        "衷",
+        "逐",
+        "斥",
+        "稀",
+        "芙",
+        "詔",
+        "皐",
+        "雛",
+        "惟",
+        "佑",
+        "耀",
+        "黛",
+        "廊",
+        "鶴"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜をおいて",
+        "〜を限りに",
+        "〜を皮切りに"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「翠」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 翠.",
+          "en": "This material checks words that contain 翠."
+        },
+        {
+          "jp": "著者の主張を理解するには、「鮎」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 鮎 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 鮎 in context."
+        },
+        {
+          "jp": "「榛」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 榛 лучше закрепляется вместе со сложными словами.",
+          "en": "榛 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "翠",
+        "鮎",
+        "榛",
+        "凹",
+        "艶",
+        "渚",
+        "衷",
+        "逐"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
+    },
+    {
+      "id": "bulk-n1-46",
+      "level": "N1",
+      "order": 46,
+      "title": {
+        "ru": "Урок 46. N1 кандзи 901-920",
+        "en": "N1 Lesson 46"
+      },
+      "theme": {
+        "ru": "N1 кандзи 901-920",
+        "en": "N1 kanji 901-920"
+      },
+      "kanji": [
+        "渥",
+        "憧",
+        "脩",
+        "甫",
+        "酌",
+        "嬉",
+        "蒼",
+        "暉",
+        "頒",
+        "只",
+        "肢",
+        "檀",
+        "凱",
+        "彗",
+        "謄",
+        "梓",
+        "汐",
+        "絢",
+        "朔",
+        "虚"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜を禁じ得ない",
+        "〜をもって",
+        "〜をものともせず"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「渥」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 渥.",
+          "en": "This material checks words that contain 渥."
+        },
+        {
+          "jp": "著者の主張を理解するには、「憧」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 憧 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 憧 in context."
+        },
+        {
+          "jp": "「脩」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 脩 лучше закрепляется вместе со сложными словами.",
+          "en": "脩 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "渥",
+        "憧",
+        "脩",
+        "甫",
+        "酌",
+        "嬉",
+        "蒼",
+        "暉"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-6"
+    },
+    {
+      "id": "bulk-n1-47",
+      "level": "N1",
+      "order": 47,
+      "title": {
+        "ru": "Урок 47. N1 кандзи 921-940",
+        "en": "N1 Lesson 47"
+      },
+      "theme": {
+        "ru": "N1 кандзи 921-940",
+        "en": "N1 kanji 921-940"
+      },
+      "kanji": [
+        "伽",
+        "畝",
+        "抄",
+        "爽",
+        "黎",
+        "惰",
+        "旺",
+        "萌",
+        "侯",
+        "蒔",
+        "鯉",
+        "弧",
+        "舜",
+        "瑛",
+        "附",
+        "彪",
+        "趣",
+        "匂",
+        "菊",
+        "孝"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜を余儀なくされる",
+        "〜をよそに",
+        "〜んがため"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「伽」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 伽.",
+          "en": "This material checks words that contain 伽."
+        },
+        {
+          "jp": "著者の主張を理解するには、「畝」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 畝 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 畝 in context."
+        },
+        {
+          "jp": "「抄」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 抄 лучше закрепляется вместе со сложными словами.",
+          "en": "抄 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "伽",
+        "畝",
+        "抄",
+        "爽",
+        "黎",
+        "惰",
+        "旺",
+        "萌"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-7"
+    },
+    {
+      "id": "bulk-n1-48",
+      "level": "N1",
+      "order": 48,
+      "title": {
+        "ru": "Урок 48. N1 кандзи 941-960",
+        "en": "N1 Lesson 48"
+      },
+      "theme": {
+        "ru": "N1 кандзи 941-960",
+        "en": "N1 kanji 941-960"
+      },
+      "kanji": [
+        "卯",
+        "但",
+        "綺",
+        "芋",
+        "凌",
+        "婆",
+        "緋",
+        "怜",
+        "邑",
+        "倣",
+        "碧",
+        "啄",
+        "酉",
+        "悌",
+        "柚",
+        "繭",
+        "姫",
+        "須",
+        "歓",
+        "喉"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "〜んばかり",
+        "あえて",
+        "あくまでも"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「卯」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 卯.",
+          "en": "This material checks words that contain 卯."
+        },
+        {
+          "jp": "著者の主張を理解するには、「但」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 但 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 但 in context."
+        },
+        {
+          "jp": "「綺」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 綺 лучше закрепляется вместе со сложными словами.",
+          "en": "綺 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "卯",
+        "但",
+        "綺",
+        "芋",
+        "凌",
+        "婆",
+        "緋",
+        "怜"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-8"
+    },
+    {
+      "id": "bulk-n1-49",
+      "level": "N1",
+      "order": 49,
+      "title": {
+        "ru": "Урок 49. N1 кандзи 961-980",
+        "en": "N1 Lesson 49"
+      },
+      "theme": {
+        "ru": "N1 кандзи 961-980",
+        "en": "N1 kanji 961-980"
+      },
+      "kanji": [
+        "亦",
+        "賦",
+        "眸",
+        "玖",
+        "錘",
+        "諄",
+        "倖",
+        "痘",
+        "笙",
+        "侃",
+        "裟",
+        "洵",
+        "爾",
+        "耗",
+        "昴",
+        "碩",
+        "宥",
+        "滉",
+        "晏",
+        "脈"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "あえて",
+        "あくまでも",
+        "案の定"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「亦」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 亦.",
+          "en": "This material checks words that contain 亦."
+        },
+        {
+          "jp": "著者の主張を理解するには、「賦」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 賦 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 賦 in context."
+        },
+        {
+          "jp": "「眸」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 眸 лучше закрепляется вместе со сложными словами.",
+          "en": "眸 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "亦",
+        "賦",
+        "眸",
+        "玖",
+        "錘",
+        "諄",
+        "倖",
+        "痘"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-1"
+    },
+    {
+      "id": "bulk-n1-50",
+      "level": "N1",
+      "order": 50,
+      "title": {
+        "ru": "Урок 50. N1 кандзи 981-1000",
+        "en": "N1 Lesson 50"
+      },
+      "theme": {
+        "ru": "N1 кандзи 981-1000",
+        "en": "N1 kanji 981-1000"
+      },
+      "kanji": [
+        "伎",
+        "朕",
+        "迪",
+        "綸",
+        "且",
+        "竣",
+        "晨",
+        "吏",
+        "燦",
+        "頌",
+        "梧",
+        "哉",
+        "晟",
+        "衿",
+        "梢",
+        "丙",
+        "偽",
+        "桜",
+        "排",
+        "麗"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "あえて",
+        "あくまでも",
+        "案の定"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「伎」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 伎.",
+          "en": "This material checks words that contain 伎."
+        },
+        {
+          "jp": "著者の主張を理解するには、「朕」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 朕 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 朕 in context."
+        },
+        {
+          "jp": "「迪」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 迪 лучше закрепляется вместе со сложными словами.",
+          "en": "迪 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "伎",
+        "朕",
+        "迪",
+        "綸",
+        "且",
+        "竣",
+        "晨",
+        "吏"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-2"
+    },
+    {
+      "id": "bulk-n1-51",
+      "level": "N1",
+      "order": 51,
+      "title": {
+        "ru": "Урок 51. N1 кандзи 1001-1020",
+        "en": "N1 Lesson 51"
+      },
+      "theme": {
+        "ru": "N1 кандзи 1001-1020",
+        "en": "N1 kanji 1001-1020"
+      },
+      "kanji": [
+        "颯",
+        "茄",
+        "勺",
+        "恕",
+        "瑚",
+        "遵",
+        "侑",
+        "謁",
+        "斤",
+        "嵩",
+        "捺",
+        "蓉",
+        "茉",
+        "袈",
+        "燿",
+        "誼",
+        "冶",
+        "凝",
+        "椅",
+        "寛"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "あえて",
+        "あくまでも",
+        "案の定"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「颯」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 颯.",
+          "en": "This material checks words that contain 颯."
+        },
+        {
+          "jp": "著者の主張を理解するには、「茄」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 茄 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 茄 in context."
+        },
+        {
+          "jp": "「勺」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 勺 лучше закрепляется вместе со сложными словами.",
+          "en": "勺 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "颯",
+        "茄",
+        "勺",
+        "恕",
+        "瑚",
+        "遵",
+        "侑",
+        "謁"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-3"
+    },
+    {
+      "id": "bulk-n1-52",
+      "level": "N1",
+      "order": 52,
+      "title": {
+        "ru": "Урок 52. N1 кандзи 1021-1040",
+        "en": "N1 Lesson 52"
+      },
+      "theme": {
+        "ru": "N1 кандзи 1021-1040",
+        "en": "N1 kanji 1021-1040"
+      },
+      "kanji": [
+        "墾",
+        "勁",
+        "叡",
+        "紬",
+        "胤",
+        "凜",
+        "亥",
+        "圏",
+        "脹",
+        "麟",
+        "莉",
+        "汰",
+        "耶",
+        "椰",
+        "絃",
+        "塑",
+        "柾",
+        "斉",
+        "穂",
+        "尚"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "あえて",
+        "あくまでも",
+        "案の定"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「墾」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 墾.",
+          "en": "This material checks words that contain 墾."
+        },
+        {
+          "jp": "著者の主張を理解するには、「勁」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 勁 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 勁 in context."
+        },
+        {
+          "jp": "「叡」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 叡 лучше закрепляется вместе со сложными словами.",
+          "en": "叡 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "墾",
+        "勁",
+        "叡",
+        "紬",
+        "胤",
+        "凜",
+        "亥",
+        "圏"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-4"
+    },
+    {
+      "id": "bulk-n1-53",
+      "level": "N1",
+      "order": 53,
+      "title": {
+        "ru": "Урок 53. N1 кандзи 1041-1047",
+        "en": "N1 Lesson 53"
+      },
+      "theme": {
+        "ru": "N1 кандзи 1041-1047",
+        "en": "N1 kanji 1041-1047"
+      },
+      "kanji": [
+        "熙",
+        "菫",
+        "諒",
+        "鞠",
+        "濫",
+        "捷",
+        "較"
+      ],
+      "goal": {
+        "ru": "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание.",
+        "en": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall."
+      },
+      "durationMinutes": 55,
+      "grammarFocus": [
+        "あえて",
+        "あくまでも",
+        "案の定"
+      ],
+      "sentences": [
+        {
+          "jp": "この資料では「熙」を含む語彙の使い方を確認します。",
+          "reading": "",
+          "ru": "В этом материале проверяем употребление слов со знаком 熙.",
+          "en": "This material checks words that contain 熙."
+        },
+        {
+          "jp": "著者の主張を理解するには、「菫」の関連語を文脈で読む必要があります。",
+          "reading": "",
+          "ru": "Чтобы понять позицию автора, слова со знаком 菫 нужно читать в контексте.",
+          "en": "To understand the author's claim, read words with 菫 in context."
+        },
+        {
+          "jp": "「諒」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
+          "reading": "",
+          "ru": "Знак 諒 лучше закрепляется вместе со сложными словами.",
+          "en": "諒 sticks better together with compounds."
+        },
+        {
+          "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
+          "reading": "",
+          "ru": "Проверь основание и кратко сформулируй своё мнение.",
+          "en": "Check the basis and summarize your opinion briefly."
+        }
+      ],
+      "writing": [
+        "熙",
+        "菫",
+        "諒",
+        "鞠",
+        "濫",
+        "捷",
+        "較"
+      ],
+      "reviewAfterDays": [
+        1,
+        3,
+        7,
+        14,
+        30,
+        60,
+        90,
+        120
+      ],
+      "miniReadingId": "n1-reading-textbook-5"
     }
   ]
 }

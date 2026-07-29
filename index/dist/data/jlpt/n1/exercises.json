@@ -1,7 +1,7 @@
 {
   "version": 1,
   "level": "N1",
-  "lessonQuestionCount": 12,
+  "lessonQuestionCount": 10,
   "reviewModes": [
     {
       "id": "due",
@@ -20,7 +20,7 @@
     {
       "id": "all",
       "title": {
-        "ru": "Все N1",
+        "ru": "Весь N1",
         "en": "All N1"
       }
     }
@@ -54,48 +54,21 @@
       "rewardMoon": 1
     },
     {
-      "type": "missing-word",
-      "title": {
-        "ru": "Слово-опора",
-        "en": "Support word"
-      },
-      "rewardXp": 13,
-      "rewardMoon": 1
-    },
-    {
       "type": "sentence",
       "title": {
         "ru": "Позиция в предложении",
-        "en": "Sentence stance"
+        "en": "Sentence position"
       },
       "rewardXp": 14,
       "rewardMoon": 1
     },
     {
-      "type": "grammar-link",
+      "type": "grammar",
       "title": {
-        "ru": "Грамматическая связка",
-        "en": "Grammar link"
+        "ru": "Грамматика N1",
+        "en": "N1 grammar"
       },
       "rewardXp": 14,
-      "rewardMoon": 1
-    },
-    {
-      "type": "mini-reading",
-      "title": {
-        "ru": "Мини-reading",
-        "en": "Mini reading"
-      },
-      "rewardXp": 16,
-      "rewardMoon": 1
-    },
-    {
-      "type": "author-stance",
-      "title": {
-        "ru": "Позиция автора",
-        "en": "Author stance"
-      },
-      "rewardXp": 16,
       "rewardMoon": 1
     },
     {
@@ -104,400 +77,911 @@
         "ru": "Активное вспоминание",
         "en": "Active recall"
       },
-      "rewardXp": 15,
+      "rewardXp": 14,
       "rewardMoon": 1
     }
   ],
-  "lessonOverlays": [
-    {
-      "lessonId": "bulk-n1-01",
-      "intro": {
-        "ru": "Первый N1-урок собирает административную и формальную лексику:氏, 統, 保, 第, 結, 派, 案, 策. Смотри не только на перевод, а на то, кто действует, что оформляется и какой вывод делает текст.",
-        "en": "The first N1 lesson gathers administrative and formal vocabulary: 氏, 統, 保, 第, 結, 派, 案, 策. Watch not only meaning, but who acts, what is formalized, and what conclusion the text reaches."
+  "lessonOverlays": {
+    "bulk-n1-01": [
+      {
+        "type": "active-recall",
+        "kanji": "氏",
+        "prompt": "Вспомни значение 氏 без подсказки.",
+        "answer": "family name, surname, clan",
+        "rewardXp": 14,
+        "rewardMoon": 1
       },
-      "grammarFocus": [
-        "に至るまで",
-        "をもって",
-        "に即して",
-        "を余儀なくされる",
-        "にかかわる"
-      ],
-      "miniReadingId": "n1-reading-lesson-01",
-      "collocations": [
-        {
-          "jp": "氏名を確認する",
-          "reading": "しめいをかくにんする",
-          "ru": "подтвердить имя и фамилию",
-          "en": "confirm full name"
-        },
-        {
-          "jp": "統一した方針",
-          "reading": "とういつしたほうしん",
-          "ru": "единая политика",
-          "en": "unified policy"
-        },
-        {
-          "jp": "保護を求める",
-          "reading": "ほごをもとめる",
-          "ru": "запрашивать защиту",
-          "en": "seek protection"
-        },
-        {
-          "jp": "第一段階",
-          "reading": "だいいちだんかい",
-          "ru": "первый этап",
-          "en": "first stage"
-        },
-        {
-          "jp": "結論に至る",
-          "reading": "けつろんにいたる",
-          "ru": "прийти к выводу",
-          "en": "reach a conclusion"
-        },
-        {
-          "jp": "派遣の条件",
-          "reading": "はけんのじょうけん",
-          "ru": "условия направления/отправки",
-          "en": "dispatch conditions"
-        },
-        {
-          "jp": "案を提出する",
-          "reading": "あんをていしゅつする",
-          "ru": "представить план",
-          "en": "submit a proposal"
-        },
-        {
-          "jp": "対策を講じる",
-          "reading": "たいさくをこうじる",
-          "ru": "принять меры",
-          "en": "take countermeasures"
-        }
-      ],
-      "sentences": [
-        {
-          "jp": "委員会は、氏名の確認から保護方針の統一に至るまで、第一段階として新たな案を示した。",
-          "reading": "いいんかいは、しめいのかくにんからほごほうしんのとういつにいたるまで、だいいちだんかいとしてあらたなあんをしめした。",
-          "ru": "Комитет как первый этап представил новый план: от проверки имён до унификации политики защиты.",
-          "en": "As a first stage, the committee presented a new proposal covering everything from name verification to unified protection policy."
-        },
-        {
-          "jp": "各派の意見に即して対策を講じるべきだ、という結論に至った。",
-          "reading": "かくはのいけんにそくしてたいさくをこうじるべきだ、というけつろんにいたった。",
-          "ru": "В итоге пришли к выводу, что меры следует принимать в соответствии с мнениями каждой фракции.",
-          "en": "They reached the conclusion that countermeasures should be taken in line with each faction's views."
-        },
-        {
-          "jp": "提案は採用されたものの、実施には保護体制の再検討が必要だ。",
-          "reading": "ていあんはさいようされたものの、じっしにはほごたいせいのさいけんとうがひつようだ。",
-          "ru": "Хотя предложение приняли, для реализации необходимо пересмотреть систему защиты.",
-          "en": "Although the proposal was accepted, implementation requires a review of the protection system."
-        }
-      ],
-      "exercises": [
-        {
-          "id": "bulk-n1-01-stance-01",
-          "type": "author-stance",
-          "prompt": {
-            "ru": "Что автор подчёркивает в предложении: 各派の意見に即して対策を講じるべきだ、という結論に至った。",
-            "en": "What does the author emphasize in: 各派の意見に即して対策を講じるべきだ、という結論に至った。"
-          },
-          "answer": "process-to-conclusion",
-          "answerLabel": {
-            "ru": "путь от мнений к выводу и мерам",
-            "en": "the path from opinions to conclusion and measures"
-          },
-          "kanji": "策",
-          "options": [
-            {
-              "value": "process-to-conclusion",
-              "label": {
-                "ru": "путь от мнений к выводу и мерам",
-                "en": "the path from opinions to conclusion and measures"
-              }
-            },
-            {
-              "value": "personal-emotion",
-              "label": {
-                "ru": "личную эмоцию автора",
-                "en": "the author's personal emotion"
-              }
-            },
-            {
-              "value": "time-only",
-              "label": {
-                "ru": "только время действия",
-                "en": "only timing"
-              }
-            },
-            {
-              "value": "place-only",
-              "label": {
-                "ru": "только место действия",
-                "en": "only location"
-              }
-            }
-          ]
-        },
-        {
-          "id": "bulk-n1-01-grammar-01",
-          "type": "grammar-link",
-          "grammarId": "n1-overlay-itaru",
-          "prompt": {
-            "ru": "Какая связка показывает диапазон до крайней точки: 氏名の確認から保護方針の統一___?",
-            "en": "Which link marks a range up to the final point: 氏名の確認から保護方針の統一___?"
-          },
-          "answer": "に至るまで",
-          "answerLabel": {
-            "ru": "に至るまで",
-            "en": "に至るまで"
-          },
-          "kanji": "統",
-          "options": [
-            "に至るまで",
-            "に対して",
-            "として",
-            "によると"
-          ]
-        },
-        {
-          "id": "bulk-n1-01-reading-conclusion",
-          "type": "mini-reading",
-          "prompt": {
-            "ru": "Какой главный вывод мини-текста урока?",
-            "en": "What is the main conclusion of the lesson mini reading?"
-          },
-          "answer": "need-review-before-implementation",
-          "answerLabel": {
-            "ru": "перед реализацией нужен пересмотр системы",
-            "en": "the system needs review before implementation"
-          },
-          "kanji": "結",
-          "options": [
-            {
-              "value": "need-review-before-implementation",
-              "label": {
-                "ru": "перед реализацией нужен пересмотр системы",
-                "en": "the system needs review before implementation"
-              }
-            },
-            {
-              "value": "proposal-rejected",
-              "label": {
-                "ru": "предложение полностью отклонено",
-                "en": "the proposal was fully rejected"
-              }
-            },
-            {
-              "value": "names-are-unimportant",
-              "label": {
-                "ru": "имена не имеют значения",
-                "en": "names do not matter"
-              }
-            },
-            {
-              "value": "no-measures",
-              "label": {
-                "ru": "меры больше не нужны",
-                "en": "no measures are needed"
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "diagnostic": [
-    {
-      "id": "diag-n5-particle-wo",
-      "topicId": "n5-particles",
-      "level": "N5",
-      "topic": {
-        "ru": "частицы を / に / で",
-        "en": "particles を / に / で"
-      },
-      "prompt": {
-        "ru": "Выбери частицу: 本___読みます。",
-        "en": "Choose the particle: 本___読みます。"
-      },
-      "answer": "を",
-      "options": [
-        {
-          "value": "を",
-          "label": {
-            "ru": "を",
-            "en": "を"
-          }
-        },
-        {
-          "value": "に",
-          "label": {
-            "ru": "に",
-            "en": "に"
-          }
-        },
-        {
-          "value": "で",
-          "label": {
-            "ru": "で",
-            "en": "で"
-          }
-        },
-        {
-          "value": "へ",
-          "label": {
-            "ru": "へ",
-            "en": "へ"
-          }
-        }
-      ],
-      "review": {
-        "ru": "Повтори базовое управление глаголов N5.",
-        "en": "Review basic N5 verb particles."
+      {
+        "type": "writing",
+        "kanji": "統",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
       }
-    },
-    {
-      "id": "diag-n4-conditional",
-      "topicId": "n4-conditionals",
-      "level": "N4",
-      "topic": {
-        "ru": "условные формы たら / なら / ば / と",
-        "en": "conditionals たら / なら / ば / と"
+    ],
+    "bulk-n1-02": [
+      {
+        "type": "active-recall",
+        "kanji": "施",
+        "prompt": "Вспомни значение 施 без подсказки.",
+        "answer": "give, bestow, perform, alms",
+        "rewardXp": 14,
+        "rewardMoon": 1
       },
-      "prompt": {
-        "ru": "Какая форма чаще задаёт условие с советом: 日本へ行く___、冬の服を持っていったほうがいい。",
-        "en": "Which form best sets a condition with advice: 日本へ行く___、冬の服を持っていったほうがいい。"
-      },
-      "answer": "なら",
-      "options": [
-        {
-          "value": "なら",
-          "label": {
-            "ru": "なら",
-            "en": "なら"
-          }
-        },
-        {
-          "value": "と",
-          "label": {
-            "ru": "と",
-            "en": "と"
-          }
-        },
-        {
-          "value": "まで",
-          "label": {
-            "ru": "まで",
-            "en": "まで"
-          }
-        },
-        {
-          "value": "から",
-          "label": {
-            "ru": "から",
-            "en": "から"
-          }
-        }
-      ],
-      "review": {
-        "ru": "Повтори N4-условия перед N1-аргументами.",
-        "en": "Review N4 conditionals before N1 argument flow."
+      {
+        "type": "writing",
+        "kanji": "井",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
       }
-    },
-    {
-      "id": "diag-n3-contrast",
-      "topicId": "n3-contrast",
-      "level": "N3",
-      "topic": {
-        "ru": "контраст и уступка",
-        "en": "contrast and concession"
+    ],
+    "bulk-n1-03": [
+      {
+        "type": "active-recall",
+        "kanji": "姿",
+        "prompt": "Вспомни значение 姿 без подсказки.",
+        "answer": "figure, form, shape",
+        "rewardXp": 14,
+        "rewardMoon": 1
       },
-      "prompt": {
-        "ru": "Что делает のに в: 便利なのに、利用者は少ない。",
-        "en": "What does のに do in: 便利なのに、利用者は少ない。"
-      },
-      "answer": "concession",
-      "options": [
-        {
-          "value": "concession",
-          "label": {
-            "ru": "уступка: хотя удобно, пользователей мало",
-            "en": "concession: although convenient, users are few"
-          }
-        },
-        {
-          "value": "cause",
-          "label": {
-            "ru": "простая причина",
-            "en": "simple cause"
-          }
-        },
-        {
-          "value": "time",
-          "label": {
-            "ru": "время",
-            "en": "time"
-          }
-        },
-        {
-          "value": "quotation",
-          "label": {
-            "ru": "цитата",
-            "en": "quotation"
-          }
-        }
-      ],
-      "review": {
-        "ru": "Повтори уступку и контраст N3.",
-        "en": "Review N3 concession and contrast."
+      {
+        "type": "writing",
+        "kanji": "閣",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
       }
-    },
-    {
-      "id": "diag-n2-author-stance",
-      "topicId": "n2-author-stance",
-      "level": "N2",
-      "topic": {
-        "ru": "позиция автора",
-        "en": "author stance"
+    ],
+    "bulk-n1-04": [
+      {
+        "type": "active-recall",
+        "kanji": "崎",
+        "prompt": "Вспомни значение 崎 без подсказки.",
+        "answer": "promontory, cape, spit",
+        "rewardXp": 14,
+        "rewardMoon": 1
       },
-      "prompt": {
-        "ru": "В тексте: 便利だ。しかし、導入には慎重な議論が必要だ。 Какая позиция автора?",
-        "en": "In: 便利だ。しかし、導入には慎重な議論が必要だ。 What is the author's stance?"
-      },
-      "answer": "cautious-support",
-      "options": [
-        {
-          "value": "cautious-support",
-          "label": {
-            "ru": "осторожная поддержка",
-            "en": "cautious support"
-          }
-        },
-        {
-          "value": "full-rejection",
-          "label": {
-            "ru": "полный отказ",
-            "en": "full rejection"
-          }
-        },
-        {
-          "value": "no-opinion",
-          "label": {
-            "ru": "позиции нет",
-            "en": "no stance"
-          }
-        },
-        {
-          "value": "unrelated",
-          "label": {
-            "ru": "тема сменилась",
-            "en": "topic changed"
-          }
-        }
-      ],
-      "review": {
-        "ru": "Повтори N2-логику: польза + ограничение + вывод.",
-        "en": "Review N2 logic: benefit + limitation + conclusion."
+      {
+        "type": "writing",
+        "kanji": "督",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
       }
-    }
-  ]
+    ],
+    "bulk-n1-05": [
+      {
+        "type": "active-recall",
+        "kanji": "振",
+        "prompt": "Вспомни значение 振 без подсказки.",
+        "answer": "shake, wave, wag, swing",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "弁",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-06": [
+      {
+        "type": "active-recall",
+        "kanji": "昭",
+        "prompt": "Вспомни значение 昭 без подсказки.",
+        "answer": "shining, bright",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "廃",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-07": [
+      {
+        "type": "active-recall",
+        "kanji": "葬",
+        "prompt": "Вспомни значение 葬 без подсказки.",
+        "answer": "interment, bury, shelve",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "避",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-08": [
+      {
+        "type": "active-recall",
+        "kanji": "密",
+        "prompt": "Вспомни значение 密 без подсказки.",
+        "answer": "secrecy, density (pop), minuteness, carefulness",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "措",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-09": [
+      {
+        "type": "active-recall",
+        "kanji": "拒",
+        "prompt": "Вспомни значение 拒 без подсказки.",
+        "answer": "repel, refuse, reject, decline",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "刑",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-10": [
+      {
+        "type": "active-recall",
+        "kanji": "縮",
+        "prompt": "Вспомни значение 縮 без подсказки.",
+        "answer": "shrink, contract, shrivel, wrinkle",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "還",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-11": [
+      {
+        "type": "active-recall",
+        "kanji": "獲",
+        "prompt": "Вспомни значение 獲 без подсказки.",
+        "answer": "seize, get, find, earn, acquire",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "郡",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-12": [
+      {
+        "type": "active-recall",
+        "kanji": "扱",
+        "prompt": "Вспомни значение 扱 без подсказки.",
+        "answer": "handle, entertain, thresh, strip",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "顧",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-13": [
+      {
+        "type": "active-recall",
+        "kanji": "範",
+        "prompt": "Вспомни значение 範 без подсказки.",
+        "answer": "pattern, example, model, modèle",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "己",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-14": [
+      {
+        "type": "active-recall",
+        "kanji": "索",
+        "prompt": "Вспомни значение 索 без подсказки.",
+        "answer": "cord, rope, searching, inquiring",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "誠",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-15": [
+      {
+        "type": "active-recall",
+        "kanji": "柳",
+        "prompt": "Вспомни значение 柳 без подсказки.",
+        "answer": "willow, saule, sauce, mimbre",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "詳",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-16": [
+      {
+        "type": "active-recall",
+        "kanji": "擁",
+        "prompt": "Вспомни значение 擁 без подсказки.",
+        "answer": "hug, embrace, possess, protect",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "酸",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-17": [
+      {
+        "type": "active-recall",
+        "kanji": "摩",
+        "prompt": "Вспомни значение 摩 без подсказки.",
+        "answer": "chafe, rub, polish, grind",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "輝",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-18": [
+      {
+        "type": "active-recall",
+        "kanji": "唯",
+        "prompt": "Вспомни значение 唯 без подсказки.",
+        "answer": "solely, only, merely, simply",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "膨",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-19": [
+      {
+        "type": "active-recall",
+        "kanji": "梨",
+        "prompt": "Вспомни значение 梨 без подсказки.",
+        "answer": "pear tree, poire, peral, pera",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "仁",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-20": [
+      {
+        "type": "active-recall",
+        "kanji": "殖",
+        "prompt": "Вспомни значение 殖 без подсказки.",
+        "answer": "augment, increase, multiply, raise",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "艦",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-21": [
+      {
+        "type": "active-recall",
+        "kanji": "陰",
+        "prompt": "Вспомни значение 陰 без подсказки.",
+        "answer": "shade, yin, negative, sex organs",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "銘",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-22": [
+      {
+        "type": "active-recall",
+        "kanji": "豆",
+        "prompt": "Вспомни значение 豆 без подсказки.",
+        "answer": "beans, pea, midget, haricot",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "遂",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-23": [
+      {
+        "type": "active-recall",
+        "kanji": "帳",
+        "prompt": "Вспомни значение 帳 без подсказки.",
+        "answer": "notebook, account book, album, curtain",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "悔",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-24": [
+      {
+        "type": "active-recall",
+        "kanji": "諾",
+        "prompt": "Вспомни значение 諾 без подсказки.",
+        "answer": "consent, assent, agreement, consentement",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "雷",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-25": [
+      {
+        "type": "active-recall",
+        "kanji": "曙",
+        "prompt": "Вспомни значение 曙 без подсказки.",
+        "answer": "dawn, daybreak, alba, amanecer",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "紋",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-26": [
+      {
+        "type": "active-recall",
+        "kanji": "愚",
+        "prompt": "Вспомни значение 愚 без подсказки.",
+        "answer": "foolish, folly, absurdity, stupid",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "没",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-27": [
+      {
+        "type": "active-recall",
+        "kanji": "菌",
+        "prompt": "Вспомни значение 菌 без подсказки.",
+        "answer": "germ, fungus, bacteria, germe (microbien)",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "鎌",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-28": [
+      {
+        "type": "active-recall",
+        "kanji": "履",
+        "prompt": "Вспомни значение 履 без подсказки.",
+        "answer": "perform, complete, footgear, shoes",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "劣",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-29": [
+      {
+        "type": "active-recall",
+        "kanji": "盆",
+        "prompt": "Вспомни значение 盆 без подсказки.",
+        "answer": "basin, lantern festival, tray, bassin",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "晋",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-30": [
+      {
+        "type": "active-recall",
+        "kanji": "虜",
+        "prompt": "Вспомни значение 虜 без подсказки.",
+        "answer": "captive, barbarian, low epithet for the enemy, captif",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "陶",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-31": [
+      {
+        "type": "active-recall",
+        "kanji": "祐",
+        "prompt": "Вспомни значение 祐 без подсказки.",
+        "answer": "help, ayudar",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "鵬",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-32": [
+      {
+        "type": "active-recall",
+        "kanji": "荘",
+        "prompt": "Вспомни значение 荘 без подсказки.",
+        "answer": "villa, inn, cottage, feudal manor",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "笹",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-33": [
+      {
+        "type": "active-recall",
+        "kanji": "辱",
+        "prompt": "Вспомни значение 辱 без подсказки.",
+        "answer": "embarrass, humiliate, shame, humilier",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "毅",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-34": [
+      {
+        "type": "active-recall",
+        "kanji": "猶",
+        "prompt": "Вспомни значение 猶 без подсказки.",
+        "answer": "furthermore, still, yet, en outre",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "塊",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-35": [
+      {
+        "type": "active-recall",
+        "kanji": "厘",
+        "prompt": "Вспомни значение 厘 без подсказки.",
+        "answer": "rin, 1/10 sen, 1/10 bu, un petit peu",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "峰",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-36": [
+      {
+        "type": "active-recall",
+        "kanji": "遮",
+        "prompt": "Вспомни значение 遮 без подсказки.",
+        "answer": "intercept, interrupt, obstruct, intercepter",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "扉",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-37": [
+      {
+        "type": "active-recall",
+        "kanji": "朽",
+        "prompt": "Вспомни значение 朽 без подсказки.",
+        "answer": "decay, rot, remain in seclusion, délabré",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "享",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-38": [
+      {
+        "type": "active-recall",
+        "kanji": "傑",
+        "prompt": "Вспомни значение 傑 без подсказки.",
+        "answer": "greatness, excellence, grandeur, excellence",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "楠",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-39": [
+      {
+        "type": "active-recall",
+        "kanji": "酢",
+        "prompt": "Вспомни значение 酢 без подсказки.",
+        "answer": "vinegar, sour, acid, tart",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "吟",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-40": [
+      {
+        "type": "active-recall",
+        "kanji": "翼",
+        "prompt": "Вспомни значение 翼 без подсказки.",
+        "answer": "wing, plane, flank",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "睦",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-41": [
+      {
+        "type": "active-recall",
+        "kanji": "蕉",
+        "prompt": "Вспомни значение 蕉 без подсказки.",
+        "answer": "banana, plantain, plátano, banana",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "寡",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-42": [
+      {
+        "type": "active-recall",
+        "kanji": "翁",
+        "prompt": "Вспомни значение 翁 без подсказки.",
+        "answer": "venerable old man, vénérable vieillard, anciano, velho venerável",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "廉",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-43": [
+      {
+        "type": "active-recall",
+        "kanji": "罷",
+        "prompt": "Вспомни значение 罷 без подсказки.",
+        "answer": "quit, stop, leave, withdraw",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "矯",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-44": [
+      {
+        "type": "active-recall",
+        "kanji": "硝",
+        "prompt": "Вспомни значение 硝 без подсказки.",
+        "answer": "nitrate, saltpeter, nitrate, salpêtre",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "勅",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-45": [
+      {
+        "type": "active-recall",
+        "kanji": "翠",
+        "prompt": "Вспомни значение 翠 без подсказки.",
+        "answer": "green, kingfisher, martín pescador, verde",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "鮎",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-46": [
+      {
+        "type": "active-recall",
+        "kanji": "渥",
+        "prompt": "Вспомни значение 渥 без подсказки.",
+        "answer": "kindness, moisten, bondad, amabilidad",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "憧",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-47": [
+      {
+        "type": "active-recall",
+        "kanji": "伽",
+        "prompt": "Вспомни значение 伽 без подсказки.",
+        "answer": "nursing, attending, entertainer, asistencia",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "畝",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-48": [
+      {
+        "type": "active-recall",
+        "kanji": "卯",
+        "prompt": "Вспомни значение 卯 без подсказки.",
+        "answer": "sign of the hare or rabbit, fourth sign of Chinese zodiac, 5-7AM, east",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "但",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-49": [
+      {
+        "type": "active-recall",
+        "kanji": "亦",
+        "prompt": "Вспомни значение 亦 без подсказки.",
+        "answer": "also, again, también, otra vez",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "賦",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-50": [
+      {
+        "type": "active-recall",
+        "kanji": "伎",
+        "prompt": "Вспомни значение 伎 без подсказки.",
+        "answer": "deed, skill, habilidad, técnica",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "朕",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-51": [
+      {
+        "type": "active-recall",
+        "kanji": "颯",
+        "prompt": "Вспомни значение 颯 без подсказки.",
+        "answer": "sudden, quick, sound of the wind, de repente",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "茄",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-52": [
+      {
+        "type": "active-recall",
+        "kanji": "墾",
+        "prompt": "Вспомни значение 墾 без подсказки.",
+        "answer": "ground-breaking, open up farmland, défrichage, tierra de cultivo",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "勁",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ],
+    "bulk-n1-53": [
+      {
+        "type": "active-recall",
+        "kanji": "熙",
+        "prompt": "Вспомни значение 熙 без подсказки.",
+        "answer": "bright, sunny, prosperous, merry",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      },
+      {
+        "type": "writing",
+        "kanji": "菫",
+        "prompt": "Напиши знак и назови одно слово-пример.",
+        "rewardXp": 14,
+        "rewardMoon": 1
+      }
+    ]
+  }
 }
