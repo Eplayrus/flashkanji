@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, follow" />
   <title>Flash Kanji</title>
   <script>
     (function () {
       const legacyIndexShell = /^\/index(?:\/dist)?\/?$/i.test(location.pathname);
+      const legacyIndexFile = /^\/index(?:\/dist)?\/index\.html$/i.test(location.pathname);
       const route = location.pathname.replace(/^\/+|\/+$/g, "");
       const target = new URL("./", location.origin);
       target.search = location.search;
-      target.hash = legacyIndexShell || !route || /^index(?:\.html)?$/i.test(route)
+      target.hash = legacyIndexShell || legacyIndexFile || !route || /^index(?:\.html)?$/i.test(route)
         ? (location.hash || "#home")
         : `#${route}`;
       window.location.replace(target.toString());

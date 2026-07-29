@@ -17,12 +17,29 @@ function isDownloadRoute(url = "") {
   return pathname === "/download" || pathname === "/download/";
 }
 
+function isLegacyIndexRoute(url = "") {
+  const pathname = url.split(/[?#]/, 1)[0];
+  return /^\/index(?:\/dist)?(?:\/index\.html)?\/?$/i.test(pathname);
+}
+
+function legacyRedirectLocation(url = "") {
+  const [, suffix = ""] = url.match(/^[^?#]*([?#].*)?$/) || [];
+  return `/${suffix || ""}`;
+}
+
 function downloadPageRoutePlugin(): Plugin {
   return {
     name: "flash-kanji-download-page-route",
     configureServer(server) {
       const htmlPath = fileURLToPath(new URL("./public/download/index.html", import.meta.url));
       server.middlewares.use(async (request, response, next) => {
+        if (isLegacyIndexRoute(request.url)) {
+          response.statusCode = 308;
+          response.setHeader("Location", legacyRedirectLocation(request.url));
+          response.end();
+          return;
+        }
+
         if (!isDownloadRoute(request.url)) {
           next();
           return;
@@ -45,6 +62,13 @@ function downloadPageRoutePlugin(): Plugin {
     configurePreviewServer(server) {
       const htmlPath = fileURLToPath(new URL("./dist/download/index.html", import.meta.url));
       server.middlewares.use(async (request, response, next) => {
+        if (isLegacyIndexRoute(request.url)) {
+          response.statusCode = 308;
+          response.setHeader("Location", legacyRedirectLocation(request.url));
+          response.end();
+          return;
+        }
+
         if (!isDownloadRoute(request.url)) {
           next();
           return;

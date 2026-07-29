@@ -29,23 +29,9 @@
   <meta name="twitter:image" content="https://flashkanji.space/assets/og/flashkanji-og.webp" />
   <meta name="twitter:image:alt" content="Flash Kanji - preview card with logo, Eva and kanji-learning features." />
   <title>Flash Kanji — учи японские кандзи через JLPT-учебники, письмо и повторение</title>
-  <script>
-    (function () {
-      var pathname = window.location.pathname;
-      var isSourceFolder = /\/index\/?$/i.test(pathname);
-      var isSourceFile = /\/index\/index\.html$/i.test(pathname);
-      if (!isSourceFolder && !isSourceFile) {
-        return;
-      }
-      var targetPath = isSourceFolder
-        ? pathname.replace(/\/?$/, "/dist/")
-        : pathname.replace(/\/index\.html$/i, "/dist/");
-      window.location.replace(targetPath + window.location.search + (window.location.hash || "#home"));
-    })();
-  </script>
   <link rel="canonical" href="https://flashkanji.space/" />
-  <link rel="alternate" hreflang="ru" href="https://flashkanji.space/ru/textbooks/" />
-  <link rel="alternate" hreflang="en" href="https://flashkanji.space/en/textbooks/" />
+  <link rel="alternate" hreflang="ru" href="https://flashkanji.space/ru/" />
+  <link rel="alternate" hreflang="en" href="https://flashkanji.space/en/" />
   <link rel="alternate" hreflang="x-default" href="https://flashkanji.space/" />
   <script>
     (function () {
@@ -128,7 +114,7 @@
     })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js?id=109492033", "ym");
   </script>
   <!-- /Yandex.Metrika counter -->
-  <script type="module" crossorigin src="./assets/index-BXnAQ1hX.js"></script>
+  <script type="module" crossorigin src="./assets/index-C4cVnY4H.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-BBJILzRj.css">
 </head>
 <body>
@@ -255,6 +241,17 @@
     </script>
 
     <main id="app" class="app-main" aria-live="polite" aria-busy="true">
+      <section class="seo-root-content" aria-label="Flash Kanji">
+        <h1>Flash Kanji — учи японские кандзи через JLPT-учебники</h1>
+        <p>Flash Kanji — PWA и Android-приложение для изучения японских кандзи N5–N1: учебники, SRS-повторение, письмо, словарь, примеры и Moon Fragments.</p>
+        <ul>
+          <li><a href="ru/">Русская версия Flash Kanji</a></li>
+          <li><a href="en/">English version of Flash Kanji</a></li>
+          <li><a href="ru/textbooks/">Учебники JLPT N5–N1</a></li>
+          <li><a href="ru/kanji/">Вики кандзи</a></li>
+          <li><a href="download/">Скачать Flash Kanji для Android</a></li>
+        </ul>
+      </section>
       <section class="boot-screen" aria-label="Flash Kanji loading">
         <div class="boot-panel">
           <p class="eyebrow">JLPT N5-N1 · Учебники · Повторение</p>

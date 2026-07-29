@@ -47,9 +47,37 @@ jobs:
         working-directory: index
         run: npm test
 
+      - name: Validate N1 textbook data
+        working-directory: index
+        run: npm run validate:n1
+
+      - name: Generate SEO pages
+        working-directory: index
+        run: npm run generate:seo
+
+      - name: Validate i18n registry
+        working-directory: index
+        run: npm run validate:i18n
+
+      - name: Validate SEO output
+        working-directory: index
+        run: npm run validate:seo
+
       - name: Build
         working-directory: index
         run: npm run build
+
+      - name: Bundle budget report
+        working-directory: index
+        run: npm run perf:bundle
+
+      - name: Install Playwright browsers
+        working-directory: index
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end smoke tests
+        working-directory: index
+        run: npm run test:e2e
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
