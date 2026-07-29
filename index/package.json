@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "perf:bundle": "node tools/report-bundle-size.mjs",
     "generate:wiki": "node tools/generate-kanji-wiki.mjs",
+    "generate:n1": "python tools/generate-n1-textbook.py",
     "validate:srs": "node tools/validate-srs.mjs",
     "validate:readings": "node tools/validate-readings.mjs",
     "validate:n1": "node tools/validate-n1-textbook.mjs",

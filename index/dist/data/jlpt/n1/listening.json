@@ -1,202 +1,259 @@
 {
   "version": 1,
   "level": "N1",
-  "generatedAt": "2026-06-11T10:44:21.438595+00:00",
-  "textbook": {
-    "jlpt": "N1",
-    "slug": "n1",
-    "title": {
-      "ru": "N1: тексты и нюансы",
-      "en": "N1: Texts and Nuance"
-    },
-    "displayTitle": {
-      "ru": "Тексты и нюансы",
-      "en": "Texts and Nuance"
-    },
-    "description": {
-      "ru": "Плотные тексты, авторская позиция, абстрактная лексика и продвинутая грамматика. Верхний слой базы.",
-      "en": "Dense texts, author stance, abstract vocabulary, and advanced grammar. The top layer of the base."
-    },
-    "goal": {
-      "ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.",
-      "en": "Break down long phrases, rare readings, and meaning nuance in reading."
-    },
-    "recommendedCycle": {
-      "ru": "Повторяй каждые 5-7 дней с точечным возвратом к слабым карточкам.",
-      "en": "Review every 5-7 days with targeted returns to weak cards."
-    },
-    "previousLevels": [
-      "N5",
-      "N4",
-      "N3",
-      "N2"
-    ],
-    "nextLevels": [],
-    "coverImage": "assets/bg/bg_silent_road.webp",
-    "pdfFile": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-    "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-    "lessonIds": [
-      "bulk-n1-01",
-      "bulk-n1-02",
-      "bulk-n1-03",
-      "bulk-n1-04",
-      "bulk-n1-05",
-      "bulk-n1-06",
-      "bulk-n1-07",
-      "bulk-n1-08",
-      "bulk-n1-09",
-      "bulk-n1-10",
-      "bulk-n1-11"
-    ],
-    "lessonCount": 11,
-    "kanjiCount": 220,
-    "cardCount": 220,
-    "files": {
-      "kanji": "data/jlpt/n1/kanji.json",
-      "lessons": "data/jlpt/n1/lessons.json",
-      "grammar": "data/jlpt/n1/grammar.json",
-      "reading": "data/jlpt/n1/reading.json",
-      "listening": "data/jlpt/n1/listening.json",
-      "tests": "data/jlpt/n1/tests.json"
-    }
-  },
+  "generatedAt": "2026-07-29T09:38:18.882476+00:00",
   "items": [
     {
-      "id": "listening-n1-pronunciation",
-      "kind": "pronunciation",
-      "level": "N1",
-      "items": [
+      "id": "n1-listening-1",
+      "title": {
+        "ru": "Скрипт 1: 会議の延期",
+        "en": "Script 1: 会議の延期"
+      },
+      "jp": "A: 明日の会議ですが、資料がまだそろっていないようです。 B: では、無理に実施するより、来週に延期したほうがよさそうですね。 A: ただ、先方には今日中に連絡しておく必要があります。",
+      "ru": "Сегодня нужно связаться с другой стороной.",
+      "source": "Flash Kanji N1 PDF, section 9",
+      "questions": [
         {
-          "kanji": "氏",
-          "reading": "し",
-          "romaji": "shi",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10961-shi.mp3",
-          "meaning": {
-            "ru": "он; его; (ср.) …し【…氏】",
-            "en": "он; его; (ср.) …し【…氏】"
-          }
-        },
-        {
-          "kanji": "統",
-          "reading": "すべる",
-          "romaji": "suberu",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10962-suberu.mp3",
-          "meaning": {
-            "ru": "governing, overall, relationship, ruling",
-            "en": "governing, overall, relationship, ruling"
-          }
-        },
-        {
-          "kanji": "保",
-          "reading": "たもつ",
-          "romaji": "tamotsu",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10963-tamotsu.mp3",
-          "meaning": {
-            "ru": "guarantee, keep, preserve, protect",
-            "en": "guarantee, keep, preserve, protect"
-          }
-        },
-        {
-          "kanji": "第",
-          "reading": "だい",
-          "romaji": "dai",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10964-dai.mp3",
-          "meaning": {
-            "ru": "No., residence",
-            "en": "No., residence"
-          }
-        },
-        {
-          "kanji": "結",
-          "reading": "むすぶ",
-          "romaji": "musubu",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10965-musubu.mp3",
-          "meaning": {
-            "ru": "bind, contract, do up hair, fasten",
-            "en": "bind, contract, do up hair, fasten"
-          }
-        },
-        {
-          "kanji": "派",
-          "reading": "は",
-          "romaji": "ha",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10966-ha.mp3",
-          "meaning": {
-            "ru": "группировка, группа; течение, школа (в науке, искусстве); ответвление, ветвь; фракция; секта",
-            "en": "группировка, группа; течение, школа (в науке, искусстве); ответвление, ветвь; фракция; секта"
-          }
-        },
-        {
-          "kanji": "案",
-          "reading": "あん",
-          "romaji": "an",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10967-an.mp3",
-          "meaning": {
-            "ru": "проект, план; предложение, мнение; ожидания, предположения",
-            "en": "проект, план; предложение, мнение; ожидания, предположения"
-          }
-        },
-        {
-          "kanji": "策",
-          "reading": "さく",
-          "romaji": "saku",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10968-saku.mp3",
-          "meaning": {
-            "ru": "курс, политика; план действий; меры, мероприятия",
-            "en": "курс, политика; план действий; меры, мероприятия"
-          }
-        },
-        {
-          "kanji": "基",
-          "reading": "もとい",
-          "romaji": "motoi",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10969-motoi.mp3",
-          "meaning": {
-            "ru": "основа, основание; もとづく",
-            "en": "основа, основание; もとづく"
-          }
-        },
-        {
-          "kanji": "価",
-          "reading": "あたい",
-          "romaji": "atai",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10970-atai.mp3",
-          "meaning": {
-            "ru": "цена, value",
-            "en": "цена, value"
-          }
-        },
-        {
-          "kanji": "提",
-          "reading": "さげる",
-          "romaji": "sageru",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10971-sageru.mp3",
-          "meaning": {
-            "ru": "carry in hand, propose, take along",
-            "en": "carry in hand, propose, take along"
-          }
-        },
-        {
-          "kanji": "挙",
-          "reading": "きょ",
-          "romaji": "kyo",
-          "audio": "./audio/kanji/n1/bulk-n1-01/10972-kyo.mp3",
-          "meaning": {
-            "ru": "проект, план; попытка; начинание, предприятие; поступок, действие, акт; шаг, поведение, линия поведения (действий)",
-            "en": "проект, план; попытка; начинание, предприятие; поступок, действие, акт; шаг, поведение, линия поведения (действий)"
-          }
+          "prompt": {
+            "ru": "Что нужно понять из аудио?",
+            "en": "What should you understand from the audio?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Сегодня нужно связаться с другой стороной.",
+                "en": "Сегодня нужно связаться с другой стороной."
+              }
+            },
+            {
+              "value": "wrong_time",
+              "label": {
+                "ru": "В тексте говорится только о времени.",
+                "en": "The script only discusses time."
+              }
+            },
+            {
+              "value": "no_action",
+              "label": {
+                "ru": "Никакого действия не требуется.",
+                "en": "No action is required."
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "id": "listening-n1-context",
-      "kind": "context",
-      "level": "N1",
-      "apps": [],
-      "note": {
-        "ru": "Слушай чтения кандзи N1 в контексте приложений и интерфейсов.",
-        "en": "Listen to N1 kanji in app and interface context."
-      }
+      "id": "n1-listening-2",
+      "title": {
+        "ru": "Скрипт 2: 方針の変更",
+        "en": "Script 2: 方針の変更"
+      },
+      "jp": "上司: 今回の方針変更は、現場の負担を考慮したものです。 社員: ということは、締切も見直されるのでしょうか。 上司: その点については、各部署の状況いかんで判断します。",
+      "ru": "Дедлайн зависит от ситуации в каждом отделе.",
+      "source": "Flash Kanji N1 PDF, section 9",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что нужно понять из аудио?",
+            "en": "What should you understand from the audio?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Дедлайн зависит от ситуации в каждом отделе.",
+                "en": "Дедлайн зависит от ситуации в каждом отделе."
+              }
+            },
+            {
+              "value": "wrong_time",
+              "label": {
+                "ru": "В тексте говорится только о времени.",
+                "en": "The script only discusses time."
+              }
+            },
+            {
+              "value": "no_action",
+              "label": {
+                "ru": "Никакого действия не требуется.",
+                "en": "No action is required."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-listening-3",
+      "title": {
+        "ru": "Скрипт 3: 研究発表",
+        "en": "Script 3: 研究発表"
+      },
+      "jp": "発表者: この調査は十分とは言えませんが、傾向を把握する手がかりにはなります。 質問者: つまり、結論を急ぐべきではないということですね。 発表者: ええ、その通りです。",
+      "ru": "Нельзя торопиться с окончательным выводом.",
+      "source": "Flash Kanji N1 PDF, section 9",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что нужно понять из аудио?",
+            "en": "What should you understand from the audio?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Нельзя торопиться с окончательным выводом.",
+                "en": "Нельзя торопиться с окончательным выводом."
+              }
+            },
+            {
+              "value": "wrong_time",
+              "label": {
+                "ru": "В тексте говорится только о времени.",
+                "en": "The script only discusses time."
+              }
+            },
+            {
+              "value": "no_action",
+              "label": {
+                "ru": "Никакого действия не требуется.",
+                "en": "No action is required."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-listening-4",
+      "title": {
+        "ru": "Скрипт 4: 店での苦情",
+        "en": "Script 4: 店での苦情"
+      },
+      "jp": "客: 修理したばかりなのに、また動かなくなりました。 店員: ご迷惑をおかけして申し訳ありません。確認した上で、交換も含めて対応いたします。",
+      "ru": "Сотрудник сначала проверит товар.",
+      "source": "Flash Kanji N1 PDF, section 9",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что нужно понять из аудио?",
+            "en": "What should you understand from the audio?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Сотрудник сначала проверит товар.",
+                "en": "Сотрудник сначала проверит товар."
+              }
+            },
+            {
+              "value": "wrong_time",
+              "label": {
+                "ru": "В тексте говорится только о времени.",
+                "en": "The script only discusses time."
+              }
+            },
+            {
+              "value": "no_action",
+              "label": {
+                "ru": "Никакого действия не требуется.",
+                "en": "No action is required."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-listening-5",
+      "title": {
+        "ru": "Скрипт 5: 学習計画",
+        "en": "Script 5: 学習計画"
+      },
+      "jp": "N1の学習では、長い時間勉強すること以上に、何を間違えたかを記録することが重要です。記録なしに復習しても、同じ問題を繰り返す恐れがあります。",
+      "ru": "Важнее записывать ошибки, чем просто считать часы.",
+      "source": "Flash Kanji N1 PDF, section 9",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что нужно понять из аудио?",
+            "en": "What should you understand from the audio?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Важнее записывать ошибки, чем просто считать часы.",
+                "en": "Важнее записывать ошибки, чем просто считать часы."
+              }
+            },
+            {
+              "value": "wrong_time",
+              "label": {
+                "ru": "В тексте говорится только о времени.",
+                "en": "The script only discusses time."
+              }
+            },
+            {
+              "value": "no_action",
+              "label": {
+                "ru": "Никакого действия не требуется.",
+                "en": "No action is required."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n1-listening-6",
+      "title": {
+        "ru": "Скрипт 6: 社会問題",
+        "en": "Script 6: 社会問題"
+      },
+      "jp": "便利さを追求するあまり、私たちは不便さが持っていた価値を見落としているのかもしれません。待つ時間や迷う時間にも、考える余地があったのです。",
+      "ru": "Неудобство может давать время на размышление.",
+      "source": "Flash Kanji N1 PDF, section 9",
+      "questions": [
+        {
+          "prompt": {
+            "ru": "Что нужно понять из аудио?",
+            "en": "What should you understand from the audio?"
+          },
+          "answer": "main",
+          "options": [
+            {
+              "value": "main",
+              "label": {
+                "ru": "Неудобство может давать время на размышление.",
+                "en": "Неудобство может давать время на размышление."
+              }
+            },
+            {
+              "value": "wrong_time",
+              "label": {
+                "ru": "В тексте говорится только о времени.",
+                "en": "The script only discusses time."
+              }
+            },
+            {
+              "value": "no_action",
+              "label": {
+                "ru": "Никакого действия не требуется.",
+                "en": "No action is required."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

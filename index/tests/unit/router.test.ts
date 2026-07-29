@@ -12,6 +12,17 @@ describe("hash router", () => {
     expect(parseHash("#textbooks").route).toBe("textbooks");
   });
 
+  it("routes the full N1 textbook through the textbooks renderer", () => {
+    expect(parseHash("#textbooks/N1")).toMatchObject({
+      route: "textbooks",
+      segments: ["textbooks", "N1"]
+    });
+    expect(parseHash("#jlpt/n1/bulk-n1-01")).toMatchObject({
+      route: "textbooks",
+      segments: ["jlpt", "n1", "bulk-n1-01"]
+    });
+  });
+
   it("aborts the old render during rapid navigation", () => {
     const coordinator = createRenderCoordinator();
     const textbooks = coordinator.begin("textbooks");

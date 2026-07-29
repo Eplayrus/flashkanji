@@ -2,7 +2,7 @@
   "lesson": {
     "id": "bulk-n1-36",
     "title": "Урок 36. N1 кандзи 701-720",
-    "title_en": "Lesson 36. N1 kanji 701-720",
+    "title_en": "N1 Lesson 36",
     "jlpt": "N1",
     "order": 91
   },
@@ -10,17 +10,20 @@
     {
       "id": "11613",
       "courseCardId": "11613",
+      "number": 701,
       "kanji": "遮",
       "meaning": {
         "ru": "intercept, interrupt, obstruct, intercepter",
-        "en": "intercept, interrupt, obstruct, intercepter"
+        "en": "intercept, interrupt, obstruct"
       },
+      "meaning_ru": "intercept, interrupt, obstruct, intercepter",
+      "meaning_en": "intercept, interrupt, obstruct",
       "readings": {
         "onyomi": [
-          "シャ"
+          "しゃ"
         ],
         "kunyomi": [
-          "さえぎ.る"
+          "さえぎる"
         ],
         "hiragana": [
           "さえぎる"
@@ -30,66 +33,161 @@
         ],
         "nanori": []
       },
+      "onyomi": "しゃ",
+      "kunyomi": "さえぎる",
+      "hiragana": "さえぎる",
+      "romaji": "saegiru",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 14,
       "strokeOrder": [
-        "Всего черт: 14. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 14. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 14. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 14. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
           "word": "遮る",
           "reading": "さえぎる",
           "romaji": "saegiru",
+          "translation": "преграждать, заграждать",
           "translation_ru": "преграждать, заграждать",
           "translation_en": "to interrupt"
         },
         {
-          "word": "遮光幕",
-          "reading": "しゃこうまく",
-          "romaji": "shakoumaku",
-          "translation_ru": "светомаскировочный занавес, светомаскировочная штора",
-          "translation_en": "blackout curtain"
+          "word": "遮光",
+          "reading": "しゃこう",
+          "romaji": "shakou",
+          "translation": "светомаскировка, затемнение",
+          "translation_ru": "светомаскировка, затемнение",
+          "translation_en": "shading"
+        },
+        {
+          "word": "遮断",
+          "reading": "しゃだん",
+          "romaji": "shadan",
+          "translation": "перерыв; разобщение; изоляция",
+          "translation_ru": "перерыв; разобщение; изоляция",
+          "translation_en": "isolation"
+        }
+      ],
+      "words": [
+        {
+          "word": "遮る",
+          "reading": "さえぎる",
+          "romaji": "saegiru",
+          "translation": "преграждать, заграждать",
+          "translation_ru": "преграждать, заграждать",
+          "translation_en": "to interrupt"
+        },
+        {
+          "word": "遮光",
+          "reading": "しゃこう",
+          "romaji": "shakou",
+          "translation": "светомаскировка, затемнение",
+          "translation_ru": "светомаскировка, затемнение",
+          "translation_en": "shading"
+        },
+        {
+          "word": "遮断",
+          "reading": "しゃだん",
+          "romaji": "shadan",
+          "translation": "перерыв; разобщение; изоляция",
+          "translation_ru": "перерыв; разобщение; изоляция",
+          "translation_en": "isolation"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 遮 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1992,
-        "unicode": "U+906E",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 遮 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 遮 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 遮 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 遮 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 遮 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 遮 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11613-saegiru.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "遮る",
+        "reading": "さえぎる",
+        "romaji": "saegiru",
+        "translation": "преграждать, заграждать",
+        "translation_ru": "преграждать, заграждать",
+        "translation_en": "to interrupt"
+      },
+      "hintRu": "Свяжи 遮 со значением «intercept, interrupt, obstruct, intercepter» и первым реальным словом из словаря."
     },
     {
       "id": "11614",
       "courseCardId": "11614",
+      "number": 702,
       "kanji": "扉",
       "meaning": {
         "ru": "front door, title page, front page, porte d'entrée",
-        "en": "front door, title page, front page, porte d'entrée"
+        "en": "front door, title page, front page"
       },
+      "meaning_ru": "front door, title page, front page, porte d'entrée",
+      "meaning_en": "front door, title page, front page",
       "readings": {
         "onyomi": [
-          "ヒ"
+          "ひ"
         ],
         "kunyomi": [
           "とびら"
@@ -102,21 +200,66 @@
         ],
         "nanori": []
       },
+      "onyomi": "ひ",
+      "kunyomi": "とびら",
+      "hiragana": "とびら",
+      "romaji": "tobira",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 12,
       "strokeOrder": [
-        "Всего черт: 12. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 12. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 12. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 12. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
+        {
+          "word": "開扉",
+          "reading": "かいひ",
+          "romaji": "kaihi",
+          "translation": ":  открывать дверь (створчатую)",
+          "translation_ru": ":  открывать дверь (створчатую)",
+          "translation_en": "opening a door"
+        },
         {
           "word": "門扉",
           "reading": "もんぴ",
           "romaji": "monpi",
+          "translation": "створки ворот",
           "translation_ru": "створки ворот",
           "translation_en": "door(s) of a gate"
         },
@@ -124,44 +267,94 @@
           "word": "鉄扉",
           "reading": "てっぴ",
           "romaji": "teppi",
+          "translation": "(кн.) железная дверь",
+          "translation_ru": "(кн.) железная дверь",
+          "translation_en": "iron door"
+        }
+      ],
+      "words": [
+        {
+          "word": "開扉",
+          "reading": "かいひ",
+          "romaji": "kaihi",
+          "translation": ":  открывать дверь (створчатую)",
+          "translation_ru": ":  открывать дверь (створчатую)",
+          "translation_en": "opening a door"
+        },
+        {
+          "word": "門扉",
+          "reading": "もんぴ",
+          "romaji": "monpi",
+          "translation": "створки ворот",
+          "translation_ru": "створки ворот",
+          "translation_en": "door(s) of a gate"
+        },
+        {
+          "word": "鉄扉",
+          "reading": "てっぴ",
+          "romaji": "teppi",
+          "translation": "(кн.) железная дверь",
           "translation_ru": "(кн.) железная дверь",
           "translation_en": "iron door"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 扉 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1476,
-        "unicode": "U+6249",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 扉 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 扉 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 扉 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 扉 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 扉 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 扉 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11614-tobira.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "開扉",
+        "reading": "かいひ",
+        "romaji": "kaihi",
+        "translation": ":  открывать дверь (створчатую)",
+        "translation_ru": ":  открывать дверь (створчатую)",
+        "translation_en": "opening a door"
+      },
+      "hintRu": "Свяжи 扉 со значением «front door, title page, front page, porte d'entrée» и первым реальным словом из словаря."
     },
     {
       "id": "11615",
       "courseCardId": "11615",
+      "number": 703,
       "kanji": "硫",
       "meaning": {
         "ru": "sulphur, soufre, azufre abreviatura de ácido sulfúrico, enxofre",
-        "en": "sulphur, soufre, azufre abreviatura de ácido sulfúrico, enxofre"
+        "en": "sulphur"
       },
+      "meaning_ru": "sulphur, soufre, azufre abreviatura de ácido sulfúrico, enxofre",
+      "meaning_en": "sulphur",
       "readings": {
         "onyomi": [
-          "リュウ"
+          "りゅう"
         ],
         "kunyomi": [],
         "hiragana": [
@@ -172,136 +365,328 @@
         ],
         "nanori": []
       },
+      "onyomi": "りゅう",
+      "kunyomi": "",
+      "hiragana": "りゅう",
+      "romaji": "ryuu",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 12,
       "strokeOrder": [
-        "Всего черт: 12. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 12. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 12. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 12. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
           "word": "加硫",
           "reading": "かりゅう",
           "romaji": "karyuu",
+          "translation": "вулканизация",
           "translation_ru": "вулканизация",
           "translation_en": "vulcanizing (rubber)"
         },
         {
-          "word": "硫安",
-          "reading": "りゅうあん",
-          "romaji": "ryuuan",
-          "translation_ru": "сульфат аммония, сернокислый аммоний (удобрение)",
-          "translation_en": "ammonium sulfate"
+          "word": "硫黄",
+          "reading": "いおう",
+          "romaji": "iou",
+          "translation": "сера",
+          "translation_ru": "сера",
+          "translation_en": "sulfur (S)"
+        },
+        {
+          "word": "硫酸",
+          "reading": "りゅうさん",
+          "romaji": "ryuusan",
+          "translation": "серная кислота",
+          "translation_ru": "серная кислота",
+          "translation_en": "sulfuric acid"
+        }
+      ],
+      "words": [
+        {
+          "word": "加硫",
+          "reading": "かりゅう",
+          "romaji": "karyuu",
+          "translation": "вулканизация",
+          "translation_ru": "вулканизация",
+          "translation_en": "vulcanizing (rubber)"
+        },
+        {
+          "word": "硫黄",
+          "reading": "いおう",
+          "romaji": "iou",
+          "translation": "сера",
+          "translation_ru": "сера",
+          "translation_en": "sulfur (S)"
+        },
+        {
+          "word": "硫酸",
+          "reading": "りゅうさん",
+          "romaji": "ryuusan",
+          "translation": "серная кислота",
+          "translation_ru": "серная кислота",
+          "translation_en": "sulfuric acid"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 硫 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2321,
-        "unicode": "U+786B",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 硫 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 硫 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 硫 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 硫 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 硫 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 硫 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11615-ryuu.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "加硫",
+        "reading": "かりゅう",
+        "romaji": "karyuu",
+        "translation": "вулканизация",
+        "translation_ru": "вулканизация",
+        "translation_en": "vulcanizing (rubber)"
+      },
+      "hintRu": "Свяжи 硫 со значением «sulphur, soufre, azufre abreviatura de ácido sulfúrico, enxofre» и первым реальным словом из словаря."
     },
     {
       "id": "11616",
       "courseCardId": "11616",
+      "number": 704,
       "kanji": "赦",
       "meaning": {
         "ru": "pardon, forgiveness, pardon, perdón",
-        "en": "pardon, forgiveness, pardon, perdón"
+        "en": "pardon, forgiveness"
       },
+      "meaning_ru": "pardon, forgiveness, pardon, perdón",
+      "meaning_en": "pardon, forgiveness",
       "readings": {
         "onyomi": [
-          "シャ"
-        ],
-        "kunyomi": [],
-        "hiragana": [
           "しゃ"
         ],
+        "kunyomi": [
+          "ゆるす"
+        ],
+        "hiragana": [
+          "ゆるす"
+        ],
         "romaji": [
-          "sha"
+          "yurusu"
         ],
         "nanori": []
       },
+      "onyomi": "しゃ",
+      "kunyomi": "ゆるす",
+      "hiragana": "ゆるす",
+      "romaji": "yurusu",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 11,
       "strokeOrder": [
-        "Всего черт: 11. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 11. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 11. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 11. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
-        {
-          "word": "大赦",
-          "reading": "たいしゃ",
-          "romaji": "taisha",
-          "translation_ru": "амнистия",
-          "translation_en": "amnesty"
-        },
         {
           "word": "恩赦",
           "reading": "おんしゃ",
           "romaji": "onsha",
+          "translation": "амнистия; помилование",
           "translation_ru": "амнистия; помилование",
+          "translation_en": "amnesty"
+        },
+        {
+          "word": "赦免",
+          "reading": "しゃめん",
+          "romaji": "shamen",
+          "translation": "помилование; амнистия",
+          "translation_ru": "помилование; амнистия",
+          "translation_en": "pardon"
+        },
+        {
+          "word": "大赦",
+          "reading": "たいしゃ",
+          "romaji": "taisha",
+          "translation": "амнистия",
+          "translation_ru": "амнистия",
+          "translation_en": "amnesty"
+        }
+      ],
+      "words": [
+        {
+          "word": "恩赦",
+          "reading": "おんしゃ",
+          "romaji": "onsha",
+          "translation": "амнистия; помилование",
+          "translation_ru": "амнистия; помилование",
+          "translation_en": "amnesty"
+        },
+        {
+          "word": "赦免",
+          "reading": "しゃめん",
+          "romaji": "shamen",
+          "translation": "помилование; амнистия",
+          "translation_ru": "помилование; амнистия",
+          "translation_en": "pardon"
+        },
+        {
+          "word": "大赦",
+          "reading": "たいしゃ",
+          "romaji": "taisha",
+          "translation": "амнистия",
+          "translation_ru": "амнистия",
           "translation_en": "amnesty"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 赦 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2006,
-        "unicode": "U+8D66",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 赦 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 赦 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 赦 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 赦 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 赦 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 赦 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11616-yurusu.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "恩赦",
+        "reading": "おんしゃ",
+        "romaji": "onsha",
+        "translation": "амнистия; помилование",
+        "translation_ru": "амнистия; помилование",
+        "translation_en": "amnesty"
+      },
+      "hintRu": "Свяжи 赦 со значением «pardon, forgiveness, pardon, perdón» и первым реальным словом из словаря."
     },
     {
       "id": "11617",
       "courseCardId": "11617",
+      "number": 705,
       "kanji": "泡",
       "meaning": {
         "ru": "bubbles, foam, suds, froth",
         "en": "bubbles, foam, suds, froth"
       },
+      "meaning_ru": "bubbles, foam, suds, froth",
+      "meaning_en": "bubbles, foam, suds, froth",
       "readings": {
         "onyomi": [
-          "ホウ"
+          "ほう"
         ],
         "kunyomi": [
           "あわ"
@@ -314,71 +699,166 @@
         ],
         "nanori": []
       },
+      "onyomi": "ほう",
+      "kunyomi": "あわ",
+      "hiragana": "あわ",
+      "romaji": "awa",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 8,
       "strokeOrder": [
-        "Всего черт: 8. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 8. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 8. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 8. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
+        {
+          "word": "一泡",
+          "reading": "ひとあわ",
+          "romaji": "hitoawa",
+          "translation": "(связ.:) 一泡吹かせてやる (разг.) задать (кому-л.) перцу",
+          "translation_ru": "(связ.:) 一泡吹かせてやる (разг.) задать (кому-л.) перцу",
+          "translation_en": "blow"
+        },
         {
           "word": "気泡",
           "reading": "きほう",
           "romaji": "kihou",
+          "translation": "пена; пузыри [пены]",
           "translation_ru": "пена; пузыри [пены]",
           "translation_en": "(air) bubble (esp. in a liquid)"
         },
         {
-          "word": "泡盛",
-          "reading": "あわもり",
-          "romaji": "awamori",
-          "translation_ru": "авамори (крепкий алкогольный напиток, изготовляемый на юге Японии)",
-          "translation_en": "awamori"
+          "word": "水泡",
+          "reading": "すいほう",
+          "romaji": "suihou",
+          "translation": "пузырь; пена",
+          "translation_ru": "пузырь; пена",
+          "translation_en": "foam"
+        }
+      ],
+      "words": [
+        {
+          "word": "一泡",
+          "reading": "ひとあわ",
+          "romaji": "hitoawa",
+          "translation": "(связ.:) 一泡吹かせてやる (разг.) задать (кому-л.) перцу",
+          "translation_ru": "(связ.:) 一泡吹かせてやる (разг.) задать (кому-л.) перцу",
+          "translation_en": "blow"
+        },
+        {
+          "word": "気泡",
+          "reading": "きほう",
+          "romaji": "kihou",
+          "translation": "пена; пузыри [пены]",
+          "translation_ru": "пена; пузыри [пены]",
+          "translation_en": "(air) bubble (esp. in a liquid)"
+        },
+        {
+          "word": "水泡",
+          "reading": "すいほう",
+          "romaji": "suihou",
+          "translation": "пузырь; пена",
+          "translation_ru": "пузырь; пена",
+          "translation_en": "foam"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 泡 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1932,
-        "unicode": "U+6CE1",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 泡 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 泡 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 泡 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 泡 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 泡 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 泡 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11617-awa.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "一泡",
+        "reading": "ひとあわ",
+        "romaji": "hitoawa",
+        "translation": "(связ.:) 一泡吹かせてやる (разг.) задать (кому-л.) перцу",
+        "translation_ru": "(связ.:) 一泡吹かせてやる (разг.) задать (кому-л.) перцу",
+        "translation_en": "blow"
+      },
+      "hintRu": "Свяжи 泡 со значением «bubbles, foam, suds, froth» и первым реальным словом из словаря."
     },
     {
       "id": "11618",
       "courseCardId": "11618",
+      "number": 706,
       "kanji": "瑞",
       "meaning": {
         "ru": "congratulations, felicitaciones, felicidades, enhorabuena",
-        "en": "congratulations, felicitaciones, felicidades, enhorabuena"
+        "en": "congratulations"
       },
+      "meaning_ru": "congratulations, felicitaciones, felicidades, enhorabuena",
+      "meaning_en": "congratulations",
       "readings": {
         "onyomi": [
-          "ズイ",
-          "スイ",
-          "シル"
+          "ずい",
+          "すい"
         ],
         "kunyomi": [
-          "みず-"
+          "みず",
+          "しるし"
         ],
         "hiragana": [
           "みず"
@@ -392,71 +872,165 @@
           "みつ"
         ]
       },
+      "onyomi": "ずい / すい",
+      "kunyomi": "みず / しるし",
+      "hiragana": "みず",
+      "romaji": "mizu",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 13,
       "strokeOrder": [
-        "Всего черт: 13. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 13. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 13. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 13. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "瑞語",
-          "reading": "みず",
-          "romaji": "mizu",
-          "translation_ru": "congratulations, felicitaciones, felicidades, enhorabuena",
-          "translation_en": "congratulations, felicitaciones, felicidades, enhorabuena"
+          "word": "奇瑞",
+          "reading": "きずい",
+          "romaji": "kizui",
+          "translation": "счастливое предзнаменование, хорошая примета",
+          "translation_ru": "счастливое предзнаменование, хорошая примета",
+          "translation_en": "auspicious (good) omen"
         },
         {
-          "word": "瑞語",
-          "reading": "みず",
-          "romaji": "mizu",
-          "translation_ru": "congratulations, felicitaciones, felicidades, enhorabuena",
-          "translation_en": "congratulations, felicitaciones, felicidades, enhorabuena"
+          "word": "瑞気",
+          "reading": "ずいき",
+          "romaji": "zuiki",
+          "translation": "(см.) ずいちょう【瑞兆】",
+          "translation_ru": "(см.) ずいちょう【瑞兆】",
+          "translation_en": "good omen"
+        },
+        {
+          "word": "瑞兆",
+          "reading": "ずいちょう",
+          "romaji": "zuichou",
+          "translation": "хорошая примета, хорошее (счастливое) предзнаменование, добрый знак",
+          "translation_ru": "хорошая примета, хорошее (счастливое) предзнаменование, добрый знак",
+          "translation_en": "auspicious sign"
+        }
+      ],
+      "words": [
+        {
+          "word": "奇瑞",
+          "reading": "きずい",
+          "romaji": "kizui",
+          "translation": "счастливое предзнаменование, хорошая примета",
+          "translation_ru": "счастливое предзнаменование, хорошая примета",
+          "translation_en": "auspicious (good) omen"
+        },
+        {
+          "word": "瑞気",
+          "reading": "ずいき",
+          "romaji": "zuiki",
+          "translation": "(см.) ずいちょう【瑞兆】",
+          "translation_ru": "(см.) ずいちょう【瑞兆】",
+          "translation_en": "good omen"
+        },
+        {
+          "word": "瑞兆",
+          "reading": "ずいちょう",
+          "romaji": "zuichou",
+          "translation": "хорошая примета, хорошее (счастливое) предзнаменование, добрый знак",
+          "translation_ru": "хорошая примета, хорошее (счастливое) предзнаменование, добрый знак",
+          "translation_en": "auspicious sign"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 瑞 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 9,
-        "freq": null,
-        "unicode": "U+745E",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 瑞 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 瑞 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 瑞 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 瑞 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 瑞 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 瑞 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11618-mizu.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "奇瑞",
+        "reading": "きずい",
+        "romaji": "kizui",
+        "translation": "счастливое предзнаменование, хорошая примета",
+        "translation_ru": "счастливое предзнаменование, хорошая примета",
+        "translation_en": "auspicious (good) omen"
+      },
+      "hintRu": "Свяжи 瑞 со значением «congratulations, felicitaciones, felicidades, enhorabuena» и первым реальным словом из словаря."
     },
     {
       "id": "11619",
       "courseCardId": "11619",
+      "number": 707,
       "kanji": "又",
       "meaning": {
         "ru": "or again, furthermore, on the other hand, ou encore",
-        "en": "or again, furthermore, on the other hand, ou encore"
+        "en": "or again, furthermore, on the other hand"
       },
+      "meaning_ru": "or again, furthermore, on the other hand, ou encore",
+      "meaning_en": "or again, furthermore, on the other hand",
       "readings": {
         "onyomi": [
-          "ユウ"
+          "ゆう"
         ],
         "kunyomi": [
           "また",
-          "また-",
-          "また.の"
+          "またの"
         ],
         "hiragana": [
           "また"
@@ -468,66 +1042,161 @@
           "やす"
         ]
       },
+      "onyomi": "ゆう",
+      "kunyomi": "また / またの",
+      "hiragana": "また",
+      "romaji": "mata",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 2,
       "strokeOrder": [
-        "Всего черт: 2. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 2. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 2. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 2. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
-        {
-          "word": "尚又",
-          "reading": "なおまた",
-          "romaji": "naomata",
-          "translation_ru": "сверх того, к тому же",
-          "translation_en": "besides"
-        },
         {
           "word": "又は",
           "reading": "または",
           "romaji": "mataha",
+          "translation": "или [же]",
           "translation_ru": "или [же]",
           "translation_en": "or"
+        },
+        {
+          "word": "又も",
+          "reading": "またも",
+          "romaji": "matamo",
+          "translation": "(см.) またまた",
+          "translation_ru": "(см.) またまた",
+          "translation_en": "(once) again"
+        },
+        {
+          "word": "尚又",
+          "reading": "なおまた",
+          "romaji": "naomata",
+          "translation": "сверх того, к тому же",
+          "translation_ru": "сверх того, к тому же",
+          "translation_en": "besides"
+        }
+      ],
+      "words": [
+        {
+          "word": "又は",
+          "reading": "または",
+          "romaji": "mataha",
+          "translation": "или [же]",
+          "translation_ru": "или [же]",
+          "translation_en": "or"
+        },
+        {
+          "word": "又も",
+          "reading": "またも",
+          "romaji": "matamo",
+          "translation": "(см.) またまた",
+          "translation_ru": "(см.) またまた",
+          "translation_en": "(once) again"
+        },
+        {
+          "word": "尚又",
+          "reading": "なおまた",
+          "romaji": "naomata",
+          "translation": "сверх того, к тому же",
+          "translation_ru": "сверх того, к тому же",
+          "translation_en": "besides"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首 29",
-        "radicalMeaning": {
-          "ru": "радикал 29",
-          "en": "radical 29"
+        {
+          "name": "Research reader",
+          "use": "Look for 又 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1187,
-        "unicode": "U+53C8",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 又 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 又 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 又 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 又 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 又 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 又 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11619-mata.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "又は",
+        "reading": "または",
+        "romaji": "mataha",
+        "translation": "или [же]",
+        "translation_ru": "или [же]",
+        "translation_en": "or"
+      },
+      "hintRu": "Свяжи 又 со значением «or again, furthermore, on the other hand, ou encore» и первым реальным словом из словаря."
     },
     {
       "id": "11620",
       "courseCardId": "11620",
+      "number": 708,
       "kanji": "肪",
       "meaning": {
         "ru": "obese, fat, obèse, graisse",
-        "en": "obese, fat, obèse, graisse"
+        "en": "obese, fat"
       },
+      "meaning_ru": "obese, fat, obèse, graisse",
+      "meaning_en": "obese, fat",
       "readings": {
         "onyomi": [
-          "ボウ"
+          "ぼう"
         ],
         "kunyomi": [],
         "hiragana": [
@@ -538,69 +1207,164 @@
         ],
         "nanori": []
       },
+      "onyomi": "ぼう",
+      "kunyomi": "",
+      "hiragana": "ぼう",
+      "romaji": "bou",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 8,
       "strokeOrder": [
-        "Всего черт: 8. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 8. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 8. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 8. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
           "word": "脂肪",
           "reading": "しぼう",
           "romaji": "shibou",
+          "translation": "[животный] жир; сало; лярд",
           "translation_ru": "[животный] жир; сало; лярд",
           "translation_en": "fat"
+        },
+        {
+          "word": "脂肪質",
+          "reading": "しぼうしつ",
+          "romaji": "shiboushitsu",
+          "translation": ":  жирный; жировой",
+          "translation_ru": ":  жирный; жировой",
+          "translation_en": "fatty"
         },
         {
           "word": "脂肪心",
           "reading": "しぼうしん",
           "romaji": "shiboushin",
+          "translation": "(мед.) ожирение сердца",
+          "translation_ru": "(мед.) ожирение сердца",
+          "translation_en": "fatty heart"
+        }
+      ],
+      "words": [
+        {
+          "word": "脂肪",
+          "reading": "しぼう",
+          "romaji": "shibou",
+          "translation": "[животный] жир; сало; лярд",
+          "translation_ru": "[животный] жир; сало; лярд",
+          "translation_en": "fat"
+        },
+        {
+          "word": "脂肪質",
+          "reading": "しぼうしつ",
+          "romaji": "shiboushitsu",
+          "translation": ":  жирный; жировой",
+          "translation_ru": ":  жирный; жировой",
+          "translation_en": "fatty"
+        },
+        {
+          "word": "脂肪心",
+          "reading": "しぼうしん",
+          "romaji": "shiboushin",
+          "translation": "(мед.) ожирение сердца",
           "translation_ru": "(мед.) ожирение сердца",
           "translation_en": "fatty heart"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 肪 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1903,
-        "unicode": "U+80AA",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 肪 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 肪 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 肪 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 肪 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 肪 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 肪 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11620-bou.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "脂肪",
+        "reading": "しぼう",
+        "romaji": "shibou",
+        "translation": "[животный] жир; сало; лярд",
+        "translation_ru": "[животный] жир; сало; лярд",
+        "translation_en": "fat"
+      },
+      "hintRu": "Свяжи 肪 со значением «obese, fat, obèse, graisse» и первым реальным словом из словаря."
     },
     {
       "id": "11621",
       "courseCardId": "11621",
+      "number": 709,
       "kanji": "扶",
       "meaning": {
         "ru": "aid, help, assist, aider",
-        "en": "aid, help, assist, aider"
+        "en": "aid, help, assist"
       },
+      "meaning_ru": "aid, help, assist, aider",
+      "meaning_en": "aid, help, assist",
       "readings": {
         "onyomi": [
-          "フ"
+          "ふ"
         ],
         "kunyomi": [
-          "たす.ける"
+          "たすける"
         ],
         "hiragana": [
           "たすける"
@@ -610,145 +1374,336 @@
         ],
         "nanori": []
       },
+      "onyomi": "ふ",
+      "kunyomi": "たすける",
+      "hiragana": "たすける",
+      "romaji": "tasukeru",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 7,
       "strokeOrder": [
-        "Всего черт: 7. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 7. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 7. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 7. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
           "word": "家扶",
           "reading": "かふ",
           "romaji": "kafu",
+          "translation": "(ист.) слуга",
           "translation_ru": "(ист.) слуга",
           "translation_en": "steward"
         },
         {
-          "word": "扶助料",
-          "reading": "ふじょりょう",
-          "romaji": "fujoryou",
-          "translation_ru": "пособие; дотация; пенсия; алименты",
-          "translation_en": "aid or relief allowance"
+          "word": "扶持",
+          "reading": "ふち",
+          "romaji": "fuchi",
+          "translation": "(уст.) пособие, вспомоществование",
+          "translation_ru": "(уст.) пособие, вспомоществование",
+          "translation_en": "salary (paid in rice to a samurai)"
+        },
+        {
+          "word": "扶助",
+          "reading": "ふじょ",
+          "romaji": "fujo",
+          "translation": "помощь, поддержка",
+          "translation_ru": "помощь, поддержка",
+          "translation_en": "aid"
+        }
+      ],
+      "words": [
+        {
+          "word": "家扶",
+          "reading": "かふ",
+          "romaji": "kafu",
+          "translation": "(ист.) слуга",
+          "translation_ru": "(ист.) слуга",
+          "translation_en": "steward"
+        },
+        {
+          "word": "扶持",
+          "reading": "ふち",
+          "romaji": "fuchi",
+          "translation": "(уст.) пособие, вспомоществование",
+          "translation_ru": "(уст.) пособие, вспомоществование",
+          "translation_en": "salary (paid in rice to a samurai)"
+        },
+        {
+          "word": "扶助",
+          "reading": "ふじょ",
+          "romaji": "fujo",
+          "translation": "помощь, поддержка",
+          "translation_ru": "помощь, поддержка",
+          "translation_en": "aid"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 扶 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2040,
-        "unicode": "U+6276",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 扶 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 扶 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 扶 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 扶 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 扶 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 扶 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11621-tasukeru.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "家扶",
+        "reading": "かふ",
+        "romaji": "kafu",
+        "translation": "(ист.) слуга",
+        "translation_ru": "(ист.) слуга",
+        "translation_en": "steward"
+      },
+      "hintRu": "Свяжи 扶 со значением «aid, help, assist, aider» и первым реальным словом из словаря."
     },
     {
       "id": "11622",
       "courseCardId": "11622",
+      "number": 710,
       "kanji": "伍",
       "meaning": {
-        "ru": "Ð¿ÑÑÑ, five-man squad, file, line",
+        "ru": "five, five-man squad, file, line",
         "en": "five, five-man squad, file, line"
       },
+      "meaning_ru": "five, five-man squad, file, line",
+      "meaning_en": "five, five-man squad, file, line",
       "readings": {
         "onyomi": [
-          "ゴ",
-          "イツ"
-        ],
-        "kunyomi": [],
-        "hiragana": [
           "ご"
         ],
+        "kunyomi": [
+          "いつつ"
+        ],
+        "hiragana": [
+          "いつつ"
+        ],
         "romaji": [
-          "go"
+          "itsutsu"
         ],
         "nanori": [
           "くみ",
           "あつむ"
         ]
       },
+      "onyomi": "ご",
+      "kunyomi": "いつつ",
+      "hiragana": "いつつ",
+      "romaji": "itsutsu",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 6,
       "strokeOrder": [
-        "Всего черт: 6. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 6. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 6. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 6. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "伍語",
-          "reading": "ご",
-          "romaji": "go",
-          "translation_ru": "Ð¿ÑÑÑ, five-man squad, file, line",
-          "translation_en": "Ð¿ÑÑÑ, five-man squad, file, line"
+          "word": "伍長",
+          "reading": "ごちょう",
+          "romaji": "gochou",
+          "translation": "младший унтер-офицер",
+          "translation_ru": "младший унтер-офицер",
+          "translation_en": "corporal"
         },
         {
-          "word": "伍語",
-          "reading": "ご",
-          "romaji": "go",
-          "translation_ru": "Ð¿ÑÑÑ, five-man squad, file, line",
-          "translation_en": "Ð¿ÑÑÑ, five-man squad, file, line"
+          "word": "卒伍",
+          "reading": "そつご",
+          "romaji": "sotsugo",
+          "translation": "(уст.) солдат, рядовой",
+          "translation_ru": "(уст.) солдат, рядовой",
+          "translation_en": "rank and file"
+        },
+        {
+          "word": "落伍",
+          "reading": "らくご",
+          "romaji": "rakugo",
+          "translation": ":  выбывать из рядов (из строя)",
+          "translation_ru": ":  выбывать из рядов (из строя)",
+          "translation_en": "straggling"
+        }
+      ],
+      "words": [
+        {
+          "word": "伍長",
+          "reading": "ごちょう",
+          "romaji": "gochou",
+          "translation": "младший унтер-офицер",
+          "translation_ru": "младший унтер-офицер",
+          "translation_en": "corporal"
+        },
+        {
+          "word": "卒伍",
+          "reading": "そつご",
+          "romaji": "sotsugo",
+          "translation": "(уст.) солдат, рядовой",
+          "translation_ru": "(уст.) солдат, рядовой",
+          "translation_en": "rank and file"
+        },
+        {
+          "word": "落伍",
+          "reading": "らくご",
+          "romaji": "rakugo",
+          "translation": ":  выбывать из рядов (из строя)",
+          "translation_ru": ":  выбывать из рядов (из строя)",
+          "translation_en": "straggling"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 伍 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 9,
-        "freq": null,
-        "unicode": "U+4F0D",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 伍 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 伍 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 伍 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 伍 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 伍 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 伍 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11622-itsutsu.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "伍長",
+        "reading": "ごちょう",
+        "romaji": "gochou",
+        "translation": "младший унтер-офицер",
+        "translation_ru": "младший унтер-офицер",
+        "translation_en": "corporal"
+      },
+      "hintRu": "Свяжи 伍 со значением «five, five-man squad, file, line» и первым реальным словом из словаря."
     },
     {
       "id": "11623",
       "courseCardId": "11623",
+      "number": 711,
       "kanji": "忌",
       "meaning": {
         "ru": "mourning, abhor, detestable, death anniversary",
         "en": "mourning, abhor, detestable, death anniversary"
       },
+      "meaning_ru": "mourning, abhor, detestable, death anniversary",
+      "meaning_en": "mourning, abhor, detestable, death anniversary",
       "readings": {
         "onyomi": [
-          "キ",
-          "イ.マワシ"
+          "き"
         ],
         "kunyomi": [
-          "い.む",
-          "い.み"
+          "いむ",
+          "いみ",
+          "いまわしい"
         ],
         "hiragana": [
           "いむ"
@@ -760,71 +1715,166 @@
           "いまわ"
         ]
       },
+      "onyomi": "き",
+      "kunyomi": "いむ / いみ / いまわしい",
+      "hiragana": "いむ",
+      "romaji": "imu",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 7,
       "strokeOrder": [
-        "Всего черт: 7. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 7. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 7. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 7. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "忌引",
-          "reading": "きびき",
-          "romaji": "kibiki",
-          "translation_ru": "невыход на работу в связи с трауром (по случаю смерти кого-л. из родных)",
-          "translation_en": "absence from work or school due to mourning"
+          "word": "回忌",
+          "reading": "かいき",
+          "romaji": "kaiki",
+          "translation": "годовщина смерти",
+          "translation_ru": "годовщина смерти",
+          "translation_en": "death anniversary"
         },
         {
-          "word": "忌服",
-          "reading": "きぶく",
-          "romaji": "kibuku",
-          "translation_ru": "траур",
+          "word": "忌み",
+          "reading": "いみ",
+          "romaji": "imi",
+          "translation": "(буд.) очищение (обряд)",
+          "translation_ru": "(буд.) очищение (обряд)",
           "translation_en": "mourning"
+        },
+        {
+          "word": "忌む",
+          "reading": "いむ",
+          "romaji": "imu",
+          "translation": "ненавидеть (что-л.); питать отвращение (к чему-л.)",
+          "translation_ru": "ненавидеть (что-л.); питать отвращение (к чему-л.)",
+          "translation_en": "to avoid"
+        }
+      ],
+      "words": [
+        {
+          "word": "回忌",
+          "reading": "かいき",
+          "romaji": "kaiki",
+          "translation": "годовщина смерти",
+          "translation_ru": "годовщина смерти",
+          "translation_en": "death anniversary"
+        },
+        {
+          "word": "忌み",
+          "reading": "いみ",
+          "romaji": "imi",
+          "translation": "(буд.) очищение (обряд)",
+          "translation_ru": "(буд.) очищение (обряд)",
+          "translation_en": "mourning"
+        },
+        {
+          "word": "忌む",
+          "reading": "いむ",
+          "romaji": "imu",
+          "translation": "ненавидеть (что-л.); питать отвращение (к чему-л.)",
+          "translation_ru": "ненавидеть (что-л.); питать отвращение (к чему-л.)",
+          "translation_en": "to avoid"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 忌 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2053,
-        "unicode": "U+5FCC",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 忌 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 忌 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 忌 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 忌 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 忌 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 忌 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11623-imu.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "回忌",
+        "reading": "かいき",
+        "romaji": "kaiki",
+        "translation": "годовщина смерти",
+        "translation_ru": "годовщина смерти",
+        "translation_en": "death anniversary"
+      },
+      "hintRu": "Свяжи 忌 со значением «mourning, abhor, detestable, death anniversary» и первым реальным словом из словаря."
     },
     {
       "id": "11624",
       "courseCardId": "11624",
+      "number": 712,
       "kanji": "濁",
       "meaning": {
         "ru": "voiced, uncleanness, wrong, nigori",
-        "en": "voiced, uncleanness, wrong, nigori"
+        "en": "voiced, uncleanness, wrong, nigori, impurity"
       },
+      "meaning_ru": "voiced, uncleanness, wrong, nigori",
+      "meaning_en": "voiced, uncleanness, wrong, nigori, impurity",
       "readings": {
         "onyomi": [
-          "ダク",
-          "ジョク",
-          "ニゴ."
+          "だく",
+          "じょく"
         ],
         "kunyomi": [
-          "にご.る"
+          "にごる",
+          "にごす"
         ],
         "hiragana": [
           "にごる"
@@ -836,137 +1886,329 @@
           "にごり"
         ]
       },
+      "onyomi": "だく / じょく",
+      "kunyomi": "にごる / にごす",
+      "hiragana": "にごる",
+      "romaji": "nigoru",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 16,
       "strokeOrder": [
-        "Всего черт: 16. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 16. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 16. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 16. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "濁る",
-          "reading": "にごる",
-          "romaji": "nigoru",
-          "translation_ru": "стать мутным, замутиться, помутнеть",
-          "translation_en": "to become muddy"
+          "word": "汚濁",
+          "reading": "おだく",
+          "romaji": "odaku",
+          "translation": "(кн.) разложение (моральное)",
+          "translation_ru": "(кн.) разложение (моральное)",
+          "translation_en": "pollution"
         },
         {
-          "word": "濁流",
-          "reading": "だくりゅう",
-          "romaji": "dakuryuu",
-          "translation_ru": "мутный поток, мутное течение",
-          "translation_en": "muddy stream"
+          "word": "混濁",
+          "reading": "こんだく",
+          "romaji": "kondaku",
+          "translation": "мутность; муть",
+          "translation_ru": "мутность; муть",
+          "translation_en": "becoming turbid"
+        },
+        {
+          "word": "清濁",
+          "reading": "せいだく",
+          "romaji": "seidaku",
+          "translation": "(кн.)",
+          "translation_ru": "(кн.)",
+          "translation_en": "good and evil"
+        }
+      ],
+      "words": [
+        {
+          "word": "汚濁",
+          "reading": "おだく",
+          "romaji": "odaku",
+          "translation": "(кн.) разложение (моральное)",
+          "translation_ru": "(кн.) разложение (моральное)",
+          "translation_en": "pollution"
+        },
+        {
+          "word": "混濁",
+          "reading": "こんだく",
+          "romaji": "kondaku",
+          "translation": "мутность; муть",
+          "translation_ru": "мутность; муть",
+          "translation_en": "becoming turbid"
+        },
+        {
+          "word": "清濁",
+          "reading": "せいだく",
+          "romaji": "seidaku",
+          "translation": "(кн.)",
+          "translation_ru": "(кн.)",
+          "translation_en": "good and evil"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 濁 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1855,
-        "unicode": "U+6FC1",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 濁 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 濁 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 濁 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 濁 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 濁 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 濁 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11624-nigoru.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "汚濁",
+        "reading": "おだく",
+        "romaji": "odaku",
+        "translation": "(кн.) разложение (моральное)",
+        "translation_ru": "(кн.) разложение (моральное)",
+        "translation_en": "pollution"
+      },
+      "hintRu": "Свяжи 濁 со значением «voiced, uncleanness, wrong, nigori» и первым реальным словом из словаря."
     },
     {
       "id": "11625",
       "courseCardId": "11625",
+      "number": 713,
       "kanji": "奔",
       "meaning": {
-        "ru": "Ð±ÐµÐ¶Ð°ÑÑ, bustle, courir, agitation",
-        "en": "run, bustle, courir, agitation"
+        "ru": "run, bustle, courir, agitation",
+        "en": "run, bustle"
       },
+      "meaning_ru": "run, bustle, courir, agitation",
+      "meaning_en": "run, bustle",
       "readings": {
         "onyomi": [
-          "ホン"
-        ],
-        "kunyomi": [],
-        "hiragana": [
           "ほん"
         ],
+        "kunyomi": [
+          "はしる"
+        ],
+        "hiragana": [
+          "はしる"
+        ],
         "romaji": [
-          "hon"
+          "hashiru"
         ],
         "nanori": []
       },
+      "onyomi": "ほん",
+      "kunyomi": "はしる",
+      "hiragana": "はしる",
+      "romaji": "hashiru",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 8,
       "strokeOrder": [
-        "Всего черт: 8. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 8. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 8. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 8. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "奔出",
-          "reading": "ほんしゅつ",
-          "romaji": "honshutsu",
-          "translation_ru": "фонтанирование мощной струёй",
-          "translation_en": "gushing out"
+          "word": "淫奔",
+          "reading": "いんぽん",
+          "romaji": "inpon",
+          "translation": "распутство, развратный образ жизни",
+          "translation_ru": "распутство, развратный образ жизни",
+          "translation_en": "lewdness"
         },
         {
-          "word": "出奔者",
-          "reading": "しゅっぽんしゃ",
-          "romaji": "shupponsha",
-          "translation_ru": "беглец",
-          "translation_en": "runaway"
+          "word": "狂奔",
+          "reading": "きょうほん",
+          "romaji": "kyouhon",
+          "translation": "беготня",
+          "translation_ru": "беготня",
+          "translation_en": "rushing around"
+        },
+        {
+          "word": "出奔",
+          "reading": "しゅっぽん",
+          "romaji": "shuppon",
+          "translation": "бегство, побег",
+          "translation_ru": "бегство, побег",
+          "translation_en": "flight"
+        }
+      ],
+      "words": [
+        {
+          "word": "淫奔",
+          "reading": "いんぽん",
+          "romaji": "inpon",
+          "translation": "распутство, развратный образ жизни",
+          "translation_ru": "распутство, развратный образ жизни",
+          "translation_en": "lewdness"
+        },
+        {
+          "word": "狂奔",
+          "reading": "きょうほん",
+          "romaji": "kyouhon",
+          "translation": "беготня",
+          "translation_ru": "беготня",
+          "translation_en": "rushing around"
+        },
+        {
+          "word": "出奔",
+          "reading": "しゅっぽん",
+          "romaji": "shuppon",
+          "translation": "бегство, побег",
+          "translation_ru": "бегство, побег",
+          "translation_en": "flight"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 奔 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1943,
-        "unicode": "U+5954",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 奔 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 奔 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 奔 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 奔 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 奔 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 奔 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11625-hashiru.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "淫奔",
+        "reading": "いんぽん",
+        "romaji": "inpon",
+        "translation": "распутство, развратный образ жизни",
+        "translation_ru": "распутство, развратный образ жизни",
+        "translation_en": "lewdness"
+      },
+      "hintRu": "Свяжи 奔 со значением «run, bustle, courir, agitation» и первым реальным словом из словаря."
     },
     {
       "id": "11626",
       "courseCardId": "11626",
+      "number": 714,
       "kanji": "斗",
       "meaning": {
         "ru": "Big Dipper, ten sho (vol), sake dipper, dots and cross radical (no. 68)",
         "en": "Big Dipper, ten sho (vol), sake dipper, dots and cross radical (no. 68)"
       },
+      "meaning_ru": "Big Dipper, ten sho (vol), sake dipper, dots and cross radical (no. 68)",
+      "meaning_en": "Big Dipper, ten sho (vol), sake dipper, dots and cross radical (no. 68)",
       "readings": {
         "onyomi": [
-          "ト",
-          "ト"
+          "と",
+          "とう"
         ],
         "kunyomi": [],
         "hiragana": [
@@ -979,66 +2221,162 @@
           "ます"
         ]
       },
+      "onyomi": "と / とう",
+      "kunyomi": "",
+      "hiragana": "と",
+      "romaji": "to",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 4,
       "strokeOrder": [
-        "Всего черт: 4. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 4. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 4. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 4. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "熨斗",
-          "reading": "のし",
-          "romaji": "noshi",
-          "translation_ru": "носи (особая наклейка на подарке)",
-          "translation_en": "noshi"
+          "word": "斗酒",
+          "reading": "としゅ",
+          "romaji": "toshu",
+          "translation": "(кн.) бочонок сакэ",
+          "translation_ru": "(кн.) бочонок сакэ",
+          "translation_en": "kegs of sake"
         },
         {
           "word": "漏斗",
           "reading": "じょうご",
           "romaji": "jougo",
+          "translation": "воронка (для жидкости)",
           "translation_ru": "воронка (для жидкости)",
           "translation_en": "funnel"
+        },
+        {
+          "word": "熨斗",
+          "reading": "のし",
+          "romaji": "noshi",
+          "translation": "носи (особая наклейка на подарке)",
+          "translation_ru": "носи (особая наклейка на подарке)",
+          "translation_en": "noshi"
+        }
+      ],
+      "words": [
+        {
+          "word": "斗酒",
+          "reading": "としゅ",
+          "romaji": "toshu",
+          "translation": "(кн.) бочонок сакэ",
+          "translation_ru": "(кн.) бочонок сакэ",
+          "translation_en": "kegs of sake"
+        },
+        {
+          "word": "漏斗",
+          "reading": "じょうご",
+          "romaji": "jougo",
+          "translation": "воронка (для жидкости)",
+          "translation_ru": "воронка (для жидкости)",
+          "translation_en": "funnel"
+        },
+        {
+          "word": "熨斗",
+          "reading": "のし",
+          "romaji": "noshi",
+          "translation": "носи (особая наклейка на подарке)",
+          "translation_ru": "носи (особая наклейка на подарке)",
+          "translation_en": "noshi"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首 68",
-        "radicalMeaning": {
-          "ru": "радикал 68",
-          "en": "radical 68"
+        {
+          "name": "Research reader",
+          "use": "Look for 斗 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2010,
-        "unicode": "U+6597",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 斗 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 斗 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 斗 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 斗 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 斗 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 斗 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11626-to.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "斗酒",
+        "reading": "としゅ",
+        "romaji": "toshu",
+        "translation": "(кн.) бочонок сакэ",
+        "translation_ru": "(кн.) бочонок сакэ",
+        "translation_en": "kegs of sake"
+      },
+      "hintRu": "Свяжи 斗 со значением «Big Dipper, ten sho (vol), sake dipper, dots and cross radical (no. 68)» и первым реальным словом из словаря."
     },
     {
       "id": "11627",
       "courseCardId": "11627",
+      "number": 715,
       "kanji": "蘭",
       "meaning": {
         "ru": "orchid, Holland, Hollande, orchidée",
-        "en": "orchid, Holland, Hollande, orchidée"
+        "en": "orchid, Holland"
       },
+      "meaning_ru": "orchid, Holland, Hollande, orchidée",
+      "meaning_en": "orchid, Holland",
       "readings": {
         "onyomi": [
-          "ラン"
+          "らん",
+          "ら"
         ],
         "kunyomi": [],
         "hiragana": [
@@ -1052,66 +2390,161 @@
           "あららぎ"
         ]
       },
+      "onyomi": "らん / ら",
+      "kunyomi": "",
+      "hiragana": "らん",
+      "romaji": "ran",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 19,
       "strokeOrder": [
-        "Всего черт: 19. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 19. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 19. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 19. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "蘭語",
-          "reading": "らん",
-          "romaji": "ran",
-          "translation_ru": "orchid, Holland, Hollande, orchidée",
-          "translation_en": "orchid, Holland, Hollande, orchidée"
+          "word": "蘭学",
+          "reading": "らんがく",
+          "romaji": "rangaku",
+          "translation": "(ист.) голландоведение (изучение голландского языка и научной литературы на этом языке)",
+          "translation_ru": "(ист.) голландоведение (изучение голландского языка и научной литературы на этом языке)",
+          "translation_en": "rangaku"
         },
         {
-          "word": "蘭語",
-          "reading": "らん",
-          "romaji": "ran",
-          "translation_ru": "orchid, Holland, Hollande, orchidée",
-          "translation_en": "orchid, Holland, Hollande, orchidée"
+          "word": "鈴蘭",
+          "reading": "すずらん",
+          "romaji": "suzuran",
+          "translation": "ландыш, Convallaria majalis (L.)",
+          "translation_ru": "ландыш, Convallaria majalis (L.)",
+          "translation_en": "lily of the valley (Convallaria keiskei)"
+        },
+        {
+          "word": "葉蘭",
+          "reading": "はらん",
+          "romaji": "haran",
+          "translation": "(бот.) аспидистра, Aspidistra elatior (Blume.)",
+          "translation_ru": "(бот.) аспидистра, Aspidistra elatior (Blume.)",
+          "translation_en": "cast iron plant (Aspidistra elatior)"
+        }
+      ],
+      "words": [
+        {
+          "word": "蘭学",
+          "reading": "らんがく",
+          "romaji": "rangaku",
+          "translation": "(ист.) голландоведение (изучение голландского языка и научной литературы на этом языке)",
+          "translation_ru": "(ист.) голландоведение (изучение голландского языка и научной литературы на этом языке)",
+          "translation_en": "rangaku"
+        },
+        {
+          "word": "鈴蘭",
+          "reading": "すずらん",
+          "romaji": "suzuran",
+          "translation": "ландыш, Convallaria majalis (L.)",
+          "translation_ru": "ландыш, Convallaria majalis (L.)",
+          "translation_en": "lily of the valley (Convallaria keiskei)"
+        },
+        {
+          "word": "葉蘭",
+          "reading": "はらん",
+          "romaji": "haran",
+          "translation": "(бот.) аспидистра, Aspidistra elatior (Blume.)",
+          "translation_ru": "(бот.) аспидистра, Aspidistra elatior (Blume.)",
+          "translation_en": "cast iron plant (Aspidistra elatior)"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 蘭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 9,
-        "freq": null,
-        "unicode": "U+862D",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 蘭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 蘭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 蘭 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 蘭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 蘭 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 蘭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11627-ran.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "蘭学",
+        "reading": "らんがく",
+        "romaji": "rangaku",
+        "translation": "(ист.) голландоведение (изучение голландского языка и научной литературы на этом языке)",
+        "translation_ru": "(ист.) голландоведение (изучение голландского языка и научной литературы на этом языке)",
+        "translation_en": "rangaku"
+      },
+      "hintRu": "Свяжи 蘭 со значением «orchid, Holland, Hollande, orchidée» и первым реальным словом из словаря."
     },
     {
       "id": "11628",
       "courseCardId": "11628",
+      "number": 716,
       "kanji": "迅",
       "meaning": {
-        "ru": "swift, Ð±ÑÑÑÑÑÐ¹, vif, rapide",
-        "en": "swift, fast, vif, rapide"
+        "ru": "swift, fast, vif, rapide",
+        "en": "swift, fast"
       },
+      "meaning_ru": "swift, fast, vif, rapide",
+      "meaning_en": "swift, fast",
       "readings": {
         "onyomi": [
-          "ジン"
+          "じん"
         ],
         "kunyomi": [],
         "hiragana": [
@@ -1122,21 +2555,66 @@
         ],
         "nanori": []
       },
+      "onyomi": "じん",
+      "kunyomi": "",
+      "hiragana": "じん",
+      "romaji": "jin",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 6,
       "strokeOrder": [
-        "Всего черт: 6. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 6. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 6. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 6. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
+        {
+          "word": "迅速",
+          "reading": "じんそく",
+          "romaji": "jinsoku",
+          "translation": ":  быстрый, скорый; скоростной; немедленный",
+          "translation_ru": ":  быстрый, скорый; скоростной; немедленный",
+          "translation_en": "quick"
+        },
         {
           "word": "迅雷",
           "reading": "じんらい",
           "romaji": "jinrai",
+          "translation": "удар грома, гром",
           "translation_ru": "удар грома, гром",
           "translation_en": "sudden peal of thunder"
         },
@@ -1144,47 +2622,97 @@
           "word": "奮迅",
           "reading": "ふんじん",
           "romaji": "funjin",
+          "translation": "(кн. связ.) бросок вперёд; (см.) ししふんじん",
+          "translation_ru": "(кн. связ.) бросок вперёд; (см.) ししふんじん",
+          "translation_en": "rousing oneself fiercely"
+        }
+      ],
+      "words": [
+        {
+          "word": "迅速",
+          "reading": "じんそく",
+          "romaji": "jinsoku",
+          "translation": ":  быстрый, скорый; скоростной; немедленный",
+          "translation_ru": ":  быстрый, скорый; скоростной; немедленный",
+          "translation_en": "quick"
+        },
+        {
+          "word": "迅雷",
+          "reading": "じんらい",
+          "romaji": "jinrai",
+          "translation": "удар грома, гром",
+          "translation_ru": "удар грома, гром",
+          "translation_en": "sudden peal of thunder"
+        },
+        {
+          "word": "奮迅",
+          "reading": "ふんじん",
+          "romaji": "funjin",
+          "translation": "(кн. связ.) бросок вперёд; (см.) ししふんじん",
           "translation_ru": "(кн. связ.) бросок вперёд; (см.) ししふんじん",
           "translation_en": "rousing oneself fiercely"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 迅 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2200,
-        "unicode": "U+8FC5",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 迅 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 迅 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 迅 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 迅 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 迅 в официальных текстах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 迅 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11628-jin.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "迅速",
+        "reading": "じんそく",
+        "romaji": "jinsoku",
+        "translation": ":  быстрый, скорый; скоростной; немедленный",
+        "translation_ru": ":  быстрый, скорый; скоростной; немедленный",
+        "translation_en": "quick"
+      },
+      "hintRu": "Свяжи 迅 со значением «swift, fast, vif, rapide» и первым реальным словом из словаря."
     },
     {
       "id": "11629",
       "courseCardId": "11629",
+      "number": 717,
       "kanji": "肖",
       "meaning": {
         "ru": "resemblance, ressemblance, portrait, imitar",
-        "en": "resemblance, ressemblance, portrait, imitar"
+        "en": "resemblance"
       },
+      "meaning_ru": "resemblance, ressemblance, portrait, imitar",
+      "meaning_en": "resemblance",
       "readings": {
         "onyomi": [
-          "ショウ"
+          "しょう"
         ],
         "kunyomi": [
-          "あやか.る"
+          "あやかる"
         ],
         "hiragana": [
           "あやかる"
@@ -1194,21 +2722,58 @@
         ],
         "nanori": []
       },
+      "onyomi": "しょう",
+      "kunyomi": "あやかる",
+      "hiragana": "あやかる",
+      "romaji": "ayakaru",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 7,
       "strokeOrder": [
-        "Всего черт: 7. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 7. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 7. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 7. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
           "word": "肖る",
           "reading": "あやかる",
           "romaji": "ayakaru",
+          "translation": "быть похожим, походить (на кого-л. (по умению, удаче)",
           "translation_ru": "быть похожим, походить (на кого-л. (по умению, удаче)",
           "translation_en": "to share (someone's) good luck"
         },
@@ -1216,45 +2781,103 @@
           "word": "肖像",
           "reading": "しょうぞう",
           "romaji": "shouzou",
+          "translation": "портрет, изображение; образ",
           "translation_ru": "портрет, изображение; образ",
           "translation_en": "portrait"
+        },
+        {
+          "word": "不肖",
+          "reading": "ふしょう",
+          "romaji": "fushou",
+          "translation": ":  недостойный",
+          "translation_ru": ":  недостойный",
+          "translation_en": "unworthy (of one's father, teacher, etc.)"
+        }
+      ],
+      "words": [
+        {
+          "word": "肖る",
+          "reading": "あやかる",
+          "romaji": "ayakaru",
+          "translation": "быть похожим, походить (на кого-л. (по умению, удаче)",
+          "translation_ru": "быть похожим, походить (на кого-л. (по умению, удаче)",
+          "translation_en": "to share (someone's) good luck"
+        },
+        {
+          "word": "肖像",
+          "reading": "しょうぞう",
+          "romaji": "shouzou",
+          "translation": "портрет, изображение; образ",
+          "translation_ru": "портрет, изображение; образ",
+          "translation_en": "portrait"
+        },
+        {
+          "word": "不肖",
+          "reading": "ふしょう",
+          "romaji": "fushou",
+          "translation": ":  недостойный",
+          "translation_ru": ":  недостойный",
+          "translation_en": "unworthy (of one's father, teacher, etc.)"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 肖 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 2115,
-        "unicode": "U+8096",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 肖 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 肖 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 肖 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 肖 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 肖 в новостях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 肖 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11629-ayakaru.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "肖る",
+        "reading": "あやかる",
+        "romaji": "ayakaru",
+        "translation": "быть похожим, походить (на кого-л. (по умению, удаче)",
+        "translation_ru": "быть похожим, походить (на кого-л. (по умению, удаче)",
+        "translation_en": "to share (someone's) good luck"
+      },
+      "hintRu": "Свяжи 肖 со значением «resemblance, ressemblance, portrait, imitar» и первым реальным словом из словаря."
     },
     {
       "id": "11630",
       "courseCardId": "11630",
+      "number": 718,
       "kanji": "鉢",
       "meaning": {
         "ru": "bowl, rice tub, pot, crown",
         "en": "bowl, rice tub, pot, crown"
       },
+      "meaning_ru": "bowl, rice tub, pot, crown",
+      "meaning_en": "bowl, rice tub, pot, crown",
       "readings": {
         "onyomi": [
-          "ハチ",
-          "ハツ"
+          "はち",
+          "はつ"
         ],
         "kunyomi": [],
         "hiragana": [
@@ -1265,70 +2888,165 @@
         ],
         "nanori": []
       },
+      "onyomi": "はち / はつ",
+      "kunyomi": "",
+      "hiragana": "はち",
+      "romaji": "hachi",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 13,
       "strokeOrder": [
-        "Всего черт: 13. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 13. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 13. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 13. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "鉢物",
-          "reading": "はちもの",
-          "romaji": "hachimono",
-          "translation_ru": "кушанье, подаваемое в горшочках (мисках)",
-          "translation_en": "food served in bowls"
+          "word": "衣鉢",
+          "reading": "いはつ",
+          "romaji": "ihatsu",
+          "translation": "(буд.) облачение и утварь, переданные духовным наставником ученику",
+          "translation_ru": "(буд.) облачение и утварь, переданные духовным наставником ученику",
+          "translation_en": "mysteries of one's master's art"
+        },
+        {
+          "word": "火鉢",
+          "reading": "ひばち",
+          "romaji": "hibachi",
+          "translation": "хибати (жаровня, служащая средством отопления в яп. доме)",
+          "translation_ru": "хибати (жаровня, служащая средством отопления в яп. доме)",
+          "translation_en": "brazier"
         },
         {
           "word": "小鉢",
           "reading": "こばち",
           "romaji": "kobachi",
+          "translation": "мисочка, горшочек",
+          "translation_ru": "мисочка, горшочек",
+          "translation_en": "small bowl"
+        }
+      ],
+      "words": [
+        {
+          "word": "衣鉢",
+          "reading": "いはつ",
+          "romaji": "ihatsu",
+          "translation": "(буд.) облачение и утварь, переданные духовным наставником ученику",
+          "translation_ru": "(буд.) облачение и утварь, переданные духовным наставником ученику",
+          "translation_en": "mysteries of one's master's art"
+        },
+        {
+          "word": "火鉢",
+          "reading": "ひばち",
+          "romaji": "hibachi",
+          "translation": "хибати (жаровня, служащая средством отопления в яп. доме)",
+          "translation_ru": "хибати (жаровня, служащая средством отопления в яп. доме)",
+          "translation_en": "brazier"
+        },
+        {
+          "word": "小鉢",
+          "reading": "こばち",
+          "romaji": "kobachi",
+          "translation": "мисочка, горшочек",
           "translation_ru": "мисочка, горшочек",
           "translation_en": "small bowl"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 鉢 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1677,
-        "unicode": "U+9262",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 鉢 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 鉢 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 鉢 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 鉢 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 鉢 в академических статьях: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 鉢 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11630-hachi.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "衣鉢",
+        "reading": "いはつ",
+        "romaji": "ihatsu",
+        "translation": "(буд.) облачение и утварь, переданные духовным наставником ученику",
+        "translation_ru": "(буд.) облачение и утварь, переданные духовным наставником ученику",
+        "translation_en": "mysteries of one's master's art"
+      },
+      "hintRu": "Свяжи 鉢 со значением «bowl, rice tub, pot, crown» и первым реальным словом из словаря."
     },
     {
       "id": "11650",
       "courseCardId": "11650",
+      "number": 719,
       "kanji": "奴",
       "meaning": {
         "ru": "guy, slave, manservant, fellow",
         "en": "guy, slave, manservant, fellow"
       },
+      "meaning_ru": "guy, slave, manservant, fellow",
+      "meaning_en": "guy, slave, manservant, fellow",
       "readings": {
         "onyomi": [
-          "ド",
-          "ヤッ"
+          "ど"
         ],
         "kunyomi": [
-          "やつ"
+          "やつ",
+          "やっこ"
         ],
         "hiragana": [
           "やつ"
@@ -1340,67 +3058,162 @@
           "ぬ"
         ]
       },
+      "onyomi": "ど",
+      "kunyomi": "やつ / やっこ",
+      "hiragana": "やつ",
+      "romaji": "yatsu",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 5,
       "strokeOrder": [
-        "Всего черт: 5. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 5. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 5. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 5. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "奴凧",
-          "reading": "やっこだこ",
-          "romaji": "yakkodako",
-          "translation_ru": "фигурный воздушный змей",
-          "translation_en": "kite shaped like an Edo-period footman"
+          "word": "黒奴",
+          "reading": "こくど",
+          "romaji": "kokudo",
+          "translation": "(см.) くろんぼう",
+          "translation_ru": "(см.) くろんぼう",
+          "translation_en": "black slave"
+        },
+        {
+          "word": "奴隷",
+          "reading": "どれい",
+          "romaji": "dorei",
+          "translation": "раб, невольник",
+          "translation_ru": "раб, невольник",
+          "translation_en": "slave"
         },
         {
           "word": "農奴",
           "reading": "のうど",
           "romaji": "noudo",
+          "translation": "(сущ. ист.) крепостной",
+          "translation_ru": "(сущ. ист.) крепостной",
+          "translation_en": "serf"
+        }
+      ],
+      "words": [
+        {
+          "word": "黒奴",
+          "reading": "こくど",
+          "romaji": "kokudo",
+          "translation": "(см.) くろんぼう",
+          "translation_ru": "(см.) くろんぼう",
+          "translation_en": "black slave"
+        },
+        {
+          "word": "奴隷",
+          "reading": "どれい",
+          "romaji": "dorei",
+          "translation": "раб, невольник",
+          "translation_ru": "раб, невольник",
+          "translation_en": "slave"
+        },
+        {
+          "word": "農奴",
+          "reading": "のうど",
+          "romaji": "noudo",
+          "translation": "(сущ. ист.) крепостной",
           "translation_ru": "(сущ. ист.) крепостной",
           "translation_en": "serf"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 奴 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 8,
-        "freq": 1183,
-        "unicode": "U+5974",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 奴 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 奴 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 奴 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 奴 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 奴 в деловой переписке: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 奴 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11650-yatsu.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "黒奴",
+        "reading": "こくど",
+        "romaji": "kokudo",
+        "translation": "(см.) くろんぼう",
+        "translation_ru": "(см.) くろんぼう",
+        "translation_en": "black slave"
+      },
+      "hintRu": "Свяжи 奴 со значением «guy, slave, manservant, fellow» и первым реальным словом из словаря."
     },
     {
       "id": "11991",
       "courseCardId": "11991",
+      "number": 720,
       "kanji": "銭",
       "meaning": {
-        "ru": "coin, .01 yen, Ð´ÐµÐ½ÑÐ³Ð¸, piécette",
-        "en": "coin, .01 yen, money, piécette"
+        "ru": "coin, .01 yen, money, piécette",
+        "en": "coin, .01 yen, money"
       },
+      "meaning_ru": "coin, .01 yen, money, piécette",
+      "meaning_en": "coin, .01 yen, money",
       "readings": {
         "onyomi": [
-          "セン",
-          "ゼン"
+          "せん",
+          "ぜん"
         ],
         "kunyomi": [
           "ぜに",
@@ -1414,54 +3227,146 @@
         ],
         "nanori": []
       },
+      "onyomi": "せん / ぜん",
+      "kunyomi": "ぜに / すき",
+      "hiragana": "ぜに",
+      "romaji": "zeni",
       "jlpt": "N1",
+      "level": "N1",
       "lessonId": "bulk-n1-36",
       "lessonTitle": "Урок 36. N1 кандзи 701-720",
-      "lessonTitleEn": "Lesson 36. N1 kanji 701-720",
+      "lessonTitleEn": "N1 Lesson 36",
       "strokes": 14,
       "strokeOrder": [
-        "Всего черт: 14. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу."
+        {
+          "id": 1,
+          "type": "stroke",
+          "description_ru": "Всего черт: 14. Сначала смотри на верхние и левые элементы.",
+          "description_en": "Total strokes: 14. Start by observing the top and left-side components.",
+          "path": null
+        },
+        {
+          "id": 2,
+          "type": "stroke",
+          "description_ru": "Разбей знак на радикалы и крупные блоки.",
+          "description_en": "Break the kanji into radicals and large components.",
+          "path": null
+        },
+        {
+          "id": 3,
+          "type": "stroke",
+          "description_ru": "Проведи порядок письма сверху вниз и слева направо.",
+          "description_en": "Practice the stroke order from top to bottom and left to right.",
+          "path": null
+        },
+        {
+          "id": 4,
+          "type": "stroke",
+          "description_ru": "Повтори знак вместе со словом-примером.",
+          "description_en": "Review the kanji together with a real example word.",
+          "path": null
+        }
+      ],
+      "stroke_order": [
+        "Всего черт: 14. Сначала смотри на верхние и левые элементы.",
+        "Разбей знак на радикалы и крупные блоки.",
+        "Проведи порядок письма сверху вниз и слева направо.",
+        "Повтори знак вместе со словом-примером."
       ],
       "examples": [
         {
-          "word": "銭苔",
-          "reading": "ぜにごけ",
-          "romaji": "zenigoke",
-          "translation_ru": "печёночный мох, Marchantia polymorpha (L.)",
-          "translation_en": "liverwort"
+          "word": "金銭",
+          "reading": "きんせん",
+          "romaji": "kinsen",
+          "translation": "деньги",
+          "translation_ru": "деньги",
+          "translation_en": "money"
+        },
+        {
+          "word": "古銭",
+          "reading": "こせん",
+          "romaji": "kosen",
+          "translation": "старинная монета",
+          "translation_ru": "старинная монета",
+          "translation_en": "old coin"
         },
         {
           "word": "小銭",
           "reading": "こぜに",
           "romaji": "kozeni",
+          "translation": "мелкие деньги, мелочь; разменная монета",
+          "translation_ru": "мелкие деньги, мелочь; разменная монета",
+          "translation_en": "small change"
+        }
+      ],
+      "words": [
+        {
+          "word": "金銭",
+          "reading": "きんせん",
+          "romaji": "kinsen",
+          "translation": "деньги",
+          "translation_ru": "деньги",
+          "translation_en": "money"
+        },
+        {
+          "word": "古銭",
+          "reading": "こせん",
+          "romaji": "kosen",
+          "translation": "старинная монета",
+          "translation_ru": "старинная монета",
+          "translation_en": "old coin"
+        },
+        {
+          "word": "小銭",
+          "reading": "こぜに",
+          "romaji": "kozeni",
+          "translation": "мелкие деньги, мелочь; разменная монета",
           "translation_ru": "мелкие деньги, мелочь; разменная монета",
           "translation_en": "small change"
         }
       ],
       "apps": [
-        "Government portals",
-        "Academic databases",
-        "Legal apps",
-        "Financial terminals",
-        "Enterprise tools"
-      ],
-      "interfaceUse": "Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-      "audio": null,
-      "meta": {
-        "radical": "部首",
-        "radicalMeaning": {
-          "ru": "радикал",
-          "en": "radical"
+        {
+          "name": "Research reader",
+          "use": "Look for 銭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
         },
-        "grade": 6,
-        "freq": 1188,
-        "unicode": "U+92AD",
-        "variants": [],
-        "favoriteSeed": false
+        {
+          "name": "News archive",
+          "use": "Look for 銭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        },
+        {
+          "name": "Policy memo",
+          "use": "Look for 銭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+        }
+      ],
+      "interfaceUse": "Ищи 銭 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interfaceUseEn": "Look for 銭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "interface_use": "Ищи 銭 в юридических документах: там знак часто уточняет позицию автора, норму или вывод.",
+      "interface_use_en": "Look for 銭 in formal texts: it often clarifies the author's stance, a rule, or a conclusion.",
+      "audio": "./audio/kanji/n1/bulk-n1-36/11991-zeni.mp3",
+      "meta": {
+        "radical": "",
+        "radicalMeaning": {
+          "ru": "",
+          "en": ""
+        },
+        "source": "KANJIDIC + Flash Kanji N1 PDF"
       },
-      "sourcePage": 83
+      "sourcePage": 83,
+      "grammarLinks": [
+        "〜にたえる",
+        "〜にたえない",
+        "〜に足る"
+      ],
+      "example": {
+        "word": "金銭",
+        "reading": "きんせん",
+        "romaji": "kinsen",
+        "translation": "деньги",
+        "translation_ru": "деньги",
+        "translation_en": "money"
+      },
+      "hintRu": "Свяжи 銭 со значением «coin, .01 yen, money, piécette» и первым реальным словом из словаря."
     }
   ]
 }

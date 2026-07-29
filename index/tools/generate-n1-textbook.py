@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import copy
 import gzip
 import json
-import math
-import os
 import re
-import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -15,1213 +11,922 @@ from pathlib import Path
 
 try:
     import fitz  # PyMuPDF
-except Exception as exc:  # pragma: no cover - local environment dependency
-    raise SystemExit(f"PyMuPDF is required to generate N1 data: {exc}")
+except Exception as exc:  # pragma: no cover - local tool dependency
+    raise SystemExit(f"PyMuPDF is required to generate the N1 textbook: {exc}")
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PROJECT_ROOT = ROOT.parent
-PDF_PATH = ROOT / "docs" / "flashkanji_N1_textbook_flashkanji_space.pdf"
-CURRENT_N1_KANJI_PATH = ROOT / "data" / "jlpt" / "n1" / "kanji.json"
-CURRENT_N1_META_PATH = ROOT / "data" / "jlpt" / "n1" / "meta.json"
-CURRENT_N1_LESSONS_PATH = ROOT / "data" / "jlpt" / "n1" / "lessons.json"
-CURRENT_N1_EXERCISES_PATH = ROOT / "data" / "jlpt" / "n1" / "exercises.json"
-CURRENT_N1_READING_PATH = ROOT / "data" / "jlpt" / "n1" / "reading.json"
-CURRENT_N1_LISTENING_PATH = ROOT / "data" / "jlpt" / "n1" / "listening.json"
-CURRENT_N1_TESTS_PATH = ROOT / "data" / "jlpt" / "n1" / "tests.json"
-CURRENT_N1_FINAL_TEST_PATH = ROOT / "data" / "jlpt" / "n1" / "final-test.json"
-LESSONS_GENERATED_DIR = ROOT / "data" / "lessons" / "generated"
-LESSONS_MANIFEST_PATH = ROOT / "data" / "lessons.json"
-LESSON_TRANSLATIONS_PATH = ROOT / "data" / "lessons" / "translations.json"
-JLPT_INDEX_PATH = ROOT / "data" / "jlpt" / "index.json"
-TEXTBOOKS_INDEX_PATH = ROOT / "data" / "textbooks" / "index.json"
-REWARDS_PATH = ROOT / "data" / "rewards.json"
-KANJI_META_PATH = ROOT / "data" / "kanji" / "meta.json"
-KANJI_HINTS_PATH = ROOT / "data" / "kanji" / "hints.json"
-KANJI_TRANSLATIONS_PATH = ROOT / "data" / "kanji" / "translations.json"
-KANJI_PAGE_SOURCES_PATH = ROOT / "data" / "sources" / "kanji-page-sources.json"
-KANJIDIC_GZ_PATH = ROOT / "tmp_kanjidic2.xml.gz"
-if not KANJIDIC_GZ_PATH.exists():
-    KANJIDIC_GZ_PATH = PROJECT_ROOT / "tmp_kanjidic2.xml.gz"
+PUBLIC = ROOT / "public"
+DATA = PUBLIC / "data"
+PDF_PATH = PUBLIC / "docs" / "flashkanji_N1_textbook_flashkanji_space.pdf"
+
+N1_DIR = DATA / "jlpt" / "n1"
+LESSONS_GENERATED_DIR = DATA / "lessons" / "generated"
+LESSONS_MANIFEST_PATH = DATA / "lessons.json"
+LESSON_TRANSLATIONS_PATH = DATA / "lessons" / "translations.json"
+JLPT_INDEX_PATH = DATA / "jlpt" / "index.json"
+TEXTBOOKS_INDEX_PATH = DATA / "textbooks" / "index.json"
+REWARDS_PATH = DATA / "rewards.json"
+KANJI_META_PATH = DATA / "kanji" / "meta.json"
+KANJI_HINTS_PATH = DATA / "kanji" / "hints.json"
+KANJI_TRANSLATIONS_PATH = DATA / "kanji" / "translations.json"
+KANJI_PAGE_SOURCES_PATH = DATA / "sources" / "kanji-page-sources.json"
 
 REMOTE_JLPT_KANJI_URL = "https://raw.githubusercontent.com/AnchorI/jlpt-kanji-dictionary/main/jlpt-kanji.json"
 REMOTE_DICTIONARY_URLS = [
     f"https://raw.githubusercontent.com/AnchorI/jlpt-kanji-dictionary/main/dictionary_part_{part}.json"
     for part in range(1, 5)
 ]
-
-APP_POOLS = {
-    "N1": ["Government portals", "Academic databases", "Legal apps", "Financial terminals", "Enterprise tools"],
-}
+KANJIDIC_URL = "https://www.edrdg.org/kanjidic/kanjidic2.xml.gz"
+USER_AGENT = "Mozilla/5.0 (Flash Kanji N1 generator)"
 
 LESSON_COUNT = 53
 KANJI_COUNT = 1047
-CURRENT_KANJI_COUNT = 1047
-CURRENT_LESSON_COUNT = 53
-CURRENT_CARD_COUNT = 1047
-
-USER_AGENT = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) FlashKanjiN1Generator/1.0"
+LESSON_CARD_COUNTS = [20] * 52 + [7]
+ROMAJI = {
+    "あ": "a", "い": "i", "う": "u", "え": "e", "お": "o",
+    "か": "ka", "き": "ki", "く": "ku", "け": "ke", "こ": "ko",
+    "さ": "sa", "し": "shi", "す": "su", "せ": "se", "そ": "so",
+    "た": "ta", "ち": "chi", "つ": "tsu", "て": "te", "と": "to",
+    "な": "na", "に": "ni", "ぬ": "nu", "ね": "ne", "の": "no",
+    "は": "ha", "ひ": "hi", "ふ": "fu", "へ": "he", "ほ": "ho",
+    "ま": "ma", "み": "mi", "む": "mu", "め": "me", "も": "mo",
+    "や": "ya", "ゆ": "yu", "よ": "yo",
+    "ら": "ra", "り": "ri", "る": "ru", "れ": "re", "ろ": "ro",
+    "わ": "wa", "を": "o", "ん": "n",
+    "が": "ga", "ぎ": "gi", "ぐ": "gu", "げ": "ge", "ご": "go",
+    "ざ": "za", "じ": "ji", "ず": "zu", "ぜ": "ze", "ぞ": "zo",
+    "だ": "da", "ぢ": "ji", "づ": "zu", "で": "de", "ど": "do",
+    "ば": "ba", "び": "bi", "ぶ": "bu", "べ": "be", "ぼ": "bo",
+    "ぱ": "pa", "ぴ": "pi", "ぷ": "pu", "ぺ": "pe", "ぽ": "po",
+    "きゃ": "kya", "きゅ": "kyu", "きょ": "kyo",
+    "しゃ": "sha", "しゅ": "shu", "しょ": "sho",
+    "ちゃ": "cha", "ちゅ": "chu", "ちょ": "cho",
+    "にゃ": "nya", "にゅ": "nyu", "にょ": "nyo",
+    "ひゃ": "hya", "ひゅ": "hyu", "ひょ": "hyo",
+    "みゃ": "mya", "みゅ": "myu", "みょ": "myo",
+    "りゃ": "rya", "りゅ": "ryu", "りょ": "ryo",
+    "ぎゃ": "gya", "ぎゅ": "gyu", "ぎょ": "gyo",
+    "じゃ": "ja", "じゅ": "ju", "じょ": "jo",
+    "びゃ": "bya", "びゅ": "byu", "びょ": "byo",
+    "ぴゃ": "pya", "ぴゅ": "pyu", "ぴょ": "pyo",
 }
 
+APP_CONTEXTS = ["официальных текстах", "новостях", "академических статьях", "деловой переписке", "юридических документах"]
 
-def load_json(path: Path):
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def load_json(path: Path, fallback=None):
+    if not path.exists():
+        return fallback
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def dump_json(path: Path, payload):
+def dump_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def repair_mojibake(value):
-    if not isinstance(value, str):
-        return value
-    if not any(marker in value for marker in ("Р", "С", "вЂ", "Ð", "Ñ")):
-        return value
-    try:
-        repaired = value.encode("cp1251").decode("utf-8")
-    except Exception:
-        return value
-    if repaired.count("�") > value.count("�"):
-        return value
-    return repaired
-
-
-def repair_structure(value):
-    if isinstance(value, dict):
-        return {key: repair_structure(item) for key, item in value.items()}
-    if isinstance(value, list):
-        return [repair_structure(item) for item in value]
-    return repair_mojibake(value)
+def fetch_bytes(url: str) -> bytes:
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=90) as response:
+        return response.read()
 
 
 def fetch_json(url: str):
-    request = urllib.request.Request(url, headers=USER_AGENT)
-    with urllib.request.urlopen(request, timeout=60) as response:
-        return json.load(response)
+    return json.loads(fetch_bytes(url).decode("utf-8"))
 
 
-def extract_js_map(script_text: str, const_name: str):
-    marker = f"const {const_name} = {{"
-    start = script_text.index(marker) + len(marker)
-    end = script_text.index("\n};", start)
-    block = script_text[start:end]
-    result = {}
-    for raw_line in block.splitlines():
-        line = raw_line.strip().rstrip(",")
-        if not line or line.startswith("//"):
+def clean_text(value: str) -> str:
+    text = str(value or "").replace("\x00", "").replace("\ufffd", "")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def looks_mojibake(value: str) -> bool:
+    text = str(value or "")
+    return bool(re.search(r"(?:Ð|Ñ|Рџ|Рќ|Рђ|РЅ|Рµ|Рё|Р°|Рѕ|Рє|Р»|Рґ|СЃ|С‚|СЊ|С‹|СЏ|СЂ|С‡|Сѓ|С†|С€|С‰|С…|СЋ|СЌ|вЂ)", text))
+
+
+def safe_localized(value, fallback=""):
+    if isinstance(value, dict):
+        ru = clean_text(value.get("ru") or value.get("en") or fallback)
+        en = clean_text(value.get("en") or value.get("ru") or fallback)
+    else:
+        ru = en = clean_text(value or fallback)
+    if looks_mojibake(ru):
+        ru = en
+    if looks_mojibake(en):
+        en = ru
+    return {"ru": ru, "en": en}
+
+
+def is_cjk(char: str) -> bool:
+    return len(char) == 1 and "\u4e00" <= char <= "\u9fff"
+
+
+def kata_to_hira(value: str) -> str:
+    output = []
+    for char in clean_text(value):
+        code = ord(char)
+        if 0x30A1 <= code <= 0x30F6:
+            output.append(chr(code - 0x60))
+        elif char not in {".", "-"}:
+            output.append(char)
+    return "".join(output)
+
+
+def split_readings(values) -> list[str]:
+    if not values:
+        return []
+    if isinstance(values, str):
+        values = re.split(r"[\s/、,]+", values)
+    result = []
+    for item in values:
+        reading = kata_to_hira(str(item)).replace(".", "").replace("-", "")
+        reading = re.sub(r"\s+", "", reading)
+        if reading and reading not in result:
+            result.append(reading)
+    return result
+
+
+def romanize_kana(value: str) -> str:
+    text = kata_to_hira(value)
+    output = []
+    i = 0
+    while i < len(text):
+        if text[i] == "っ":
+            next_pair = text[i + 1:i + 3]
+            next_one = text[i + 1:i + 2]
+            next_romaji = ROMAJI.get(next_pair) or ROMAJI.get(next_one, "")
+            if next_romaji:
+                output.append(next_romaji[0])
+            i += 1
             continue
+        pair = text[i:i + 2]
+        if pair in ROMAJI:
+            output.append(ROMAJI[pair])
+            i += 2
+            continue
+        if text[i] == "ー" and output:
+            output[-1] = output[-1] + output[-1][-1]
+        else:
+            output.append(ROMAJI.get(text[i], text[i]))
+        i += 1
+    return "".join(output)
+
+
+def audio_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", romanize_kana(value).lower()).strip("-")
+    return slug or "reading"
+
+
+def parse_meaning_map() -> dict[str, str]:
+    source = ROOT / "tools" / "generate-kanji-course.mjs"
+    if not source.exists():
+        return {}
+    text = source.read_text(encoding="utf-8")
+    marker = "const MEANING_RU = {"
+    if marker not in text:
+        return {}
+    block = text.split(marker, 1)[1].split("\n};", 1)[0]
+    result = {}
+    for raw in block.splitlines():
+        line = raw.strip().rstrip(",")
         match = re.match(r'(?P<key>.+?):\s*"(?P<value>(?:[^"\\]|\\.)*)"$', line)
         if not match:
             continue
-        key = match.group("key").strip()
-        if key.startswith('"') and key.endswith('"'):
-            key = key[1:-1]
+        key = match.group("key").strip().strip('"').lower()
         value = bytes(match.group("value"), "utf-8").decode("unicode_escape")
         result[key] = value
     return result
 
 
-def safe_float(value, default=None):
-    try:
-        return float(value)
-    except Exception:
-        return default
+def clean_gloss(value: str) -> str:
+    text = clean_text(value)
+    text = re.sub(r"\{[^}]*\}", "", text)
+    text = re.sub(r"^\d+\)\s*", "", text)
+    text = re.sub(r"\s*;\s*$", "", text)
+    return text.strip()
 
 
-def safe_int(value, default=None):
-    try:
-        if value is None or value == "":
-            return default
-        return int(value)
-    except Exception:
-        return default
-
-
-def remove_control_chars(text: str):
-    return "".join(ch for ch in text if ch >= " " or ch in ("\n", "\t")).replace("\x00", "")
-
-
-def normalize_spaces(text: str):
-    return re.sub(r"\s+", " ", text or "").strip()
-
-
-def strip_kanji_row_start(text: str):
-    text = remove_control_chars(text or "").strip()
-    return text
-
-
-def split_readings(text: str):
-    text = remove_control_chars(text or "")
-    if not text:
-        return []
-    parts = []
-    for chunk in re.split(r"[\s/]+", text):
-        chunk = chunk.strip().strip("・")
-        if chunk and chunk != "-":
-            parts.append(chunk)
-    return parts
-
-
-def kata_to_hira(value: str):
-    chars = []
-    for char in value:
-        code = ord(char)
-        if 0x30A1 <= code <= 0x30F6:
-            chars.append(chr(code - 0x60))
-        else:
-            chars.append(char)
-    return "".join(chars)
-
-
-def clean_reading(value: str):
-    value = kata_to_hira(remove_control_chars(value or ""))
-    value = value.replace("・", "").replace("･", "").replace(".", "").replace("-", "")
-    value = re.sub(r"\s+", "", value)
-    return value.split(",")[0].strip()
-
-
-def build_romaji_map(script_text: str):
-    mapping = {}
-    marker = "const ROMAJI = {"
-    start = script_text.index(marker) + len(marker)
-    end = script_text.index("\n};", start)
-    block = script_text[start:end]
-    for raw_line in block.splitlines():
-        line = raw_line.strip().rstrip(",")
-        if not line or ":" not in line:
-            continue
-        key_part, value_part = line.split(":", 1)
-        key = key_part.strip()
-        value = value_part.strip()
-        if value.startswith('"') and value.endswith('"'):
-            value = value[1:-1]
-        mapping[key] = value
-    return mapping
-
-
-def romanize_kana(value: str, romaji_map: dict[str, str]):
-    text = clean_reading(value)
-    if not text:
-        return ""
-    output = []
-    i = 0
-    while i < len(text):
-        char = text[i]
-        nxt = text[i + 1] if i + 1 < len(text) else ""
-        pair = char + nxt
-        if pair in romaji_map:
-            output.append(romaji_map[pair])
-            i += 2
-            continue
-        if char == "っ":
-            if nxt:
-                next_pair = nxt + (text[i + 2] if i + 2 < len(text) else "")
-                next_romaji = romaji_map.get(next_pair) or romaji_map.get(nxt, "")
-                output.append(next_romaji[:1])
-            i += 1
-            continue
-        if char == "ー":
-            if output:
-                output[-1] = output[-1] + output[-1][-1]
-            i += 1
-            continue
-        output.append(romaji_map.get(char, char))
-        i += 1
-    return "".join(output)
-
-
-def romanize_reading(value: str, romaji_map: dict[str, str]):
-    return " / ".join(
-        romanize_kana(part.strip(), romaji_map)
-        for part in str(value or "").split("/")
-        if part.strip()
-    )
-
-
-def clean_gloss(value: str):
-    value = normalize_spaces(remove_control_chars(value or ""))
-    value = re.sub(r"^\d+\)\s*", "", value)
-    value = re.sub(r"\{[^}]*\}", "", value)
-    value = re.sub(r"^\s*[:;,\-]+", "", value)
-    value = re.sub(r"\s*;\s*$", "", value)
-    return value.strip()[:140]
-
-
-def build_meaning_map(script_text: str):
-    raw = extract_js_map(script_text, "MEANING_RU")
-    return {key.lower(): value for key, value in raw.items()}
-
-
-def translate_glosses(glosses: list[str], meaning_map: dict[str, str]):
+def translate_meaning(glosses: list[str], meaning_map: dict[str, str]) -> str:
     translated = []
     for gloss in glosses:
-        gloss_clean = clean_gloss(gloss)
-        if not gloss_clean:
+        clean = clean_gloss(gloss)
+        if not clean:
             continue
-        translated.append(meaning_map.get(gloss_clean.lower(), gloss_clean))
-    return translated
+        mapped = meaning_map.get(clean.lower(), clean)
+        translated.append(clean if looks_mojibake(mapped) else mapped)
+        if len(translated) >= 4:
+            break
+    return ", ".join(translated)
 
 
-def load_current_structure(path: Path):
-    if not path.exists():
-        return None
-    return repair_structure(load_json(path))
-
-
-def build_kanjidic_map():
-    with gzip.open(KANJIDIC_GZ_PATH, "rb") as stream:
-        root = ET.parse(stream).getroot()
+def build_kanjidic_map() -> dict[str, dict]:
+    gz_bytes = fetch_bytes(KANJIDIC_URL)
+    root = ET.fromstring(gzip.decompress(gz_bytes))
     result = {}
     for character in root.findall("character"):
-        literal = character.findtext("literal")
+        literal = character.findtext("literal") or ""
         if not literal:
             continue
+        misc = character.find("misc")
+        stroke_count = 0
+        if misc is not None:
+            try:
+                stroke_count = int(misc.findtext("stroke_count") or "0")
+            except ValueError:
+                stroke_count = 0
+        on, kun, nanori, meanings = [], [], [], []
         rm = character.find("reading_meaning")
-        readings_on = []
-        readings_kun = []
-        nanori = []
-        meanings = []
         if rm is not None:
             for group in rm.findall("rmgroup"):
                 for reading in group.findall("reading"):
+                    value = reading.text or ""
                     kind = reading.attrib.get("r_type")
-                    text = reading.text or ""
                     if kind == "ja_on":
-                        readings_on.append(text)
+                        on.append(value)
                     elif kind == "ja_kun":
-                        readings_kun.append(text)
+                        kun.append(value)
                 for meaning in group.findall("meaning"):
+                    if meaning.attrib.get("m_lang"):
+                        continue
                     if meaning.text:
                         meanings.append(meaning.text)
-            for item in rm.findall("nanori"):
-                if item.text:
-                    nanori.append(item.text)
-        misc = character.find("misc")
+            nanori = [item.text for item in rm.findall("nanori") if item.text]
         result[literal] = {
-            "literal": literal,
-            "strokeCount": safe_int(misc.findtext("stroke_count") if misc is not None else None, 0),
-            "grade": safe_int(misc.findtext("grade") if misc is not None else None, None),
-            "freq": safe_int(misc.findtext("freq") if misc is not None else None, None),
-            "jlpt": safe_int(misc.findtext("jlpt") if misc is not None else None, None),
-            "readingsOn": readings_on,
-            "readingsKun": readings_kun,
-            "nanori": nanori,
-            "meanings": meanings,
+            "strokes": stroke_count,
+            "onyomi": split_readings(on),
+            "kunyomi": split_readings(kun),
+            "nanori": split_readings(nanori),
+            "meanings": [clean_gloss(item) for item in meanings if clean_gloss(item)],
         }
     return result
 
 
-def build_anchor_map():
+def build_anchor_n1() -> list[dict]:
     data = fetch_json(REMOTE_JLPT_KANJI_URL)
-    by_kanji = {}
-    n1_chars = []
+    seen = set()
+    result = []
     for item in data:
-        kanji = item.get("kanji")
-        if not kanji:
+        kanji = str(item.get("kanji") or "")
+        if not is_cjk(kanji) or kanji in seen:
             continue
-        by_kanji[kanji] = item
-        if str(item.get("jlpt", "")).upper() == "N1":
-            n1_chars.append(item)
-    return by_kanji, n1_chars
+        if str(item.get("jlpt", "")).upper() != "N1":
+            continue
+        seen.add(kanji)
+        result.append(item)
+    return result
 
 
-def build_dictionary_index():
-    entries = []
-    for url in REMOTE_DICTIONARY_URLS:
-        entries.extend(fetch_json(url))
-    return entries
-
-
-def index_examples(entries, selected_chars: set[str]):
+def load_dictionary_examples(selected: set[str]) -> dict[str, list[dict]]:
     buckets = defaultdict(list)
-    for entry in entries:
-        word = str(entry.get("kanji") or "")
-        if not word:
-            continue
-        chars = sorted(set(ch for ch in word if ch in selected_chars))
-        if not chars:
-            continue
-        if len(word) == 1 and word in selected_chars:
-            # Keep single-kanji entries for fallback, but they do not rank well.
-            pass
-        for char in chars:
-            if len(word) == 1 and word == char:
+    for url in REMOTE_DICTIONARY_URLS:
+        for entry in fetch_json(url):
+            word = clean_text(entry.get("kanji") or "")
+            reading = clean_text(entry.get("reading") or "")
+            if not word or not reading:
                 continue
-            if len(buckets[char]) < 120:
-                buckets[char].append(entry)
-    for char, bucket in buckets.items():
-        bucket.sort(key=score_example, reverse=True)
+            chars = sorted({char for char in word if char in selected})
+            if not chars:
+                continue
+            if len(word) == 1 and word in selected:
+                continue
+            for char in chars:
+                if len(buckets[char]) < 80:
+                    buckets[char].append(entry)
+    for char, entries in buckets.items():
+        entries.sort(key=score_example, reverse=True)
     return buckets
 
 
-def score_example(entry):
-    kanji = str(entry.get("kanji") or "")
-    gloss_ru = " ".join(entry.get("glossary_ru") or [])
-    gloss_en = " ".join(entry.get("glossary_en") or [])
-    text = f"{kanji} {gloss_ru} {gloss_en}".strip()
-    has_russian = 100000000 if entry.get("glossary_ru") else 0
-    short_bonus = max(0, 8 - len(kanji)) * 5000000
-    no_katakana = -8000000 if re.search(r"[\u30a0-\u30ff]", kanji) else 2000000
-    no_rare = -6000000 if re.search(r"(кн\.|уст\.|прост\.|редк\.|связ\.|см\.|\{|\(\()", text, re.I) else 1500000
-    starts_with_kanji = 1000000 if re.match(r"^[\u4e00-\u9fff]", kanji) else 0
-    return has_russian + short_bonus + no_katakana + no_rare + starts_with_kanji
+def score_example(entry: dict) -> tuple:
+    word = clean_text(entry.get("kanji") or "")
+    ru = entry.get("glossary_ru") or []
+    no_katakana = not bool(re.search(r"[\u30a0-\u30ff]", word))
+    return (1 if ru else 0, 1 if no_katakana else 0, -len(word), -int(entry.get("sequence") or 0))
 
 
-def page_lines(page):
-    return [normalize_spaces(remove_control_chars(line)) for line in page.get_text("text").splitlines()]
+def example_from_entry(entry: dict, fallback_meaning: str) -> dict:
+    ru_glosses = [clean_gloss(item) for item in (entry.get("glossary_ru") or [])]
+    en_glosses = [clean_gloss(item) for item in (entry.get("glossary_en") or []) if not re.search(r"[ぁ-んァ-ン一-龯]", str(item))]
+    translation_ru = next((item for item in ru_glosses if item and not looks_mojibake(item)), "")
+    translation_en = next((item for item in en_glosses if item), "")
+    return {
+        "word": clean_text(entry.get("kanji") or ""),
+        "reading": kata_to_hira(entry.get("reading") or ""),
+        "romaji": romanize_kana(entry.get("reading") or ""),
+        "translation": translation_ru or translation_en or fallback_meaning,
+        "translation_ru": translation_ru or translation_en or fallback_meaning,
+        "translation_en": translation_en or translation_ru or fallback_meaning,
+    }
 
 
-def is_row_start(raw_line: str, cleaned_line: str):
-    if not raw_line:
-        return False
-    if raw_line.startswith("\x00"):
-        return True
-    if cleaned_line in {"Кандзи", "ON", "KUN", "Meaning / подсказка", "Примеры предложений", "日本語", "Перевод"}:
-        return False
-    if len(cleaned_line) <= 3 and any("\u4e00" <= ch <= "\u9fff" for ch in cleaned_line):
-        return True
-    return False
+def existing_n1_cards_by_position() -> list[dict]:
+    result = []
+    for path in sorted(LESSONS_GENERATED_DIR.glob("bulk-n1-*.json")):
+        payload = load_json(path, {})
+        for item in payload.get("items") or []:
+            if isinstance(item, dict):
+                result.append(item)
+    return result
 
 
-def parse_page(pdf_lines, page_number, kanjidic_map, n1_candidates):
-    lesson_title = ""
-    lesson_goal = ""
-    lesson_index = page_number - 47
-    row_section_start = None
-    sentences_start = None
-    sentences_end = None
-    for index, line in enumerate(pdf_lines):
-        if line.startswith("Урок "):
-            lesson_title = line
-        elif line.startswith("Задача урока:"):
-            lesson_goal = line
-        elif line == "Meaning / подсказка":
-            row_section_start = index + 1
-        elif line == "Примеры предложений":
-            sentences_start = index + 1
-        elif line.startswith("Упражнения:"):
-            sentences_end = index
-            break
-    if row_section_start is None:
-        raise ValueError(f"Could not find row section on page {page_number}")
-    if sentences_start is None:
-        sentences_start = len(pdf_lines)
-    if sentences_end is None:
-        sentences_end = len(pdf_lines)
-
-    row_boundaries = []
-    for i in range(row_section_start, sentences_start):
-        if is_row_start(pdf_lines[i], pdf_lines[i]):
-            row_boundaries.append(i)
-    rows = []
-    taken = set()
-    for idx, start in enumerate(row_boundaries):
-        end = row_boundaries[idx + 1] if idx + 1 < len(row_boundaries) else sentences_start
-        block = [line for line in pdf_lines[start:end] if line]
-        if not block:
+def build_unique_kanji_sequence(existing_cards: list[dict], anchor_n1: list[dict]) -> list[str]:
+    used = set()
+    slots: list[str | None] = []
+    for item in existing_cards[:KANJI_COUNT]:
+        kanji = clean_text(item.get("kanji") or "")
+        if is_cjk(kanji) and kanji not in used:
+            slots.append(kanji)
+            used.add(kanji)
+        else:
+            slots.append(None)
+    while len(slots) < KANJI_COUNT:
+        slots.append(None)
+    fillers = [clean_text(item.get("kanji") or "") for item in anchor_n1 if is_cjk(clean_text(item.get("kanji") or "")) and clean_text(item.get("kanji") or "") not in used]
+    filler_index = 0
+    for index, value in enumerate(slots):
+        if value:
             continue
-        row = parse_row_block(block, kanjidic_map, n1_candidates, taken)
-        if row:
-            rows.append(row)
-            taken.add(row["kanji"])
-    if not rows:
-        raise ValueError(f"No rows parsed for page {page_number}")
-    sentences = build_lesson_sentences(rows)
-    lesson_match = re.search(r"Урок\s+(\d+)\.\s+N1 кандзи\s+(\d+)-(\d+)", lesson_title)
-    if not lesson_match:
-        raise ValueError(f"Could not parse lesson title on page {page_number}: {lesson_title}")
-    lesson_no = int(lesson_match.group(1))
-    start_index = int(lesson_match.group(2))
-    end_index = int(lesson_match.group(3))
-    return {
-        "lessonNumber": lesson_no,
-        "startIndex": start_index,
-        "endIndex": end_index,
-        "title": lesson_title,
-        "goal": lesson_goal.replace("Задача урока:", "").strip(),
-        "rows": rows,
-        "sentences": sentences,
-        "pageNumber": page_number,
-        "lessonOrder": lesson_index,
-    }
+        if filler_index >= len(fillers):
+            raise SystemExit("Not enough unique N1 kanji to fill the textbook sequence.")
+        slots[index] = fillers[filler_index]
+        used.add(fillers[filler_index])
+        filler_index += 1
+    sequence = [item for item in slots if item]
+    if len(sequence) != KANJI_COUNT or len(set(sequence)) != KANJI_COUNT:
+        raise SystemExit(f"N1 sequence must contain {KANJI_COUNT} unique kanji; got {len(sequence)} / {len(set(sequence))}.")
+    return sequence
 
 
-def parse_row_block(block, kanjidic_map, n1_candidates, taken):
-    start_line = block[0]
-    start_clean = strip_kanji_row_start(start_line)
-    on_line = block[1] if len(block) > 1 else ""
-    kun_line = block[2] if len(block) > 2 else ""
-    meaning_lines = block[3:] if len(block) > 3 else []
-
-    visible_kanji = "".join(ch for ch in start_clean if "\u4e00" <= ch <= "\u9fff")
-    kanji = visible_kanji[:1]
-    if not kanji:
-        kanji = match_placeholder_row(on_line, kun_line, meaning_lines, kanjidic_map, n1_candidates, taken)
-    if not kanji:
-        return None
-
-    return {
-        "kanji": kanji,
-        "on": on_line,
-        "kun": kun_line,
-        "meaning": " ".join(meaning_lines),
-    }
-
-
-def synthesize_row_from_candidate(entry, kanjidic_map):
-    kanji = str(entry.get("kanji") or "").strip()
-    dic = kanjidic_map.get(kanji, {})
-    on = " ".join((dic.get("readingsOn") or [])[:3])
-    kun = " ".join((dic.get("readingsKun") or [])[:3])
-    meanings = dic.get("meanings") or []
-    meaning = ", ".join(meanings[:4]) or str(entry.get("description") or "")
-    return {
-        "kanji": kanji,
-        "on": on,
-        "kun": kun,
-        "meaning": meaning,
-    }
-
-
-def match_placeholder_row(on_line, kun_line, meaning_lines, kanjidic_map, n1_candidates, taken):
-    query_on = [clean_reading(part) for part in split_readings(on_line)]
-    query_kun = [clean_reading(part) for part in split_readings(kun_line)]
-    query_meaning = normalize_spaces(" ".join(meaning_lines)).lower()
-    best = None
-    best_score = -10**9
-    for entry in n1_candidates:
-        kanji = entry["kanji"]
-        if kanji in taken:
-            continue
-        dic = kanjidic_map.get(kanji)
-        if not dic:
-            continue
-        score = 0
-        readings_on = [clean_reading(item) for item in dic.get("readingsOn") or []]
-        readings_kun = [clean_reading(item) for item in dic.get("readingsKun") or []]
-        candidates = readings_on + readings_kun + [clean_reading(item) for item in dic.get("nanori") or []]
-        for token in query_on + query_kun:
-            if not token:
-                continue
-            if token in candidates:
-                score += 60
-            elif any(cand.startswith(token) or token.startswith(cand) for cand in candidates):
-                score += 35
-        meaning_tokens = {token for token in re.findall(r"[a-zA-Z]+", query_meaning)}
-        meaning_pool = {token for token in re.findall(r"[a-zA-Z]+", " ".join(dic.get("meanings") or []).lower())}
-        overlap = len(meaning_tokens & meaning_pool)
-        score += overlap * 30
-        if dic.get("strokeCount"):
-            score -= abs(dic["strokeCount"] - max(1, len(query_on) + len(query_kun))) * 2
-        if score > best_score:
-            best_score = score
-            best = kanji
-    return best
-
-
-def build_lesson_sentences(rows):
-    kanji = [row["kanji"] for row in rows[:3]]
-    while len(kanji) < 3:
-        kanji.append(rows[0]["kanji"])
-    return [
-        {
-            "jp": f"この資料では「{kanji[0]}」を含む語彙の使い方を確認します。",
-            "reading": "",
-            "ru": f"В этом материале проверяем употребление слов со знаком {kanji[0]}.",
-            "en": f"We check how words with {kanji[0]} are used in context.",
-        },
-        {
-            "jp": f"著者の主張を理解するには、「{kanji[1]}」の周辺語を文脈で読む必要があります。",
-            "reading": "",
-            "ru": f"Чтобы понять позицию автора, слова со знаком {kanji[1]} нужно читать в контексте.",
-            "en": f"To understand the author's point, read the surrounding words with {kanji[1]} in context.",
-        },
-        {
-            "jp": f"「{kanji[2]}」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。",
-            "reading": "",
-            "ru": f"Знак {kanji[2]} лучше закрепляется не отдельно, а вместе со сложными словами.",
-            "en": f"{kanji[2]} sticks better when you learn it together with compounds, not alone.",
-        },
-        {
-            "jp": "根拠を確認した上で、自分の意見を短くまとめてください。",
-            "reading": "",
-            "ru": "Проверь основание и кратко сформулируй свое мнение.",
-            "en": "Check the evidence first and then summarize your own opinion briefly.",
-        },
-        {
-            "jp": "Flash Kanjiでは、読み・意味・文脈を一つのカードとして扱います。",
-            "reading": "",
-            "ru": "В Flash Kanji чтение, значение и контекст считаются одной карточкой.",
-            "en": "In Flash Kanji, reading, meaning and context are treated as one card.",
-        },
-    ]
-
-
-def normalize_example_item(example, meaning_fallback, romaji_map, reading_fallback=""):
-    word = str(example.get("kanji") or "")
-    reading = clean_reading(example.get("reading") or reading_fallback or "")
-    if not reading:
-        reading = clean_reading(reading_fallback or word)
-    romaji = romanize_reading(reading, romaji_map)
-    translation_ru = None
-    translation_en = None
-    glossary_ru = example.get("glossary_ru") or []
-    glossary_en = example.get("glossary_en") or []
-    if glossary_ru:
-        translation_ru = clean_gloss(glossary_ru[0])
-    if glossary_en:
-        translation_en = clean_gloss(glossary_en[0])
-    if not translation_ru:
-        translation_ru = meaning_fallback
-    if not translation_en:
-        translation_en = meaning_fallback
-    return {
-        "word": word,
-        "reading": reading,
-        "romaji": romaji,
-        "translation_ru": translation_ru,
-        "translation_en": translation_en,
-    }
-
-
-def fallback_example(card_kanji, reading, meaning_text, romaji_map):
-    reading_clean = clean_reading(reading)
-    return {
-        "word": f"{card_kanji}語",
-        "reading": reading_clean,
-        "romaji": romanize_reading(reading_clean, romaji_map),
-        "translation_ru": meaning_text or f"слово со знаком {card_kanji}",
-        "translation_en": meaning_text or f"a word with {card_kanji}",
-    }
-
-
-def normalize_examples(examples, reading_fallback, romaji_map):
-    normalized = []
-    for example in examples or []:
-        item = copy.deepcopy(example)
-        reading = clean_reading(item.get("reading") or reading_fallback or item.get("word") or "")
-        item["reading"] = reading
-        item["romaji"] = romanize_reading(reading, romaji_map)
-        normalized.append(item)
-    return normalized
-
-
-def build_card_from_row(
-    row,
-    lesson_meta,
-    card_id,
-    base_card,
-    anchor_by_kanji,
-    kanjidic_map,
-    examples_by_kanji,
-    meaning_map,
-    romaji_map,
-):
-    kanji = row["kanji"]
-    dic = kanjidic_map.get(kanji, {})
-    anchor = anchor_by_kanji.get(kanji, {})
-    readings_on = split_readings(row["on"])
-    readings_kun = split_readings(row["kun"])
-
-    if base_card:
-        card = copy.deepcopy(base_card)
-    else:
-        card = {}
-
-    meaning_en = dic.get("meanings", [])[:4]
-    meaning_ru = translate_glosses(meaning_en, meaning_map)
-    meaning_join_ru = ", ".join(meaning_ru or meaning_en[:4] or [row["meaning"]]) or row["meaning"]
-    meaning_join_en = ", ".join(meaning_en or [row["meaning"]]) or row["meaning"]
-
-    primary_reading = ""
-    if readings_kun:
-        primary_reading = clean_reading(readings_kun[0])
-    elif readings_on:
-        primary_reading = clean_reading(readings_on[0])
-    elif dic.get("readingsKun"):
-        primary_reading = clean_reading(dic["readingsKun"][0])
-    elif dic.get("readingsOn"):
-        primary_reading = clean_reading(dic["readingsOn"][0])
-
-    selected_examples = []
-    for example in examples_by_kanji.get(kanji, [])[:2]:
-        selected_examples.append(normalize_example_item(example, meaning_join_ru, romaji_map, primary_reading))
-    if not selected_examples:
-        selected_examples.append(fallback_example(kanji, primary_reading, meaning_join_ru, romaji_map))
-    while len(selected_examples) < 2:
-        selected_examples.append(fallback_example(kanji, primary_reading, meaning_join_ru, romaji_map))
-
-    audio_path = card.get("audio") or expected_audio_path(card_id, lesson_meta["id"], "N1", primary_reading)
-
-    examples_value = normalize_examples(card.get("examples") or selected_examples, primary_reading, romaji_map)
-
-    card.update(
-        {
-            "id": str(card.get("id") or card_id),
-            "courseCardId": str(card.get("courseCardId") or card_id),
-            "kanji": kanji,
-            "meaning": {
-                "ru": repair_mojibake(card.get("meaning", {}).get("ru")) if card.get("meaning") else meaning_join_ru,
-                "en": repair_mojibake(card.get("meaning", {}).get("en")) if card.get("meaning") else meaning_join_en,
-            },
-            "readings": {
-                "onyomi": card.get("readings", {}).get("onyomi") if card.get("readings") else readings_on,
-                "kunyomi": card.get("readings", {}).get("kunyomi") if card.get("readings") else readings_kun,
-                "hiragana": card.get("readings", {}).get("hiragana") if card.get("readings") else ([primary_reading] if primary_reading else []),
-                "romaji": card.get("readings", {}).get("romaji") if card.get("readings") else ([romanize_reading(primary_reading, romaji_map)] if primary_reading else []),
-                "nanori": card.get("readings", {}).get("nanori") if card.get("readings") else [clean_reading(n) for n in dic.get("nanori") or []],
-            },
-            "jlpt": "N1",
-            "lessonId": lesson_meta["id"],
-            "lessonTitle": lesson_meta["title_ru"],
-            "lessonTitleEn": lesson_meta["title_en"],
-            "strokes": safe_int(card.get("strokes"), None) or dic.get("strokeCount") or anchor.get("strokes") or 0,
-            "strokeOrder": card.get("strokeOrder") or generic_stroke_order(safe_int(card.get("strokes"), None) or dic.get("strokeCount") or anchor.get("strokes") or 0),
-            "examples": examples_value,
-            "apps": card.get("apps") or APP_POOLS["N1"],
-            "interfaceUse": card.get("interfaceUse") or f"Встречается в словах уровня N1: интерфейсы, тексты, уведомления и реальные японские приложения.",
-            "audio": audio_path or None,
-            "meta": {
-                **(card.get("meta") or {}),
-                "radical": card.get("meta", {}).get("radical") or f"部首 {anchor.get('radical_number') or ''}".strip(),
-                "radicalMeaning": card.get("meta", {}).get("radicalMeaning")
-                or {
-                    "ru": f"радикал {anchor.get('radical_number') or ''}".strip(),
-                    "en": f"radical {anchor.get('radical_number') or ''}".strip(),
-                },
-                "grade": card.get("meta", {}).get("grade", dic.get("grade")),
-                "freq": card.get("meta", {}).get("freq", anchor.get("frequency")),
-                "unicode": card.get("meta", {}).get("unicode") or f"U+{ord(kanji):04X}",
-                "variants": card.get("meta", {}).get("variants") or [],
-                "favoriteSeed": card.get("meta", {}).get("favoriteSeed", False),
-            },
-            "sourcePage": lesson_meta["page_number"],
-        }
-    )
-    return card
-
-
-def generic_stroke_order(strokes):
-    strokes = safe_int(strokes, 0) or 0
-    return [
-        f"Всего черт: {strokes}. Начинай с верхних и левых элементов.",
-        "Двигайся сверху вниз и слева направо, сохраняя пропорции.",
-        "Пересекающие и закрывающие черты обычно выполняй ближе к концу.",
-    ]
-
-
-def expected_audio_path(card_id, lesson_id, jlpt, reading):
-    slug = audio_slug(reading or "")
-    if not slug:
-        return ""
-    return f"./audio/kanji/{jlpt.lower()}/{lesson_id}/{card_id}-{slug}.mp3"
-
-
-def audio_slug(value):
-    text = clean_reading(value or "").lower()
-    text = re.sub(r"[\u0300-\u036f]", "", text)
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    return text.strip("-")
-
-
-def build_meta_entries(cards, existing_meta, existing_translations, existing_hints):
-    meta_items = dict(existing_meta.get("items", {})) if existing_meta else {}
-    translation_items = dict(existing_translations.get("items", {})) if existing_translations else {}
-    hint_items = dict(existing_hints.get("items", {})) if existing_hints else {}
-    for card in cards:
-        key = str(card["id"])
-        examples = card.get("examples") or []
-        hint_words = [example.get("word") for example in examples if example.get("word")]
-        first_word = hint_words[0] if hint_words else card["kanji"]
-        second_word = hint_words[1] if len(hint_words) > 1 else first_word
-        meta_items[key] = {
-            "radical": card.get("meta", {}).get("radical") or "",
-            "radicalMeaning": card.get("meta", {}).get("radicalMeaning") or {"ru": "", "en": ""},
-            "favoriteSeed": False,
-            "audio": {
-                "pronunciation": f"audio/kanji/{key}-pronunciation.mp3",
-                "eva": f"audio/eva/{key}-explanation.mp3",
-                "leya": f"audio/leya/{key}-hint.mp3",
-            },
-        }
-        translation_items[key] = {
-            "meaning_en": card.get("meaning", {}).get("en") or card.get("meaning", {}).get("ru") or "",
-            "interface_use_en": card.get("interfaceUse") or "",
-        }
-        hint_items[key] = {
-            "hint": {
-                "ru": f"Подсказка: ищи {card['kanji']} в словах {first_word} и {second_word}.",
-                "en": f"Hint: look for {card['kanji']} in {first_word} and {second_word}.",
-            },
-            "mnemonic": {
-                "ru": f"{card['kanji']}: свяжи образ со значением \"{card.get('meaning', {}).get('ru') or card.get('meaning', {}).get('en') or ''}\".",
-                "en": f"{card['kanji']}: connect the shape with \"{card.get('meaning', {}).get('en') or card.get('meaning', {}).get('ru') or ''}\".",
-            },
-        }
-    return meta_items, translation_items, hint_items
-
-
-def build_manifest_entries(lesson_cards, lesson_meta, lesson_idx):
-    lesson_id = lesson_meta["id"]
-    title_ru = lesson_meta["title_ru"]
-    title_en = lesson_meta["title_en"]
-    return {
-        "id": lesson_id,
-        "file": f"data/lessons/generated/{lesson_id}.json",
-        "title": title_ru,
-        "title_en": title_en,
-        "jlpt": "N1",
-        "order": 56 + lesson_idx,
-        "unlockLevel": 28 + lesson_idx // 2,
-        "mascot": "eva" if lesson_idx % 2 == 0 else "leya",
-        "summary": f"{len(lesson_cards)} кандзи уровня N1 для SRS-практики, словаря и повторений.",
-        "summary_en": f"{len(lesson_cards)} N1 kanji for practice, dictionary search and reviews.",
-        "cardCount": len(lesson_cards),
-        "kanjiCount": len(lesson_cards),
-    }
-
-
-def build_lesson_payload(lesson_meta, lesson_cards):
-    return {
-        "lesson": {
-            "id": lesson_meta["id"],
-            "title": lesson_meta["title_ru"],
-            "title_en": lesson_meta["title_en"],
-            "jlpt": "N1",
-            "order": lesson_meta["order"],
-            "goal": {
-                "ru": lesson_meta["goal_ru"],
-                "en": lesson_meta["goal_en"],
-            },
-            "theme": {
-                "ru": lesson_meta["theme_ru"],
-                "en": lesson_meta["theme_en"],
-            },
-        },
-        "items": lesson_cards,
-    }
-
-
-def build_lesson_meta(page_number, lesson_number, start_index, end_index, pdf_title, pdf_goal):
-    lesson_id = f"bulk-n1-{lesson_number:02d}"
-    title_ru = pdf_title
-    title_en = f"Lesson {lesson_number}. N1 kanji {start_index}-{end_index}"
-    return {
-        "id": lesson_id,
-        "title_ru": title_ru,
-        "title_en": title_en,
-        "goal_ru": pdf_goal,
-        "goal_en": "Learn the lesson kanji, readings, meanings and context through active recall.",
-        "theme_ru": pdf_title,
-        "theme_en": title_en,
-        "page_number": page_number,
-        "order": 55 + lesson_number,
-    }
-
-
-def main():
-    script_text = (ROOT / "tools" / "generate-kanji-course.mjs").read_text(encoding="utf-8")
-    meaning_map = build_meaning_map(script_text)
-    romaji_map = build_romaji_map(script_text)
-
-    current_n1 = load_current_structure(CURRENT_N1_KANJI_PATH) or {"items": []}
-    current_n1_meta = load_current_structure(CURRENT_N1_META_PATH) or {}
-    current_n1_lessons = load_current_structure(CURRENT_N1_LESSONS_PATH) or {"items": []}
-    current_exercises = load_current_structure(CURRENT_N1_EXERCISES_PATH)
-    current_reading = load_current_structure(CURRENT_N1_READING_PATH)
-    current_listening = load_current_structure(CURRENT_N1_LISTENING_PATH)
-    current_tests = load_current_structure(CURRENT_N1_TESTS_PATH)
-    current_final_test = load_current_structure(CURRENT_N1_FINAL_TEST_PATH)
-    existing_manifest = load_current_structure(LESSONS_MANIFEST_PATH)
-    existing_translations = load_current_structure(LESSON_TRANSLATIONS_PATH) or {"items": {}}
-    existing_jlpt_index = load_current_structure(JLPT_INDEX_PATH)
-    existing_textbooks_index = load_current_structure(TEXTBOOKS_INDEX_PATH)
-    existing_rewards = load_current_structure(REWARDS_PATH)
-    existing_kanji_meta = load_current_structure(KANJI_META_PATH) or {"items": {}}
-    existing_kanji_translations = load_current_structure(KANJI_TRANSLATIONS_PATH) or {"items": {}}
-    existing_kanji_hints = load_current_structure(KANJI_HINTS_PATH) or {"items": {}}
-    existing_page_sources = load_current_structure(KANJI_PAGE_SOURCES_PATH) or {"items": {}}
-
-    anchor_by_kanji, anchor_n1 = build_anchor_map()
-    kanjidic_map = build_kanjidic_map()
-    dictionary_entries = build_dictionary_index()
-
+def pdf_lesson_meta() -> list[dict]:
     if not PDF_PATH.exists():
-        raise SystemExit(f"Missing PDF: {PDF_PATH}")
-
+        raise SystemExit(f"Missing N1 PDF: {PDF_PATH}")
     doc = fitz.open(PDF_PATH)
-    pdf_pages = list(range(47, 100))  # 0-based pages 48..100 inclusive
-    if len(pdf_pages) != LESSON_COUNT:
-        raise SystemExit(f"Expected {LESSON_COUNT} lessons but page range produced {len(pdf_pages)}")
+    result = []
+    for lesson_number in range(1, LESSON_COUNT + 1):
+        page_number = 47 + lesson_number
+        text = doc[page_number - 1].get_text("text")
+        lines = [clean_text(line) for line in text.splitlines() if clean_text(line)]
+        title = next((line for line in lines if line.startswith("Урок ")), f"Урок {lesson_number}. N1 кандзи")
+        goal = ""
+        for index, line in enumerate(lines):
+            if line.startswith("Задача урока:"):
+                goal = line.replace("Задача урока:", "").strip()
+                next_index = index + 1
+                while next_index < len(lines) and not lines[next_index].startswith("Кандзи"):
+                    goal = f"{goal} {lines[next_index]}"
+                    next_index += 1
+                break
+        if not goal:
+            goal = "узнать знаки, прочитать опорные чтения, связать значение с контекстом и сделать активное вспоминание."
+        result.append({
+            "lessonNumber": lesson_number,
+            "pageNumber": page_number,
+            "titleRu": title,
+            "titleEn": f"N1 Lesson {lesson_number}",
+            "goalRu": goal,
+            "goalEn": "Recognize the kanji, read support readings, connect meaning with context, and practice active recall.",
+        })
+    return result
 
-    selected_chars = {row["kanji"] for row in anchor_n1}
-    selected_chars |= {card.get("kanji") for card in current_n1.get("items", []) if card.get("kanji")}
-    examples_by_kanji = index_examples(dictionary_entries, selected_chars)
 
-    current_cards_by_key = {}
-    current_cards_by_kanji = {}
-    for card in current_n1.get("items", []):
-        key = (str(card.get("lessonId") or ""), str(card.get("kanji") or ""))
-        current_cards_by_key[key] = card
-        if card.get("kanji"):
-            current_cards_by_kanji[str(card["kanji"])] = card
+def generated_card_id(index: int, old_card: dict | None, kanji: str) -> str:
+    if old_card and clean_text(old_card.get("kanji") or "") == kanji and old_card.get("id"):
+        return str(old_card["id"])
+    return f"n1-{index + 1:04d}"
 
-    next_card_id = max((safe_int(card.get("id"), 0) or 0 for card in current_n1.get("items", [])), default=11180) + 1
-    all_cards = []
-    lessons_payload = []
-    manifest_entries = []
-    n1_lessons_items = []
-    lesson_translations_items = dict(existing_translations.get("items", {}))
-    lessons_by_id = {}
-    generated_lesson_ids = []
-    rewards_unlocks = dict(existing_rewards.get("lessonUnlocks", {}))
-    used_kanji_global = set()
-    filler_cursor = 0
 
-    for lesson_index, page_index in enumerate(pdf_pages):
-        page = doc[page_index]
-        lines = page_lines(page)
-        parsed = parse_page(lines, page_index + 1, kanjidic_map, anchor_n1)
-        lesson_id = f"bulk-n1-{parsed['lessonNumber']:02d}"
-        lesson_meta = build_lesson_meta(
-            page_number=parsed["pageNumber"],
-            lesson_number=parsed["lessonNumber"],
-            start_index=parsed["startIndex"],
-            end_index=parsed["endIndex"],
-            pdf_title=parsed["title"],
-            pdf_goal=parsed["goal"],
-        )
-        lesson_cards = []
-        for row in parsed["rows"]:
-            key = (lesson_id, row["kanji"])
-            base_card = current_cards_by_key.get(key) or current_cards_by_kanji.get(row["kanji"])
-            card_id = base_card.get("id") if base_card else str(next_card_id)
-            if not base_card:
-                next_card_id += 1
-            card = build_card_from_row(
-                row=row,
-                lesson_meta={
-                    "id": lesson_id,
-                    "title_ru": lesson_meta["title_ru"],
-                    "title_en": lesson_meta["title_en"],
-                    "goal_ru": lesson_meta["goal_ru"],
-                    "goal_en": lesson_meta["goal_en"],
-                    "theme_ru": lesson_meta["theme_ru"],
-                    "theme_en": lesson_meta["theme_en"],
-                    "page_number": lesson_meta["page_number"],
-                    "order": lesson_meta["order"],
-                },
-                card_id=str(card_id),
-                base_card=base_card,
-                anchor_by_kanji=anchor_by_kanji,
-                kanjidic_map=kanjidic_map,
-                examples_by_kanji=examples_by_kanji,
-                meaning_map=meaning_map,
-                romaji_map=romaji_map,
-            )
-            card["lessonId"] = lesson_id
-            card["lessonTitle"] = lesson_meta["title_ru"]
-            card["lessonTitleEn"] = lesson_meta["title_en"]
-            card["sourcePage"] = lesson_meta["page_number"]
-            lesson_cards.append(card)
-            all_cards.append(card)
-            used_kanji_global.add(card["kanji"])
+def stroke_steps(strokes: int) -> list[dict]:
+    total = max(1, int(strokes or 0))
+    return [
+        {"id": 1, "type": "stroke", "description_ru": f"Всего черт: {total}. Сначала смотри на верхние и левые элементы.", "description_en": f"Total strokes: {total}. Start by observing the top and left-side components.", "path": None},
+        {"id": 2, "type": "stroke", "description_ru": "Разбей знак на радикалы и крупные блоки.", "description_en": "Break the kanji into radicals and large components.", "path": None},
+        {"id": 3, "type": "stroke", "description_ru": "Проведи порядок письма сверху вниз и слева направо.", "description_en": "Practice the stroke order from top to bottom and left to right.", "path": None},
+        {"id": 4, "type": "stroke", "description_ru": "Повтори знак вместе со словом-примером.", "description_en": "Review the kanji together with a real example word.", "path": None},
+    ]
 
-        expected_count = max(0, parsed["endIndex"] - parsed["startIndex"] + 1)
-        while len(lesson_cards) < expected_count and filler_cursor < len(anchor_n1):
-            candidate = anchor_n1[filler_cursor]
-            filler_cursor += 1
-            candidate_kanji = str(candidate.get("kanji") or "").strip()
-            if not candidate_kanji or candidate_kanji in used_kanji_global:
-                continue
-            filler_row = synthesize_row_from_candidate(candidate, kanjidic_map)
-            key = (lesson_id, candidate_kanji)
-            base_card = current_cards_by_key.get(key) or current_cards_by_kanji.get(candidate_kanji)
-            card_id = base_card.get("id") if base_card else str(next_card_id)
-            if not base_card:
-                next_card_id += 1
-            card = build_card_from_row(
-                row=filler_row,
-                lesson_meta={
-                    "id": lesson_id,
-                    "title_ru": lesson_meta["title_ru"],
-                    "title_en": lesson_meta["title_en"],
-                    "goal_ru": lesson_meta["goal_ru"],
-                    "goal_en": lesson_meta["goal_en"],
-                    "theme_ru": lesson_meta["theme_ru"],
-                    "theme_en": lesson_meta["theme_en"],
-                    "page_number": lesson_meta["page_number"],
-                    "order": lesson_meta["order"],
-                },
-                card_id=str(card_id),
-                base_card=base_card,
-                anchor_by_kanji=anchor_by_kanji,
-                kanjidic_map=kanjidic_map,
-                examples_by_kanji=examples_by_kanji,
-                meaning_map=meaning_map,
-                romaji_map=romaji_map,
-            )
-            card["lessonId"] = lesson_id
-            card["lessonTitle"] = lesson_meta["title_ru"]
-            card["lessonTitleEn"] = lesson_meta["title_en"]
-            card["sourcePage"] = lesson_meta["page_number"]
-            lesson_cards.append(card)
-            all_cards.append(card)
-            used_kanji_global.add(card["kanji"])
-        lesson_meta["sampleKanji"] = [card["kanji"] for card in lesson_cards[:8]]
-        lesson_meta["focusWords"] = [example["word"] for card in lesson_cards[:4] for example in card.get("examples", [])[:1]]
-        lesson_meta["sentences"] = parsed["sentences"]
-        lessons_by_id[lesson_id] = lesson_cards
-        lessons_payload.append(build_lesson_payload(lesson_meta, lesson_cards))
-        manifest_entries.append(build_manifest_entries(lesson_cards, lesson_meta, lesson_index))
-        generated_lesson_ids.append(lesson_id)
-        rewards_unlocks[lesson_id] = 28 + lesson_index // 2
-        lesson_translations_items[lesson_id] = {
-            "title_en": lesson_meta["title_en"],
-            "summary_en": f"{len(lesson_cards)} N1 kanji for practice, dictionary search and reviews.",
-        }
-        n1_lessons_items.append(
-            {
-                "id": lesson_id,
-                "title": lesson_meta["title_ru"],
-                "titleEn": lesson_meta["title_en"],
-                "jlpt": "N1",
-                "order": lesson_meta["order"] - 55,
-                "file": f"data/lessons/generated/{lesson_id}.json",
-                "summary": f"{len(lesson_cards)} кандзи уровня N1 для SRS-практики, словаря и повторений.",
-                "summaryEn": f"{len(lesson_cards)} N1 kanji for practice, dictionary search and reviews.",
-                "sampleKanji": [card["kanji"] for card in lesson_cards[:8]],
-            }
-        )
 
-    # Normalise and preserve any existing current N1 overlay files, but rebuild the textbook layer.
-    n1_textbook = {
-        "version": 1,
-        "level": "N1",
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "textbook": {
-            "jlpt": "N1",
-            "slug": "n1",
-            "title": {
-                "ru": "N1: тексты и нюансы",
-                "en": "N1: Texts and nuance",
-            },
-            "displayTitle": {
-                "ru": "Тексты и нюансы",
-                "en": "Texts and nuance",
-            },
-            "description": {
-                "ru": "Плотные тексты, авторская позиция, абстрактная лексика и продвинутая грамматика. Верхний слой базы.",
-                "en": "Dense texts, author stance, abstract vocabulary, and advanced grammar. The top layer of the base.",
-            },
-            "goal": {
-                "ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.",
-                "en": "Break down long phrases, rare readings, and meaning nuance in reading.",
-            },
-            "recommendedCycle": {
-                "ru": "Повторяй каждые 5-7 дней с точечным возвратом к слабым карточкам.",
-                "en": "Review every 5-7 days with targeted returns to weak cards.",
-            },
-            "previousLevels": ["N5", "N4", "N3", "N2"],
-            "nextLevels": [],
-            "coverImage": "assets/bg/bg_silent_road.webp",
-            "pdfFile": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-            "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
-            "lessonIds": generated_lesson_ids,
-            "lessonCount": LESSON_COUNT,
-            "kanjiCount": KANJI_COUNT,
-            "cardCount": KANJI_COUNT,
-            "files": {
-                "kanji": "data/jlpt/n1/kanji.json",
-                "lessons": "data/jlpt/n1/lessons.json",
-                "grammar": "data/jlpt/n1/grammar.json",
-                "reading": "data/jlpt/n1/reading.json",
-                "listening": "data/jlpt/n1/listening.json",
-                "tests": "data/jlpt/n1/tests.json",
-                "finalTest": "data/jlpt/n1/final-test.json",
-                "meta": "data/jlpt/n1/meta.json",
-                "exercises": "data/jlpt/n1/exercises.json",
-            },
-            "currentLessonCount": CURRENT_LESSON_COUNT,
-            "currentKanjiCount": CURRENT_KANJI_COUNT,
-            "currentCardCount": CURRENT_CARD_COUNT,
+def build_card(index: int, kanji: str, lesson: dict, old_card: dict | None, kanjidic: dict, examples_by_kanji: dict, meaning_map: dict) -> dict:
+    dic = kanjidic.get(kanji, {})
+    old_meaning = safe_localized((old_card or {}).get("meaning") or {}, "")
+    meanings_en = dic.get("meanings") or []
+    meaning_en = ", ".join(meanings_en[:5]) or old_meaning["en"] or "N1 kanji"
+    meaning_ru = old_meaning["ru"] if old_meaning["ru"] and not looks_mojibake(old_meaning["ru"]) else translate_meaning(meanings_en, meaning_map)
+    meaning_ru = meaning_ru or meaning_en
+    onyomi = split_readings(dic.get("onyomi") or (old_card or {}).get("readings", {}).get("onyomi") or [])
+    kunyomi = split_readings(dic.get("kunyomi") or (old_card or {}).get("readings", {}).get("kunyomi") or [])
+    primary_reading = (kunyomi or onyomi or split_readings((old_card or {}).get("hiragana") or []))[0] if (kunyomi or onyomi or split_readings((old_card or {}).get("hiragana") or [])) else ""
+    examples = []
+    for entry in examples_by_kanji.get(kanji, [])[:3]:
+        example = example_from_entry(entry, meaning_ru)
+        if example["word"] and example["reading"] and example not in examples:
+            examples.append(example)
+    if not primary_reading and examples:
+        primary_reading = examples[0]["reading"]
+    card_id = generated_card_id(index, old_card, kanji)
+    audio = f"./audio/kanji/n1/{lesson['id']}/{card_id}-{audio_slug(primary_reading)}.mp3" if primary_reading else ""
+    strokes = int(dic.get("strokes") or (old_card or {}).get("strokes") or 0)
+    interface_ru = f"Ищи {kanji} в {APP_CONTEXTS[index % len(APP_CONTEXTS)]}: там знак часто уточняет позицию автора, норму или вывод."
+    interface_en = f"Look for {kanji} in formal texts: it often clarifies the author's stance, a rule, or a conclusion."
+    return {
+        "id": card_id,
+        "courseCardId": card_id,
+        "number": index + 1,
+        "kanji": kanji,
+        "meaning": {"ru": meaning_ru, "en": meaning_en},
+        "meaning_ru": meaning_ru,
+        "meaning_en": meaning_en,
+        "readings": {
+            "onyomi": onyomi,
+            "kunyomi": kunyomi,
+            "hiragana": [primary_reading] if primary_reading else [],
+            "romaji": [romanize_kana(primary_reading)] if primary_reading else [],
+            "nanori": split_readings(dic.get("nanori") or []),
         },
-        "items": all_cards,
+        "onyomi": " / ".join(onyomi),
+        "kunyomi": " / ".join(kunyomi),
+        "hiragana": primary_reading,
+        "romaji": romanize_kana(primary_reading),
+        "jlpt": "N1",
+        "level": "N1",
+        "lessonId": lesson["id"],
+        "lessonTitle": lesson["title"]["ru"],
+        "lessonTitleEn": lesson["title"]["en"],
+        "strokes": strokes,
+        "strokeOrder": stroke_steps(strokes),
+        "stroke_order": [step["description_ru"] for step in stroke_steps(strokes)],
+        "examples": examples,
+        "words": examples,
+        "apps": [{"name": name, "use": interface_en} for name in ["Research reader", "News archive", "Policy memo"]],
+        "interfaceUse": interface_ru,
+        "interfaceUseEn": interface_en,
+        "interface_use": interface_ru,
+        "interface_use_en": interface_en,
+        "audio": audio,
+        "meta": {"radical": "", "radicalMeaning": {"ru": "", "en": ""}, "source": "KANJIDIC + Flash Kanji N1 PDF"},
+        "sourcePage": lesson["sourcePage"],
+        "grammarLinks": lesson["grammarFocus"],
+        "example": examples[0] if examples else None,
+        "hintRu": f"Свяжи {kanji} со значением «{meaning_ru}» и первым реальным словом из словаря.",
     }
-    n1_textbook["lessonCount"] = LESSON_COUNT
-    n1_textbook["kanjiCount"] = KANJI_COUNT
-    n1_textbook["cardCount"] = KANJI_COUNT
-    n1_textbook["currentLessonCount"] = CURRENT_LESSON_COUNT
-    n1_textbook["currentKanjiCount"] = CURRENT_KANJI_COUNT
-    n1_textbook["currentCardCount"] = CURRENT_CARD_COUNT
 
-    n1_meta = copy.deepcopy(n1_textbook)
-    n1_meta["textbook"]["currentLessonCount"] = LESSON_COUNT
-    n1_meta["textbook"]["currentKanjiCount"] = KANJI_COUNT
-    n1_meta["textbook"]["currentCardCount"] = KANJI_COUNT
-    n1_meta["lessonCount"] = LESSON_COUNT
-    n1_meta["kanjiCount"] = KANJI_COUNT
-    n1_meta["cardCount"] = KANJI_COUNT
-    n1_meta["currentLessonCount"] = CURRENT_LESSON_COUNT
-    n1_meta["currentKanjiCount"] = CURRENT_KANJI_COUNT
-    n1_meta["currentCardCount"] = CURRENT_CARD_COUNT
 
-    lessons_manifest = {
-        "version": 1,
-        "course": "Flash Kanji Core",
-        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "lessons": [],
-    }
-    if existing_manifest and existing_manifest.get("lessons"):
-        lessons_manifest["lessons"].extend(
-            repair_structure([lesson for lesson in existing_manifest["lessons"] if not str(lesson.get("id", "")).startswith("bulk-n1-")])
-        )
-    lessons_manifest["lessons"].extend(manifest_entries)
+def grammar_fallback_example(pattern: str) -> str:
+    clean_pattern = pattern.replace("〜", "").strip()
+    if not clean_pattern:
+        clean_pattern = "に即して"
+    return f"この問題は、資料を確認した上で{clean_pattern}慎重に判断する必要がある。"
 
-    textbooks_index = copy.deepcopy(existing_textbooks_index or {})
-    levels = textbooks_index.get("levels", [])
-    next_levels = []
-    for item in levels:
-        if item.get("jlpt") == "N1":
-            item = repair_structure(item)
-            item.update(
+
+def is_japanese(value: str) -> bool:
+    return bool(re.search(r"[ぁ-んァ-ン一-龯〜]", value or ""))
+
+
+def parse_grammar_items() -> list[dict]:
+    doc = fitz.open(PDF_PATH)
+    items = []
+    for page_number in range(106, 124):
+        lines = [clean_text(line) for line in doc[page_number - 1].get_text("text").splitlines()]
+        start = 0
+        for index, line in enumerate(lines):
+            if line == "Перевод":
+                start = index + 1
+                break
+        block = []
+        for line in lines[start:]:
+            if not line or line.startswith("flashkanji") or line.startswith("Flash Kanji") or re.fullmatch(r"\d+", line):
+                continue
+            if line.startswith("Упражнение"):
+                break
+            block.append(line)
+        index = 0
+        while index < len(block):
+            candidate = block[index]
+            is_pattern = is_japanese(candidate) and "。" not in candidate and len(candidate) <= 42
+            if not is_pattern:
+                index += 1
+                continue
+            pattern = candidate
+            index += 1
+            function_lines = []
+            while index < len(block) and not (is_japanese(block[index]) and "。" in block[index]):
+                if is_japanese(block[index]) and "。" not in block[index] and len(block[index]) <= 42:
+                    break
+                function_lines.append(block[index])
+                index += 1
+            example = block[index] if index < len(block) and is_japanese(block[index]) and "。" in block[index] else ""
+            if example:
+                index += 1
+            translation_lines = []
+            while index < len(block):
+                next_line = block[index]
+                if is_japanese(next_line) and "。" not in next_line and len(next_line) <= 42:
+                    break
+                translation_lines.append(next_line)
+                index += 1
+            function = clean_text(" ".join(function_lines))
+            translation = clean_text(" ".join(translation_lines))
+            if not function:
+                function = "логическая связка N1"
+            if not example or "?" in example:
+                example = grammar_fallback_example(pattern)
+            items.append({
+                "id": f"n1-grammar-{len(items) + 1:03d}",
+                "level": "N1",
+                "order": len(items) + 1,
+                "group": {"ru": f"Грамматический блок {(len(items) // 8) + 1}", "en": f"Grammar block {(len(items) // 8) + 1}"},
+                "pattern": pattern,
+                "title": {"ru": function, "en": function},
+                "explanation": {
+                    "ru": f"{pattern} помогает читать N1-текст: показывает {function} и связывает аргумент с выводом.",
+                    "en": f"{pattern} helps read N1 texts by expressing {function} and linking an argument to a conclusion.",
+                },
+                "formula": pattern,
+                "examples": [{"jp": example, "reading": "", "ru": translation or function, "en": translation or function}],
+                "question": {"ru": f"Что лучше всего передаёт форма {pattern}?", "en": f"What does {pattern} best express?"},
+                "answer": function,
+                "options": [],
+                "sourcePage": page_number,
+            })
+    if len(items) != 142:
+        raise SystemExit(f"Expected 142 N1 grammar items from the PDF, got {len(items)}.")
+    all_answers = [item["answer"] for item in items]
+    for index, item in enumerate(items):
+        options = [item["answer"]]
+        for shift in (13, 37, 71):
+            candidate = all_answers[(index + shift) % len(all_answers)]
+            if candidate not in options:
+                options.append(candidate)
+        item["options"] = options
+    return items
+
+
+def build_reading_items() -> list[dict]:
+    texts = [
+        ("技術と責任", "新しい技術は生活を便利にする一方で、利用者に見えにくい責任を生み出す。たとえば、情報を素早く共有できることは利点だが、誤った情報が広がる速度も同時に高まる。したがって、技術そのものを評価するだけでは不十分であり、それを使う側の判断力も問われる。", "Новая технология делает жизнь удобнее, но одновременно создаёт ответственность, которую пользователь не всегда видит."),
+        ("学習の継続", "学習を続ける上で重要なのは、完璧な計画を作ることではなく、計画が崩れた後に戻れる仕組みを持つことだ。失敗を記録することは恥ではない。むしろ、何を優先すべきかを明らかにする手がかりとなる。", "Для продолжения учёбы важен не идеальный план, а система возвращения после срыва."),
+        ("社会の合意", "社会的な合意は、単に多数決によって成立するものではない。反対意見をどのように扱うかによって、その合意の質が決まる。少数派の声を無視した決定は、短期的には効率的に見えても、長期的には不信を招きかねない。", "Качество общественного согласия зависит от отношения к возражениям и меньшинству."),
+        ("伝統と変化", "伝統を守るとは、昔の形をそのまま残すことだけを意味しない。時代に応じて変化しながらも、中心にある価値を失わないことこそが、伝統を生かす道だと言える。", "Сохранить традицию значит менять форму, не теряя центральную ценность."),
+        ("専門家の言葉", "専門家の説明は正確であるべきだが、正確さだけを追求すれば、一般の人には伝わりにくくなる。だからといって、内容を単純化しすぎれば誤解を招く。専門性と分かりやすさの間で、どこに線を引くかが問われている。", "Эксперт должен удержать баланс между точностью и понятностью."),
+        ("都市と孤独", "都市には多くの人が集まるにもかかわらず、孤独を感じる人は少なくない。人が近くにいることと、関係があることは同じではない。便利さを追求する都市設計に加えて、人が自然に関われる場をどう作るかが課題である。", "Город собирает людей, но это не гарантирует отношений и сниженной孤独ности."),
+        ("判断の速度", "早く決めることが必ずしも良い判断につながるとは限らない。特に、影響が広範囲に及ぶ問題では、時間をかけて前提を確認する必要がある。一方で、決定を先延ばしにすること自体がリスクとなる場合もある。", "Автор сравнивает риск поспешного решения и риск бесконечного откладывания."),
+        ("仕事と評価", "成果だけで人を評価する仕組みは分かりやすい。しかし、成果が出るまでの過程を無視すれば、短期的な数字だけを追う行動を促しかねない。評価制度は、人を管理するためだけでなく、どのような行動を社会が望むのかを示すものでもある。", "Система оценки формирует поведение, а не только измеряет результат."),
+    ]
+    items = []
+    for index, (title, jp, ru) in enumerate(texts, start=1):
+        items.append({
+            "id": f"n1-reading-textbook-{index}",
+            "lessonId": f"bulk-n1-{index:02d}",
+            "title": {"ru": f"Текст {index}: {title}", "en": f"Text {index}: {title}"},
+            "jp": jp,
+            "reading": "",
+            "ru": ru,
+            "en": ru,
+            "source": "Flash Kanji N1 PDF, section 8",
+            "questions": [
                 {
-                    "kanjiCount": KANJI_COUNT,
-                    "lessonCount": LESSON_COUNT,
-                    "lessonFiles": [f"data/lessons/generated/bulk-n1-{index:02d}.json" for index in range(1, LESSON_COUNT + 1)],
+                    "prompt": {"ru": "Какой главный вывод делает автор?", "en": "What is the author's main conclusion?"},
+                    "answer": "main",
+                    "options": [
+                        {"value": "main", "label": {"ru": ru, "en": ru}},
+                        {"value": "detail", "label": {"ru": "Автор перечисляет только частные факты.", "en": "The author only lists isolated facts."}},
+                        {"value": "opposite", "label": {"ru": "Автор утверждает обратное.", "en": "The author argues the opposite."}},
+                    ],
                 }
-            )
-        next_levels.append(item)
-    textbooks_index = {
-        "version": textbooks_index.get("version", 1),
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "levels": next_levels,
+            ],
+        })
+    return items
+
+
+def build_listening_items() -> list[dict]:
+    scripts = [
+        ("会議の延期", "A: 明日の会議ですが、資料がまだそろっていないようです。 B: では、無理に実施するより、来週に延期したほうがよさそうですね。 A: ただ、先方には今日中に連絡しておく必要があります。", "Сегодня нужно связаться с другой стороной."),
+        ("方針の変更", "上司: 今回の方針変更は、現場の負担を考慮したものです。 社員: ということは、締切も見直されるのでしょうか。 上司: その点については、各部署の状況いかんで判断します。", "Дедлайн зависит от ситуации в каждом отделе."),
+        ("研究発表", "発表者: この調査は十分とは言えませんが、傾向を把握する手がかりにはなります。 質問者: つまり、結論を急ぐべきではないということですね。 発表者: ええ、その通りです。", "Нельзя торопиться с окончательным выводом."),
+        ("店での苦情", "客: 修理したばかりなのに、また動かなくなりました。 店員: ご迷惑をおかけして申し訳ありません。確認した上で、交換も含めて対応いたします。", "Сотрудник сначала проверит товар."),
+        ("学習計画", "N1の学習では、長い時間勉強すること以上に、何を間違えたかを記録することが重要です。記録なしに復習しても、同じ問題を繰り返す恐れがあります。", "Важнее записывать ошибки, чем просто считать часы."),
+        ("社会問題", "便利さを追求するあまり、私たちは不便さが持っていた価値を見落としているのかもしれません。待つ時間や迷う時間にも、考える余地があったのです。", "Неудобство может давать время на размышление."),
+    ]
+    return [{
+        "id": f"n1-listening-{index}",
+        "title": {"ru": f"Скрипт {index}: {title}", "en": f"Script {index}: {title}"},
+        "jp": jp,
+        "ru": ru,
+        "source": "Flash Kanji N1 PDF, section 9",
+        "questions": [{
+            "prompt": {"ru": "Что нужно понять из аудио?", "en": "What should you understand from the audio?"},
+            "answer": "main",
+            "options": [
+                {"value": "main", "label": {"ru": ru, "en": ru}},
+                {"value": "wrong_time", "label": {"ru": "В тексте говорится только о времени.", "en": "The script only discusses time."}},
+                {"value": "no_action", "label": {"ru": "Никакого действия не требуется.", "en": "No action is required."}},
+            ],
+        }],
+    } for index, (title, jp, ru) in enumerate(scripts, start=1)]
+
+
+def lesson_shell(lesson_number: int, meta: dict, cards: list[dict], grammar_items: list[dict], reading_items: list[dict]) -> dict:
+    lesson_id = f"bulk-n1-{lesson_number:02d}"
+    grammar_focus = [item["pattern"] for item in grammar_items[(lesson_number - 1) * 3: lesson_number * 3]][:3]
+    if len(grammar_focus) < 3:
+        grammar_focus.extend(item["pattern"] for item in grammar_items[:3 - len(grammar_focus)])
+    sentences = [
+        {"jp": f"この資料では「{cards[0]['kanji']}」を含む語彙の使い方を確認します。", "reading": "", "ru": f"В этом материале проверяем употребление слов со знаком {cards[0]['kanji']}.", "en": f"This material checks words that contain {cards[0]['kanji']}."},
+        {"jp": f"著者の主張を理解するには、「{cards[1]['kanji']}」の関連語を文脈で読む必要があります。", "reading": "", "ru": f"Чтобы понять позицию автора, слова со знаком {cards[1]['kanji']} нужно читать в контексте.", "en": f"To understand the author's claim, read words with {cards[1]['kanji']} in context."},
+        {"jp": f"「{cards[2]['kanji']}」は単独で覚えるより、複合語と一緒に覚えたほうが定着します。", "reading": "", "ru": f"Знак {cards[2]['kanji']} лучше закрепляется вместе со сложными словами.", "en": f"{cards[2]['kanji']} sticks better together with compounds."},
+        {"jp": "根拠を確認した上で、自分の意見を短くまとめてください。", "reading": "", "ru": "Проверь основание и кратко сформулируй своё мнение.", "en": "Check the basis and summarize your opinion briefly."},
+    ]
+    reading = reading_items[(lesson_number - 1) % len(reading_items)]["id"] if reading_items else None
+    return {
+        "id": lesson_id,
+        "level": "N1",
+        "order": lesson_number,
+        "title": {"ru": meta["titleRu"], "en": meta["titleEn"]},
+        "theme": {"ru": f"N1 кандзи {cards[0]['number']}-{cards[-1]['number']}", "en": f"N1 kanji {cards[0]['number']}-{cards[-1]['number']}"},
+        "kanji": [card["kanji"] for card in cards],
+        "goal": {"ru": meta["goalRu"], "en": meta["goalEn"]},
+        "durationMinutes": 55,
+        "grammarFocus": grammar_focus,
+        "sentences": sentences,
+        "writing": [card["kanji"] for card in cards[:8]],
+        "reviewAfterDays": [1, 3, 7, 14, 30, 60, 90, 120],
+        "miniReadingId": reading,
     }
 
-    jlpt_index = copy.deepcopy(existing_jlpt_index or {})
-    jlpt_items = jlpt_index.get("items", [])
-    next_jlpt_items = []
-    for item in jlpt_items:
-        if item.get("jlpt") == "N1":
-            item = repair_structure(item)
-            item.update(
-                {
-                    "lessonIds": generated_lesson_ids,
-                    "lessonCount": LESSON_COUNT,
-                    "kanjiCount": KANJI_COUNT,
-                    "cardCount": KANJI_COUNT,
-                }
-            )
-        next_jlpt_items.append(item)
-    jlpt_index = {
-        "version": jlpt_index.get("version", 1),
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "items": next_jlpt_items,
-    }
 
-    rewards = copy.deepcopy(existing_rewards or {})
-    rewards["lessonUnlocks"] = rewards_unlocks
-
-    # Generated lesson payloads.
-    LESSONS_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    for lesson_payload in lessons_payload:
-        lesson_id = lesson_payload["lesson"]["id"]
-        dump_json(LESSONS_GENERATED_DIR / f"{lesson_id}.json", lesson_payload)
-
-    # Repair and extend the global registry files that the app reads on every boot.
-    lesson_translations = {
-        "version": 1,
-        "items": lesson_translations_items,
-    }
-
-    # Extend kanji registries, preserving current data where possible.
-    current_meta_items = dict((existing_kanji_meta or {}).get("items", {}))
-    current_translation_items = dict((existing_kanji_translations or {}).get("items", {}))
-    current_hint_items = dict((existing_kanji_hints or {}).get("items", {}))
-
-    for card in all_cards:
-        key = str(card["id"])
-        current_meta_items[key] = {
-            "radical": card.get("meta", {}).get("radical") or "",
-            "radicalMeaning": card.get("meta", {}).get("radicalMeaning") or {"ru": "", "en": ""},
-            "favoriteSeed": False,
-            "audio": {
-                "pronunciation": f"audio/kanji/{key}-pronunciation.mp3",
-                "eva": f"audio/eva/{key}-explanation.mp3",
-                "leya": f"audio/leya/{key}-hint.mp3",
-            },
-        }
-        current_translation_items[key] = {
-            "meaning_en": card.get("meaning", {}).get("en") or card.get("meaning", {}).get("ru") or "",
-            "interface_use_en": card.get("interfaceUse") or "",
-        }
-        examples = card.get("examples") or []
-        word1 = examples[0]["word"] if len(examples) > 0 and examples[0].get("word") else card["kanji"]
-        word2 = examples[1]["word"] if len(examples) > 1 and examples[1].get("word") else word1
-        current_hint_items[key] = {
-            "hint": {
-                "ru": f"Подсказка: ищи {card['kanji']} в словах {word1} и {word2}.",
-                "en": f"Hint: look for {card['kanji']} in {word1} and {word2}.",
-            },
-            "mnemonic": {
-                "ru": f"{card['kanji']}: свяжи образ со значением \"{card.get('meaning', {}).get('ru') or card.get('meaning', {}).get('en') or ''}\".",
-                "en": f"{card['kanji']}: connect the shape with \"{card.get('meaning', {}).get('en') or card.get('meaning', {}).get('ru') or ''}\".",
-            },
-        }
-
-    # Persist all touched files.
-    dump_json(CURRENT_N1_KANJI_PATH, n1_textbook)
-    dump_json(CURRENT_N1_META_PATH, n1_meta)
-    dump_json(CURRENT_N1_LESSONS_PATH, {
+def build_exercise_config(lessons: list[dict], cards_by_kanji: dict[str, dict]) -> dict:
+    overlays = {}
+    for lesson in lessons:
+        cards = [cards_by_kanji[kanji] for kanji in lesson["kanji"] if kanji in cards_by_kanji]
+        if not cards:
+            continue
+        first = cards[0]
+        overlays[lesson["id"]] = [
+            {"type": "active-recall", "kanji": first["kanji"], "prompt": f"Вспомни значение {first['kanji']} без подсказки.", "answer": first["meaning"]["ru"], "rewardXp": 14, "rewardMoon": 1},
+            {"type": "writing", "kanji": cards[min(1, len(cards) - 1)]["kanji"], "prompt": "Напиши знак и назови одно слово-пример.", "rewardXp": 14, "rewardMoon": 1},
+        ]
+    return {
         "version": 1,
         "level": "N1",
-        "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "textbook": n1_textbook["textbook"],
-        "items": n1_lessons_items,
-    })
-    dump_json(CURRENT_N1_EXERCISES_PATH, current_exercises or {"version": 1, "level": "N1", "lessonOverlays": []})
-    dump_json(CURRENT_N1_READING_PATH, current_reading or {"version": 1, "level": "N1", "items": []})
-    dump_json(CURRENT_N1_LISTENING_PATH, current_listening or {"version": 1, "level": "N1", "items": []})
-    dump_json(CURRENT_N1_TESTS_PATH, current_tests or {"version": 1, "level": "N1", "items": []})
-    dump_json(CURRENT_N1_FINAL_TEST_PATH, current_final_test or {"version": 1, "level": "N1"})
+        "lessonQuestionCount": 10,
+        "reviewModes": [
+            {"id": "due", "title": {"ru": "К повторению", "en": "Due"}},
+            {"id": "difficult", "title": {"ru": "Сложные", "en": "Difficult"}},
+            {"id": "all", "title": {"ru": "Весь N1", "en": "All N1"}},
+        ],
+        "types": [
+            {"type": "meaning", "title": {"ru": "Значение в N1-контексте", "en": "Meaning in N1 context"}, "rewardXp": 13, "rewardMoon": 1},
+            {"type": "kanji", "title": {"ru": "Кандзи по смыслу", "en": "Kanji from meaning"}, "rewardXp": 13, "rewardMoon": 1},
+            {"type": "reading", "title": {"ru": "Чтение слова", "en": "Word reading"}, "rewardXp": 13, "rewardMoon": 1},
+            {"type": "sentence", "title": {"ru": "Позиция в предложении", "en": "Sentence position"}, "rewardXp": 14, "rewardMoon": 1},
+            {"type": "grammar", "title": {"ru": "Грамматика N1", "en": "N1 grammar"}, "rewardXp": 14, "rewardMoon": 1},
+            {"type": "active-recall", "title": {"ru": "Активное вспоминание", "en": "Active recall"}, "rewardXp": 14, "rewardMoon": 1},
+        ],
+        "lessonOverlays": overlays,
+    }
 
-    dump_json(LESSONS_MANIFEST_PATH, lessons_manifest)
-    dump_json(LESSON_TRANSLATIONS_PATH, lesson_translations)
-    dump_json(JLPT_INDEX_PATH, jlpt_index)
-    dump_json(TEXTBOOKS_INDEX_PATH, textbooks_index)
-    dump_json(REWARDS_PATH, rewards)
-    dump_json(KANJI_META_PATH, {"version": 1, "items": current_meta_items})
-    dump_json(KANJI_TRANSLATIONS_PATH, {"version": 1, "items": current_translation_items})
-    dump_json(KANJI_HINTS_PATH, {"version": 1, "items": current_hint_items})
-    dump_json(KANJI_PAGE_SOURCES_PATH, existing_page_sources or {"version": 1, "items": {}})
 
-    # Generate lesson files referenced by the course manifest.
-    for lesson_idx, lesson_id in enumerate(generated_lesson_ids):
-        lesson_cards = lessons_by_id[lesson_id]
-        payload = {
-            "lesson": {
-                "id": lesson_id,
-                "title": lesson_cards[0].get("lessonTitle", "") if lesson_cards else "",
-                "title_en": lesson_cards[0].get("lessonTitleEn", "") if lesson_cards else "",
-                "jlpt": "N1",
-                "order": 56 + lesson_idx,
-            },
-            "items": lesson_cards,
+def build_tests(cards: list[dict], grammar_items: list[dict]) -> dict:
+    items = []
+    for index, card in enumerate(cards[:60]):
+        options = [card["meaning"]["ru"]]
+        for offset in (17, 31, 43):
+            candidate = cards[(index + offset) % len(cards)]["meaning"]["ru"]
+            if candidate not in options:
+                options.append(candidate)
+        items.append({
+            "id": f"n1-diagnostic-{index + 1:03d}",
+            "kanji": card["kanji"],
+            "question": {"ru": "Что означает этот кандзи?", "en": "What does this kanji mean?"},
+            "answer": {"ru": card["meaning"]["ru"], "en": card["meaning"]["en"]},
+            "options": options,
+            "lessonId": card["lessonId"],
+        })
+    for grammar in grammar_items[:30]:
+        items.append({
+            "id": f"{grammar['id']}-diagnostic",
+            "kind": "grammar",
+            "question": grammar["question"],
+            "answer": grammar["answer"],
+            "options": grammar["options"],
+            "lessonId": f"bulk-n1-{min(53, max(1, grammar['order'] // 3 + 1)):02d}",
+        })
+    return {"version": 1, "level": "N1", "generatedAt": now_iso(), "items": items}
+
+
+def update_index_item(items: list[dict], textbook: dict) -> list[dict]:
+    next_items = []
+    replaced = False
+    for item in items:
+        if item.get("jlpt") == "N1":
+            next_items.append({**item, **textbook})
+            replaced = True
+        else:
+            next_items.append(item)
+    if not replaced:
+        next_items.append(textbook)
+    return next_items
+
+
+def main() -> None:
+    anchor_n1 = build_anchor_n1()
+    kanjidic = build_kanjidic_map()
+    meaning_map = parse_meaning_map()
+    existing_cards = existing_n1_cards_by_position()
+    old_by_kanji = {}
+    for card in existing_cards:
+        kanji = clean_text(card.get("kanji") or "")
+        if is_cjk(kanji) and kanji not in old_by_kanji:
+            old_by_kanji[kanji] = card
+    sequence = build_unique_kanji_sequence(existing_cards, anchor_n1)
+    examples_by_kanji = load_dictionary_examples(set(sequence))
+    grammar_items = parse_grammar_items()
+    reading_items = build_reading_items()
+    listening_items = build_listening_items()
+    lesson_meta = pdf_lesson_meta()
+
+    all_cards = []
+    lessons = []
+    cursor = 0
+    for lesson_number, count in enumerate(LESSON_CARD_COUNTS, start=1):
+        lesson_id = f"bulk-n1-{lesson_number:02d}"
+        meta = lesson_meta[lesson_number - 1]
+        preview_lesson = {
+            "id": lesson_id,
+            "title": {"ru": meta["titleRu"], "en": meta["titleEn"]},
+            "grammarFocus": [item["pattern"] for item in grammar_items[(lesson_number - 1) * 3: lesson_number * 3]][:3],
+            "sourcePage": meta["pageNumber"],
         }
-        dump_json(LESSONS_GENERATED_DIR / f"{lesson_id}.json", payload)
+        lesson_cards = []
+        for position in range(cursor, cursor + count):
+            kanji = sequence[position]
+            lesson_cards.append(build_card(position, kanji, preview_lesson, old_by_kanji.get(kanji), kanjidic, examples_by_kanji, meaning_map))
+        cursor += count
+        shell = lesson_shell(lesson_number, meta, lesson_cards, grammar_items, reading_items)
+        for card in lesson_cards:
+            card["lessonTitle"] = shell["title"]["ru"]
+            card["lessonTitleEn"] = shell["title"]["en"]
+            card["grammarLinks"] = shell["grammarFocus"]
+        all_cards.extend(lesson_cards)
+        lessons.append(shell)
 
-    # Repair and persist the global manifests that are already part of the app.
-    if existing_translations:
-        dump_json(LESSON_TRANSLATIONS_PATH, lesson_translations)
-    if existing_manifest:
-        dump_json(LESSONS_MANIFEST_PATH, lessons_manifest)
+    if len(all_cards) != KANJI_COUNT or len({card["kanji"] for card in all_cards}) != KANJI_COUNT:
+        raise SystemExit("N1 generation did not produce 1047 unique cards.")
 
-    print(
-        f"Generated N1 textbook: {len(all_cards)} cards across {len(lessons_payload)} lessons.",
-        f"New ids: {next_card_id - 1 if next_card_id else 0}",
-    )
+    textbook_meta = {
+        "jlpt": "N1",
+        "slug": "n1",
+        "title": {"ru": "N1: тексты и нюансы", "en": "N1: Texts and nuance"},
+        "displayTitle": {"ru": "Тексты и нюансы", "en": "Texts and nuance"},
+        "description": {"ru": "Верхний уровень Flash Kanji: редкие кандзи, формальные слова, плотные абзацы, позиция автора и выводы.", "en": "The top Flash Kanji layer: rare kanji, formal vocabulary, dense paragraphs, author stance, and conclusions."},
+        "goal": {"ru": "Разбирать длинные фразы, редкие чтения и смысловые оттенки в чтении.", "en": "Break down long phrases, rare readings, and meaning nuance in reading."},
+        "recommendedCycle": {"ru": "Повторяй каждые 5–7 дней с точечным возвратом к слабым карточкам.", "en": "Review every 5–7 days with targeted returns to weak cards."},
+        "previousLevels": ["N5", "N4", "N3", "N2"],
+        "nextLevels": [],
+        "coverImage": "assets/bg/bg_silent_road.webp",
+        "pdfFile": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+        "pdfUrl": "docs/flashkanji_N1_textbook_flashkanji_space.pdf",
+        "lessonIds": [lesson["id"] for lesson in lessons],
+        "lessonCount": LESSON_COUNT,
+        "kanjiCount": KANJI_COUNT,
+        "cardCount": KANJI_COUNT,
+        "grammarCount": len(grammar_items),
+        "readingCount": len(reading_items),
+        "listeningCount": len(listening_items),
+        "files": {
+            "kanji": "data/jlpt/n1/kanji.json",
+            "lessons": "data/jlpt/n1/lessons.json",
+            "grammar": "data/jlpt/n1/grammar.json",
+            "reading": "data/jlpt/n1/reading.json",
+            "listening": "data/jlpt/n1/listening.json",
+            "tests": "data/jlpt/n1/tests.json",
+            "finalTest": "data/jlpt/n1/final-test.json",
+            "meta": "data/jlpt/n1/meta.json",
+            "exercises": "data/jlpt/n1/exercises.json",
+        },
+    }
+    generated_at = now_iso()
+    kanji_payload = {"version": 1, "level": "N1", "generatedAt": generated_at, "textbook": textbook_meta, "items": all_cards}
+    lessons_payload = {"version": 1, "level": "N1", "generatedAt": generated_at, "textbook": textbook_meta, "items": lessons}
+    meta_payload = {
+        "version": 1,
+        "level": "N1",
+        "title": textbook_meta["title"],
+        "description": textbook_meta["description"],
+        "principle": {"ru": "кандзи -> слово -> чтение -> грамматика -> абзац -> позиция автора -> вывод -> ошибка -> SRS", "en": "kanji -> word -> reading -> grammar -> paragraph -> author stance -> conclusion -> mistake -> SRS"},
+        "kanjiCount": KANJI_COUNT,
+        "lessonCount": LESSON_COUNT,
+        "kanjiPerLesson": 20,
+        "grammarCount": len(grammar_items),
+        "readingCount": len(reading_items),
+        "listeningCount": len(listening_items),
+        "pdfUrl": textbook_meta["pdfUrl"],
+        "reviewPlan": [
+            {"day": "1–53", "label": {"ru": "каждый урок: 20 кандзи, 3 грамматики, мини-reading и SRS", "en": "each lesson: 20 kanji, 3 grammar points, mini reading, and SRS"}},
+            {"day": "54–90", "label": {"ru": "повтор ошибок, чтение, аудирование и финальный тест", "en": "mistake review, reading, listening, and the final test"}},
+        ],
+        "n5Bridge": ["N2 reading", "author stance", "formal vocabulary", "abstract logic"],
+        "rewards": {"addToSrsXp": 8, "knowXp": 11, "hardXp": 2, "exerciseXp": 13, "exerciseMoon": 1, "grammarXp": 14, "grammarMoon": 1, "lessonCompleteXp": 105, "lessonCompleteMoon": 12, "readingXp": 55, "readingMoon": 5, "listeningXp": 50, "listeningMoon": 5, "finalTestXp": 320, "finalTestMoon": 60},
+        "textbook": textbook_meta,
+    }
+    final_test = {
+        "version": 1,
+        "level": "N1",
+        "title": {"ru": "Финальный тест Flash Kanji N1", "en": "Flash Kanji N1 Final Test"},
+        "description": {"ru": "Смешанный тест по 1047 кандзи N1, грамматике, чтению, аудированию и SRS.", "en": "A mixed test across 1047 N1 kanji, grammar, reading, listening, and SRS."},
+        "questionCount": 45,
+        "passingPercent": 82,
+        "kanjiPool": [card["kanji"] for card in all_cards[7::53]][:45],
+        "grammarPool": [item["pattern"] for item in grammar_items[:45]],
+        "readingPool": [item["id"] for item in reading_items],
+        "types": ["meaning", "reading", "sentence", "kanji", "word", "grammar", "mini-reading", "srs"],
+        "rewards": {"completeXp": 320, "completeMoon": 60, "passXp": 160, "passMoon": 25},
+    }
+
+    for lesson in lessons:
+        cards = [card for card in all_cards if card["lessonId"] == lesson["id"]]
+        dump_json(LESSONS_GENERATED_DIR / f"{lesson['id']}.json", {"lesson": {"id": lesson["id"], "title": lesson["title"]["ru"], "title_en": lesson["title"]["en"], "jlpt": "N1", "order": 55 + lesson["order"]}, "items": cards})
+
+    manifest = load_json(LESSONS_MANIFEST_PATH, {"version": 1, "course": "Flash Kanji Core", "lessons": []})
+    manifest_lessons = [item for item in manifest.get("lessons", []) if not str(item.get("id", "")).startswith("bulk-n1-")]
+    for lesson in lessons:
+        cards = [card for card in all_cards if card["lessonId"] == lesson["id"]]
+        manifest_lessons.append({
+            "id": lesson["id"],
+            "title": lesson["title"]["ru"],
+            "titleEn": lesson["title"]["en"],
+            "jlpt": "N1",
+            "order": 55 + lesson["order"],
+            "summary": lesson["goal"]["ru"],
+            "summaryEn": lesson["goal"]["en"],
+            "file": f"data/lessons/generated/{lesson['id']}.json",
+            "unlockLevel": 1,
+            "mascot": "eva",
+            "cardCount": len(cards),
+            "kanjiCount": len(cards),
+            "sampleKanji": [card["kanji"] for card in cards[:8]],
+            "focusWords": [example["word"] for card in cards[:5] for example in card.get("examples", [])[:1]],
+        })
+    manifest["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    manifest["lessons"] = manifest_lessons
+
+    translations = load_json(LESSON_TRANSLATIONS_PATH, {"version": 1, "items": {}})
+    translations.setdefault("items", {})
+    for lesson in lessons:
+        translations["items"][lesson["id"]] = {"title_en": lesson["title"]["en"], "summary_en": lesson["goal"]["en"]}
+
+    textbooks_index = load_json(TEXTBOOKS_INDEX_PATH, {"version": 1, "levels": []})
+    textbooks_index["generatedAt"] = generated_at
+    textbooks_index["levels"] = update_index_item(textbooks_index.get("levels", []), textbook_meta)
+
+    jlpt_index = load_json(JLPT_INDEX_PATH, {"version": 1, "items": []})
+    jlpt_index["generatedAt"] = generated_at
+    jlpt_index["items"] = update_index_item(jlpt_index.get("items", []), textbook_meta)
+
+    rewards = load_json(REWARDS_PATH, {"version": 1, "lessonUnlocks": {}})
+    rewards.setdefault("lessonUnlocks", {})
+    for lesson in lessons:
+        rewards["lessonUnlocks"][lesson["id"]] = 1
+
+    meta_items = load_json(KANJI_META_PATH, {"version": 1, "items": {}})
+    translation_items = load_json(KANJI_TRANSLATIONS_PATH, {"version": 1, "items": {}})
+    hint_items = load_json(KANJI_HINTS_PATH, {"version": 1, "items": {}})
+    meta_items.setdefault("items", {})
+    translation_items.setdefault("items", {})
+    hint_items.setdefault("items", {})
+    for card in all_cards:
+        card_id = str(card["id"])
+        meta_items["items"][card_id] = {"radical": "", "radicalMeaning": {"ru": "", "en": ""}, "favoriteSeed": False, "audio": {"pronunciation": card["audio"]}}
+        translation_items["items"][card_id] = {"meaning_en": card["meaning"]["en"], "interface_use_en": card["interfaceUseEn"]}
+        hint_items["items"][card_id] = {"hint": {"ru": card["hintRu"], "en": f"Connect {card['kanji']} with {card['meaning']['en']}."}, "mnemonic": {"ru": card["hintRu"], "en": f"Use a real compound to anchor {card['kanji']}."}}
+
+    dump_json(N1_DIR / "kanji.json", kanji_payload)
+    dump_json(N1_DIR / "lessons.json", lessons_payload)
+    dump_json(N1_DIR / "meta.json", meta_payload)
+    dump_json(N1_DIR / "grammar.json", {"version": 1, "level": "N1", "generatedAt": generated_at, "items": grammar_items})
+    dump_json(N1_DIR / "reading.json", {"version": 1, "level": "N1", "generatedAt": generated_at, "items": reading_items})
+    dump_json(N1_DIR / "listening.json", {"version": 1, "level": "N1", "generatedAt": generated_at, "items": listening_items})
+    dump_json(N1_DIR / "exercises.json", build_exercise_config(lessons, {card["kanji"]: card for card in all_cards}))
+    dump_json(N1_DIR / "tests.json", build_tests(all_cards, grammar_items))
+    dump_json(N1_DIR / "final-test.json", final_test)
+    dump_json(LESSONS_MANIFEST_PATH, manifest)
+    dump_json(LESSON_TRANSLATIONS_PATH, translations)
+    dump_json(TEXTBOOKS_INDEX_PATH, textbooks_index)
+    dump_json(JLPT_INDEX_PATH, jlpt_index)
+    dump_json(REWARDS_PATH, rewards)
+    dump_json(KANJI_META_PATH, meta_items)
+    dump_json(KANJI_TRANSLATIONS_PATH, translation_items)
+    dump_json(KANJI_HINTS_PATH, hint_items)
+    if not KANJI_PAGE_SOURCES_PATH.exists():
+        dump_json(KANJI_PAGE_SOURCES_PATH, {"version": 1, "items": {}})
+
+    print(f"Generated N1 textbook: {len(all_cards)} unique kanji, {len(lessons)} lessons, {len(grammar_items)} grammar items.")
 
 
 if __name__ == "__main__":
