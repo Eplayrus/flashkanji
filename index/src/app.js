@@ -2,6 +2,13 @@ import { ROUTES, createRenderCoordinator, installHashRouter, parseHash } from ".
 import { calculateNextProgress, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
+import {
+    CHANGELOG_LAST_SEEN_VERSION_KEY,
+    FLASH_KANJI_HAS_VISITED_KEY,
+    decideChangelogVisibility,
+    markChangelogHandled,
+    normalizeChangelogPayload
+} from "./services/changelog";
 
 (() => {
     "use strict";
@@ -96,7 +103,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         evaAutonomyLines: "data/eva-autonomy-lines.json",
         evaExpandedDialogues: "data/eva-expanded-dialogues.json",
         evaFisPersonality: "data/eva-fis-personality.json",
-        evaPresence: "data/eva-presence.json"
+        evaPresence: "data/eva-presence.json",
+        changelog: "data/changelog.json"
     };
     const ratingLabels = { forgot: "Forgot", remember: "Remember", again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
     const stateLabels = { New: "New", Learning: "Learning", Review: "Review", Mastered: "Mastered", new: "New", learning: "Learning", review: "Review", mastered: "Mastered" };
@@ -302,6 +310,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         pwaInstallPrompt: loadPwaInstallPromptState(),
         notificationPrompt: loadNotificationPromptState(),
         notificationPromptVisible: false,
+        changelog: null,
+        changelogModal: null,
         deferredDataLoaded: false,
         deferredDataLoading: false
     };
@@ -321,6 +331,9 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     let evaSaveQueued = false;
     let customizationSaveTimer = 0;
     let customizationSaveQueued = false;
+    let changelogLoadStarted = false;
+    let pendingChangelogExistingUser = false;
+    let changelogFocusTimer = 0;
     let reviewQueueCountRenderActive = false;
     let reviewQueueCountRenderCache = null;
     let deferredPwaInstallPrompt = null;
@@ -358,6 +371,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
     let recentEvaMascotLineIds = [];
     const notificationTimers = new Map();
     const mascotSpeechTimers = new Map();
+    const activeStudyActionLocks = new Set();
     const notificationUsageStartedAt = Date.now();
     if (typeof history !== "undefined" && "scrollRestoration" in history) {
         history.scrollRestoration = "manual";
@@ -485,19 +499,20 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
             state.rewards.achievements = state.achievements;
+            const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             hydrateProgress();
             clearLegacyFlashKanjiOnboardingState();
             hydrateCustomization();
             hydrateEvaState();
             applyTheme();
             syncPwaInstallInstalledFlag();
-            const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             recordAppOpen();
             refreshFlashKanjiOnboardingAudience(hadPriorVisit);
             claimDailyBonus();
             evaluateAchievements();
             saveProgress();
             render();
+            scheduleChangelogCheck(hadPriorVisit);
             loadDeferredEnhancements();
             scheduleDeferredDataLoad({ route: state.route, delay: routeNeedsDeferredData(state.route) ? 0 : DEFERRED_DATA_START_DELAY_MS });
             registerServiceWorker();
@@ -533,6 +548,58 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         if (app)
             app.setAttribute("aria-busy", isBooting ? "true" : "false");
+    }
+    function scheduleChangelogCheck(hadPriorVisit = false) {
+        pendingChangelogExistingUser = Boolean(hadPriorVisit);
+        if (changelogLoadStarted)
+            return;
+        changelogLoadStarted = true;
+        requestAnimationFrame(() => {
+            window.setTimeout(() => {
+                maybeLoadChangelog().catch((error) => console.warn("Flash Kanji changelog failed to load.", error));
+            }, 0);
+        });
+    }
+    async function maybeLoadChangelog() {
+        const payload = await fetchJson(DATA_URLS.changelog, () => null);
+        const changelog = normalizeChangelogPayload(payload);
+        if (!changelog)
+            return;
+        state.changelog = changelog;
+        const decision = decideChangelogVisibility(changelog, state.progress, safeLocalStorage(), { hadPriorVisit: pendingChangelogExistingUser, useProgressSignals: false });
+        if (decision.shouldMarkHandled) {
+            markChangelogHandled(decision.currentVersion, safeLocalStorage());
+            return;
+        }
+        if (!decision.shouldShow || !decision.entry)
+            return;
+        state.changelogModal = { version: decision.currentVersion, entry: decision.entry };
+        render();
+        scheduleChangelogFocus();
+    }
+    function safeLocalStorage() {
+        try {
+            return window.localStorage;
+        }
+        catch {
+            return null;
+        }
+    }
+    function scheduleChangelogFocus() {
+        if (changelogFocusTimer)
+            window.clearTimeout(changelogFocusTimer);
+        changelogFocusTimer = window.setTimeout(() => {
+            changelogFocusTimer = 0;
+            const button = document.querySelector('[data-action="close-changelog"]');
+            if (button instanceof HTMLElement)
+                button.focus({ preventScroll: true });
+        }, 0);
+    }
+    function closeChangelog() {
+        const version = state.changelogModal?.version || state.changelog?.currentVersion || "";
+        markChangelogHandled(version, safeLocalStorage());
+        state.changelogModal = null;
+        render();
     }
     function loadDeferredScript(src, id) {
         if (!src)
@@ -3775,6 +3842,54 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         }
         return true;
     }
+    function scheduleNonCriticalTask(label, task, { timeout = 0 } = {}) {
+        const run = () => {
+            try {
+                const result = task?.();
+                if (result && typeof result.then === "function") {
+                    result.catch((error) => console.warn(`[Flash Kanji] ${label} failed.`, error));
+                }
+            }
+            catch (error) {
+                console.warn(`[Flash Kanji] ${label} failed.`, error);
+            }
+        };
+        requestAnimationFrame(() => window.setTimeout(run, timeout));
+    }
+    function scheduleStudySideEffects(label, task) {
+        scheduleNonCriticalTask(label, () => {
+            const result = task?.();
+            if (result && typeof result.then === "function") {
+                result.catch((error) => console.warn(`[Flash Kanji] ${label} failed.`, error));
+            }
+            saveProgress();
+            renderImmediatePreservingScroll();
+        });
+    }
+    function claimStudyAction(target) {
+        const action = target?.dataset?.action || "";
+        const key = studyActionLockKey(action, target);
+        if (!key)
+            return true;
+        if (activeStudyActionLocks.has(key))
+            return false;
+        activeStudyActionLocks.add(key);
+        requestAnimationFrame(() => window.setTimeout(() => activeStudyActionLocks.delete(key), 0));
+        return true;
+    }
+    function studyActionLockKey(action, target) {
+        if (!action)
+            return "";
+        if (action === "rate")
+            return `rate:${state.activeCardId || ""}:${target?.dataset?.rating || ""}`;
+        if (action === "jlpt-lesson-answer")
+            return `jlpt:${target?.dataset?.level || ""}:${target?.dataset?.lesson || target?.dataset?.lessonId || ""}:${target?.dataset?.card || target?.dataset?.id || ""}`;
+        if (action === "reading-review-answer")
+            return `reading-review:${state.activeExerciseReviewLevel || ""}:${state.activeExerciseReviewId || ""}:${target?.dataset?.question || ""}`;
+        if (/^n[1-5]-(answer|srs|check-input|grammar-complete|reading-complete|listening-complete)$/.test(action))
+            return `${action}:${target?.dataset?.id || ""}:${target?.dataset?.rating || target?.dataset?.value || target?.dataset?.question || ""}`;
+        return "";
+    }
     function hydrateProgress() {
         state.cards.forEach((card) => getCardProgress(card.id));
             state.progress.level = calculateLevel(state.progress.xp);
@@ -4575,6 +4690,10 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             scheduleRender();
             return;
         }
+        if (event.target.classList?.contains("changelog-backdrop")) {
+            closeChangelog();
+            return;
+        }
         const clickedNavSurface = event.target.closest(".nav-popover, .bottom-nav");
         if (state.navMenu && !clickedNavSurface && !event.target.closest("[data-action]")) {
             state.navMenu = null;
@@ -4587,6 +4706,8 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         const action = target.dataset.action;
         const id = target.dataset.id;
         markActionPressed(target);
+        if (!claimStudyAction(target))
+            return;
         if (["eva-click", "eva-autonomy-next", "eva-question-answer"].includes(action) && Date.now() - lastEvaDirectActionAt < 280)
             return;
         // HARD immediate guard for complete lesson buttons: prevents double calls and farming even before complete* func runs.
@@ -4673,6 +4794,10 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         if (action === "close-contact-modal") {
             state.contactModal = false;
             scheduleRender();
+        }
+        if (action === "close-changelog") {
+            closeChangelog();
+            return;
         }
         if (action === "close-pwa-install-help") {
             state.pwaInstallHelpVisible = false;
@@ -5107,7 +5232,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.rewardModal = state.rewardQueue.shift() || null;
             if (state.rewardModal)
                 showRewardFeedback(state.rewardModal);
-            render();
+            renderImmediatePreservingScroll();
         }
         if (action === "set-goal") {
             state.progress.settings.dailyGoal = Number(target.dataset.goal);
@@ -5435,14 +5560,17 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return;
         if (handleMoonCheatKey(event))
             return;
-        if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.navMenu)) {
+        if (event.key === "Escape" && (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal || state.navMenu)) {
             state.detailCardId = null;
             state.rewardModal = null;
             state.finalTestModal = null;
             state.contactModal = false;
             state.pwaInstallHelpVisible = false;
             state.navMenu = null;
-            render();
+            if (state.changelogModal)
+                closeChangelog();
+            else
+                render();
             return;
         }
         const readingInput = event.target.closest?.("[data-reading-input]");
@@ -5623,7 +5751,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             if (!renderContext.isCurrent())
                 return;
             app.innerHTML = `${html}${renderSiteFooter()}${renderGlobalOverlays()}`;
-            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible));
+            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal));
             syncMascotSpeechTimers();
             requestAnimationFrame(() => {
                 applyPendingFocus();
@@ -5690,7 +5818,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         return `<section class="page empty-state" data-route-error="${escapeAttr(state.route)}"><h1>${escapeHtml(lang() === "ru" ? "Не удалось открыть раздел" : "Could not open this section")}</h1><p>${escapeHtml(message)}</p><button class="btn primary" type="button" data-action="route" data-route="home">${escapeHtml(lang() === "ru" ? "На главную" : "Home")}</button></section>`;
     }
     function renderGlobalOverlays() {
-        const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderPwaInstallHelpModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
+        const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderChangelogModal()}${renderPwaInstallHelpModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
         return overlays ? `<div class="modal-layer">${overlays}</div>` : "";
     }
     function ensureFlashKanjiOnboardingRoot() {
@@ -5866,7 +5994,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return false;
         if (!document.body || document.visibilityState !== "visible")
             return false;
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.navMenu)
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.changelogModal || state.navMenu)
             return false;
         return true;
     }
@@ -11975,7 +12103,6 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 if (rewardXp || rewardMoon)
                     addReward(rewardXp, rewardMoon, options.rewardKey || `exercise:${exercise.id}`);
             }
-            playUxSound("answer_correct");
         }
         else {
             state.progress.totalWrong += 1;
@@ -11987,13 +12114,15 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 if (wordMistakeKey)
                     options.markWordMistake?.(wordMistakeKey);
             }
-            playUxSound("answer_wrong");
         }
-        evaluateAchievements();
-        saveProgress();
         if (inReviewMode)
             state.pendingFocus = "__scroll-top__";
         render();
+        saveProgress();
+        scheduleStudySideEffects("textbook exercise post-render effects", () => {
+            playUxSound(correct ? "answer_correct" : "answer_wrong");
+            evaluateAchievements();
+        });
     }
     function readingExerciseRewardConfig(exercise) {
         const level = canonicalJlptLevel(exercise?.level || "");
@@ -12049,11 +12178,9 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.reviewExerciseResults[exercise.id] = cloneProgress(progress);
             if (correct) {
                 state.progress.totalCorrect += 1;
-                playUxSound("answer_correct");
             }
             else {
                 state.progress.totalWrong += 1;
-                playUxSound("answer_wrong");
             }
             const before = cloneProgress(progress);
             const after = calculateNextProgress(before, correct ? "good" : "again");
@@ -12076,11 +12203,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             else {
                 addReward(Math.max(1, Math.round(rewards.xp * 0.35)), 0, `reading:${exercise.id}:again`);
             }
-            evaluateAchievements();
-            saveProgress();
             if (inReviewMode)
                 state.pendingFocus = "__scroll-top__";
             render();
+            saveProgress();
+            scheduleStudySideEffects("reading cloze post-render effects", () => {
+                playUxSound(correct ? "answer_correct" : "answer_wrong");
+                evaluateAchievements();
+            });
             return;
         }
         const question = exercise.question || exercise.questions?.[0] || null;
@@ -12101,15 +12231,16 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         state.reviewExerciseResults[exercise.id] = cloneProgress(progress);
         if (correct) {
             state.progress.totalCorrect += 1;
-            playUxSound("answer_correct");
         }
         else {
             state.progress.totalWrong += 1;
-            playUxSound("answer_wrong");
         }
         saveProgress();
         if (!progress.completed) {
             render();
+            scheduleStudySideEffects("reading question post-render sound", () => {
+                playUxSound(correct ? "answer_correct" : "answer_wrong");
+            });
             return;
         }
         const before = cloneProgress(progress);
@@ -12132,11 +12263,14 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         else {
             addReward(Math.max(1, Math.round(rewards.xp * 0.25)), 0, `reading:${exercise.id}:again`);
         }
-        evaluateAchievements();
-        saveProgress();
         if (inReviewMode)
             state.pendingFocus = "__scroll-top__";
         render();
+        saveProgress();
+        scheduleStudySideEffects("reading exercise post-render effects", () => {
+            playUxSound(correct ? "answer_correct" : "answer_wrong");
+            evaluateAchievements();
+        });
     }
     function answerReadingReview(target) {
         const active = activeReviewExerciseItem();
@@ -12302,30 +12436,23 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         study.session.updatedAt = now;
         if (study.session.phase === "test") {
             study.session.testOpenedAt ||= now;
-            state.pendingFocus = jlptLessonStudySectionId(canonical, lesson.id, "test");
         }
-        else {
-            state.pendingFocus = jlptLessonStudySectionId(canonical, lesson.id, "player");
-        }
-        if (canonical === "N5") {
-            handleN5SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N4") {
-            handleN4SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N3") {
-            handleN3SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N2") {
-            handleN2SrsAction(card.id, remembered ? "good" : "again", "review");
-            return;
-        }
-        if (canonical === "N1") {
-            handleN1SrsAction(card.id, remembered ? "good" : "again", "review");
-        }
+        state.pendingFocus = null;
+        renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleNonCriticalTask(`${canonical} lesson SRS post-render commit`, () => {
+            const rating = remembered ? "good" : "again";
+            if (canonical === "N5")
+                handleN5SrsAction(card.id, rating, "review");
+            else if (canonical === "N4")
+                handleN4SrsAction(card.id, rating, "review");
+            else if (canonical === "N3")
+                handleN3SrsAction(card.id, rating, "review");
+            else if (canonical === "N2")
+                handleN2SrsAction(card.id, rating, "review");
+            else if (canonical === "N1")
+                handleN1SrsAction(card.id, rating, "review");
+        });
     }
     function handleN5SrsAction(cardId, rating, source = "review") {
         const card = findCard(cardId);
@@ -12345,22 +12472,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN5KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n5Meta?.rewards?.hardXp || 2, 1, `n5_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN5KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n5Meta?.rewards?.hardXp || 2, 0, `n5_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n5Meta?.rewards?.knowXp || 6) : (state.n5Meta?.rewards?.addToSrsXp || 4), 1, `n5_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N5 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN5Writing(cardId) {
         const card = findCard(cardId);
@@ -13940,22 +14067,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN4KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n4Meta?.rewards?.hardXp || 2, 1, `n4_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN4KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n4Meta?.rewards?.hardXp || 2, 0, `n4_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n4Meta?.rewards?.knowXp || 7) : (state.n4Meta?.rewards?.addToSrsXp || 5), 1, `n4_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N4 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN4Writing(cardId) {
         const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
@@ -15665,22 +15792,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN3KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n3Meta?.rewards?.hardXp || 2, 1, `n3_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN3KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n3Meta?.rewards?.hardXp || 2, 0, `n3_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n3Meta?.rewards?.knowXp || 8) : (state.n3Meta?.rewards?.addToSrsXp || 6), 1, `n3_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N3 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN3Writing(cardId) {
         const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
@@ -17390,22 +17517,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN2KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n2Meta?.rewards?.hardXp || 2, 1, `n2_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN2KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n2Meta?.rewards?.hardXp || 2, 0, `n2_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n2Meta?.rewards?.knowXp || 9) : (state.n2Meta?.rewards?.addToSrsXp || 7), 1, `n2_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N2 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN2Writing(cardId) {
         const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
@@ -19119,22 +19246,22 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             markN1KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
             addReward(state.n1Meta?.rewards?.hardXp || 2, 1, `n1_srs_lesson_hard:${card.id}`);
-            playUxSound("answer_correct");
         }
         else if (isForgottenRating(rating)) {
             markN1KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
             addReward(state.n1Meta?.rewards?.hardXp || 2, 0, `n1_srs_hard:${card.id}`);
-            playUxSound("answer_wrong");
         }
         else {
             state.progress.totalCorrect += 1;
             addReward(rating === "easy" ? (state.n1Meta?.rewards?.knowXp || 9) : (state.n1Meta?.rewards?.addToSrsXp || 7), 1, `n1_srs:${card.id}`);
-            playUxSound("answer_correct");
         }
-        evaluateAchievements();
-        saveProgress();
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("N1 SRS post-render effects", () => {
+            playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
+            evaluateAchievements();
+        });
     }
     function markN1Writing(cardId) {
         const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
@@ -22305,6 +22432,40 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
       </div>
     `;
     }
+    function renderChangelogModal() {
+        const modal = state.changelogModal;
+        if (!modal?.entry)
+            return "";
+        const entry = modal.entry;
+        const currentLang = lang();
+        const title = localized(entry.title || {}) || (currentLang === "ru" ? "Что нового во Flash Kanji" : "What’s new in Flash Kanji");
+        const items = Array.isArray(entry.items?.[currentLang]) && entry.items[currentLang].length
+            ? entry.items[currentLang]
+            : entry.items?.ru || entry.items?.en || [];
+        const intro = currentLang === "ru"
+            ? "Мы обновили учебники и ускорили учебные действия. Это окно появится только один раз для этой версии."
+            : "Textbooks were updated and study actions are faster. This window appears only once for this version.";
+        const button = currentLang === "ru" ? "Понятно" : "Got it";
+        return `
+      <div class="reward-backdrop changelog-backdrop">
+        <article class="reward-modal changelog-modal" role="dialog" aria-modal="true" aria-labelledby="changelogTitle" aria-describedby="changelogDescription">
+          <div class="changelog-kicker">Flash Kanji · ${escapeHtml(entry.version || modal.version || "")}</div>
+          <h2 id="changelogTitle">${escapeHtml(title)}</h2>
+          ${entry.date ? `<p class="changelog-date">${escapeHtml(entry.date)}</p>` : ""}
+          <p id="changelogDescription">${escapeHtml(intro)}</p>
+          <ul class="changelog-list">
+            ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          </ul>
+          <p class="changelog-storage-note">${escapeHtml(currentLang === "ru"
+            ? `Статус хранится локально: ${FLASH_KANJI_HAS_VISITED_KEY}, ${CHANGELOG_LAST_SEEN_VERSION_KEY}.`
+            : `Saved locally: ${FLASH_KANJI_HAS_VISITED_KEY}, ${CHANGELOG_LAST_SEEN_VERSION_KEY}.`)}</p>
+          <div class="actions changelog-actions">
+            <button class="btn primary" type="button" data-action="close-changelog">${escapeHtml(button)}</button>
+          </div>
+        </article>
+      </div>
+    `;
+    }
     function renderPwaInstallHelpModal() {
         if (!state.pwaInstallHelpVisible)
             return "";
@@ -22368,7 +22529,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return "";
         if (!canShowPwaInstallPrompt())
             return "";
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal)
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.changelogModal)
             return "";
         const copy = pwaInstallCopy();
         const isInstruction = !deferredPwaInstallPrompt && isIosSafari();
@@ -22393,7 +22554,7 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             return "";
         if (!state.notificationPromptVisible || !canShowNotificationPrompt("visible"))
             return "";
-        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || canShowPwaInstallPrompt())
+        if (state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.changelogModal || state.pwaInstallHelpVisible || canShowPwaInstallPrompt())
             return "";
         const copy = notificationPromptCopy();
         return `
@@ -22554,19 +22715,18 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
         if (!card || !ratingLabels[rating])
             return;
         markKanjiSeen(card, "srs_rating");
-        stopKanjiAudio();
         const before = cloneProgress(getCardProgress(card.id));
         const after = calculateNextProgress(before, rating);
         state.progress.cards[card.id] = after;
         updateDailyStats(before, after, rating);
         updateStreak();
         const previousCombo = Number(state.progress.correctCombo || 0);
+        const answerTone = isForgottenRating(rating) ? "again" : "ok";
         if (isForgottenRating(rating)) {
             state.progress.totalWrong += 1;
             state.progress.correctCombo = 0;
             adjustEvaRelationship({ discipline: -0.8, trust: -0.2 }, "answer_again");
             dispatchEvaEvent("answer_wrong", { cardId: card.id, kanji: card.kanji, rating, comboLost: previousCombo > 0 });
-            playTone("again");
             toast(dialogueText("eva", "wrong"));
         }
         else {
@@ -22576,7 +22736,6 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
             state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
             adjustEvaRelationship({ trust: 0.35, discipline: 0.25, curiosity: after.lastDecision === "Easy" ? 0.2 : 0 }, `answer_${rating}`);
             dispatchEvaEvent("answer_correct", { cardId: card.id, kanji: card.kanji, rating, combo: state.progress.correctCombo });
-            playTone("ok");
             toast(dialogueText("eva", "correct"));
             if (state.progress.correctCombo > 0 && state.progress.correctCombo % 5 === 0) {
                 addReward(state.rewards.rewards.comboXp, 0, "combo_bonus");
@@ -22591,17 +22750,21 @@ import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from
                 });
             }
         }
-        syncEvaRelationshipFromProgress();
-        checkLessonCompletion(card.lessonId);
-        checkDailyGoal();
-        evaluateAchievements();
         state.reviewQueueLastKind = "card";
-        saveProgress();
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
         state.pendingFocus = null;
         renderImmediatePreservingScroll();
+        saveProgress();
+        scheduleStudySideEffects("review card post-render effects", () => {
+            stopKanjiAudio();
+            playTone(answerTone);
+            syncEvaRelationshipFromProgress();
+            checkLessonCompletion(card.lessonId);
+            checkDailyGoal();
+            evaluateAchievements();
+        });
     }
     function srsButtonLabels() {
         return lang() === "ru"
