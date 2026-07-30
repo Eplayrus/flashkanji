@@ -489,14 +489,15 @@ import {
         syncHeaderSocialToggleButton();
         applyTheme();
         try {
-            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons] = await Promise.all([
+            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, changelogPayload] = await Promise.all([
                 loadCourse({ initialOnly: true }),
                 fetchJson(DATA_URLS.i18n),
                 fetchJson(DATA_URLS.dialogues),
                 fetchJson(DATA_URLS.rewards, defaultRewardsPayload),
                 fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
                 fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
-                fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] }))
+                fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
+                fetchJson(DATA_URLS.changelog, () => null)
             ]);
             const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
             state.lessons = course.lessons;
@@ -521,9 +522,11 @@ import {
             claimDailyBonus();
             evaluateAchievements();
             applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
+            const shouldFocusChangelog = applyChangelogPayload(changelogPayload, hadPriorVisit);
             saveProgress();
             render();
-            scheduleChangelogCheck(hadPriorVisit);
+            if (shouldFocusChangelog)
+                scheduleChangelogFocus();
             loadDeferredEnhancements();
             scheduleDeferredDataLoad({ route: state.route, delay: routeNeedsDeferredData(state.route) ? 0 : DEFERRED_DATA_START_DELAY_MS });
             registerServiceWorker();
@@ -567,24 +570,32 @@ import {
         changelogLoadStarted = true;
         requestAnimationFrame(() => {
             window.setTimeout(() => {
-                maybeLoadChangelog().catch((error) => console.warn("Flash Kanji changelog failed to load.", error));
+                maybeLoadChangelog(pendingChangelogExistingUser).catch((error) => console.warn("Flash Kanji changelog failed to load.", error));
             }, 0);
         });
     }
-    async function maybeLoadChangelog() {
-        const payload = await fetchJson(DATA_URLS.changelog, () => null);
+    function applyChangelogPayload(payload, hadPriorVisit = false) {
+        changelogLoadStarted = true;
+        pendingChangelogExistingUser = Boolean(hadPriorVisit);
+        state.changelogModal = null;
         const changelog = normalizeChangelogPayload(payload);
         if (!changelog)
-            return;
+            return false;
         state.changelog = changelog;
         const decision = decideChangelogVisibility(changelog, state.progress, safeLocalStorage(), { hadPriorVisit: pendingChangelogExistingUser, useProgressSignals: false });
         if (decision.shouldMarkHandled) {
             markChangelogHandled(decision.currentVersion, safeLocalStorage());
-            return;
+            return false;
         }
         if (!decision.shouldShow || !decision.entry)
-            return;
+            return false;
         state.changelogModal = { version: decision.currentVersion, entry: decision.entry };
+        return true;
+    }
+    async function maybeLoadChangelog(hadPriorVisit = pendingChangelogExistingUser) {
+        const payload = await fetchJson(DATA_URLS.changelog, () => null);
+        if (!applyChangelogPayload(payload, hadPriorVisit))
+            return;
         render();
         scheduleChangelogFocus();
     }
@@ -26970,7 +26981,12 @@ import {
         if (!("serviceWorker" in navigator) || location.protocol === "file:")
             return;
         let refreshing = false;
+        let shouldReloadOnControllerChange = Boolean(navigator.serviceWorker.controller);
         navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (!shouldReloadOnControllerChange) {
+                shouldReloadOnControllerChange = true;
+                return;
+            }
             if (refreshing)
                 return;
             refreshing = true;
