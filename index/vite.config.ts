@@ -1,8 +1,10 @@
+import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { defineConfig, type Plugin } from "vite";
+import { matchPathname } from "./src/router";
 
 const buildId = process.env.GITHUB_SHA?.slice(0, 12) || `local-${Date.now()}`;
 const configDir = fileURLToPath(new URL(".", import.meta.url));
@@ -17,12 +19,68 @@ function isDownloadRoute(url = "") {
   return pathname === "/download" || pathname === "/download/";
 }
 
+function isLegacyIndexRoute(url = "") {
+  const pathname = url.split(/[?#]/, 1)[0];
+  return /^\/index(?:\/dist)?(?:\/index\.html)?\/?$/i.test(pathname);
+}
+
+function legacyRedirectLocation(url = "") {
+  const [, suffix = ""] = url.match(/^[^?#]*([?#].*)?$/) || [];
+  return `/${suffix || ""}`;
+}
+
+function requestWantsHtml(request: { headers: Record<string, string | string[] | undefined> }): boolean {
+  const accept = String(request.headers.accept || "");
+  return accept.includes("text/html");
+}
+
+function pathnameFromUrl(url = ""): string {
+  return url.split(/[?#]/, 1)[0] || "/";
+}
+
+function htmlFileForPath(rootDir: string, pathname: string): string {
+  const normalized = pathname.replace(/\/{2,}/g, "/");
+  if (normalized === "/" || normalized === "") return path.join(rootDir, "index.html");
+  if (/\.html$/i.test(normalized)) return path.join(rootDir, normalized);
+  return path.join(rootDir, normalized, "index.html");
+}
+
+function hasStaticHtml(rootDir: string, pathname: string): boolean {
+  return existsSync(htmlFileForPath(rootDir, pathname));
+}
+
+function shouldServeRoute404(request: { url?: string; headers: Record<string, string | string[] | undefined> }, rootDir: string): boolean {
+  if (!request.url || !requestWantsHtml(request)) return false;
+  const pathname = pathnameFromUrl(request.url);
+  if (isLegacyIndexRoute(pathname) || isDownloadRoute(pathname)) return false;
+  if (hasStaticHtml(rootDir, pathname)) return false;
+  const match = matchPathname(pathname);
+  if (match.status === "valid" && (match.kind === "app-shell" || match.kind === "legacy-index")) return false;
+  return true;
+}
+
+async function serveRoute404(response: { statusCode: number; setHeader(name: string, value: string): void; end(body?: string): void }, htmlPath: string): Promise<void> {
+  const html = await readFile(htmlPath, "utf8");
+  response.statusCode = 404;
+  response.setHeader("Content-Type", "text/html; charset=utf-8");
+  response.end(html);
+}
+
 function downloadPageRoutePlugin(): Plugin {
   return {
     name: "flash-kanji-download-page-route",
     configureServer(server) {
       const htmlPath = fileURLToPath(new URL("./public/download/index.html", import.meta.url));
+      const notFoundPath = fileURLToPath(new URL("./public/404.html", import.meta.url));
+      const publicDir = fileURLToPath(new URL("./public", import.meta.url));
       server.middlewares.use(async (request, response, next) => {
+        if (isLegacyIndexRoute(request.url)) {
+          response.statusCode = 308;
+          response.setHeader("Location", legacyRedirectLocation(request.url));
+          response.end();
+          return;
+        }
+
         if (!isDownloadRoute(request.url)) {
           next();
           return;
@@ -40,11 +98,28 @@ function downloadPageRoutePlugin(): Plugin {
         response.statusCode = 200;
         response.setHeader("Content-Type", "text/html; charset=utf-8");
         response.end(transformedHtml);
+        return;
+      });
+      server.middlewares.use(async (request, response, next) => {
+        if (!shouldServeRoute404(request, publicDir)) {
+          next();
+          return;
+        }
+        await serveRoute404(response, notFoundPath);
       });
     },
     configurePreviewServer(server) {
       const htmlPath = fileURLToPath(new URL("./dist/download/index.html", import.meta.url));
+      const notFoundPath = fileURLToPath(new URL("./dist/404.html", import.meta.url));
+      const distDir = fileURLToPath(new URL("./dist", import.meta.url));
       server.middlewares.use(async (request, response, next) => {
+        if (isLegacyIndexRoute(request.url)) {
+          response.statusCode = 308;
+          response.setHeader("Location", legacyRedirectLocation(request.url));
+          response.end();
+          return;
+        }
+
         if (!isDownloadRoute(request.url)) {
           next();
           return;
@@ -61,6 +136,14 @@ function downloadPageRoutePlugin(): Plugin {
         response.statusCode = 200;
         response.setHeader("Content-Type", "text/html; charset=utf-8");
         response.end(html);
+        return;
+      });
+      server.middlewares.use(async (request, response, next) => {
+        if (!shouldServeRoute404(request, distDir)) {
+          next();
+          return;
+        }
+        await serveRoute404(response, notFoundPath);
       });
     }
   };

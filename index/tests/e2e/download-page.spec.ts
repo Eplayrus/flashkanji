@@ -2,19 +2,23 @@ import { expect, test } from "@playwright/test";
 
 test.use({ serviceWorkers: "block" });
 
-test("download entry is a lightweight bridge into the main app route", async ({ page, request }) => {
+test("download entry is a real SEO page with APK and PWA links", async ({ page, request }) => {
   const documentResponse = await request.get("./download/");
   expect(documentResponse.status()).toBe(200);
   const documentHtml = await documentResponse.text();
-  expect(documentHtml).toContain("Страница скачивания встроена в основное приложение Flash Kanji");
-  expect(documentHtml).toContain("#download");
+  expect(documentHtml).toContain("Скачать Flash Kanji для Android и установить PWA");
+  expect(documentHtml).toContain("Официальная страница скачивания Flash Kanji");
+  expect(documentHtml).toContain("../downloads/flash-kanji-android.apk");
+  expect(documentHtml).toContain("application/ld+json");
+  expect(documentHtml).toContain('rel="canonical" href="https://flashkanji.space/download/"');
   expect(documentHtml).not.toContain("download-app-shell");
-  expect(documentHtml).not.toContain("download.css");
+  expect(documentHtml).not.toContain("url=../index.html#download");
 
   await page.goto("./download/");
-  await expect(page).toHaveURL(/\/index\.html#download$/);
-  await expect(page.locator(".app-shell")).toBeVisible();
-  await expect(page.locator(".download-page")).toBeVisible();
+  await expect(page).toHaveURL(/\/download\/$/);
+  await expect(page.locator(".seo-main")).toBeVisible();
+  await expect(page.locator("h1")).toContainText("Скачать Flash Kanji");
+  await expect(page.locator('a[download="flash-kanji-android.apk"]')).toHaveAttribute("href", "../downloads/flash-kanji-android.apk");
 });
 
 test("download route uses the app shell, app styles, and official APK links", async ({ page, request }) => {
@@ -26,13 +30,13 @@ test("download route uses the app shell, app styles, and official APK links", as
   await expect(page.locator(".download-page")).toBeVisible();
   await expect(page.locator(".bottom-nav")).toBeVisible();
   await expect(page.locator(".download-app-preview img")).toBeVisible();
-  await expect(page.locator("h1")).toContainText(/Скачать Flash Kanji|Download Flash Kanji/);
-  await expect(page.locator("h1")).toContainText(/и установить PWA|and install the PWA/);
-  await expect(page.locator("main")).toContainText(/JLPT-учебники|JLPT textbooks/);
+  await expect(page.locator("h1")).toContainText(/РЎРєР°С‡Р°С‚СЊ Flash Kanji|Download Flash Kanji/);
+  await expect(page.locator("h1")).toContainText(/Рё СѓСЃС‚Р°РЅРѕРІРёС‚СЊ PWA|and install the PWA/);
+  await expect(page.locator("main")).toContainText(/JLPT-СѓС‡РµР±РЅРёРєРё|JLPT textbooks/);
 
   const apkLink = page.locator("a.apk-download");
   await expect(apkLink).toHaveAttribute("href", "https://drive.google.com/uc?export=download&id=1lIwF4vLq2DNAQ_Hufkmve7-m3bLWpvua");
-  await expect(apkLink).toHaveText(/Скачать APK|Download APK/);
+  await expect(apkLink).toHaveText(/РЎРєР°С‡Р°С‚СЊ APK|Download APK/);
 
   const pwaButton = page.locator('.download-page button[data-action="pwa-install"]');
   await expect(pwaButton).toBeVisible();

@@ -14,6 +14,12 @@ async function expectRoute(page: import("@playwright/test").Page, route: "review
   if (route === "textbooks") await expect(page.locator("#app .textbooks-page")).toBeVisible();
 }
 
+async function expectAppNotFound(page: import("@playwright/test").Page, reason: string) {
+  const notFound = page.locator(`#app [data-route-error="not-found"][data-route-not-found="${reason}"]`);
+  await expect(notFound).toBeVisible();
+  await expect(page.locator('[data-route="home"][aria-current="page"]:visible')).toHaveCount(0);
+}
+
 test("#review renders Review and survives reload", async ({ page }) => {
   await page.goto("./#review");
   await expectRoute(page, "review");
@@ -60,6 +66,53 @@ test("home → review → textbooks → review keeps route, nav and content alig
   await expectRoute(page, "textbooks");
   await page.locator('.bottom-nav [data-route="review"]').click();
   await expectRoute(page, "review");
+});
+
+test("unknown hashes render a real SPA 404 instead of Home", async ({ page }) => {
+  await page.goto("./#does-not-exist");
+  await expectAppNotFound(page, "unknown-route");
+  await expect(page).toHaveURL(/#does-not-exist$/);
+});
+
+test("invalid hash parameters render SPA 404 before route content", async ({ page }) => {
+  await page.goto("./#textbooks/N9");
+  await expectAppNotFound(page, "invalid-parameter");
+  await expect(page.locator("#app .textbooks-page")).toHaveCount(0);
+
+  await page.goto("./#kanji/a/b");
+  await expectAppNotFound(page, "unknown-route");
+  await expect(page.locator("#app .kanji-page")).toHaveCount(0);
+});
+
+test("known hash shape with missing entity renders entity-not-found", async ({ page }) => {
+  await page.goto("./#textbooks/N5/not-real-lesson");
+  await expectAppNotFound(page, "entity-not-found");
+
+  await page.goto("./#jlpt/n1/bulk-n1-99");
+  await expectAppNotFound(page, "entity-not-found");
+
+  await page.goto("./#kanji/not-real-card");
+  await expectAppNotFound(page, "entity-not-found");
+});
+
+test("Back and Forward keep valid routes and Not Found states distinct", async ({ page }) => {
+  await page.goto("./#home");
+  await page.locator('.bottom-nav [data-route="textbooks"]').click();
+  await expectRoute(page, "textbooks");
+  await page.evaluate(() => { window.location.hash = "does-not-exist"; });
+  await expectAppNotFound(page, "unknown-route");
+
+  await page.goBack();
+  await expectRoute(page, "textbooks");
+  await page.goForward();
+  await expectAppNotFound(page, "unknown-route");
+});
+
+test("direct invalid public pathname serves the static 404 instead of the app shell", async ({ page }) => {
+  const response = await page.goto("/en/kanji/u4e0a-ue/");
+  expect(response?.status()).toBe(404);
+  await expect(page.locator("#app")).toHaveCount(0);
+  await expect(page.locator("body")).toContainText(/404|not found|страница не найдена/i);
 });
 
 test("#review ignores stale sentence practice saved state", async ({ page }) => {

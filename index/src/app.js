@@ -1,4 +1,4 @@
-import { ROUTES, createRenderCoordinator, installHashRouter, parseHash } from "./router";
+import { NOT_FOUND_ROUTE, createRenderCoordinator, installHashRouter, isAppShellPathname, isRegisteredRoute, matchPathname, notFound, parseHash } from "./router";
 import { calculateNextProgress, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
@@ -163,7 +163,6 @@ import {
     const ONBOARDING_DIALOG_WIDTH = 392;
     const ONBOARDING_DIALOG_MAX_WIDTH = 420;
     const ONBOARDING_GAP = 14;
-    const routes = [...ROUTES];
     const DICTIONARY_INITIAL_LIMIT = 72;
     const DICTIONARY_INCREMENT = 96;
     const LEARNING_PATH_VERSION = 1;
@@ -195,8 +194,11 @@ import {
     const DEFERRED_DATA_START_DELAY_MS = 7000;
     const FETCH_TIMEOUT_MS = 8000;
     const DEFERRED_DATA_ROUTES = new Set(["dictionary", "kanji", "stats", "jlpt-lesson", "textbooks"]);
+    const initialRouteMatch = readCurrentRouteMatch();
     const state = {
-        route: readRouteHash(),
+        route: initialRouteMatch.route,
+        routeMatch: initialRouteMatch,
+        routeNotFound: initialRouteMatch.status === "not-found" ? initialRouteMatch : null,
         lessons: [],
         cards: [],
         i18n: null,
@@ -270,12 +272,12 @@ import {
         evaRoomShopOpen: false,
         progress: null,
         activeLessonId: null,
-        activeJlptLesson: readJlptLessonRouteLevel() || null,
-        activeTextbookLevel: readTextbookRouteLevel() || null,
-        activeTextbookSubroute: readTextbookRouteSubroute() || null,
-        activeLearnView: readLearnRouteView(),
-        activeLearnNodeId: readLearnRouteNodeId() || null,
-        activeLearnLegacyLessonId: readLearnLegacyLessonId() || null,
+        activeJlptLesson: initialRouteMatch.status === "valid" ? (initialRouteMatch.params.level || null) : null,
+        activeTextbookLevel: initialRouteMatch.status === "valid" && initialRouteMatch.route === "textbooks" ? (initialRouteMatch.params.level || null) : null,
+        activeTextbookSubroute: initialRouteMatch.status === "valid" && initialRouteMatch.route === "textbooks" ? (initialRouteMatch.params.subroute || null) : null,
+        activeLearnView: initialRouteMatch.status === "valid" && initialRouteMatch.route === "learn" ? (initialRouteMatch.params.view || LEARNING_PATH_MAP_VIEW) : LEARNING_PATH_MAP_VIEW,
+        activeLearnNodeId: initialRouteMatch.status === "valid" && initialRouteMatch.route === "learn" && initialRouteMatch.params.view === LEARNING_PATH_LESSON_VIEW ? (initialRouteMatch.params.targetId || null) : null,
+        activeLearnLegacyLessonId: initialRouteMatch.status === "valid" && initialRouteMatch.route === "learn" && initialRouteMatch.params.view === LEARNING_PATH_LEGACY_VIEW ? (initialRouteMatch.params.targetId || null) : null,
         learningPathLessonPayloads: {},
         activeCardId: null,
         activeExerciseReviewId: null,
@@ -286,7 +288,7 @@ import {
         activeExerciseReviewTranslationOpen: false,
         reviewQueueLastKind: "",
         reviewSession: null,
-        kanjiPageId: readKanjiRouteId(),
+        kanjiPageId: initialRouteMatch.status === "valid" && initialRouteMatch.route === "kanji" ? (initialRouteMatch.params.cardId || null) : null,
         revealed: false,
         detailCardId: null,
         rewardModal: null,
@@ -315,7 +317,7 @@ import {
         deferredDataLoaded: false,
         deferredDataLoading: false
     };
-    if (readRouteHash() === "textbooks")
+    if (state.route === "textbooks" && !state.routeNotFound)
         replaceRouteUrl(textbooksRouteHash(readTextbookRouteLevel(), readTextbookRouteSubroute()));
     const routeRenderCoordinator = createRenderCoordinator();
     let audioContext = null;
@@ -388,6 +390,7 @@ import {
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const app = $("#app");
+    const DEFAULT_DOCUMENT_TITLE = document.title || "Flash Kanji";
     const importInput = $("#progressImport");
     document.addEventListener("click", handleClick);
     document.addEventListener("pointerdown", handleEvaDirectPointer);
@@ -419,14 +422,18 @@ import {
     window.addEventListener("pagehide", flushPendingPersistentState);
     window.addEventListener("beforeunload", flushPendingPersistentState);
     installHashRouter(() => {
-        const route = readRouteHash();
-        const kanjiPageId = readKanjiRouteId();
-        const textbookLevel = route === "textbooks" ? readTextbookRouteLevel() : null;
-        const textbookSubroute = route === "textbooks" ? readTextbookRouteSubroute() : null;
-        const jlptLessonLevel = route === "jlpt-lesson" ? readJlptLessonRouteLevel() : null;
-        const learnView = route === "learn" ? readLearnRouteView() : LEARNING_PATH_MAP_VIEW;
-        const learnNodeId = route === "learn" ? readLearnRouteNodeId() : null;
-        const learnLegacyLessonId = route === "learn" ? readLearnLegacyLessonId() : null;
+        const routeMatch = validateRouteMatchEntities(readCurrentRouteMatch());
+        const route = routeMatch.route;
+        const params = routeMatch.status === "valid" ? routeMatch.params : {};
+        const kanjiPageId = route === "kanji" ? (params.cardId || null) : null;
+        const textbookLevel = route === "textbooks" ? (params.level || null) : null;
+        const textbookSubroute = route === "textbooks" ? (params.subroute || null) : null;
+        const jlptLessonLevel = route === "jlpt-lesson" ? (params.level || null) : null;
+        const learnView = route === "learn" ? (params.view || LEARNING_PATH_MAP_VIEW) : LEARNING_PATH_MAP_VIEW;
+        const learnNodeId = route === "learn" && learnView === LEARNING_PATH_LESSON_VIEW ? (params.targetId || null) : null;
+        const learnLegacyLessonId = route === "learn" && learnView === LEARNING_PATH_LEGACY_VIEW ? (params.targetId || null) : null;
+        const previousRouteNotFoundKey = routeNotFoundKey(state.routeNotFound);
+        const nextRouteNotFoundKey = routeMatch.status === "not-found" ? routeNotFoundKey(routeMatch) : "";
         if (route !== state.route
             || (route === "kanji" && kanjiPageId !== state.kanjiPageId)
             || (route === "textbooks" && textbookLevel !== state.activeTextbookLevel)
@@ -434,8 +441,11 @@ import {
             || (route === "jlpt-lesson" && jlptLessonLevel !== state.activeJlptLesson)
             || (route === "learn" && learnView !== state.activeLearnView)
             || (route === "learn" && learnNodeId !== state.activeLearnNodeId)
-            || (route === "learn" && learnLegacyLessonId !== state.activeLearnLegacyLessonId)) {
+            || (route === "learn" && learnLegacyLessonId !== state.activeLearnLegacyLessonId)
+            || previousRouteNotFoundKey !== nextRouteNotFoundKey) {
             const previousRoute = state.route;
+            state.routeMatch = routeMatch;
+            state.routeNotFound = routeMatch.status === "not-found" ? routeMatch : null;
             state.route = route;
             if (previousRoute !== route && (previousRoute === "review" || route === "review"))
                 state.reviewSession = null;
@@ -510,6 +520,7 @@ import {
             refreshFlashKanjiOnboardingAudience(hadPriorVisit);
             claimDailyBonus();
             evaluateAchievements();
+            applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
             saveProgress();
             render();
             scheduleChangelogCheck(hadPriorVisit);
@@ -896,6 +907,7 @@ import {
                 evaluateAchievements();
                 saveProgress();
             }
+            applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
             if (renderAfter)
                 render();
         })().finally(() => {
@@ -5638,16 +5650,45 @@ import {
             setLearnRoute(LEARNING_PATH_MAP_VIEW, null, focus);
             return;
         }
+        if (!isRegisteredRoute(route)) {
+            const rawRoute = String(route || "");
+            applyRouteMatch(notFound("hash", "unknown-route", rawRoute, rawRoute ? [rawRoute] : []));
+            replaceRouteUrl(rawRoute ? `#${encodeURIComponent(rawRoute)}` : "#not-found");
+            state.pendingFocus = focus;
+            state.navMenu = null;
+            resetReadingCheck();
+            scheduleScrollPageToTop();
+            renderImmediate();
+            return;
+        }
         const previousRoute = state.route;
-        state.route = routes.includes(route) ? route : "home";
+        state.route = route;
+        state.routeMatch = null;
+        state.routeNotFound = null;
         if (previousRoute !== state.route && (previousRoute === "review" || state.route === "review"))
             state.reviewSession = null;
         if (state.route === "textbooks") {
-            state.activeTextbookLevel = subroute ? String(subroute).toUpperCase() : null;
+            const requestedLevel = subroute ? String(subroute).toUpperCase() : "";
+            if (requestedLevel && !canonicalJlptLevel(requestedLevel)) {
+                applyRouteMatch(notFound("hash", "invalid-parameter", `textbooks/${requestedLevel}`, ["textbooks", requestedLevel]));
+                replaceRouteUrl(`#textbooks/${encodeURIComponent(requestedLevel)}`);
+                state.pendingFocus = focus;
+                renderImmediate();
+                return;
+            }
+            state.activeTextbookLevel = requestedLevel || null;
             state.activeTextbookSubroute = null;
         }
         else if (state.route === "jlpt-lesson") {
-            state.activeJlptLesson = subroute ? String(subroute).toUpperCase() : state.activeJlptLesson || readJlptLessonRouteLevel() || null;
+            const requestedLevel = subroute ? String(subroute).toUpperCase() : state.activeJlptLesson || readJlptLessonRouteLevel() || "";
+            if (requestedLevel && !canonicalJlptLevel(requestedLevel)) {
+                applyRouteMatch(notFound("hash", "invalid-parameter", `jlpt-lesson/${requestedLevel}`, ["jlpt-lesson", requestedLevel]));
+                replaceRouteUrl(`#jlpt-lesson/${encodeURIComponent(requestedLevel)}`);
+                state.pendingFocus = focus;
+                renderImmediate();
+                return;
+            }
+            state.activeJlptLesson = requestedLevel || null;
         }
         else {
             state.activeTextbookLevel = null;
@@ -5711,7 +5752,10 @@ import {
         destroyCharts();
         try {
             syncChrome();
+            syncRouteMeta();
             let html = "";
+            if (state.route === NOT_FOUND_ROUTE)
+                html = renderNotFoundPage(state.routeNotFound);
             if (state.route === "home")
                 html = renderHome();
             if (state.route === "download")
@@ -5748,6 +5792,8 @@ import {
                 html = renderJlptLessonPage();
             if (state.route === "textbooks")
                 html = renderTextbooksPage();
+            if (!html)
+                html = renderNotFoundPage(notFound("hash", "unknown-route", String(state.route || ""), state.route ? [String(state.route)] : []));
             if (!renderContext.isCurrent())
                 return;
             app.innerHTML = `${html}${renderSiteFooter()}${renderGlobalOverlays()}`;
@@ -5816,6 +5862,62 @@ import {
     function renderRouteError(error) {
         const message = error instanceof Error ? error.message : String(error || "Unknown route error");
         return `<section class="page empty-state" data-route-error="${escapeAttr(state.route)}"><h1>${escapeHtml(lang() === "ru" ? "Не удалось открыть раздел" : "Could not open this section")}</h1><p>${escapeHtml(message)}</p><button class="btn primary" type="button" data-action="route" data-route="home">${escapeHtml(lang() === "ru" ? "На главную" : "Home")}</button></section>`;
+    }
+    function renderNotFoundPage(match = state.routeNotFound) {
+        syncNotFoundMeta();
+        const ru = lang() === "ru";
+        const reason = match?.reason || "unknown-route";
+        const reasonCopy = {
+            "unknown-locale": ru ? "Язык из адреса не зарегистрирован для Flash Kanji." : "The URL locale is not registered in Flash Kanji.",
+            "unknown-route": ru ? "Такого раздела или шаблона URL нет в реестре маршрутов." : "This section or URL pattern is not registered.",
+            "invalid-parameter": ru ? "Параметр в адресе имеет неверный формат." : "A URL parameter has an invalid format.",
+            "entity-not-found": ru ? "Адрес похож на правильный, но такой страницы или сущности нет в данных." : "The URL shape is known, but the referenced page or entity does not exist."
+        };
+        const raw = match?.raw || location.pathname || location.hash || "";
+        return `
+      <section class="page empty-state not-found-page" data-route-error="not-found" data-route-not-found="${escapeAttr(reason)}">
+        <span class="kanji-char" aria-hidden="true">無</span>
+        <p class="eyebrow">404 · Flash Kanji</p>
+        <h1>${escapeHtml(ru ? "Страница не найдена" : "Page not found")}</h1>
+        <p>${escapeHtml(reasonCopy[reason] || reasonCopy["unknown-route"])}</p>
+        <p class="label"><code>${escapeHtml(raw)}</code></p>
+        <div class="actions">
+          <button class="btn primary" type="button" data-action="route" data-route="home">${escapeHtml(ru ? "На главную" : "Home")}</button>
+          <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(ru ? "К учебникам" : "Textbooks")}</button>
+          <button class="btn ghost" type="button" data-action="route" data-route="dictionary">${escapeHtml(ru ? "В словарь" : "Dictionary")}</button>
+        </div>
+      </section>
+    `;
+    }
+    function syncNotFoundMeta() {
+        document.title = lang() === "ru" ? "404 — Flash Kanji" : "404 — Flash Kanji";
+        setMetaTag("robots", "noindex, follow");
+        setCanonicalHref("/404.html");
+    }
+    function syncRouteMeta() {
+        if (state.route === NOT_FOUND_ROUTE)
+            return;
+        document.title = DEFAULT_DOCUMENT_TITLE;
+        setMetaTag("robots", "index, follow");
+        setCanonicalHref("/");
+    }
+    function setMetaTag(name, content) {
+        let tag = document.querySelector(`meta[name="${name}"]`);
+        if (!tag) {
+            tag = document.createElement("meta");
+            tag.setAttribute("name", name);
+            document.head.append(tag);
+        }
+        tag.setAttribute("content", content);
+    }
+    function setCanonicalHref(pathname) {
+        let link = document.querySelector('link[rel="canonical"]');
+        if (!link) {
+            link = document.createElement("link");
+            link.setAttribute("rel", "canonical");
+            document.head.append(link);
+        }
+        link.setAttribute("href", new URL(pathname, location.origin).href);
     }
     function renderGlobalOverlays() {
         const overlays = `${renderBottomNavMenu()}${renderDetailModal()}${renderRewardModal()}${renderFinalTestModal()}${renderContactModal()}${renderChangelogModal()}${renderPwaInstallHelpModal()}${renderPwaInstallBanner()}${renderNotificationPermissionBanner()}${renderScrollToggleButton()}`;
@@ -10833,7 +10935,7 @@ import {
         state.activeJlptLesson = "N5";
         ensureN5CourseProgress();
         const subroute = String(state.activeTextbookSubroute || "");
-        if (subroute === "final-test")
+        if (subroute === "final-test" || subroute === "final")
             return renderN5FinalTestPage(textbook);
         if (subroute === "review")
             return renderN5ReviewPage(textbook);
@@ -12926,7 +13028,7 @@ import {
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
-        if (subroute === "final-test")
+        if (subroute === "final-test" || subroute === "final")
             return renderN4FinalTestPage(textbook);
         if (subroute === "review")
             return renderN4ReviewPage(textbook);
@@ -14615,7 +14717,7 @@ import {
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
-        if (subroute === "final-test")
+        if (subroute === "final-test" || subroute === "final")
             return renderN3FinalTestPage(textbook);
         if (subroute === "review")
             return renderN3ReviewPage(textbook);
@@ -16343,7 +16445,7 @@ import {
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
-        if (subroute === "final-test")
+        if (subroute === "final-test" || subroute === "final")
             return renderN2FinalTestPage(textbook);
         if (subroute === "review")
             return renderN2ReviewPage(textbook);
@@ -18068,7 +18170,7 @@ import {
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
-        if (subroute === "final-test")
+        if (subroute === "final-test" || subroute === "final")
             return renderN1FinalTestPage(textbook);
         if (subroute === "review")
             return renderN1ReviewPage(textbook);
@@ -21671,18 +21773,14 @@ import {
         return `<article class="empty-state"><span class="kanji-char">無</span><h2>${escapeHtml(title)}</h2>${text ? `<p>${escapeHtml(text)}</p>` : ""}</article>`;
     }
     function renderKanjiPage() {
-        const card = findCard(state.kanjiPageId || readKanjiRouteId());
+        const requestedId = state.kanjiPageId || readKanjiRouteId();
+        const card = findCard(requestedId);
         if (!card) {
-            return `
-        <section class="page">
-          <article class="empty-state">
-            <span class="kanji-char">無</span>
-            <h1>${escapeHtml(lang() === "ru" ? "Кандзи не найден" : "Kanji not found")}</h1>
-            <p>${escapeHtml(lang() === "ru" ? "Открой словарь и выбери карточку заново." : "Open the dictionary and choose a card again.")}</p>
-            <button class="btn primary" type="button" data-action="route" data-route="dictionary">⋯ ${escapeHtml(t("dictionary"))}</button>
-          </article>
-        </section>
-      `;
+            if (!state.deferredDataLoaded) {
+                scheduleDeferredDataLoad({ route: "kanji", delay: 0, force: true });
+                return renderLoading();
+            }
+            return renderNotFoundPage(notFound("hash", "entity-not-found", readRouteSource(), parseHash(location.hash).segments));
         }
         const progress = getCardProgress(card.id);
         const meta = cardMeta(card.id);
@@ -24636,7 +24734,25 @@ import {
         return unlocked[index];
     }
     function findCard(id) {
-        return state.cards.find((card) => String(card.id) === String(id));
+        const raw = String(id || "");
+        if (!raw)
+            return null;
+        return state.cards.find((card) => String(card.id) === raw
+            || String(card.kanji || "") === raw
+            || kanjiPublicSlug(card) === raw) || null;
+    }
+    function findCardByRouteParam(id) {
+        return findCard(id);
+    }
+    function isPotentialKanjiRouteParam(id) {
+        const raw = String(id || "").trim();
+        if (!raw)
+            return false;
+        if (/^\d+$/.test(raw))
+            return true;
+        if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(raw))
+            return true;
+        return /^u[0-9a-f]{4,6}(?:-u[0-9a-f]{4,6})*-[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(raw);
     }
     function cardMeta(id) {
         return state.kanjiMeta[String(id)] || {};
@@ -25780,6 +25896,19 @@ import {
         if (!canonical || !rawLessonId)
             return false;
         return textbookLessonsForLevel(canonical).some((lesson) => lesson.id === rawLessonId);
+    }
+    function textbookSubrouteExists(level, subroute) {
+        const canonical = canonicalJlptLevel(level);
+        const rawSubroute = String(subroute || "");
+        if (!canonical || !rawSubroute)
+            return Boolean(canonical);
+        const commonSubroutes = new Set(["review", "final", "final-test"]);
+        const expandedSubroutes = new Set(["kanji", "grammar", "reading", "listening"]);
+        if (commonSubroutes.has(rawSubroute))
+            return true;
+        if (canonical !== "N5" && expandedSubroutes.has(rawSubroute))
+            return true;
+        return textbookLessonsForLevel(canonical).some((lesson) => lesson.id === rawSubroute);
     }
     function firstTextbookLessonId(level) {
         return textbookLessonsForLevel(level)[0]?.id || "";
@@ -27457,7 +27586,15 @@ import {
         return `${textbooksRoutePath(level, subroute)}${location.search || ""}`;
     }
     function appRouteBasePath() {
-        const pathname = decodeURIComponent(location.pathname || "/");
+        let pathname = "/";
+        try {
+            pathname = decodeURIComponent(location.pathname || "/");
+        }
+        catch {
+            return "/";
+        }
+        if (!isAppShellPathname(pathname))
+            return "/";
         const strippedTextbooks = pathname.replace(/\/textbooks(?:\/[^/?#]*)*\/?$/i, "/") || "/";
         if (strippedTextbooks !== pathname || /^\/?textbooks(?:\/|$)/i.test(pathname))
             return strippedTextbooks.endsWith("/") ? strippedTextbooks : `${strippedTextbooks}/`;
@@ -27481,6 +27618,76 @@ import {
         if (currentUrl !== nextUrl)
             history.replaceState(null, "", nextUrl);
     }
+    function readCurrentRouteMatch() {
+        const pathMatch = matchPathname(location.pathname || "/");
+        if (pathMatch.status === "valid" && pathMatch.kind === "download" && !location.hash) {
+            return pathMatch;
+        }
+        if (!isAppShellPathname(location.pathname || "/")) {
+            if (pathMatch.status === "not-found")
+                return pathMatch;
+            return notFound("pathname", "entity-not-found", pathMatch.raw, pathMatch.segments, pathMatch.locale, pathMatch.canonicalPath);
+        }
+        return parseHash(location.hash);
+    }
+    function routeNotFoundKey(match) {
+        if (!match || match.status !== "not-found")
+            return "";
+        return `${match.source}:${match.reason}:${match.raw}:${match.canonicalPath || ""}`;
+    }
+    function applyRouteMatch(routeMatch) {
+        const route = routeMatch.route;
+        const params = routeMatch.status === "valid" ? routeMatch.params : {};
+        state.routeMatch = routeMatch;
+        state.routeNotFound = routeMatch.status === "not-found" ? routeMatch : null;
+        state.route = route;
+        state.kanjiPageId = route === "kanji" ? (params.cardId || null) : null;
+        state.activeTextbookLevel = route === "textbooks" ? (params.level || null) : null;
+        state.activeTextbookSubroute = route === "textbooks" ? (params.subroute || null) : null;
+        state.activeJlptLesson = route === "jlpt-lesson"
+            ? (params.level || null)
+            : route === "textbooks"
+                ? (params.level || state.activeJlptLesson)
+                : state.activeJlptLesson;
+        state.activeLearnView = route === "learn" ? (params.view || LEARNING_PATH_MAP_VIEW) : LEARNING_PATH_MAP_VIEW;
+        state.activeLearnNodeId = route === "learn" && state.activeLearnView === LEARNING_PATH_LESSON_VIEW ? (params.targetId || null) : null;
+        state.activeLearnLegacyLessonId = route === "learn" && state.activeLearnView === LEARNING_PATH_LEGACY_VIEW ? (params.targetId || null) : null;
+    }
+    function validateRouteMatchEntities(routeMatch) {
+        if (routeMatch.status === "not-found")
+            return routeMatch;
+        if (routeMatch.source === "pathname") {
+            return routeMatch;
+        }
+        const params = routeMatch.params || {};
+        if (routeMatch.route === "kanji" && !findCardByRouteParam(params.cardId)) {
+            if (!state.deferredDataLoaded && isPotentialKanjiRouteParam(params.cardId))
+                return routeMatch;
+            return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+        }
+        if (routeMatch.route === "textbooks") {
+            const level = params.level || "";
+            const subroute = params.subroute || "";
+            if (level && !jlptCatalogByLevel(level)) {
+                return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+            }
+            if (level && subroute && !textbookSubrouteExists(level, subroute)) {
+                return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+            }
+        }
+        if (routeMatch.route === "jlpt-lesson" && !jlptLessonByLevel(params.level)) {
+            return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+        }
+        if (routeMatch.route === "learn") {
+            if (params.view === LEARNING_PATH_LESSON_VIEW && !learningPathNodeById(params.targetId)) {
+                return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+            }
+            if (params.view === LEARNING_PATH_LEGACY_VIEW && !state.lessons.some((lesson) => lesson.id === params.targetId)) {
+                return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+            }
+        }
+        return routeMatch;
+    }
     function readRouteSource() {
         return parseHash(location.hash).raw;
     }
@@ -27488,24 +27695,20 @@ import {
         return parseHash(location.hash).route;
     }
     function readKanjiRouteId() {
-        const raw = decodeURIComponent(location.hash.replace("#", ""));
-        const match = raw.match(/^kanji\/([^/?]+)/);
-        return match ? match[1] : "";
+        const match = parseHash(location.hash);
+        return match.status === "valid" && match.route === "kanji" ? (match.params.cardId || "") : "";
     }
     function readTextbookRouteLevel() {
-        const raw = readRouteSource();
-        const match = raw.match(/^textbooks\/([^/?#]+)/i) || raw.match(/^jlpt\/([^/?#]+)/i);
-        return match ? String(match[1] || "").toUpperCase() : "";
+        const match = parseHash(location.hash);
+        return match.status === "valid" && match.route === "textbooks" ? (match.params.level || "") : "";
     }
     function readTextbookRouteSubroute() {
-        const raw = readRouteSource();
-        const match = raw.match(/^textbooks\/[^/?#]+\/([^?#]+)/i) || raw.match(/^jlpt\/[^/?#]+\/([^?#]+)/i);
-        return match ? String(match[1] || "") : "";
+        const match = parseHash(location.hash);
+        return match.status === "valid" && match.route === "textbooks" ? (match.params.subroute || "") : "";
     }
     function readLearnRouteView() {
-        const raw = decodeURIComponent(location.hash.replace("#", ""));
-        const match = raw.match(/^learn(?:\/([^/?#]+))?/i);
-        const view = String(match?.[1] || "").toLowerCase();
+        const match = parseHash(location.hash);
+        const view = match.status === "valid" && match.route === "learn" ? String(match.params.view || "") : "";
         if (view === LEARNING_PATH_LESSON_VIEW)
             return LEARNING_PATH_LESSON_VIEW;
         if (view === LEARNING_PATH_LEGACY_VIEW)
@@ -27513,19 +27716,16 @@ import {
         return LEARNING_PATH_MAP_VIEW;
     }
     function readLearnRouteNodeId() {
-        const raw = decodeURIComponent(location.hash.replace("#", ""));
-        const match = raw.match(/^learn\/lesson\/([^/?#]+)/i);
-        return match ? String(match[1] || "") : "";
+        const match = parseHash(location.hash);
+        return match.status === "valid" && match.route === "learn" && match.params.view === LEARNING_PATH_LESSON_VIEW ? (match.params.targetId || "") : "";
     }
     function readLearnLegacyLessonId() {
-        const raw = decodeURIComponent(location.hash.replace("#", ""));
-        const match = raw.match(/^learn\/legacy\/([^/?#]+)/i);
-        return match ? String(match[1] || "") : "";
+        const match = parseHash(location.hash);
+        return match.status === "valid" && match.route === "learn" && match.params.view === LEARNING_PATH_LEGACY_VIEW ? (match.params.targetId || "") : "";
     }
     function readJlptLessonRouteLevel() {
-        const raw = decodeURIComponent(location.hash.replace("#", ""));
-        const match = raw.match(/^jlpt-lesson\/([^/?#]+)/i);
-        return match ? String(match[1] || "").toUpperCase() : "";
+        const match = parseHash(location.hash);
+        return match.status === "valid" && match.route === "jlpt-lesson" ? (match.params.level || "") : "";
     }
     function unlockedAchievementCount() {
         return achievementList().filter((item) => isAchievementUnlocked(item.id)).length;

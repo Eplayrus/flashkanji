@@ -25,22 +25,22 @@ const NOTIFICATION_FALLBACKS = {
   review: {
     title: "Flash Kanji",
     body: "Твои карточки ждут повторения.",
-    url: "./index.html#review"
+    url: "./#review"
   },
   streak: {
     title: "Твой стрик",
     body: "Не потеряй свою серию занятий.",
-    url: "./index.html#home"
+    url: "./#home"
   },
   daily_bonus: {
     title: "Ежедневный бонус",
     body: "Забери XP и Moon Fragments.",
-    url: "./index.html#home"
+    url: "./#home"
   },
   lesson: {
     title: "Новый урок ждёт",
     body: "Продолжи изучать кандзи.",
-    url: "./index.html#textbooks"
+    url: "./#textbooks"
   }
 };
 
@@ -249,7 +249,7 @@ self.addEventListener("periodicsync", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = new URL(event.notification.data?.url || "./index.html#review", self.registration.scope).href;
+  const url = new URL(event.notification.data?.url || "./#review", self.registration.scope).href;
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
       const existing = windows.find((client) => "focus" in client);
