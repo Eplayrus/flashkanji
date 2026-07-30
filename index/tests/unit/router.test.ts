@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createRenderCoordinator, installHashRouter, parseHash } from "../../src/router";
+import { NOT_FOUND_ROUTE, createRenderCoordinator, installHashRouter, matchPathname, parseHash } from "../../src/router";
 
 describe("hash router", () => {
   it("uses the hash as the only selected route", () => {
@@ -14,12 +14,96 @@ describe("hash router", () => {
 
   it("routes the full N1 textbook through the textbooks renderer", () => {
     expect(parseHash("#textbooks/N1")).toMatchObject({
+      status: "valid",
       route: "textbooks",
+      params: { level: "N1", subroute: "" },
       segments: ["textbooks", "N1"]
     });
     expect(parseHash("#jlpt/n1/bulk-n1-01")).toMatchObject({
+      status: "valid",
       route: "textbooks",
+      params: { level: "N1", subroute: "bulk-n1-01", legacyRoute: "jlpt" },
       segments: ["jlpt", "n1", "bulk-n1-01"]
+    });
+  });
+
+  it("does not silently coerce unknown hashes to Home", () => {
+    expect(parseHash("#does-not-exist")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "unknown-route"
+    });
+  });
+
+  it("rejects malformed hash parameters before rendering", () => {
+    expect(parseHash("#textbooks/N9")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "invalid-parameter"
+    });
+    expect(parseHash("#kanji/a/b")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "unknown-route"
+    });
+    expect(parseHash("#kanji/%E0%A4%A")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "invalid-parameter"
+    });
+  });
+
+  it("strictly matches public pathname routes", () => {
+    expect(matchPathname("/")).toMatchObject({
+      status: "valid",
+      route: "home",
+      kind: "app-shell",
+      canonicalPath: "/"
+    });
+    expect(matchPathname("/download/")).toMatchObject({
+      status: "valid",
+      route: "download",
+      kind: "download",
+      canonicalPath: "/download/"
+    });
+    expect(matchPathname("/en/textbooks/n1/")).toMatchObject({
+      status: "valid",
+      route: "textbooks",
+      locale: "en",
+      kind: "textbook-level",
+      params: { level: "N1" },
+      canonicalPath: "/en/textbooks/n1/"
+    });
+    expect(matchPathname("/en/kanji/u4e0a-ue/")).toMatchObject({
+      status: "valid",
+      route: "kanji",
+      locale: "en",
+      kind: "kanji-page",
+      params: { slug: "u4e0a-ue" },
+      canonicalPath: "/en/kanji/u4e0a-ue/"
+    });
+  });
+
+  it("rejects bad public pathnames without falling through to the app shell", () => {
+    expect(matchPathname("/xx/")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "unknown-locale"
+    });
+    expect(matchPathname("/en/kanji/not-a-slug/")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "invalid-parameter"
+    });
+    expect(matchPathname("/review")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "unknown-route"
+    });
+    expect(matchPathname("/en/kanji/u4e0a-ue/extra/")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "unknown-route"
     });
   });
 
