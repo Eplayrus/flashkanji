@@ -22946,9 +22946,9 @@ import {
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
-        state.pendingFocus = null;
+        state.pendingFocus = "review-card";
         trackReviewSessionComplete("card");
-        renderImmediatePreservingScroll();
+        renderImmediate();
         saveProgress();
         scheduleStudySideEffects("review card post-render effects", () => {
             stopKanjiAudio();

@@ -138,6 +138,81 @@ test("#review ignores stale sentence practice saved state", async ({ page }) => 
   await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
 });
 
+test("SRS answer scrolls back to the top of the next review card", async ({ page }) => {
+  await page.addInitScript(() => {
+    const dueAt = new Date(Date.now() - 60_000).toISOString();
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.06");
+    localStorage.setItem("flashKanji.hasVisited", "true");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      appOpens: 2,
+      achievements: {
+        first_kanji: { unlockedAt: dueAt, rewardXp: 25, rewardFragments: 5 },
+        first_memory: { unlockedAt: dueAt, rewardXp: 25, rewardFragments: 5 }
+      },
+      dailyBonuses: { [todayKey]: dueAt },
+      visits: {
+        firstVisitDate: todayKey,
+        lastVisitDate: todayKey,
+        lastDailyBonusDate: todayKey,
+        streak: 1,
+        bestStreak: 1
+      },
+      cards: {
+        "1": {
+          state: "Review",
+          intervalDays: 1,
+          srsStep: 1,
+          dueAt,
+          lastReviewedAt: dueAt,
+          lastRating: "good",
+          reviewCount: 1,
+          lapses: 0,
+          correct: 1,
+          wrong: 0,
+          successRate: 1,
+          history: []
+        },
+        "2": {
+          state: "Review",
+          intervalDays: 1,
+          srsStep: 1,
+          dueAt,
+          lastReviewedAt: dueAt,
+          lastRating: "good",
+          reviewCount: 1,
+          lapses: 0,
+          correct: 1,
+          wrong: 0,
+          successRate: 1,
+          history: []
+        }
+      }
+    }));
+  });
+
+  await page.goto("./#review");
+  await expectRoute(page, "review");
+  for (let index = 0; index < 5; index += 1) {
+    const closeReward = page.locator('[data-action="close-reward"]').first();
+    if (!(await closeReward.isVisible({ timeout: 500 }).catch(() => false))) break;
+    await closeReward.click();
+  }
+  await expect(page.locator(".reward-modal")).toHaveCount(0);
+  await page.locator('#app button[data-action="show-answer"]').click();
+  const ratingButton = page.locator('#app button[data-action="rate"][data-rating="remember"]').first();
+  await expect(ratingButton).toBeVisible();
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const before = await page.evaluate(() => window.scrollY);
+  expect(before).toBeGreaterThan(100);
+
+  await ratingButton.click();
+  await expect.poll(async () => page.evaluate(() => window.scrollY), { timeout: 2_000 }).toBeLessThan(before - 80);
+  await expect.poll(async () => page.locator('#app [data-section="review-card"]').evaluate((element) => element.getBoundingClientRect().top), { timeout: 2_000 }).toBeLessThan(120);
+});
+
 test("#home does not invent textbook reviews from viewed lessons", async ({ page }) => {
   await page.addInitScript(() => {
     const viewedAt = new Date(Date.now() - 60_000).toISOString();
