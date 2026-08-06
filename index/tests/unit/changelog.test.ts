@@ -20,13 +20,13 @@ function memoryStorage(initial: Record<string, string> = {}) {
 }
 
 const payload = normalizeChangelogPayload({
-  currentVersion: "2026.07.29",
+  currentVersion: "2026.08.06",
   entries: [
     {
-      version: "2026.07.29",
-      date: "2026-07-29",
+      version: "2026.08.06",
+      date: "2026-08-06",
       title: { ru: "Что нового", en: "What’s new" },
-      items: { ru: ["Быстрее"], en: ["Faster"] }
+      items: { ru: ["Метрика безопаснее"], en: ["Privacy-safe analytics"] }
     }
   ]
 });
@@ -45,7 +45,7 @@ describe("changelog visibility", () => {
 
     markChangelogHandled(decision.currentVersion, storage);
     expect(storage.data[FLASH_KANJI_HAS_VISITED_KEY]).toBe("true");
-    expect(storage.data[CHANGELOG_LAST_SEEN_VERSION_KEY]).toBe("2026.07.29");
+    expect(storage.data[CHANGELOG_LAST_SEEN_VERSION_KEY]).toBe("2026.08.06");
   });
 
   it("shows once to an existing user without lastSeenVersion", () => {
@@ -53,7 +53,7 @@ describe("changelog visibility", () => {
     const decision = decideChangelogVisibility(payload, { cards: { "1": { state: "Review" } } }, storage);
 
     expect(decision.shouldShow).toBe(true);
-    expect(decision.entry?.items.ru).toEqual(["Быстрее"]);
+    expect(decision.entry?.items.ru).toEqual(["Метрика безопаснее"]);
 
     markChangelogHandled(decision.currentVersion, storage);
     expect(decideChangelogVisibility(payload, { cards: { "1": {} } }, storage).shouldShow).toBe(false);
@@ -83,7 +83,7 @@ describe("changelog visibility", () => {
   });
 
   it("does not show when current version was already seen", () => {
-    const storage = memoryStorage({ [CHANGELOG_LAST_SEEN_VERSION_KEY]: "2026.07.29" });
+    const storage = memoryStorage({ [CHANGELOG_LAST_SEEN_VERSION_KEY]: "2026.08.06" });
     const decision = decideChangelogVisibility(payload, { appOpens: 8 }, storage);
 
     expect(decision.shouldShow).toBe(false);
@@ -94,7 +94,7 @@ describe("changelog visibility", () => {
     const decision = decideChangelogVisibility(payload, { appOpens: 8 }, storage);
 
     expect(decision.shouldShow).toBe(true);
-    expect(decision.currentVersion).toBe("2026.07.29");
+    expect(decision.currentVersion).toBe("2026.08.06");
   });
 
   it("survives unavailable storage without throwing", () => {

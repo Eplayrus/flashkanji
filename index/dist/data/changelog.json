@@ -1,6 +1,26 @@
 {
-  "currentVersion": "2026.07.29",
+  "currentVersion": "2026.08.06",
   "entries": [
+    {
+      "version": "2026.08.06",
+      "date": "2026-08-06",
+      "title": {
+        "ru": "Что нового во Flash Kanji",
+        "en": "What’s new in Flash Kanji"
+      },
+      "items": {
+        "ru": [
+          "Исправлена аналитика Яндекс.Метрики для SPA-навигации: разделы Flash Kanji теперь учитываются как чистые виртуальные страницы.",
+          "Цели Метрики стали безопаснее: без пользовательского текста, LocalStorage, импорта сохранений и других личных данных.",
+          "Окно обновления показывается только возвращающимся пользователям и только один раз для этой версии."
+        ],
+        "en": [
+          "Added privacy-safe Yandex Metrika tracking for SPA navigation with clean virtual pages.",
+          "Filtered analytics goal parameters so personal text, LocalStorage and imported save data never leave the app.",
+          "The update changelog now appears only once for returning users."
+        ]
+      }
+    },
     {
       "version": "2026.07.29",
       "date": "2026-07-29",

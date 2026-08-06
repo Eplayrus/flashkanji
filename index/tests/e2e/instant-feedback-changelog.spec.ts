@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const CHANGELOG_VERSION = "2026.07.29";
+const CHANGELOG_VERSION = "2026.08.06";
 const LAST_SEEN_KEY = "flashKanji.changelog.lastSeenVersion";
 const HAS_VISITED_KEY = "flashKanji.hasVisited";
 
@@ -139,7 +139,7 @@ test("changelog content follows saved English language", async ({ page }) => {
   await page.goto("./#home");
   await expect(page.locator(".changelog-modal")).toBeVisible();
   await expect(page.locator(".changelog-modal")).toContainText("What’s new");
-  await expect(page.locator(".changelog-modal")).toContainText("Made card transitions faster");
+  await expect(page.locator(".changelog-modal")).toContainText("privacy-safe Yandex Metrika tracking");
 });
 
 declare global {

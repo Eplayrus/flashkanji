@@ -79,6 +79,45 @@
       var scheduled = false;
       m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); };
       m[i].l = 1 * new Date();
+      function metrikaSegment(value) {
+        var raw = String(value || "").trim();
+        if (!raw || raw.length > 96 || /[/?#\\]/.test(raw)) return "";
+        try { raw = decodeURIComponent(raw); } catch (error) {}
+        return encodeURIComponent(raw);
+      }
+      function metrikaLevel(value) {
+        var level = String(value || "").trim().toLowerCase();
+        return /^n[1-5]$/.test(level) ? level : "";
+      }
+      function metrikaFallbackPath() {
+        var hash = String(m.location.hash || "").split("?", 1)[0].replace(/^#\/?/, "");
+        var parts = hash.split("/").filter(Boolean);
+        var route = parts[0] || "";
+        if (!route && /\/download\/?$/i.test(String(m.location.pathname || ""))) return "/app/download";
+        if (!route) return "/app/home";
+        if (route === "learn") {
+          var view = metrikaSegment(parts[1] || "");
+          var target = metrikaSegment(parts[2] || "");
+          if ((view === "lesson" || view === "legacy") && target) return "/app/learn/" + view + "/" + target;
+          return "/app/learn";
+        }
+        if (route === "textbooks") {
+          var level = metrikaLevel(parts[1] || "");
+          var lesson = metrikaSegment(parts[2] || "");
+          if (!level) return "/app/textbooks";
+          return lesson ? "/app/textbooks/" + level + "/" + lesson : "/app/textbooks/" + level;
+        }
+        if (route === "kanji") {
+          var card = metrikaSegment(parts[1] || "");
+          return card ? "/app/kanji/" + card : "/app/kanji";
+        }
+        if (route === "jlpt-lesson") {
+          var jlpt = metrikaLevel(parts[1] || "");
+          return jlpt ? "/app/jlpt-lesson/" + jlpt : "/app/jlpt-lesson";
+        }
+        if (/^(home|review|dictionary|download|about|writing|stats|achievements|eva-room)$/.test(route)) return "/app/" + route;
+        return "/app/not-found";
+      }
       function loadMetrika() {
         if (loaded) return;
         loaded = true;
@@ -90,7 +129,7 @@
         k.async = true;
         k.src = r;
         a.parentNode.insertBefore(k, a);
-        m[i](109492033, "init", { ssr: true, webvisor: true, clickmap: true, ecommerce: "dataLayer", referrer: e.referrer, url: location.href, accurateTrackBounce: true, trackLinks: true });
+        m[i](109492033, "init", { ssr: true, webvisor: true, clickmap: true, ecommerce: "dataLayer", referrer: e.referrer, url: m.__FLASH_KANJI_METRIKA_INITIAL_PATH || metrikaFallbackPath(), accurateTrackBounce: true, trackLinks: true });
       }
       function scheduleMetrika(delay) {
         if (scheduled) return;

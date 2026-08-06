@@ -3,6 +3,11 @@ import { calculateNextProgress, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
 import {
+    primeMetrikaPageView,
+    trackMetrikaGoal,
+    trackMetrikaPageView
+} from "./services/metrika";
+import {
     CHANGELOG_LAST_SEEN_VERSION_KEY,
     FLASH_KANJI_HAS_VISITED_KEY,
     decideChangelogVisibility,
@@ -25,7 +30,6 @@ import {
     const BUILD_STORAGE_KEY = "flashKanji.appBuild.v1";
     const PWA_CACHE_RESET_STORAGE_KEY = "flashKanji.pwaCacheReset.v1";
     const BOOT_RECOVERY_STORAGE_KEY = "flashKanji.bootRecovery.v1";
-    const YANDEX_METRIKA_ID = 109492033;
     const OFFICIAL_SOCIAL_LINKS = {
         instagram: "https://www.instagram.com/fallinginto_silence?igsh=MWpzYW1ncTB1a3FuNw==",
         youtube: "https://youtube.com/@fallingintosilence?si=cJ97__ndJ1aaaMae"
@@ -336,6 +340,7 @@ import {
     let changelogLoadStarted = false;
     let pendingChangelogExistingUser = false;
     let changelogFocusTimer = 0;
+    let metrikaInitialRoutePrimed = false;
     let reviewQueueCountRenderActive = false;
     let reviewQueueCountRenderCache = null;
     let deferredPwaInstallPrompt = null;
@@ -4883,6 +4888,8 @@ import {
             toggleUxSound();
         if (action === "export")
             exportProgress();
+        if (action === "apk-download")
+            reachMetricGoal("apk_download", { route: "download", source: target.dataset.source || "primary" });
         if (action === "import")
             importInput.click();
         if (action === "reset")
@@ -5233,6 +5240,7 @@ import {
         if (action === "open-jlpt-lesson") {
             const jlpt = String(target.dataset.jlpt || "").toUpperCase();
             if (jlptLessonByLevel(jlpt)) {
+                trackLearningStart("jlpt-level", { level: jlpt });
                 if (!isTextbookUnlocked(jlpt)) {
                     state.activeTextbookLevel = jlpt;
                     state.activeJlptLesson = jlpt;
@@ -5245,10 +5253,11 @@ import {
             }
         }
         if (action === "open-jlpt-lesson-start") {
+            trackLearningStart("jlpt-start", { level: target.dataset.jlpt || defaultJlptLessonLevel() });
             openJlptLessonStart(target.dataset.jlpt || defaultJlptLessonLevel());
         }
         if (action === "social-link")
-            reachMetricGoal(`social_${String(target.dataset.network || "").toLowerCase()}_opened`, { network: target.dataset.network || "", section: state.route });
+            reachMetricGoal(`social_${String(target.dataset.network || "").toLowerCase()}_opened`, { route: state.route, source: target.dataset.network || "social" });
         if (action === "play-audio")
             playAudioPlaceholder(target.dataset.audio, target.dataset.label);
         if (action === "close-reward") {
@@ -5284,9 +5293,11 @@ import {
             }
         }
         if (action === "home-primary") {
+            trackLearningStart("home-primary");
             openLearningPathPrimaryAction();
         }
         if (action === "learning-path-node") {
+            trackLearningStart("learning-path", { lessonId: target.dataset.node || id });
             openLearningPathNode(target.dataset.node || id);
         }
         if (action === "learning-path-back") {
@@ -5358,6 +5369,7 @@ import {
             state.revealed = false;
             resetReadingCheck();
             if (action === "start-lesson") {
+                trackLearningStart("legacy-lesson", { level: lesson.jlpt || "", lessonId: id });
                 dispatchEvaEvent("lesson_start", { lessonId: id, jlpt: lesson.jlpt });
                 const jlptLevel = String(lesson.jlpt || "").toUpperCase();
                 if (/^n[2-5]-lesson-\d+$/i.test(lesson.id) && ["N5", "N4", "N3", "N2"].includes(jlptLevel)) {
@@ -5756,6 +5768,57 @@ import {
         scheduleScrollPageToTop();
         renderImmediate();
     }
+    function currentMetrikaRouteMatch() {
+        return state.routeMatch || validateRouteMatchEntities(readCurrentRouteMatch());
+    }
+    function trackCurrentMetrikaPageView() {
+        const routeMatch = currentMetrikaRouteMatch();
+        if (!metrikaInitialRoutePrimed) {
+            primeMetrikaPageView(routeMatch, state);
+            metrikaInitialRoutePrimed = true;
+            trackMetrikaRouteGoal(routeMatch);
+            return;
+        }
+        const result = trackMetrikaPageView(routeMatch, state);
+        if (result.sent)
+            trackMetrikaRouteGoal(routeMatch);
+    }
+    function trackMetrikaRouteGoal(routeMatch) {
+        if (!routeMatch || routeMatch.status !== "valid")
+            return;
+        const params = routeMatch.params || {};
+        if (routeMatch.route === "review") {
+            reachMetricGoal("review_open", { route: "review" });
+            return;
+        }
+        if (routeMatch.route === "kanji") {
+            reachMetricGoal("kanji_open", { route: "kanji", cardId: params.cardId || state.kanjiPageId || params.slug || "" });
+            return;
+        }
+        if (routeMatch.route === "jlpt-lesson") {
+            reachMetricGoal("lesson_open", { route: "jlpt-lesson", level: params.level || state.activeJlptLesson || "", source: "jlpt-lesson" });
+            return;
+        }
+        if (routeMatch.route === "learn" && params.targetId) {
+            reachMetricGoal("lesson_open", { route: "learn", lessonId: params.targetId, source: params.view || "learn" });
+            return;
+        }
+        if (routeMatch.route === "textbooks" && params.level) {
+            const subroute = String(params.subroute || "");
+            if (["final", "final-test"].includes(subroute.toLowerCase())) {
+                reachMetricGoal("final_test_start", { route: "textbooks", level: params.level, source: "route" });
+                return;
+            }
+            if (isTextbookLessonMetrikaSubroute(subroute))
+                reachMetricGoal("lesson_open", { route: "textbooks", level: params.level, lessonId: subroute, source: "textbook" });
+        }
+    }
+    function isTextbookLessonMetrikaSubroute(subroute) {
+        const raw = String(subroute || "").trim().toLowerCase();
+        if (!raw)
+            return false;
+        return !new Set(["review", "final", "final-test", "kanji", "grammar", "reading", "listening"]).has(raw);
+    }
     function renderNow() {
         const renderContext = routeRenderCoordinator.begin(state.route);
         reviewQueueCountRenderActive = true;
@@ -5764,6 +5827,7 @@ import {
         try {
             syncChrome();
             syncRouteMeta();
+            trackCurrentMetrikaPageView();
             let html = "";
             if (state.route === NOT_FOUND_ROUTE)
                 html = renderNotFoundPage(state.routeNotFound);
@@ -6701,7 +6765,7 @@ import {
             <p class="home-hero-note">${escapeHtml(copy.lead)}</p>
             <p class="hero-subtitle">${escapeHtml(copy.note)}</p>
             <div class="hero-actions home-hero-actions">
-              <a class="btn primary home-primary-cta apk-download" href="${escapeAttr(ANDROID_APK_DRIVE_URL)}" target="_blank" rel="noopener noreferrer">
+              <a class="btn primary home-primary-cta apk-download" href="${escapeAttr(ANDROID_APK_DRIVE_URL)}" target="_blank" rel="noopener noreferrer" data-action="apk-download" data-source="google-drive">
                 <span aria-hidden="true">⇩</span>
                 <span>${escapeHtml(copy.apk)}</span>
               </a>
@@ -6736,7 +6800,7 @@ import {
               <ul>
                 ${copy.info.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
               </ul>
-              <a class="btn ghost" href="${escapeAttr(ANDROID_APK_MIRROR_URL)}" download="flash-kanji-android.apk">${escapeHtml(copy.mirror)}</a>
+              <a class="btn ghost" href="${escapeAttr(ANDROID_APK_MIRROR_URL)}" download="flash-kanji-android.apk" data-action="apk-download" data-source="mirror">${escapeHtml(copy.mirror)}</a>
             </article>
           </aside>
         </section>
@@ -12318,6 +12382,8 @@ import {
             }
             if (inReviewMode)
                 state.pendingFocus = "__scroll-top__";
+            if (inReviewMode)
+                trackReviewSessionComplete("reading-cloze");
             render();
             saveProgress();
             scheduleStudySideEffects("reading cloze post-render effects", () => {
@@ -12378,6 +12444,8 @@ import {
         }
         if (inReviewMode)
             state.pendingFocus = "__scroll-top__";
+        if (inReviewMode)
+            trackReviewSessionComplete("reading-exercise");
         render();
         saveProgress();
         scheduleStudySideEffects("reading exercise post-render effects", () => {
@@ -12699,6 +12767,7 @@ import {
         const xp = state.n5Meta?.rewards?.lessonCompleteXp || 45;
         const coins = state.n5Meta?.rewards?.lessonCompleteMoon || 6;
         addReward(xp, coins, `n5_lesson:${lesson.id}`);
+        trackLessonComplete("N5", lesson.id);
         queueReward({
             title: `${n5Labels().lessonComplete}: ${localized(lesson.title)}`,
             message: n5Labels().lessonCompleteText,
@@ -12733,6 +12802,7 @@ import {
         const lesson = n5LessonById(id);
         if (!lesson)
             return;
+        trackLearningStart("textbook-lesson", { level: "N5", lessonId: lesson.id });
         n5Course().currentLessonId = lesson.id;
         rememberJlptLessonVisit("N5", lesson.id, "n5_lesson_open");
         markJlptLessonKanjiSeen("N5", lesson, "n5_lesson_open");
@@ -12972,6 +13042,7 @@ import {
             }
             test.lastRewardXp = rewardXp;
             test.lastRewardMoon = rewardMoon;
+            trackFinalTestResult("N5", test);
             // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
             // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
             n5Course();
@@ -14284,6 +14355,7 @@ import {
         const xp = state.n4Meta?.rewards?.lessonCompleteXp || 65;
         const coins = state.n4Meta?.rewards?.lessonCompleteMoon || 8;
         addReward(xp, coins, `n4_lesson:${lesson.id}`);
+        trackLessonComplete("N4", lesson.id);
         queueReward({
             title: `${n4Labels().lessonComplete}: ${localized(lesson.title)}`,
             message: n4Labels().lessonCompleteText,
@@ -14379,6 +14451,7 @@ import {
         const lesson = n4LessonById(id);
         if (!lesson)
             return;
+        trackLearningStart("textbook-lesson", { level: "N4", lessonId: lesson.id });
         n4Course().currentLessonId = lesson.id;
         rememberJlptLessonVisit("N4", lesson.id, "n4_lesson_open");
         markJlptLessonKanjiSeen("N4", lesson, "n4_lesson_open");
@@ -14671,6 +14744,7 @@ import {
             }
             test.lastRewardXp = rewardXp;
             test.lastRewardMoon = rewardMoon;
+            trackFinalTestResult("N4", test);
             // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
             // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
             n4Course();
@@ -16008,6 +16082,7 @@ import {
         const xp = state.n3Meta?.rewards?.lessonCompleteXp || 75;
         const coins = state.n3Meta?.rewards?.lessonCompleteMoon || 9;
         addReward(xp, coins, `n3_lesson:${lesson.id}`);
+        trackLessonComplete("N3", lesson.id);
         queueReward({
             title: `${n3Labels().lessonComplete}: ${localized(lesson.title)}`,
             message: n3Labels().lessonCompleteText,
@@ -16107,6 +16182,7 @@ import {
         const lesson = n3LessonById(id);
         if (!lesson)
             return;
+        trackLearningStart("textbook-lesson", { level: "N3", lessonId: lesson.id });
         n3Course().currentLessonId = lesson.id;
         rememberJlptLessonVisit("N3", lesson.id, "n3_lesson_open");
         markJlptLessonKanjiSeen("N3", lesson, "n3_lesson_open");
@@ -16399,6 +16475,7 @@ import {
             }
             test.lastRewardXp = rewardXp;
             test.lastRewardMoon = rewardMoon;
+            trackFinalTestResult("N3", test);
             // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
             // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
             n3Course();
@@ -17733,6 +17810,7 @@ import {
         const xp = state.n2Meta?.rewards?.lessonCompleteXp || 85;
         const coins = state.n2Meta?.rewards?.lessonCompleteMoon || 10;
         addReward(xp, coins, `n2_lesson:${lesson.id}`);
+        trackLessonComplete("N2", lesson.id);
         queueReward({
             title: `${n2Labels().lessonComplete}: ${localized(lesson.title)}`,
             message: n2Labels().lessonCompleteText,
@@ -17832,6 +17910,7 @@ import {
         const lesson = n2LessonById(id);
         if (!lesson)
             return;
+        trackLearningStart("textbook-lesson", { level: "N2", lessonId: lesson.id });
         n2Course().currentLessonId = lesson.id;
         rememberJlptLessonVisit("N2", lesson.id, "n2_lesson_open");
         markJlptLessonKanjiSeen("N2", lesson, "n2_lesson_open");
@@ -18124,6 +18203,7 @@ import {
             }
             test.lastRewardXp = rewardXp;
             test.lastRewardMoon = rewardMoon;
+            trackFinalTestResult("N2", test);
             // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
             // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
             n2Course();
@@ -19462,6 +19542,7 @@ import {
         const xp = state.n1Meta?.rewards?.lessonCompleteXp || 85;
         const coins = state.n1Meta?.rewards?.lessonCompleteMoon || 10;
         addReward(xp, coins, `n1_lesson:${lesson.id}`);
+        trackLessonComplete("N1", lesson.id);
         queueReward({
             title: `${n1Labels().lessonComplete}: ${localized(lesson.title)}`,
             message: n1Labels().lessonCompleteText,
@@ -19561,6 +19642,7 @@ import {
         const lesson = n1LessonById(id);
         if (!lesson)
             return;
+        trackLearningStart("textbook-lesson", { level: "N1", lessonId: lesson.id });
         n1Course().currentLessonId = lesson.id;
         rememberJlptLessonVisit("N1", lesson.id, "n1_lesson_open");
         markJlptLessonKanjiSeen("N1", lesson, "n1_lesson_open");
@@ -19853,6 +19935,7 @@ import {
             }
             test.lastRewardXp = rewardXp;
             test.lastRewardMoon = rewardMoon;
+            trackFinalTestResult("N1", test);
             // Make sure the finalTest data (including percent, completedAt, score) is normalized into the course via ensure/merge
             // so that the immediate render() of the final-test page sees the real percent instead of stale 0 or missing completedAt.
             n1Course();
@@ -22864,6 +22947,7 @@ import {
         state.activeCardId = null;
         resetReadingCheck();
         state.pendingFocus = null;
+        trackReviewSessionComplete("card");
         renderImmediatePreservingScroll();
         saveProgress();
         scheduleStudySideEffects("review card post-render effects", () => {
@@ -23156,6 +23240,7 @@ import {
         const xp = state.rewards.rewards.lessonCompleteXp;
         const coins = state.rewards.rewards.lessonCompleteCoins;
         state.progress.lessonCompletions[lessonId] = new Date().toISOString();
+        trackLessonComplete("", lessonId, "legacy-srs");
         playUxSound("lesson_complete");
         addReward(xp, coins, "lesson_completion");
         adjustEvaRelationship({ warmth: 2.4, trust: 2, discipline: 2.2, curiosity: 0.8 }, "lesson_completion");
@@ -23263,6 +23348,7 @@ import {
         }
         adjustEvaRelationship({ curiosity: 1, discipline: 0.8, trust: 0.4 }, "writing_complete");
         dispatchEvaEvent("writing_complete", { cardId: writingSession.cardId });
+        reachMetricGoal("writing_complete", { route: "writing", cardId: writingSession.cardId || "", source: "practice" });
         const unlocked = evaluateAchievements();
         saveProgress();
         if (unlocked)
@@ -25826,18 +25912,44 @@ import {
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
+        reachMetricGoal("progress_export", { route: state.route, source: "manual" });
         toast(t("export"));
     }
-    function reachMetricGoal(goal, params = {}) {
-        try {
-            if (typeof window.ym !== "function")
-                return false;
-            window.ym(YANDEX_METRIKA_ID, "reachGoal", goal, params);
-            return true;
-        }
-        catch (error) {
-            console.warn("Metric goal failed.", error);
-            return false;
+    function reachMetricGoal(goal, params = {}, options = {}) {
+        return trackMetrikaGoal(goal, params, options);
+    }
+    function trackLearningStart(source = "learn", params = {}) {
+        reachMetricGoal("learning_start", { route: state.route, source, ...params }, { dedupeKey: "learning_start" });
+    }
+    function trackLessonComplete(level, lessonId, source = "textbook") {
+        const normalizedLevel = canonicalJlptLevel(level);
+        const normalizedLessonId = String(lessonId || "");
+        reachMetricGoal("lesson_complete", {
+            route: state.route,
+            level: normalizedLevel,
+            lessonId: normalizedLessonId,
+            source
+        }, { dedupeKey: `${normalizedLevel || "legacy"}:${normalizedLessonId}` });
+    }
+    function trackReviewSessionComplete(source = "review") {
+        if (state.route !== "review" || getReviewQueueCount() > 0)
+            return;
+        const sessionKey = state.reviewSession?.startedAt || "current";
+        reachMetricGoal("review_session_complete", { route: "review", source }, { dedupeKey: sessionKey });
+    }
+    function trackFinalTestResult(level, test, source = "final-test") {
+        const normalizedLevel = canonicalJlptLevel(level);
+        reachMetricGoal("final_test_complete", {
+            route: "textbooks",
+            level: normalizedLevel,
+            source
+        }, { dedupeKey: `${normalizedLevel}:${test?.completedAt || "complete"}` });
+        if (test?.passed) {
+            reachMetricGoal("final_test_pass", {
+                route: "textbooks",
+                level: normalizedLevel,
+                source
+            }, { dedupeKey: `${normalizedLevel}:${test?.passedAt || test?.completedAt || "pass"}` });
         }
     }
     function shareContextFromTarget(target) {
@@ -26192,16 +26304,16 @@ import {
         if (!shareContext.level) {
             shareContext.level = context.level || state.activeJlptLesson || state.activeTextbookLevel || "";
         }
-        reachMetricGoal("share_opened", { section: normalized, level: canonicalJlptLevel(shareContext.level) || "" });
+        reachMetricGoal("share_opened", { route: normalized, level: canonicalJlptLevel(shareContext.level) || "", source: "share" });
         const payload = await buildShareData(normalized, shareContext);
         const result = await shareFlashKanji(payload, { toastKey: context.toastKey || "shareLinkCopied" });
         if (result === "share") {
-            reachMetricGoal("share_completed", { section: normalized, method: payload.files?.length ? "file" : "web_share" });
+            reachMetricGoal("share_completed", { route: normalized, source: payload.files?.length ? "file" : "web-share" });
             return true;
         }
         if (result === "copy") {
-            reachMetricGoal("share_link_copied", { section: normalized });
-            reachMetricGoal("share_completed", { section: normalized, method: "copy" });
+            reachMetricGoal("share_link_copied", { route: normalized, source: "copy" });
+            reachMetricGoal("share_completed", { route: normalized, source: "copy" });
             return true;
         }
         if (result === "abort")
@@ -27079,7 +27191,7 @@ import {
             showPwaInstallBanner();
     }
     async function handlePwaInstallRequest() {
-        reachMetricGoal("pwa_install_clicked", { available: Boolean(deferredPwaInstallPrompt), ios: isIosSafari() });
+        reachMetricGoal("pwa_install_click", { route: state.route, source: deferredPwaInstallPrompt ? "browser" : isIosSafari() ? "ios" : "help" });
         if (isPwaInstalled()) {
             handlePwaInstallAccepted();
             return;
@@ -27124,7 +27236,6 @@ import {
     }
     function showPwaInstallBanner() {
         if (canShowPwaInstallPrompt()) {
-            reachMetricGoal("pwa_prompt_shown", { source: deferredPwaInstallPrompt ? "browser" : "ios" });
             playUxSound("notification_soft");
             render();
         }
@@ -27139,7 +27250,7 @@ import {
         };
         state.pwaInstallHelpVisible = false;
         savePwaInstallPromptState();
-        reachMetricGoal("pwa_installed", { platform: isIosSafari() ? "ios" : "browser" });
+        reachMetricGoal("pwa_installed", { route: state.route, source: isIosSafari() ? "ios" : "browser" }, { dedupeKey: "appinstalled" });
         scheduleNotificationPromptCheck();
         if (state.progress && state.i18n)
             render();
