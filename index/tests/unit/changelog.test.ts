@@ -25,8 +25,8 @@ const payload = normalizeChangelogPayload({
     {
       version: "2026.08.06",
       date: "2026-08-06",
-      title: { ru: "Что нового", en: "What’s new" },
-      items: { ru: ["Метрика безопаснее"], en: ["Privacy-safe analytics"] }
+      title: { ru: "Что изменилось для тебя", en: "What changed for you" },
+      items: { ru: ["Учебные данные остаются в браузере"], en: ["Study data stays in your browser"] }
     }
   ]
 });
@@ -53,7 +53,7 @@ describe("changelog visibility", () => {
     const decision = decideChangelogVisibility(payload, { cards: { "1": { state: "Review" } } }, storage);
 
     expect(decision.shouldShow).toBe(true);
-    expect(decision.entry?.items.ru).toEqual(["Метрика безопаснее"]);
+    expect(decision.entry?.items.ru).toEqual(["Учебные данные остаются в браузере"]);
 
     markChangelogHandled(decision.currentVersion, storage);
     expect(decideChangelogVisibility(payload, { cards: { "1": {} } }, storage).shouldShow).toBe(false);

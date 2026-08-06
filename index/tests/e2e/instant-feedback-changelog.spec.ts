@@ -138,8 +138,8 @@ test("changelog content follows saved English language", async ({ page }) => {
 
   await page.goto("./#home");
   await expect(page.locator(".changelog-modal")).toBeVisible();
-  await expect(page.locator(".changelog-modal")).toContainText("What’s new");
-  await expect(page.locator(".changelog-modal")).toContainText("privacy-safe Yandex Metrika tracking");
+  await expect(page.locator(".changelog-modal")).toContainText("What changed for you");
+  await expect(page.locator(".changelog-modal")).toContainText("Your study data stays in your browser");
 });
 
 declare global {

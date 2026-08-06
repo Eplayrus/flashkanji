@@ -5,19 +5,19 @@
       "version": "2026.08.06",
       "date": "2026-08-06",
       "title": {
-        "ru": "Что нового во Flash Kanji",
-        "en": "What’s new in Flash Kanji"
+        "ru": "Что изменилось для тебя",
+        "en": "What changed for you"
       },
       "items": {
         "ru": [
-          "Исправлена аналитика Яндекс.Метрики для SPA-навигации: разделы Flash Kanji теперь учитываются как чистые виртуальные страницы.",
-          "Цели Метрики стали безопаснее: без пользовательского текста, LocalStorage, импорта сохранений и других личных данных.",
-          "Окно обновления показывается только возвращающимся пользователям и только один раз для этой версии."
+          "Разделы приложения теперь распознаются точнее: учебники, повторение, словарь, карточки кандзи и страница скачивания больше не смешиваются в одну «главную» страницу.",
+          "Учебные данные остаются у тебя в браузере: сохранения, импортированные файлы, введённый текст и содержимое LocalStorage не отправляются вместе со статистикой.",
+          "Окно «Что нового» больше не встречает новых пользователей и показывается возвращающимся только один раз для этой версии."
         ],
         "en": [
-          "Added privacy-safe Yandex Metrika tracking for SPA navigation with clean virtual pages.",
-          "Filtered analytics goal parameters so personal text, LocalStorage and imported save data never leave the app.",
-          "The update changelog now appears only once for returning users."
+          "App sections are recognized more accurately: textbooks, review, dictionary, kanji cards and the download page no longer collapse into one generic Home view.",
+          "Your study data stays in your browser: saved progress, imported files, typed text and LocalStorage content are not sent with analytics events.",
+          "The “What’s new” window no longer appears for first-time visitors and shows returning users only once for this version."
         ]
       }
     },
