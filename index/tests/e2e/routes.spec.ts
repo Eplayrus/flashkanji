@@ -138,7 +138,7 @@ test("#review ignores stale sentence practice saved state", async ({ page }) => 
   await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
 });
 
-test("SRS answer scrolls back to the top of the next review card", async ({ page }) => {
+test("SRS answer scrolls to the top of review after each card", async ({ page }) => {
   await page.addInitScript(() => {
     const dueAt = new Date(Date.now() - 60_000).toISOString();
     const today = new Date();
@@ -149,7 +149,8 @@ test("SRS answer scrolls back to the top of the next review card", async ({ page
       appOpens: 2,
       achievements: {
         first_kanji: { unlockedAt: dueAt, rewardXp: 25, rewardFragments: 5 },
-        first_memory: { unlockedAt: dueAt, rewardXp: 25, rewardFragments: 5 }
+        first_memory: { unlockedAt: dueAt, rewardXp: 25, rewardFragments: 5 },
+        first_day: { unlockedAt: dueAt, rewardXp: 20, rewardFragments: 4 }
       },
       dailyBonuses: { [todayKey]: dueAt },
       visits: {
@@ -200,17 +201,18 @@ test("SRS answer scrolls back to the top of the next review card", async ({ page
     await closeReward.click();
   }
   await expect(page.locator(".reward-modal")).toHaveCount(0);
-  await page.locator('#app button[data-action="show-answer"]').click();
-  const ratingButton = page.locator('#app button[data-action="rate"][data-rating="remember"]').first();
-  await expect(ratingButton).toBeVisible();
+  for (let index = 0; index < 2; index += 1) {
+    await page.locator('#app button[data-action="show-answer"]').click();
+    const ratingButton = page.locator('#app button[data-action="rate"][data-rating="remember"]').first();
+    await expect(ratingButton).toBeVisible();
 
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  const before = await page.evaluate(() => window.scrollY);
-  expect(before).toBeGreaterThan(100);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(100);
 
-  await ratingButton.click();
-  await expect.poll(async () => page.evaluate(() => window.scrollY), { timeout: 2_000 }).toBeLessThan(before - 80);
-  await expect.poll(async () => page.locator('#app [data-section="review-card"]').evaluate((element) => element.getBoundingClientRect().top), { timeout: 2_000 }).toBeLessThan(120);
+    await ratingButton.click();
+    await expect.poll(async () => page.evaluate(() => window.scrollY), { timeout: 2_000 }).toBeLessThan(16);
+  }
 });
 
 test("#home does not invent textbook reviews from viewed lessons", async ({ page }) => {

@@ -3884,14 +3884,24 @@ import {
         };
         requestAnimationFrame(() => window.setTimeout(run, timeout));
     }
-    function scheduleStudySideEffects(label, task) {
+    function renderImmediateScrollingTop() {
+        renderImmediate();
+        scrollPageToTop();
+        scheduleScrollPageToTop();
+        window.setTimeout(scrollPageToTop, 120);
+        window.setTimeout(scrollPageToTop, 320);
+    }
+    function scheduleStudySideEffects(label, task, options = {}) {
         scheduleNonCriticalTask(label, () => {
             const result = task?.();
             if (result && typeof result.then === "function") {
                 result.catch((error) => console.warn(`[Flash Kanji] ${label} failed.`, error));
             }
             saveProgress();
-            renderImmediatePreservingScroll();
+            if (options.scrollTop)
+                renderImmediateScrollingTop();
+            else
+                renderImmediatePreservingScroll();
         });
     }
     function claimStudyAction(target) {
@@ -22946,7 +22956,7 @@ import {
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
-        state.pendingFocus = "review-card";
+        state.pendingFocus = "__scroll-top__";
         trackReviewSessionComplete("card");
         renderImmediate();
         saveProgress();
@@ -22957,7 +22967,7 @@ import {
             checkLessonCompletion(card.lessonId);
             checkDailyGoal();
             evaluateAchievements();
-        });
+        }, { scrollTop: true });
     }
     function srsButtonLabels() {
         return lang() === "ru"
