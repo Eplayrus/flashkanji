@@ -1,6 +1,26 @@
 {
-  "currentVersion": "2026.08.06",
+  "currentVersion": "2026.08.09",
   "entries": [
+    {
+      "version": "2026.08.09",
+      "date": "2026-08-09",
+      "title": {
+        "ru": "Озвучка стала аккуратнее",
+        "en": "Audio playback is cleaner"
+      },
+      "items": {
+        "ru": [
+          "Озвучка кандзи больше не накладывается сама на себя: Flash Kanji выбирает один источник — системный TTS или запасной аудиофайл.",
+          "Если системная озвучка недоступна, запасной файл включается один раз и не спорит с голосом браузера.",
+          "Повторение остаётся спокойнее: после карточек экран возвращается наверх, а звук не превращается в хор."
+        ],
+        "en": [
+          "Kanji pronunciation no longer overlaps itself: Flash Kanji now uses either system TTS or the backup audio file.",
+          "If system speech is unavailable, the backup file starts once and does not compete with the browser voice.",
+          "Review stays calmer: cards return to the top and audio does not turn into a chorus."
+        ]
+      }
+    },
     {
       "version": "2026.08.06",
       "date": "2026-08-06",

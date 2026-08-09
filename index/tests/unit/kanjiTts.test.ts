@@ -37,6 +37,7 @@ describe("kanji TTS helpers", () => {
   it("speaks Japanese text through system speech synthesis", () => {
     const speak = vi.fn();
     const cancel = vi.fn();
+    const onStart = vi.fn();
     const synth = {
       cancel,
       speak,
@@ -47,15 +48,18 @@ describe("kanji TTS helpers", () => {
       lang = "";
       rate = 1;
       voice: SpeechSynthesisVoice | null = null;
+      onstart: (() => void) | null = null;
 
       constructor(text: string) {
         this.text = text;
       }
     }
-    expect(speakJapaneseReading("にち", { synth, Utterance: Utterance as typeof SpeechSynthesisUtterance })).toBe(true);
+    expect(speakJapaneseReading("にち", { synth, Utterance: Utterance as typeof SpeechSynthesisUtterance, onStart })).toBe(true);
     expect(cancel).toHaveBeenCalledOnce();
     expect(speak).toHaveBeenCalledOnce();
     expect(speak.mock.calls[0][0]).toMatchObject({ text: "にち", lang: "ja-JP", rate: 0.92 });
+    speak.mock.calls[0][0].onstart();
+    expect(onStart).toHaveBeenCalledOnce();
   });
 
   it("reports speech synthesis failures so callers can use audio fallback", () => {

@@ -74,6 +74,7 @@ export function speakJapaneseReading(text: string, options: {
   rate?: number;
   synth?: SpeechSynthesis;
   Utterance?: typeof SpeechSynthesisUtterance;
+  onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: unknown) => void;
 } = {}): boolean {
@@ -88,6 +89,7 @@ export function speakJapaneseReading(text: string, options: {
   utterance.lang = "ja-JP";
   utterance.rate = options.rate ?? 0.92;
   utterance.voice = japaneseVoice(synth);
+  utterance.onstart = () => options.onStart?.();
   utterance.onend = () => options.onEnd?.();
   utterance.onerror = (error) => options.onError?.(error);
   try {

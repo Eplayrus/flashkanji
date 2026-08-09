@@ -20,13 +20,16 @@ function memoryStorage(initial: Record<string, string> = {}) {
 }
 
 const payload = normalizeChangelogPayload({
-  currentVersion: "2026.08.06",
+  currentVersion: "2026.08.09",
   entries: [
     {
-      version: "2026.08.06",
-      date: "2026-08-06",
-      title: { ru: "Что изменилось для тебя", en: "What changed for you" },
-      items: { ru: ["Учебные данные остаются в браузере"], en: ["Study data stays in your browser"] }
+      version: "2026.08.09",
+      date: "2026-08-09",
+      title: { ru: "Озвучка стала аккуратнее", en: "Audio playback is cleaner" },
+      items: {
+        ru: ["Озвучка кандзи больше не накладывается сама на себя"],
+        en: ["Kanji pronunciation no longer overlaps itself"]
+      }
     }
   ]
 });
@@ -45,7 +48,7 @@ describe("changelog visibility", () => {
 
     markChangelogHandled(decision.currentVersion, storage);
     expect(storage.data[FLASH_KANJI_HAS_VISITED_KEY]).toBe("true");
-    expect(storage.data[CHANGELOG_LAST_SEEN_VERSION_KEY]).toBe("2026.08.06");
+    expect(storage.data[CHANGELOG_LAST_SEEN_VERSION_KEY]).toBe("2026.08.09");
   });
 
   it("shows once to an existing user without lastSeenVersion", () => {
@@ -53,7 +56,7 @@ describe("changelog visibility", () => {
     const decision = decideChangelogVisibility(payload, { cards: { "1": { state: "Review" } } }, storage);
 
     expect(decision.shouldShow).toBe(true);
-    expect(decision.entry?.items.ru).toEqual(["Учебные данные остаются в браузере"]);
+    expect(decision.entry?.items.ru).toEqual(["Озвучка кандзи больше не накладывается сама на себя"]);
 
     markChangelogHandled(decision.currentVersion, storage);
     expect(decideChangelogVisibility(payload, { cards: { "1": {} } }, storage).shouldShow).toBe(false);
@@ -83,7 +86,7 @@ describe("changelog visibility", () => {
   });
 
   it("does not show when current version was already seen", () => {
-    const storage = memoryStorage({ [CHANGELOG_LAST_SEEN_VERSION_KEY]: "2026.08.06" });
+    const storage = memoryStorage({ [CHANGELOG_LAST_SEEN_VERSION_KEY]: "2026.08.09" });
     const decision = decideChangelogVisibility(payload, { appOpens: 8 }, storage);
 
     expect(decision.shouldShow).toBe(false);
@@ -94,7 +97,7 @@ describe("changelog visibility", () => {
     const decision = decideChangelogVisibility(payload, { appOpens: 8 }, storage);
 
     expect(decision.shouldShow).toBe(true);
-    expect(decision.currentVersion).toBe("2026.08.06");
+    expect(decision.currentVersion).toBe("2026.08.09");
   });
 
   it("survives unavailable storage without throwing", () => {

@@ -143,7 +143,7 @@ test("SRS answer scrolls to the top of review after each card", async ({ page })
     const dueAt = new Date(Date.now() - 60_000).toISOString();
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.06");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.09");
     localStorage.setItem("flashKanji.hasVisited", "true");
     localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
       appOpens: 2,

@@ -326,6 +326,8 @@ import {
     const routeRenderCoordinator = createRenderCoordinator();
     let audioContext = null;
     let activeKanjiAudio = null;
+    let kanjiAudioRequestId = 0;
+    let kanjiAudioOwner = "idle";
     let lastAutoAudioKey = "";
     let kanjiSpeechCursors = new Map();
     let lastUxSoundAt = 0;
@@ -5239,7 +5241,7 @@ import {
                         text: target.dataset.ttsText || "",
                         kind: target.dataset.ttsKind || "cycle",
                         label: target.dataset.ttsLabel || "",
-                        fallback: () => playPreparedKanjiAudio(card)
+                        fallback: (fallbackOptions = {}) => playPreparedKanjiAudio(card, fallbackOptions)
                     });
                 }
                 else {
@@ -25348,7 +25350,19 @@ import {
         playKanjiAudio(card, { silent: true });
     }
     function stopKanjiAudio() {
+        kanjiAudioRequestId += 1;
+        kanjiAudioOwner = "idle";
         stopPreparedKanjiAudio();
+        cancelKanjiSpeech();
+    }
+    function nextKanjiAudioRequest() {
+        kanjiAudioRequestId += 1;
+        return kanjiAudioRequestId;
+    }
+    function isCurrentKanjiAudioRequest(requestId) {
+        return requestId === kanjiAudioRequestId;
+    }
+    function cancelKanjiSpeech() {
         if ("speechSynthesis" in window)
             window.speechSynthesis.cancel();
     }
@@ -25360,49 +25374,78 @@ import {
         }
     }
     function playKanjiAudio(card, options = {}) {
+        const requestId = nextKanjiAudioRequest();
         let fallbackPromise = null;
         const fallback = () => {
-            fallbackPromise ||= playPreparedKanjiAudio(card, options);
+            if (!isCurrentKanjiAudioRequest(requestId))
+                return Promise.resolve(false);
+            fallbackPromise ||= playPreparedKanjiAudio(card, { ...options, requestId });
             return fallbackPromise;
         };
         const ttsStarted = speakKanjiTts(card, {
             kind: "cycle",
             silent: options.silent,
-            fallback
+            fallback,
+            requestId
         });
         return ttsStarted ? Promise.resolve(true) : fallback();
     }
     function playPreparedKanjiAudio(card, options = {}) {
+        const requestId = options.requestId || nextKanjiAudioRequest();
+        if (!isCurrentKanjiAudioRequest(requestId))
+            return Promise.resolve(false);
         const audio = getKanjiAudioPath(card);
         if (!audio)
             return Promise.resolve(false);
+        cancelKanjiSpeech();
         stopPreparedKanjiAudio();
-        activeKanjiAudio = new Audio(audio);
-        activeKanjiAudio.preload = "auto";
-        activeKanjiAudio.onended = () => {
-            activeKanjiAudio = null;
+        if (!isCurrentKanjiAudioRequest(requestId))
+            return Promise.resolve(false);
+        kanjiAudioOwner = "audio";
+        const audioElement = new Audio(audio);
+        activeKanjiAudio = audioElement;
+        audioElement.preload = "auto";
+        audioElement.onended = () => {
+            if (activeKanjiAudio === audioElement) {
+                activeKanjiAudio = null;
+                if (isCurrentKanjiAudioRequest(requestId))
+                    kanjiAudioOwner = "idle";
+            }
         };
-        activeKanjiAudio.onerror = () => {
+        audioElement.onerror = () => {
+            if (!isCurrentKanjiAudioRequest(requestId))
+                return;
             if (!options.silent)
                 console.warn("Kanji audio file could not be loaded.", { id: card?.id, audio });
         };
-        return activeKanjiAudio.play()
-            .then(() => true)
+        return audioElement.play()
+            .then(() => isCurrentKanjiAudioRequest(requestId) && activeKanjiAudio === audioElement)
             .catch((error) => {
+            if (!isCurrentKanjiAudioRequest(requestId))
+                return false;
+            if (activeKanjiAudio === audioElement) {
+                activeKanjiAudio = null;
+                kanjiAudioOwner = "idle";
+            }
             if (!options.silent)
                 console.warn("Kanji audio playback was blocked or failed.", { id: card?.id, audio, error });
             return false;
         });
     }
     function speakKanjiAudio(card, options = {}) {
-        return speakKanjiTts(card, { kind: "cycle", silent: true, ...options });
+        const requestId = options.requestId || nextKanjiAudioRequest();
+        return speakKanjiTts(card, { kind: "cycle", silent: true, ...options, requestId });
     }
     function speakKanjiTts(card, options = {}) {
+        const requestId = options.requestId || nextKanjiAudioRequest();
         stopPreparedKanjiAudio();
+        kanjiAudioOwner = "tts-pending";
         let fallbackPromise = null;
         const fallback = typeof options.fallback === "function"
             ? () => {
-                fallbackPromise ||= options.fallback();
+                if (!isCurrentKanjiAudioRequest(requestId))
+                    return Promise.resolve(false);
+                fallbackPromise ||= options.fallback({ ...options, requestId });
                 return fallbackPromise;
             }
             : null;
@@ -25417,19 +25460,40 @@ import {
             kanjiSpeechCursors.set(cursorKey, picked.cursor);
         }
         const text = directText || selected?.kana || firstReading(getKanjiSpeechText(card));
+        let speechStarted = false;
         const spoken = speakJapaneseReading(text, {
+            onStart: () => {
+                if (!isCurrentKanjiAudioRequest(requestId) || kanjiAudioOwner === "audio") {
+                    cancelKanjiSpeech();
+                    return;
+                }
+                speechStarted = true;
+                kanjiAudioOwner = "tts";
+                stopPreparedKanjiAudio();
+            },
+            onEnd: () => {
+                if (isCurrentKanjiAudioRequest(requestId) && kanjiAudioOwner === "tts")
+                    kanjiAudioOwner = "idle";
+            },
             onError: (error) => {
+                if (!isCurrentKanjiAudioRequest(requestId) || speechStarted || kanjiAudioOwner === "audio")
+                    return;
                 if (!options.silent)
                     console.warn("System kanji TTS failed; trying prepared audio fallback.", { id: card?.id, error });
                 void fallback?.();
             }
         });
         if (!spoken) {
-            void fallback?.();
+            if (isCurrentKanjiAudioRequest(requestId))
+                void fallback?.();
+            if (!fallback && isCurrentKanjiAudioRequest(requestId))
+                kanjiAudioOwner = "idle";
             if (!fallback && !options.silent)
                 console.warn("Kanji audio is not available for this card.", { id: card?.id, expected: expectedKanjiAudioPath(card) });
             return false;
         }
+        if (!isCurrentKanjiAudioRequest(requestId))
+            return false;
         const label = options.label || (selected ? kanjiTtsKindLabel(selected) : "TTS");
         if (!options.silent)
             toast(`${card?.kanji || ""} ${label}: ${text}`.trim());

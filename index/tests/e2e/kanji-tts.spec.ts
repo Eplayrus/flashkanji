@@ -12,6 +12,8 @@ declare global {
       type: "new" | "play" | "pause";
       src?: string;
     }>;
+    __flashKanjiPlaybackEvents?: string[];
+    __flashKanjiTtsErrorAfterSpeak?: boolean;
     __flashKanjiTtsShouldThrow?: boolean;
   }
 }
@@ -21,6 +23,8 @@ test.beforeEach(async ({ page }) => {
     localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
     window.__flashKanjiTtsCalls = [];
     window.__flashKanjiAudioCalls = [];
+    window.__flashKanjiPlaybackEvents = [];
+    window.__flashKanjiTtsErrorAfterSpeak = false;
     window.__flashKanjiTtsShouldThrow = false;
 
     class MockUtterance {
@@ -28,6 +32,9 @@ test.beforeEach(async ({ page }) => {
       lang = "";
       rate = 1;
       voice: SpeechSynthesisVoice | null = null;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: ((error: unknown) => void) | null = null;
 
       constructor(text: string) {
         this.text = text;
@@ -41,16 +48,25 @@ test.beforeEach(async ({ page }) => {
     Object.defineProperty(window, "speechSynthesis", {
       configurable: true,
       value: {
-        cancel: () => window.__flashKanjiTtsCalls?.push({ type: "cancel" }),
+        cancel: () => {
+          window.__flashKanjiTtsCalls?.push({ type: "cancel" });
+          window.__flashKanjiPlaybackEvents?.push("tts:cancel");
+        },
         speak: (utterance: SpeechSynthesisUtterance) => {
           if (window.__flashKanjiTtsShouldThrow)
             throw new Error("System TTS unavailable");
+          window.__flashKanjiPlaybackEvents?.push("tts:speak");
           window.__flashKanjiTtsCalls?.push({
             type: "speak",
             text: utterance.text,
             lang: utterance.lang,
             rate: utterance.rate
           });
+          if (window.__flashKanjiTtsErrorAfterSpeak) {
+            setTimeout(() => utterance.onerror?.({ error: "mock-error" } as unknown as SpeechSynthesisErrorEvent), 0);
+          } else {
+            setTimeout(() => utterance.onstart?.({} as SpeechSynthesisEvent), 0);
+          }
         },
         getVoices: () => [{
           default: true,
@@ -75,11 +91,13 @@ test.beforeEach(async ({ page }) => {
 
       play() {
         window.__flashKanjiAudioCalls?.push({ type: "play", src: this.src });
+        window.__flashKanjiPlaybackEvents?.push("audio:play");
         return Promise.resolve();
       }
 
       pause() {
         window.__flashKanjiAudioCalls?.push({ type: "pause", src: this.src });
+        window.__flashKanjiPlaybackEvents?.push("audio:pause");
       }
     }
     Object.defineProperty(window, "Audio", {
@@ -129,4 +147,26 @@ test("prepared kanji file is fallback when system TTS fails", async ({ page }) =
   await button.click();
 
   await expect.poll(async () => page.evaluate(() => Boolean(window.__flashKanjiAudioCalls?.some((call) => call.type === "play" && (call.src || "").includes("audio/kanji/"))))).toBe(true);
+});
+
+test("late system TTS failure is cancelled before prepared audio fallback starts", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__flashKanjiTtsErrorAfterSpeak = true;
+  });
+
+  await page.goto("./#kanji/1");
+  await expect(page.locator("#app .kanji-page")).toBeVisible();
+  const button = page.locator('#app .audio-panel > .actions > button[data-action="play-kanji-audio"]:not(.reading-tts-choice)').first();
+  await expect(button).toBeVisible();
+  await button.click();
+
+  await expect.poll(async () => page.evaluate(() => Boolean(window.__flashKanjiAudioCalls?.some((call) => call.type === "play" && (call.src || "").includes("audio/kanji/"))))).toBe(true);
+  const events = await page.evaluate(() => window.__flashKanjiPlaybackEvents || []);
+  const speakIndex = events.indexOf("tts:speak");
+  const audioPlayIndex = events.indexOf("audio:play");
+  const cancelAfterSpeakIndex = events.findIndex((event, index) => event === "tts:cancel" && index > speakIndex);
+
+  expect(speakIndex).toBeGreaterThanOrEqual(0);
+  expect(cancelAfterSpeakIndex).toBeGreaterThan(speakIndex);
+  expect(audioPlayIndex).toBeGreaterThan(cancelAfterSpeakIndex);
 });
