@@ -29,7 +29,7 @@ export type RouteNotFoundReason =
   | "entity-not-found";
 
 export type RouteSource = "hash" | "pathname";
-export type PublicRouteKind = "app-shell" | "legacy-index" | "download" | "localized-home" | "textbooks" | "textbook-level" | "kanji-hub" | "kanji-page";
+export type PublicRouteKind = "app-shell" | "legacy-index" | "download" | "localized-home" | "textbooks" | "textbook-level" | "kana-course" | "kanji-hub" | "kanji-page";
 
 export interface ValidRouteMatch {
   status: "valid";
@@ -71,6 +71,7 @@ const SIMPLE_HASH_ROUTES = new Set<AppRoute>([
   "eva-room"
 ]);
 const JLPT_LEVEL_RE = /^n[1-5]$/i;
+const KANA_COURSE_RE = /^(?:hiragana|katakana)$/i;
 const ASCII_ROUTE_PARAM_RE = /^[A-Za-z0-9_-]+$/;
 const CARD_ROUTE_PARAM_RE = /^[\p{Letter}\p{Number}_-]+$/u;
 const PUBLIC_KANJI_SLUG_RE = /^u[0-9a-f]{4,6}(?:-u[0-9a-f]{4,6})*-[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -123,6 +124,11 @@ export function isRegisteredRoute(value: string | null | undefined): value is Ap
 export function canonicalJlptLevel(value: string | null | undefined): string {
   const level = String(value || "").trim().toUpperCase();
   return JLPT_LEVEL_RE.test(level) ? level : "";
+}
+
+export function canonicalKanaCourse(value: string | null | undefined): string {
+  const course = String(value || "").trim().toLowerCase();
+  return KANA_COURSE_RE.test(course) ? course : "";
 }
 
 export function isSafeRouteParam(value: string | null | undefined): boolean {
@@ -180,10 +186,11 @@ export function parseHash(hash: string): ParsedRoute {
     if (segments.length > 3) return invalidHash("unknown-route", raw, segments);
     if (segments.length === 1) return valid("hash", "textbooks", raw, segments);
     const level = canonicalJlptLevel(segments[1]);
-    if (!level) return invalidHash("invalid-parameter", raw, segments);
+    const course = canonicalKanaCourse(segments[1]);
+    if (!level && !course) return invalidHash("invalid-parameter", raw, segments);
     const subroute = segments[2] || "";
     if (subroute && !isValidAsciiParam(subroute)) return invalidHash("invalid-parameter", raw, segments);
-    return valid("hash", "textbooks", raw, segments, { level, subroute });
+    return valid("hash", "textbooks", raw, segments, course ? { course, subroute } : { level, subroute });
   }
 
   if (requested === "jlpt-lesson") {
@@ -300,6 +307,13 @@ export function matchPathname(pathname: string): RouteMatch {
     }
     if (segments.length === 3) {
       const level = segments[2].toLowerCase();
+      const course = canonicalKanaCourse(level);
+      if (course) {
+        return valid("pathname", "textbooks", raw, segments, { course }, locale, {
+          kind: "kana-course",
+          canonicalPath: canonicalLocalizedPath(locale, `/textbooks/${course}/`)
+        });
+      }
       if (!JLPT_LEVEL_RE.test(level)) {
         return notFound("pathname", "invalid-parameter", raw, segments, locale);
       }

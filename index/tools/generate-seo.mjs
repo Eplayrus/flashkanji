@@ -21,6 +21,38 @@ import {
 const SEO_LOCALES = ["ru", "en", "es"];
 const INDEXABLE_LOCALES = ["ru", "en"];
 const PILOT_ES_KANJI_LIMIT = 10;
+const KANA_COURSE_SLUGS = ["hiragana", "katakana"];
+
+const KANA_COPY = {
+  hiragana: {
+    ru: {
+      title: "Хирагана с нуля",
+      description: "Интерактивный курс хираганы Flash Kanji: 46 базовых знаков, уроки, чтение, прописи и SRS-повторение по официальному PDF."
+    },
+    en: {
+      title: "Hiragana from zero",
+      description: "Flash Kanji interactive hiragana course: 46 base signs, lessons, reading practice, handwriting and SRS review based on the official Russian PDF."
+    },
+    es: {
+      title: "Hiragana desde cero",
+      description: "Curso interactivo de hiragana de Flash Kanji: 46 signos base, lecciones, lectura, escritura y repaso SRS desde el PDF oficial en ruso."
+    }
+  },
+  katakana: {
+    ru: {
+      title: "Катакана с нуля",
+      description: "Интерактивный курс катаканы Flash Kanji: 46 базовых знаков, слова-заимствования, чтение, прописи и SRS-повторение по официальному PDF."
+    },
+    en: {
+      title: "Katakana from zero",
+      description: "Flash Kanji interactive katakana course: 46 base signs, loanword reading practice, handwriting and SRS review based on the official Russian PDF."
+    },
+    es: {
+      title: "Katakana desde cero",
+      description: "Curso interactivo de katakana de Flash Kanji: 46 signos base, lectura de préstamos, escritura y repaso SRS desde el PDF oficial en ruso."
+    }
+  }
+};
 
 const COPY = {
   ru: {
@@ -30,7 +62,7 @@ const COPY = {
     download: "Скачать APK",
     textbooks: "Учебники",
     textbookHubTitle: "Учебники Flash Kanji",
-    textbookHubDescription: "JLPT N5–N1: кандзи, слова, предложения, упражнения, письмо и SRS-повторение. Страницы генерируются из тех же данных, что использует приложение.",
+    textbookHubDescription: "Хирагана, катакана и JLPT N5–N1: кандзи, слова, предложения, упражнения, письмо и SRS-повторение. Страницы генерируются из тех же данных, что использует приложение.",
     homeTitle: "Flash Kanji — учи японские кандзи через JLPT-учебники",
     homeDescription: "Flash Kanji помогает учить японские кандзи через JLPT N5–N1, SRS-повторение, письмо, словарь, примеры и игровые цели Moon Fragments.",
     kanjiHubTitle: "Кандзи Flash Kanji",
@@ -43,6 +75,10 @@ const COPY = {
     readings: "Чтения",
     level: "Уровень",
     lessons: "уроков",
+    kanaSigns: "знаков",
+    tasks: "заданий",
+    sourcePdf: "Официальный PDF",
+    openCourse: "Открыть курс",
     kanji: "кандзи",
     grammar: "грамматика",
     reading: "чтение",
@@ -56,7 +92,7 @@ const COPY = {
     download: "Download APK",
     textbooks: "Textbooks",
     textbookHubTitle: "Flash Kanji textbooks",
-    textbookHubDescription: "JLPT N5–N1: kanji, words, sentences, exercises, writing and SRS review. Pages are generated from the same data used by the app.",
+    textbookHubDescription: "Hiragana, katakana and JLPT N5-N1: kanji, words, sentences, exercises, writing and SRS review. Pages are generated from the same data used by the app.",
     homeTitle: "Flash Kanji — learn Japanese kanji through JLPT textbooks",
     homeDescription: "Flash Kanji helps you learn Japanese kanji through JLPT N5–N1, SRS review, writing practice, dictionary examples and Moon Fragments goals.",
     kanjiHubTitle: "Flash Kanji kanji wiki",
@@ -69,6 +105,10 @@ const COPY = {
     readings: "Readings",
     level: "Level",
     lessons: "lessons",
+    kanaSigns: "signs",
+    tasks: "tasks",
+    sourcePdf: "Official PDF",
+    openCourse: "Open course",
     kanji: "kanji",
     grammar: "grammar",
     reading: "reading",
@@ -82,7 +122,7 @@ const COPY = {
     download: "Descargar APK",
     textbooks: "Libros",
     textbookHubTitle: "Libros de Flash Kanji",
-    textbookHubDescription: "Piloto en español para JLPT N5–N1. Estas páginas usan los mismos datos que la aplicación, pero siguen pendientes de revisión editorial.",
+    textbookHubDescription: "Piloto en español para hiragana, katakana y JLPT N5-N1. Estas páginas usan los mismos datos que la aplicación, pero siguen pendientes de revisión editorial.",
     homeTitle: "Flash Kanji — piloto en español para estudiar kanji",
     homeDescription: "Piloto en español de Flash Kanji: rutas JLPT N5–N1, repaso SRS, escritura, diccionario y objetivos Moon Fragments. Pendiente de revisión editorial.",
     kanjiHubTitle: "Wiki de kanji de Flash Kanji",
@@ -95,6 +135,10 @@ const COPY = {
     readings: "Lecturas",
     level: "Nivel",
     lessons: "lecciones",
+    kanaSigns: "signos",
+    tasks: "ejercicios",
+    sourcePdf: "PDF oficial",
+    openCourse: "Abrir curso",
     kanji: "kanji",
     grammar: "gramática",
     reading: "lectura",
@@ -269,6 +313,26 @@ function textbookCounts(meta) {
   };
 }
 
+function kanaTitle(course, locale) {
+  return clean(KANA_COPY[course.slug]?.[locale]?.title || course.title || course.slug);
+}
+
+function kanaDescription(course, locale) {
+  return clean(KANA_COPY[course.slug]?.[locale]?.description || course.description || COPY[locale].textbookHubDescription);
+}
+
+function kanaStats(course) {
+  return {
+    lessonCount: Number(course.stats?.lessonCount || course.stats?.lesson_count || course.lesson_count || 0),
+    baseCharacterCount: Number(course.stats?.baseCharacterCount || course.stats?.base_character_count || course.base_character_count || 0),
+    taskCount: Number(course.stats?.taskCount || course.stats?.task_count || course.task_count || 0)
+  };
+}
+
+function kanaPdfUrl(course) {
+  return clean(course.source?.pdf_file || course.pdf_url || `docs/flash-kanji-${course.slug}-textbook-ru.pdf`);
+}
+
 function jsonLdWebPage({ title, description, pathname, locale }) {
   return {
     "@context": "https://schema.org",
@@ -296,6 +360,23 @@ async function loadTextbooks() {
   return result;
 }
 
+async function loadKanaCourses() {
+  const catalog = await readJson("public/data/kana/index.json", { courses: [] });
+  const result = [];
+  for (const slug of KANA_COURSE_SLUGS) {
+    const catalogItem = (catalog.courses || []).find((item) => item.slug === slug) || {};
+    const courseFile = catalogItem.course_file || `data/kana/${slug}.json`;
+    const course = await readJson(`public/${courseFile}`);
+    result.push({
+      ...course,
+      catalogItem,
+      slug,
+      stats: kanaStats(course)
+    });
+  }
+  return result;
+}
+
 async function loadKanjiCards() {
   const cards = [];
   const seen = new Set();
@@ -310,7 +391,7 @@ async function loadKanjiCards() {
   return cards;
 }
 
-async function writeLocalizedHome(locale, textbooks) {
+async function writeLocalizedHome(locale, textbooks, kanaCourses) {
   const copy = COPY[locale];
   const pathname = localePath(state.registry, locale, "/");
   const indexable = isSeoIndexableLocale(state.registry, locale);
@@ -326,7 +407,10 @@ async function writeLocalizedHome(locale, textbooks) {
   </section>
   <section class="seo-card">
     <h2>${esc(copy.textbooks)}</h2>
-    <div class="seo-grid">${textbooks.map(({ level, counts }) => `<a class="seo-tile" href="textbooks/${level}/"><strong>${esc(levelLabel(level))}</strong><span>${counts.kanjiCount} ${esc(copy.kanji)} · ${counts.lessonCount} ${esc(copy.lessons)}</span></a>`).join("")}</div>
+    <div class="seo-grid">${[
+      ...kanaCourses.map((course) => `<a class="seo-tile" href="textbooks/${course.slug}/"><strong>${esc(kanaTitle(course, locale))}</strong><span>${course.stats.baseCharacterCount} ${esc(copy.kanaSigns)} · ${course.stats.taskCount} ${esc(copy.tasks)}</span></a>`),
+      ...textbooks.map(({ level, counts }) => `<a class="seo-tile" href="textbooks/${level}/"><strong>${esc(levelLabel(level))}</strong><span>${counts.kanjiCount} ${esc(copy.kanji)} · ${counts.lessonCount} ${esc(copy.lessons)}</span></a>`)
+    ].join("")}</div>
   </section>`;
   await writeText(path.join(PUBLIC_DIR, localeByCode(state.registry, locale).urlSegment, "index.html"), layout({
     locale,
@@ -354,7 +438,7 @@ async function writeLocalizedHome(locale, textbooks) {
   }));
 }
 
-async function writeTextbookHub(locale, textbooks) {
+async function writeTextbookHub(locale, textbooks, kanaCourses) {
   const copy = COPY[locale];
   const pathname = localePath(state.registry, locale, "/textbooks/");
   const indexable = isSeoIndexableLocale(state.registry, locale);
@@ -364,10 +448,13 @@ async function writeTextbookHub(locale, textbooks) {
     <p class="seo-description">${esc(copy.textbookHubDescription)}</p>
   </section>
   <section class="seo-card">
-    <div class="seo-grid">${textbooks.map(({ level, counts, catalogItem }) => {
+    <div class="seo-grid">${[
+      ...kanaCourses.map((course) => `<a class="seo-tile" href="${course.slug}/"><strong>${esc(kanaTitle(course, locale))}</strong><span>${course.stats.baseCharacterCount} ${esc(copy.kanaSigns)} · ${course.stats.taskCount} ${esc(copy.tasks)}</span></a>`),
+      ...textbooks.map(({ level, counts, catalogItem }) => {
       const title = localizedValue(catalogItem.displayTitle || catalogItem.title, locale, levelLabel(level));
       return `<a class="seo-tile" href="${level}/"><strong>${esc(levelLabel(level))}: ${esc(title)}</strong><span>${counts.kanjiCount} ${esc(copy.kanji)} · ${counts.lessonCount} ${esc(copy.lessons)}</span></a>`;
-    }).join("")}</div>
+    })
+    ].join("")}</div>
   </section>`;
   await writeText(path.join(PUBLIC_DIR, localeByCode(state.registry, locale).urlSegment, "textbooks", "index.html"), layout({
     locale,
@@ -427,6 +514,62 @@ async function writeTextbookLevel(locale, textbook) {
         "inLanguage": localeByCode(state.registry, locale).hreflang,
         "numberOfCredits": counts.lessonCount,
         "about": `${level} kanji`
+      }
+    ]
+  }));
+}
+
+async function writeKanaCoursePage(locale, course) {
+  const copy = COPY[locale];
+  const titleBase = kanaTitle(course, locale);
+  const title = `${titleBase} | Flash Kanji`;
+  const description = kanaDescription(course, locale);
+  const pathname = localePath(state.registry, locale, `/textbooks/${course.slug}/`);
+  const indexable = isSeoIndexableLocale(state.registry, locale);
+  const stats = kanaStats(course);
+  const lessons = (course.lessons || []).slice(0, 12);
+  const visibleCharacters = (course.base_characters || []).slice(0, 46);
+  const pdfUrl = kanaPdfUrl(course);
+  const body = `<section class="seo-hero" data-source-kana="${esc(course.slug)}" data-source-character-count="${stats.baseCharacterCount}" data-source-lesson-count="${stats.lessonCount}" data-source-task-count="${stats.taskCount}">
+    <p class="seo-eyebrow">Flash Kanji · Kana · ${esc(course.native_title || course.slug)}</p>
+    <h1 class="seo-title">${esc(titleBase)}</h1>
+    <p class="seo-description">${esc(description)}</p>
+    <div class="seo-stats">
+      <span class="seo-pill">${stats.baseCharacterCount} ${esc(copy.kanaSigns)}</span>
+      <span class="seo-pill">${stats.lessonCount} ${esc(copy.lessons)}</span>
+      <span class="seo-pill">${stats.taskCount} ${esc(copy.tasks)}</span>
+    </div>
+    <div class="seo-actions">
+      <a class="seo-button primary" href="${esc(relativeApp(3, `#textbooks/${course.slug}`))}">${esc(copy.openCourse)}</a>
+      <a class="seo-button" href="${esc(`${"../".repeat(3)}${pdfUrl}`)}" download>${esc(copy.sourcePdf)}</a>
+    </div>
+  </section>
+  <section class="seo-card">
+    <h2>${esc(copy.kanaSigns)}</h2>
+    <p class="seo-description" lang="ja">${visibleCharacters.map((item) => esc(item.kana)).join(" ")}</p>
+  </section>
+  <section class="seo-card"><h2>${esc(copy.lessons)}</h2><ul class="seo-list">${lessons.map((lesson) => `<li><strong>${esc(lesson.title || lesson.id)}</strong><span>${esc(clean((lesson.body || []).slice(0, 2).join(" ")))}</span></li>`).join("")}</ul></section>`;
+  await writeText(path.join(PUBLIC_DIR, localeByCode(state.registry, locale).urlSegment, "textbooks", course.slug, "index.html"), layout({
+    locale,
+    title,
+    description,
+    pathname,
+    indexable,
+    depth: 3,
+    alternates: alternatesForSuffix(`/textbooks/${course.slug}/`),
+    xDefaultPath: "/",
+    body,
+    jsonLd: [
+      jsonLdWebPage({ title, description, pathname, locale }),
+      {
+        "@context": "https://schema.org",
+        "@type": "Course",
+        "name": titleBase,
+        "description": description,
+        "url": canonicalUrl(pathname),
+        "inLanguage": localeByCode(state.registry, locale).hreflang,
+        "numberOfCredits": stats.lessonCount,
+        "about": `${course.slug} kana`
       }
     ]
   }));
@@ -644,6 +787,7 @@ const state = {
 
 async function main() {
   const textbooks = await loadTextbooks();
+  const kanaCourses = await loadKanaCourses();
   const cards = await loadKanjiCards();
 
   await safeRemoveInsidePublic("ru");
@@ -655,9 +799,12 @@ async function main() {
   await writeCss();
 
   for (const locale of SEO_LOCALES) {
-    await writeLocalizedHome(locale, textbooks);
-    await writeTextbookHub(locale, textbooks);
+    await writeLocalizedHome(locale, textbooks, kanaCourses);
+    await writeTextbookHub(locale, textbooks, kanaCourses);
     await writeKanjiHub(locale, cards);
+    for (const course of kanaCourses) {
+      await writeKanaCoursePage(locale, course);
+    }
     for (const textbook of textbooks) {
       await writeTextbookLevel(locale, textbook);
     }
@@ -681,6 +828,7 @@ async function main() {
     const urls = [
       localePath(state.registry, locale, "/"),
       localePath(state.registry, locale, "/textbooks/"),
+      ...kanaCourses.map((course) => localePath(state.registry, locale, `/textbooks/${course.slug}/`)),
       ...JLPT_LEVELS.map((level) => localePath(state.registry, locale, `/textbooks/${level}/`)),
       localePath(state.registry, locale, "/kanji/"),
       localePath(state.registry, locale, "/download/")
@@ -699,6 +847,7 @@ async function main() {
     canonicalBase: SITE_URL,
     locales: SEO_LOCALES,
     indexableLocales: INDEXABLE_LOCALES,
+    kanaCourses: kanaCourses.map((item) => ({ slug: item.slug, ...item.stats })),
     textbookLevels: textbooks.map((item) => ({ level: item.level, ...item.counts })),
     kanjiPages: {
       en: cards.length,

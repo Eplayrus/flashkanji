@@ -9462,6 +9462,126 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   background: var(--surface);
 }
 
+.kana-cover-wrap,
+.kana-course-hero {
+  background:
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--accent), transparent 76%), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface), #000 12%), color-mix(in srgb, var(--accent), transparent 88%));
+}
+
+.kana-cover-symbol,
+.kana-hero-symbol {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 9vw, 6.4rem);
+  letter-spacing: .08em;
+  text-shadow: 0 10px 0 var(--accent), 0 0 28px color-mix(in srgb, var(--accent), transparent 42%);
+}
+
+.kana-hero-symbol {
+  min-height: 220px;
+  padding: 24px;
+}
+
+.kana-course-tabs,
+.kana-character-list,
+.kana-table-grid,
+.kana-exercise-items {
+  display: grid;
+  gap: 12px;
+}
+
+.kana-course-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 16px 0 28px;
+}
+
+.kana-character-list,
+.kana-table-grid {
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+}
+
+.kana-character-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 1.5rem;
+}
+
+.kana-character-row span,
+.kana-char-chip {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface), transparent 18%);
+}
+
+.kana-character-row span {
+  min-width: 34px;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.kana-char-chip {
+  min-height: 64px;
+  padding: 10px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.kana-char-chip span {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.kana-char-chip small {
+  color: var(--muted);
+}
+
+.kana-answer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, .45fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface), transparent 18%);
+}
+
+.kana-answer-row input {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.kana-answer-row small {
+  grid-column: 1 / -1;
+}
+
+.kana-answer-row.is-correct {
+  border-color: color-mix(in srgb, #56d68a, var(--line) 30%);
+}
+
+.kana-answer-row.is-wrong {
+  border-color: color-mix(in srgb, var(--accent), var(--line) 22%);
+}
+
+.kana-review-card {
+  display: grid;
+  gap: 12px;
+}
+
+.kana-writing-card {
+  margin-top: 18px;
+}
+
 @media (min-width: 920px) {
   .home-primary-card {
     grid-template-columns: minmax(0, 1.15fr) 340px;
@@ -9487,5 +9607,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 
   .home-eva-compact-avatar {
     justify-self: center;
+  }
+
+  .kana-answer-row {
+    grid-template-columns: 1fr;
   }
 }
