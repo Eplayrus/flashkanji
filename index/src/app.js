@@ -11157,7 +11157,27 @@ import {
                 sourcePdf: "Оригинальный PDF",
                 taskCount: "заданий",
                 characters: "знаков",
-                lessonsCount: "уроков"
+                lessonsCount: "уроков",
+                lesson: "урок",
+                lessonProgress: "Прогресс урока",
+                newSigns: "Новые знаки",
+                newSignsHint: "Сначала узнаём форму и чтение каждого нового знака.",
+                readWrite: "Как читать и писать",
+                readWriteHint: "Произнесите знак, посмотрите количество штрихов и переходите к ручной прописи.",
+                reading: "Чтение",
+                strokes: "Штрихи",
+                tts: "Звук",
+                strokeOrder: "Stroke-order",
+                explanation: "Объяснение",
+                explanationHint: "Ключевые правила урока вынесены в отдельные карточки.",
+                examples: "Примеры",
+                examplesHint: "Короткие слова и записи для чтения.",
+                example: "Пример",
+                meaning: "Значение",
+                practiceBlock: "Практика",
+                practiceHint: "Выполняйте задания небольшими блоками и проверяйте ответы сразу.",
+                selfCheck: "Проверь себя",
+                selfCheckHint: "Завершите ручную часть и отметьте пропись после тренировки."
             }
             : {
                 allTextbooks: "All textbooks",
@@ -11192,7 +11212,27 @@ import {
                 sourcePdf: "Original PDF",
                 taskCount: "tasks",
                 characters: "characters",
-                lessonsCount: "lessons"
+                lessonsCount: "lessons",
+                lesson: "lesson",
+                lessonProgress: "Lesson progress",
+                newSigns: "New signs",
+                newSignsHint: "Start by recognizing the shape and reading of each new sign.",
+                readWrite: "How to read and write",
+                readWriteHint: "Play the sound, check the stroke count, then move to handwriting practice.",
+                reading: "Reading",
+                strokes: "Strokes",
+                tts: "Sound",
+                strokeOrder: "Stroke order",
+                explanation: "Explanation",
+                explanationHint: "The key lesson notes are separated into contrast cards.",
+                examples: "Examples",
+                examplesHint: "Short words and spellings for reading practice.",
+                example: "Example",
+                meaning: "Meaning",
+                practiceBlock: "Practice",
+                practiceHint: "Complete the exercises in compact blocks and check immediately.",
+                selfCheck: "Check yourself",
+                selfCheckHint: "Finish the handwriting step after practicing by hand."
             };
     }
     function renderKanaCoursePage(slug) {
@@ -11346,30 +11386,225 @@ import {
     function renderKanaLessonPage(course, lesson, labels) {
         const courseProgress = kanaCourseProgress(course.slug);
         courseProgress.currentRoute = lesson.id;
+        const summary = kanaLessonSummary(course.slug, lesson);
+        const total = kanaExerciseTotal(lesson.exercises);
+        const sections = parseKanaLessonBody(lesson);
         const writingDone = Boolean(courseProgress.writing?.[lesson.id]);
         return `
       <section class="page textbooks-page n5-course-page n5-lesson-page kana-course-page kana-lesson-page">
-        ${renderKanaPageHead(course, lesson.title, labels, lesson.id)}
-        <article class="jlpt-lesson-hero kana-study-hero">
-          <div>
-            <span class="pill">${escapeHtml(labels.russianCourse)}</span>
-            <h2>${escapeHtml(lesson.title)}</h2>
-            <p>${escapeHtml((lesson.body || []).slice(0, 4).join(" "))}</p>
-          </div>
-          <div class="kana-character-list" lang="ja">
-            ${lesson.focus_characters.map((item) => renderKanaCharacterButton(item)).join("")}
-          </div>
-        </article>
-        ${renderKanaBodySections(lesson.body)}
-        ${lesson.exercises.map((exercise) => renderKanaExerciseForm(course.slug, lesson.id, "lesson", exercise, labels)).join("")}
-        <article class="jlpt-section-card kana-writing-card">
-          <h3>${escapeHtml(labels.manualWriting)}</h3>
-          <p>${escapeHtml(lesson.writing?.prompt || labels.noAutoWriting)}</p>
-          <p>${escapeHtml(labels.noAutoWriting)}</p>
-          <button class="btn ${writingDone ? "ghost" : "primary"}" type="button" data-action="kana-writing-done" data-course="${escapeAttr(course.slug)}" data-lesson="${escapeAttr(lesson.id)}">${escapeHtml(writingDone ? labels.writeDone : labels.markWriting)}</button>
-        </article>
+        <div class="kana-lesson-shell">
+          ${renderKanaLessonHero(course, lesson, labels, sections, summary, total)}
+          ${renderKanaNewSignsSection(lesson, labels)}
+          ${renderKanaReadWriteSection(lesson, labels)}
+          ${renderKanaExplanationSection(sections.explanations, labels)}
+          ${renderKanaExamplesSection(sections.examples, labels)}
+          <section class="kana-lesson-step kana-practice-step" aria-labelledby="kanaPracticeTitle">
+            <div class="kana-step-heading">
+              <span class="pill">05</span>
+              <h2 id="kanaPracticeTitle">${escapeHtml(labels.practiceBlock)}</h2>
+              <p>${escapeHtml(labels.practiceHint)}</p>
+            </div>
+            <div class="kana-practice-stack">
+              ${lesson.exercises.map((exercise) => renderKanaExerciseForm(course.slug, lesson.id, "lesson", exercise, labels)).join("")}
+            </div>
+          </section>
+          <section class="kana-lesson-step kana-self-check-step" aria-labelledby="kanaSelfCheckTitle">
+            <div class="kana-step-heading">
+              <span class="pill">06</span>
+              <h2 id="kanaSelfCheckTitle">${escapeHtml(labels.selfCheck)}</h2>
+              <p>${escapeHtml(labels.selfCheckHint)}</p>
+            </div>
+            <article class="jlpt-section-card kana-writing-card" id="kana-writing-practice">
+              <h3>${escapeHtml(labels.manualWriting)}</h3>
+              <p>${escapeHtml(lesson.writing?.prompt || labels.noAutoWriting)}</p>
+              <p class="muted">${escapeHtml(labels.noAutoWriting)}</p>
+              <button class="btn ${writingDone ? "ghost" : "primary"}" type="button" data-action="kana-writing-done" data-course="${escapeAttr(course.slug)}" data-lesson="${escapeAttr(lesson.id)}">${escapeHtml(writingDone ? labels.writeDone : labels.markWriting)}</button>
+            </article>
+          </section>
+        </div>
       </section>
     `;
+    }
+    function parseKanaLessonBody(lesson) {
+        const lines = (lesson.body || []).map((line) => String(line || "").trim()).filter(Boolean);
+        const goal = [];
+        const explanations = [];
+        const examples = { title: "", headers: [], rows: [] };
+        let i = 0;
+        const isHeading = (line) => /^(Цель раздела|Знаки урока|Произношение|Типичная ошибка|Слова для чтения|Пример и узнавание|Модельные|Набор|Три служебных|Одна мора|Пауза|Гласный|Средняя точка)/i.test(line);
+        const isExamples = (line) => /^(Слова для чтения|Пример и узнавание)$/i.test(line);
+        while (i < lines.length) {
+            const line = lines[i];
+            if (/^\d+$/.test(line)) {
+                i += 1;
+                continue;
+            }
+            if (/^Цель раздела$/i.test(line)) {
+                i += 1;
+                while (i < lines.length && !/^Знаки урока$/i.test(lines[i])) {
+                    if (!/^\d+$/.test(lines[i]))
+                        goal.push(lines[i]);
+                    i += 1;
+                }
+                continue;
+            }
+            if (/^Знаки урока$/i.test(line)) {
+                i += 1;
+                while (i < lines.length && !/^(Произношение|Типичная ошибка|Слова для чтения|Пример и узнавание|Модельные|Набор|Три служебных|Одна мора|Пауза|Гласный|Средняя точка)/i.test(lines[i])) {
+                    i += 1;
+                }
+                continue;
+            }
+            if (isExamples(line)) {
+                examples.title = line;
+                const rest = lines.slice(i + 1).filter((item) => !/^\d+$/.test(item));
+                examples.headers = rest.slice(0, 3);
+                const cells = rest.slice(3);
+                for (let index = 0; index + 2 < cells.length; index += 3) {
+                    examples.rows.push(cells.slice(index, index + 3));
+                }
+                break;
+            }
+            if (isHeading(line)) {
+                const title = line;
+                const body = [];
+                i += 1;
+                while (i < lines.length && !isHeading(lines[i])) {
+                    if (!/^\d+$/.test(lines[i]))
+                        body.push(lines[i]);
+                    i += 1;
+                }
+                if (body.length)
+                    explanations.push({ title, body });
+                continue;
+            }
+            i += 1;
+        }
+        return { goal, explanations, examples };
+    }
+    function renderKanaLessonHero(course, lesson, labels, sections, summary, total) {
+        const score = Number(summary?.latestScore || 0);
+        const percent = progressWidth(score, Math.max(1, total));
+        const goal = sections.goal.length ? sections.goal.join(" ") : (lesson.body || []).slice(0, 2).join(" ");
+        return `
+        <article class="kana-lesson-hero-card" aria-labelledby="kanaLessonTitle">
+          <div class="kana-lesson-hero-copy">
+            <p class="eyebrow">Flash Kanji · ${escapeHtml(course.title)} · ${escapeHtml(labels.lesson)} ${escapeHtml(lesson.order || "")}</p>
+            <h1 id="kanaLessonTitle">${escapeHtml(lesson.title)} <span lang="ja">${escapeHtml(course.native_title)}</span></h1>
+            <p>${escapeHtml(goal)}</p>
+            <div class="kana-lesson-progress-row">
+              <span>${escapeHtml(labels.lessonProgress)}: ${escapeHtml(score)}/${escapeHtml(total)}</span>
+              <div class="achievement-progress" aria-hidden="true"><i style="width:${percent}%"></i></div>
+            </div>
+          </div>
+          <div class="kana-lesson-hero-aside" aria-label="${escapeAttr(labels.newSigns)}">
+            <span class="pill">${escapeHtml(labels.newSigns)} · ${escapeHtml(lesson.focus_characters.length)}</span>
+            <div class="kana-hero-signs" lang="ja">
+              ${lesson.focus_characters.map((item) => `<span>${escapeHtml(item.kana)}</span>`).join("")}
+            </div>
+            <div class="actions">
+              <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}">${escapeHtml(course.title)}</a>
+              <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+              <button class="btn ghost" type="button" data-action="kana-toggle-romaji">${escapeHtml(kanaProgressRoot().settings.showRomaji ? labels.hideRomaji : labels.showRomaji)}</button>
+              ${renderShareButton("textbook", { level: course.slug, subroute: lesson.id })}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+    function renderKanaNewSignsSection(lesson, labels) {
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaNewSignsTitle">
+          <div class="kana-step-heading">
+            <span class="pill">01</span>
+            <h2 id="kanaNewSignsTitle">${escapeHtml(labels.newSigns)}</h2>
+            <p>${escapeHtml(labels.newSignsHint)}</p>
+          </div>
+          <div class="kana-new-sign-grid">
+            ${lesson.focus_characters.map((item) => `
+              <article class="kana-new-sign-card">
+                <span lang="ja">${escapeHtml(item.kana)}</span>
+                ${kanaProgressRoot().settings.showRomaji && item.romaji ? `<small>${escapeHtml(item.romaji)}</small>` : ""}
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaReadWriteSection(lesson, labels) {
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaReadWriteTitle">
+          <div class="kana-step-heading">
+            <span class="pill">02</span>
+            <h2 id="kanaReadWriteTitle">${escapeHtml(labels.readWrite)}</h2>
+            <p>${escapeHtml(labels.readWriteHint)}</p>
+          </div>
+          <div class="kana-readwrite-grid">
+            ${lesson.focus_characters.map((item) => `
+              <article class="kana-readwrite-card">
+                <div>
+                  <span class="kana-readwrite-symbol" lang="ja">${escapeHtml(item.kana)}</span>
+                  <p>${escapeHtml(labels.reading)}: <strong>${escapeHtml(item.romaji || "—")}</strong></p>
+                  <p>${escapeHtml(labels.strokes)}: <strong>${escapeHtml(item.strokes || "—")}</strong></p>
+                </div>
+                <div class="actions">
+                  <button class="btn ghost" type="button" data-action="play-kana-tts" data-text="${escapeAttr(item.kana)}">🔊 ${escapeHtml(labels.tts)}</button>
+                  <a class="btn ghost" href="#kana-writing-practice">${escapeHtml(labels.strokeOrder)}</a>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaExplanationSection(explanations, labels) {
+        if (!explanations.length)
+            return "";
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaExplanationTitle">
+          <div class="kana-step-heading">
+            <span class="pill">03</span>
+            <h2 id="kanaExplanationTitle">${escapeHtml(labels.explanation)}</h2>
+            <p>${escapeHtml(labels.explanationHint)}</p>
+          </div>
+          <div class="kana-explanation-grid">
+            ${explanations.map((section) => `
+              <article class="jlpt-section-card kana-explanation-card">
+                <h3>${escapeHtml(section.title)}</h3>
+                ${section.body.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaExamplesSection(examples, labels) {
+        if (!examples?.rows?.length)
+            return "";
+        const headers = examples.headers.length === 3 ? examples.headers : [labels.example, labels.reading, labels.meaning];
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaExamplesTitle">
+          <div class="kana-step-heading">
+            <span class="pill">04</span>
+            <h2 id="kanaExamplesTitle">${escapeHtml(labels.examples)}</h2>
+            <p>${escapeHtml(examples.title || labels.examplesHint)}</p>
+          </div>
+          <div class="kana-examples-table-wrap">
+            <table class="kana-examples-table">
+              <thead>
+                <tr>${headers.map((header) => `<th scope="col">${escapeHtml(header)}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${examples.rows.map((row) => `
+                  <tr>
+                    ${row.map((cell, index) => `<td data-label="${escapeAttr(headers[index] || "")}"${index === 0 ? ' lang="ja"' : ""}>${escapeHtml(cell)}</td>`).join("")}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
     }
     function renderKanaPracticePage(course, practice, labels) {
         const courseProgress = kanaCourseProgress(course.slug);
