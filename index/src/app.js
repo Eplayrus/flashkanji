@@ -1,5 +1,5 @@
 import { NOT_FOUND_ROUTE, createRenderCoordinator, installHashRouter, isAppShellPathname, isRegisteredRoute, matchPathname, notFound, parseHash } from "./router";
-import { calculateNextProgress, migrateCardProgress } from "./services/srs";
+import { calculateNextProgress, createReviewSession, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
 import {
@@ -3960,6 +3960,8 @@ import {
             return "";
         if (action === "rate")
             return `rate:${state.activeCardId || ""}:${target?.dataset?.rating || ""}`;
+        if (action === "rate-kana-review")
+            return `rate-kana:${target?.dataset?.course || ""}:${target?.dataset?.card || ""}:${target?.dataset?.rating || ""}`;
         if (action === "jlpt-lesson-answer")
             return `jlpt:${target?.dataset?.level || ""}:${target?.dataset?.lesson || target?.dataset?.lessonId || ""}:${target?.dataset?.card || target?.dataset?.id || ""}`;
         if (action === "reading-review-answer")
@@ -5464,6 +5466,8 @@ import {
         }
         if (action === "rate")
             rateActiveCard(target.dataset.rating);
+        if (action === "rate-kana-review")
+            rateActiveKanaCard(target.dataset.course || "", target.dataset.card || "", target.dataset.rating || "remember");
         if (action === "open-card") {
             markKanjiSeenAndSave(findCard(id), "card_details");
             state.detailCardId = id;
@@ -5957,7 +5961,7 @@ import {
             if (!renderContext.isCurrent())
                 return;
             app.innerHTML = `${html}${renderSiteFooter()}${renderGlobalOverlays()}`;
-            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal));
+            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || isRewardModalVisible() || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal));
             syncMascotSpeechTimers();
             requestAnimationFrame(() => {
                 applyPendingFocus();
@@ -8928,13 +8932,14 @@ import {
         const fallback = lines.filter((line) => !recent.has(line.id));
         return sample(fallback.length ? fallback : lines);
     }
-    function dispatchEvaEvent(type, payload = {}) {
+    function dispatchEvaEvent(type, payload = {}, options = {}) {
         if (!type)
             return;
         // Ensure Eva always has fresh N5 lesson progress (same source as lesson cards)
         // when any event/dialogue/response generation happens.
         ensureN5CourseProgress();
-        evaluateAchievements();
+        if (!options.skipAchievements)
+            evaluateAchievements();
         const detail = { type: normalizeEvaEventType(type), payload: payload || {}, at: Date.now() };
         handleEvaEvent(detail);
         window.dispatchEvent(new CustomEvent("eva:event", {
@@ -11324,7 +11329,7 @@ import {
         </div>
         <div class="actions kana-course-tabs">
           <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/reference">${escapeHtml(labels.reference)}</a>
-          <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/review">${escapeHtml(labels.review)}</a>
+          <button class="btn ghost" type="button" data-action="route" data-route="review">${escapeHtml(labels.review)}</button>
           <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/final">${escapeHtml(labels.final)}</a>
           <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/sources">${escapeHtml(labels.sources)}</a>
           <button class="btn ghost" type="button" data-action="kana-toggle-romaji">${escapeHtml(kanaProgressRoot().settings.showRomaji ? labels.hideRomaji : labels.showRomaji)}</button>
@@ -11672,27 +11677,20 @@ import {
     `;
     }
     function renderKanaReviewPage(course, labels) {
-        const due = kanaReviewCards(course, "due");
-        const all = kanaReviewCards(course, "all");
-        const cards = due.length ? due : all.slice(0, 12);
         return `
       <section class="page textbooks-page n5-course-page kana-course-page kana-review-page">
         ${renderKanaPageHead(course, labels.review, labels, "review")}
-        <div class="lesson-grid">
-          ${cards.map((card) => `
-            <article class="review-card kana-review-card">
-              <div>
-                <p class="kanji-glyph" lang="ja">${escapeHtml(card.kana)}</p>
-                ${kanaProgressRoot().settings.showRomaji ? `<p>${escapeHtml(card.romaji || "")}</p>` : ""}
-                <button class="icon-btn" type="button" data-action="play-kana-tts" data-text="${escapeAttr(card.kana)}" aria-label="TTS">🔊</button>
-              </div>
-              <div class="actions">
-                <button class="btn ghost" type="button" data-action="kana-srs" data-course="${escapeAttr(course.slug)}" data-card="${escapeAttr(card.id)}" data-rating="forgot">${escapeHtml(labels.forgot)}</button>
-                <button class="btn primary" type="button" data-action="kana-srs" data-course="${escapeAttr(course.slug)}" data-card="${escapeAttr(card.id)}" data-rating="remember">${escapeHtml(labels.remember)}</button>
-              </div>
-            </article>
-          `).join("") || `<article class="empty-state"><h3>${escapeHtml(labels.noReview)}</h3></article>`}
-        </div>
+        <article class="empty-state kana-review-entry">
+          <span class="kanji-char" lang="ja">${escapeHtml(course.native_title)}</span>
+          <h2>${escapeHtml(lang() === "ru" ? "Повторение теперь общее" : "Review is unified now")}</h2>
+          <p>${escapeHtml(lang() === "ru"
+            ? "Хирагана, катакана и кандзи идут через один экран SRS Flash Kanji: одна карточка за раз, общие кнопки «Не помню» и «Помню», раздельная статистика по ID."
+            : "Hiragana, katakana and kanji now use the same Flash Kanji SRS screen: one card at a time, shared Forgot/Remember actions, independent card IDs.")}</p>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="route" data-route="review">${escapeHtml(labels.review)}</button>
+            <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}">${escapeHtml(course.title)}</a>
+          </div>
+        </article>
       </section>
     `;
     }
@@ -11777,18 +11775,90 @@ import {
             return course.finalTest?.[exerciseId] || course.finalTest?.sections?.[exerciseId] || null;
         return null;
     }
+    function kanaCardNamespace(slug, kana) {
+        const key = String(slug || "").toLowerCase();
+        const glyph = String(kana || "").trim();
+        const codePoint = Array.from(glyph)[0]?.codePointAt(0);
+        if (!isKanaCourseSlug(key) || !Number.isInteger(codePoint))
+            return "";
+        return `kana:${key}:${codePoint.toString(16).toUpperCase()}`;
+    }
+    function parseKanaReviewCardId(cardId, fallbackSlug = "") {
+        const value = String(cardId || "").trim();
+        const namespaced = value.match(/^kana:(hiragana|katakana):([0-9a-f]+)$/i);
+        if (namespaced) {
+            const codePoint = Number.parseInt(namespaced[2], 16);
+            if (!Number.isInteger(codePoint) || codePoint <= 0)
+                return null;
+            return { slug: namespaced[1].toLowerCase(), kana: String.fromCodePoint(codePoint), id: kanaCardNamespace(namespaced[1], String.fromCodePoint(codePoint)) };
+        }
+        const legacy = value.match(/^(hiragana|katakana):(.+)$/i);
+        if (legacy) {
+            const slug = legacy[1].toLowerCase();
+            const kana = legacy[2].trim();
+            return { slug, kana, id: kanaCardNamespace(slug, kana) };
+        }
+        const fallback = String(fallbackSlug || "").toLowerCase();
+        if (isKanaCourseSlug(fallback) && value) {
+            return { slug: fallback, kana: value, id: kanaCardNamespace(fallback, value) };
+        }
+        return null;
+    }
+    function normalizeKanaReviewStorage(slug) {
+        const key = String(slug || "").toLowerCase();
+        if (!isKanaCourseSlug(key))
+            return {};
+        const progress = kanaCourseProgress(key);
+        const source = progress.review && typeof progress.review === "object" ? progress.review : {};
+        const normalized = {};
+        let changed = false;
+        Object.entries(source).forEach(([cardId, cardProgress]) => {
+            const parsed = parseKanaReviewCardId(cardId, key);
+            const nextId = parsed?.slug === key ? parsed.id : "";
+            const migrated = migrateCardProgress(cardProgress);
+            if (!nextId) {
+                normalized[cardId] = migrated;
+                return;
+            }
+            const existing = normalized[nextId];
+            if (!existing || Number(migrated.reviewCount || 0) > Number(existing.reviewCount || 0)
+                || (Date.parse(String(migrated.lastReviewedAt || "")) || 0) > (Date.parse(String(existing.lastReviewedAt || "")) || 0)) {
+                normalized[nextId] = migrated;
+            }
+            if (nextId !== cardId)
+                changed = true;
+        });
+        const previousKeys = Object.keys(source).sort().join("|");
+        const nextKeys = Object.keys(normalized).sort().join("|");
+        if (changed || previousKeys !== nextKeys)
+            progress.review = normalized;
+        return progress.review;
+    }
+    function findKanaCharacter(slug, kana) {
+        const course = kanaCourseData(slug);
+        const value = String(kana || "");
+        return course?.base_characters?.find((item) => item.kana === value) || null;
+    }
+    function kanaCourseReviewLabel(slug) {
+        const course = kanaCourseData(slug) || kanaCatalogEntry(slug);
+        if (course?.title)
+            return course.title;
+        return String(slug || "").toLowerCase() === "katakana"
+            ? (lang() === "ru" ? "Катакана" : "Katakana")
+            : (lang() === "ru" ? "Хирагана" : "Hiragana");
+    }
     function kanaReviewCards(course, mode = "due") {
-        const progress = kanaCourseProgress(course.slug);
+        const review = normalizeKanaReviewStorage(course.slug);
         const now = Date.now();
         return (course.base_characters || []).map((item) => {
-            const id = `${course.slug}:${item.kana}`;
-            const cardProgress = progress.review[id] || null;
+            const id = kanaCardNamespace(course.slug, item.kana);
+            const cardProgress = review[id] || null;
             return { ...item, id, progress: cardProgress };
         }).filter((card) => {
             if (mode === "all")
                 return true;
-            const due = card.progress?.dueAt ? Date.parse(card.progress.dueAt) : Number.NaN;
-            return !card.progress || card.progress.state === "New" || !Number.isFinite(due) || due <= now;
+            const session = createReviewSession(card.progress ? [{ cardId: card.id, ...card.progress }] : [], now);
+            return session.initial.length > 0;
         });
     }
     function findKanaExercise(course, ownerId, ownerType, exerciseId) {
@@ -11879,23 +11949,17 @@ import {
         renderImmediatePreservingScroll();
     }
     function handleKanaSrsAction(slug, cardId, rating) {
-        const key = String(slug || "").toLowerCase();
-        if (!isKanaCourseSlug(key) || !cardId)
-            return;
-        const progress = kanaCourseProgress(key);
-        progress.review[cardId] = kanaReviewProgress(progress.review[cardId] || null, rating === "forgot" ? "forgot" : "remember");
-        progress.currentRoute = "review";
-        progress.updatedAt = new Date().toISOString();
-        saveProgress();
-        playUxSound(rating === "forgot" ? "answer_wrong" : "answer_correct");
-        renderImmediatePreservingScroll();
+        rateActiveKanaCard(slug, cardId, rating);
     }
     function seedKanaReviewCards(course, characters = []) {
         const progress = kanaCourseProgress(course.slug);
+        const review = normalizeKanaReviewStorage(course.slug);
         characters.forEach((item) => {
-            const cardId = `${course.slug}:${item.kana}`;
-            progress.review[cardId] ||= kanaReviewProgress(null, "remember");
+            const cardId = kanaCardNamespace(course.slug, item.kana);
+            if (cardId)
+                review[cardId] ||= kanaReviewProgress(null, "remember");
         });
+        progress.review = review;
     }
     function toggleKanaRomaji() {
         const root = kanaProgressRoot();
@@ -21050,7 +21114,13 @@ import {
                 ? findCard(active.card?.id || active.cardId || active.progress?.cardId || "")
                 : null;
         activateReviewQueueItem(active);
-        const activeMarkup = active ? (active.kind === "card" ? (activeCard ? renderStudyCard(activeCard) : renderNoReview()) : renderReviewExerciseItem(active)) : renderNoReview();
+        const activeMarkup = active
+            ? (active.kind === "card"
+                ? (activeCard ? renderStudyCard(activeCard) : renderNoReview())
+                : active.kind === "kana"
+                    ? renderKanaStudyCard(active, queueCount)
+                    : renderReviewExerciseItem(active))
+            : renderNoReview();
         return `
       <section class="page">
         <div class="section-head">
@@ -22203,6 +22273,43 @@ import {
       </article>
     `;
     }
+    function reviewSessionPositionLabel(queueCount) {
+        const initial = Math.max(Number(state.reviewSession?.initialSize || queueCount || 0), queueCount || 0, 1);
+        const done = clamp(initial - Math.max(Number(queueCount || 0), 0), 0, initial);
+        const current = Math.min(done + 1, initial);
+        return lang() === "ru"
+            ? `Осталось: ${queueCount} · ${current} / ${initial}`
+            : `Remaining: ${queueCount} · ${current} / ${initial}`;
+    }
+    function renderKanaStudyCard(item, queueCount) {
+        const resolved = resolveKanaReviewItem(item);
+        if (!resolved)
+            return renderNoReview();
+        const progress = resolved.progress || migrateCardProgress(null);
+        const labels = srsButtonLabels();
+        const courseLabel = kanaCourseReviewLabel(resolved.courseSlug);
+        const showRomaji = kanaProgressRoot().settings.showRomaji;
+        return `
+      <article class="study-card kana-srs-card" data-review-card-id="${escapeAttr(resolved.cardId)}" data-review-kind="kana">
+        <div class="study-topline">
+          <div class="tag-row compact-tags">
+            <span class="pill">${escapeHtml(courseLabel)}</span>
+            ${renderStatePill(progress.state)}
+            <span class="pill">${escapeHtml(reviewSessionPositionLabel(queueCount))}</span>
+          </div>
+          <button class="audio-trigger" type="button" data-action="play-kana-tts" data-text="${escapeAttr(resolved.kana)}" aria-label="${escapeAttr(lang() === "ru" ? "Озвучить знак" : "Speak kana")}">🔊</button>
+        </div>
+        <div class="kanji-focus kana-srs-focus" lang="ja" aria-label="${escapeAttr(resolved.kana)}">${escapeHtml(resolved.kana)}</div>
+        <h2>${escapeHtml(showRomaji && resolved.romaji ? resolved.romaji : (lang() === "ru" ? "Вспомни чтение" : "Recall the reading"))}</h2>
+        <p class="label">${escapeHtml(courseLabel)} · ${escapeHtml(resolved.strokes ? `${resolved.strokes} ${t("strokes")}` : (lang() === "ru" ? "знак каны" : "kana card"))} · ${escapeHtml(formatDue(progress.dueAt))}</p>
+        ${showRomaji && resolved.romaji ? `<p class="kana-srs-reading"><span lang="ja">${escapeHtml(resolved.kana)}</span> · ${escapeHtml(resolved.romaji)}</p>` : ""}
+        <div class="rating-grid srs-binary-grid">
+          <button class="btn danger" type="button" data-action="rate-kana-review" data-course="${escapeAttr(resolved.courseSlug)}" data-card="${escapeAttr(resolved.cardId)}" data-rating="forgot">${escapeHtml(labels.forgot)} <small>${escapeHtml(labels.forgotHint)}</small></button>
+          <button class="btn success" type="button" data-action="rate-kana-review" data-course="${escapeAttr(resolved.courseSlug)}" data-card="${escapeAttr(resolved.cardId)}" data-rating="remember">${escapeHtml(labels.remember)} <small>${escapeHtml(labels.rememberHint)}</small></button>
+        </div>
+      </article>
+    `;
+    }
     function renderReadingCheck(card) {
         const check = state.readingCheck.cardId === card.id ? state.readingCheck : { value: "", status: null, message: "" };
         const statusClass = check.status ? ` is-${check.status}` : "";
@@ -22302,6 +22409,13 @@ import {
             }
             return;
         }
+        if (item.kind === "kana") {
+            state.activeCardId = null;
+            clearReviewExerciseState();
+            state.revealed = false;
+            resetReadingCheck();
+            return;
+        }
         if (item.kind === "exercise") {
             const sameExercise = state.activeExerciseReviewId === item.exerciseId
                 && state.activeExerciseReviewLevel === item.level
@@ -22389,6 +22503,29 @@ import {
         const progress = course?.exerciseSrs?.[exerciseId] || null;
         return buildReviewExerciseItem(level, exerciseId, progress?.lessonId || "", progress, null, "textbook");
     }
+    function resolveKanaReviewItem(item) {
+        if (!item || item.kind !== "kana")
+            return null;
+        const parsed = parseKanaReviewCardId(item.cardId || item.key || "", item.courseSlug || "");
+        if (!parsed?.id || !isKanaCourseSlug(parsed.slug))
+            return null;
+        const review = normalizeKanaReviewStorage(parsed.slug);
+        const progress = migrateCardProgress(item.progress || review[parsed.id] || null);
+        const character = item.character || findKanaCharacter(parsed.slug, parsed.kana) || {};
+        return {
+            ...item,
+            kind: "kana",
+            key: parsed.id,
+            courseSlug: parsed.slug,
+            cardId: parsed.id,
+            kana: parsed.kana,
+            romaji: String(character.romaji || item.romaji || ""),
+            strokes: Number(character.strokes || item.strokes || 0),
+            progress,
+            character,
+            dueAt: item.dueAt || (progress.dueAt ? new Date(progress.dueAt).getTime() : 0)
+        };
+    }
     function resolveReviewExerciseItem(item) {
         if (!item || item.kind !== "exercise")
             return null;
@@ -22413,6 +22550,8 @@ import {
                 dueAt: item.dueAt || (progress.dueAt ? new Date(progress.dueAt).getTime() : 0)
             };
         }
+        if (item.kind === "kana")
+            return resolveKanaReviewItem(item);
         if (item.kind === "exercise")
             return resolveReviewExerciseItem(item);
         return null;
@@ -22434,13 +22573,14 @@ import {
         const activeCard = state.activeCardId ? safeQueue.find((item) => item.kind === "card" && item.card?.id === state.activeCardId) : null;
         if (activeCard)
             return activeCard;
-        const preferredKind = state.reviewQueueLastKind === "card"
-            ? "exercise"
+        const cardLikeKinds = ["card", "kana"];
+        const preferredKinds = cardLikeKinds.includes(state.reviewQueueLastKind)
+            ? ["exercise"]
             : state.reviewQueueLastKind === "exercise"
-                ? "card"
-                : "";
-        if (preferredKind) {
-            const preferredItem = safeQueue.find((item) => item.kind === preferredKind);
+                ? cardLikeKinds
+                : [];
+        if (preferredKinds.length) {
+            const preferredItem = safeQueue.find((item) => preferredKinds.includes(item.kind));
             if (preferredItem)
                 return preferredItem;
         }
@@ -22643,7 +22783,39 @@ import {
       </article>
     `;
     }
+    function renderReviewSessionComplete() {
+        const results = state.reviewSession?.results || {};
+        const remembered = Number(results.remember || 0);
+        const forgotten = Number(results.forgot || 0);
+        const reviewed = remembered + forgotten;
+        const upcoming = (Array.isArray(results.items) ? results.items : [])
+            .filter((item) => item?.dueAt)
+            .sort((a, b) => (Date.parse(a.dueAt) || 0) - (Date.parse(b.dueAt) || 0))
+            .slice(0, 4);
+        return `
+      <article class="empty-state review-complete-card">
+        <span class="kanji-char">済</span>
+        <h2>${escapeHtml(lang() === "ru" ? "Повторение завершено" : "Review complete")}</h2>
+        <p>${escapeHtml(lang() === "ru" ? "Карточки закрыты. Вот короткий итог с ближайшими возвращениями." : "Cards are done. Here is a short summary and the nearest returns.")}</p>
+        <div class="mini-stat-row">
+          ${renderMetric(lang() === "ru" ? "Помню" : "Remember", remembered, `${reviewed}`, progressWidth(remembered, Math.max(1, reviewed)))}
+          ${renderMetric(lang() === "ru" ? "Не помню" : "Forgot", forgotten, `${reviewed}`, progressWidth(forgotten, Math.max(1, reviewed)))}
+        </div>
+        ${upcoming.length ? `<ul class="review-upcoming-list">
+          ${upcoming.map((item) => `<li><strong>${escapeHtml(item.label || item.kind || "")}</strong><span>${escapeHtml(item.course || "")}</span><small>${escapeHtml(formatDue(item.dueAt))}</small></li>`).join("")}
+        </ul>` : ""}
+        <div class="actions" style="justify-content:center">
+          <button class="btn primary" type="button" data-action="route" data-route="textbooks">▶ ${escapeHtml(t("learn"))}</button>
+          <button class="btn ghost" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
+        </div>
+      </article>
+    `;
+    }
     function renderNoReview() {
+        const results = state.reviewSession?.results || {};
+        const reviewed = Number(results.remember || 0) + Number(results.forgot || 0);
+        if (state.route === "review" && Number(state.reviewSession?.initialSize || 0) > 0 && reviewed > 0)
+            return renderReviewSessionComplete();
         return `
       <article class="empty-state">
         <span class="kanji-char">休</span>
@@ -23461,7 +23633,7 @@ import {
         return lang() === "ru" ? "Операция" : "Transaction";
     }
     function renderRewardModal() {
-        if (!state.rewardModal)
+        if (!isRewardModalVisible())
             return "";
         const reward = state.rewardModal;
         const isLevel = reward.type === "level";
@@ -23849,6 +24021,7 @@ import {
             }
         }
         state.reviewQueueLastKind = "card";
+        recordReviewSessionResult("kanji", rating, { label: card.kanji, level: card.jlpt, dueAt: after.dueAt, cardId: card.id });
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
@@ -23864,6 +24037,57 @@ import {
             checkDailyGoal();
             evaluateAchievements();
         }, { scrollTop: true });
+    }
+    function isRewardModalVisible() {
+        return Boolean(state.rewardModal && state.route !== "review");
+    }
+    function rateActiveKanaCard(slug, cardId, rating) {
+        const parsed = parseKanaReviewCardId(cardId, slug);
+        if (!parsed?.id || !isKanaCourseSlug(parsed.slug))
+            return;
+        const progress = kanaCourseProgress(parsed.slug);
+        const review = normalizeKanaReviewStorage(parsed.slug);
+        const before = cloneProgress(migrateCardProgress(review[parsed.id] || null));
+        const normalizedRating = isForgottenRating(rating) ? "forgot" : "remember";
+        const after = kanaReviewProgress(before, normalizedRating);
+        review[parsed.id] = after;
+        progress.review = review;
+        progress.currentRoute = "review";
+        progress.updatedAt = new Date().toISOString();
+        updateDailyStats(before, after, normalizedRating);
+        updateStreak({ skipAchievements: true });
+        const previousCombo = Number(state.progress.correctCombo || 0);
+        const answerTone = normalizedRating === "forgot" ? "again" : "ok";
+        if (normalizedRating === "forgot") {
+            state.progress.totalWrong += 1;
+            state.progress.correctCombo = 0;
+            adjustEvaRelationship({ discipline: -0.5, trust: -0.1 }, "kana_answer_again");
+            dispatchEvaEvent("answer_wrong", { cardId: parsed.id, kana: parsed.kana, rating: normalizedRating, comboLost: previousCombo > 0 }, { skipAchievements: true });
+            toast(dialogueText("eva", "wrong"));
+        }
+        else {
+            state.progress.totalCorrect += 1;
+            state.progress.correctCombo += 1;
+            state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
+            adjustEvaRelationship({ trust: 0.25, discipline: 0.2, curiosity: 0.1 }, "kana_answer_remember");
+            dispatchEvaEvent("answer_correct", { cardId: parsed.id, kana: parsed.kana, rating: normalizedRating, combo: state.progress.correctCombo }, { skipAchievements: true });
+            toast(dialogueText("eva", "correct"));
+        }
+        state.reviewQueueLastKind = "kana";
+        recordReviewSessionResult("kana", normalizedRating, { label: parsed.kana, course: kanaCourseReviewLabel(parsed.slug), dueAt: after.dueAt, cardId: parsed.id });
+        state.revealed = false;
+        state.activeCardId = null;
+        clearReviewExerciseState();
+        resetReadingCheck();
+        state.pendingFocus = "__scroll-top__";
+        trackReviewSessionComplete("kana");
+        renderImmediate();
+        saveProgress();
+        scheduleStudySideEffects("kana review post-render effects", () => {
+            stopKanjiAudio();
+            playTone(answerTone);
+            syncEvaRelationshipFromProgress();
+        }, { scrollTop: state.route === "review" });
     }
     function srsButtonLabels() {
         return lang() === "ru"
@@ -24472,6 +24696,8 @@ import {
         return 0;
     }
     function queueReward(reward) {
+        if (reward?.type === "achievement" && state.route === "review" && getReviewQueueCount() > 0)
+            return;
         if (!state.rewardModal) {
             state.rewardModal = reward;
             showRewardFeedback(reward);
@@ -24555,7 +24781,7 @@ import {
         today.minutes = round(today.reviews * 0.75 + today.learned * 1.25, 1);
         state.progress.daily[todayKey()] = today;
     }
-    function updateStreak() {
+    function updateStreak(options = {}) {
         claimPendingStreakReward();
         const today = todayKey();
         const last = state.progress.streak.lastStudyDate;
@@ -24578,7 +24804,7 @@ import {
                 availableOn: shiftDayKey(today, 1)
             };
         }
-        dispatchEvaEvent("streak_up", { streak: state.progress.streak.current, lost });
+        dispatchEvaEvent("streak_up", { streak: state.progress.streak.current, lost }, { skipAchievements: Boolean(options.skipAchievements) });
         saveProgress();
     }
     function renderCharts() {
@@ -25551,6 +25777,33 @@ import {
             .filter(Boolean)
             .sort(compareReviewQueueItems);
     }
+    function getDueKanaReviewItems() {
+        const now = Date.now();
+        return ["hiragana", "katakana"].flatMap((slug) => {
+            if (!isKanaCourseSlug(slug))
+                return [];
+            const review = normalizeKanaReviewStorage(slug);
+            const cards = Object.entries(review).map(([cardId, progress]) => ({ cardId, ...migrateCardProgress(progress) }));
+            return createReviewSession(cards, now).initial.map((cardProgress) => {
+                const parsed = parseKanaReviewCardId(cardProgress.cardId, slug);
+                if (!parsed?.id || parsed.slug !== slug)
+                    return null;
+                const character = findKanaCharacter(slug, parsed.kana);
+                return resolveKanaReviewItem({
+                    kind: "kana",
+                    key: parsed.id,
+                    courseSlug: slug,
+                    cardId: parsed.id,
+                    kana: parsed.kana,
+                    romaji: character?.romaji || "",
+                    strokes: character?.strokes || 0,
+                    character,
+                    progress: cardProgress,
+                    dueAt: cardProgress.dueAt ? Date.parse(cardProgress.dueAt) : 0
+                });
+            }).filter(Boolean);
+        }).sort(compareReviewQueueItems);
+    }
     function buildCurrentReviewQueueItems() {
         const cards = getDueNowCards().map((card) => {
             if (!card?.id)
@@ -25565,12 +25818,13 @@ import {
                 progress
             };
         }).filter(Boolean);
+        const cardLikeItems = [...cards, ...getDueKanaReviewItems()].sort(compareReviewQueueItems);
         const exercises = [...getDueTextbookExerciseItems(), ...getDueReadingExerciseItems()].sort(compareReviewQueueItems);
-        return normalizeReviewQueueItems(interleaveReviewQueueItems(cards, exercises, REVIEW_EXERCISE_CARD_GAP));
+        return normalizeReviewQueueItems(interleaveReviewQueueItems(cardLikeItems, exercises, REVIEW_EXERCISE_CARD_GAP));
     }
     function resetReviewSession(items = buildCurrentReviewQueueItems()) {
         const keys = Object.freeze(normalizeReviewQueueItems(items).map((item) => item.key).filter(Boolean));
-        state.reviewSession = { keys, initialSize: keys.length, startedAt: new Date().toISOString() };
+        state.reviewSession = { keys, initialSize: keys.length, startedAt: new Date().toISOString(), results: { remember: 0, forgot: 0, items: [] } };
     }
     function getReviewQueueItems() {
         const current = buildCurrentReviewQueueItems();
@@ -25581,22 +25835,52 @@ import {
         const currentByKey = new Map(current.map((item) => [item.key, item]));
         const sessionKeys = Array.isArray(state.reviewSession?.keys) ? state.reviewSession.keys : [];
         const sessionItems = sessionKeys.map((key) => currentByKey.get(key)).filter(Boolean);
-        if (sessionItems.length !== sessionKeys.length || (!sessionItems.length && current.length)) {
+        if (!sessionKeys.length && current.length) {
             resetReviewSession(current);
             return current;
         }
         return normalizeReviewQueueItems(sessionItems);
     }
+    function recordReviewSessionResult(kind, rating, item = {}) {
+        if (state.route !== "review" || !state.reviewSession)
+            return;
+        const resultKey = isForgottenRating(rating) ? "forgot" : "remember";
+        const results = state.reviewSession.results || { remember: 0, forgot: 0, items: [] };
+        results.remember = Number(results.remember || 0);
+        results.forgot = Number(results.forgot || 0);
+        results[resultKey] += 1;
+        results.items = Array.isArray(results.items) ? results.items : [];
+        results.items.push({
+            kind,
+            rating: resultKey,
+            label: String(item.label || item.kana || item.kanji || item.cardId || ""),
+            course: String(item.course || item.level || ""),
+            dueAt: item.dueAt || null
+        });
+        state.reviewSession.results = results;
+    }
     function getLearningLaterCount() {
         const now = Date.now();
-        return getJlptReviewPoolCards().filter((card) => {
+        const kanjiCount = getJlptReviewPoolCards().filter((card) => {
             const progress = getCardProgress(card.id);
             const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
             return progress.state === "Learning" && dueAt > now;
         }).length;
+        const kanaCount = getAllKanaSrsProgress().filter((progress) => {
+            const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
+            return progress.state === "Learning" && dueAt > now;
+        }).length;
+        return kanjiCount + kanaCount;
+    }
+    function getAllKanaSrsProgress() {
+        return ["hiragana", "katakana"].flatMap((slug) => {
+            if (!isKanaCourseSlug(slug))
+                return [];
+            return Object.values(normalizeKanaReviewStorage(slug)).map((progress) => migrateCardProgress(progress));
+        });
     }
     function getTotalSrsCardCount() {
-        return getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length;
+        return getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length + getAllKanaSrsProgress().filter((progress) => progress.state !== "New").length;
     }
     function getReviewQueueCount() {
         if (reviewQueueCountRenderActive && reviewQueueCountRenderCache !== null)
@@ -25615,8 +25899,13 @@ import {
         const bPriority = studyCardPriority(bProgress);
         if (aPriority !== bPriority)
             return bPriority - aPriority;
-        if (a.kind !== b.kind)
-            return a.kind === "card" ? -1 : 1;
+        if (a.kind !== b.kind) {
+            const aCardLike = a.kind === "card" || a.kind === "kana";
+            const bCardLike = b.kind === "card" || b.kind === "kana";
+            if (aCardLike !== bCardLike)
+                return aCardLike ? -1 : 1;
+            return String(a.kind || "").localeCompare(String(b.kind || ""));
+        }
         if (a.kind === "card" && b.kind === "card")
             return Number(a.card?.id || 0) - Number(b.card?.id || 0);
         return String(a.key || "").localeCompare(String(b.key || ""));

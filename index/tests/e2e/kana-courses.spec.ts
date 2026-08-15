@@ -29,9 +29,6 @@ test("kana courses appear in textbooks and load lazily inside the app shell", as
 });
 
 test("hiragana exercise checks accepted answers and persists progress without touching katakana", async ({ page, request }) => {
-  await page.addInitScript(() => {
-    localStorage.removeItem("flashKanji.progress.v2");
-  });
   const courseResponse = await request.get("/data/kana/hiragana.json");
   expect(courseResponse.ok()).toBeTruthy();
   const course = await courseResponse.json();
@@ -54,18 +51,56 @@ test("hiragana exercise checks accepted answers and persists progress without to
   await expect.poll(async () => page.evaluate(() => {
     const raw = localStorage.getItem("flashKanji.progress.v2");
     const progress = raw ? JSON.parse(raw) : {};
+    const reviewKeys = Object.keys(progress.kanaCourses?.courses?.hiragana?.review || {});
     return {
       hiraganaScore: progress.kanaCourses?.courses?.hiragana?.lessons?.["lesson-1"]?.exercises?.["lesson-1-a"]?.score ?? null,
       hiraganaPassed: progress.kanaCourses?.courses?.hiragana?.lessons?.["lesson-1"]?.passed ?? false,
       katakanaLessonCount: Object.keys(progress.kanaCourses?.courses?.katakana?.lessons || {}).length,
-      reviewCount: Object.keys(progress.kanaCourses?.courses?.hiragana?.review || {}).length
+      reviewCount: reviewKeys.length,
+      namespacedReviewKeys: reviewKeys.every((key) => key.startsWith("kana:hiragana:"))
     };
   })).toMatchObject({
     hiraganaScore: 6,
     hiraganaPassed: true,
     katakanaLessonCount: 0,
-    reviewCount: 5
+    reviewCount: 5,
+    namespacedReviewKeys: true
   });
+
+  await page.evaluate(() => {
+    const raw = localStorage.getItem("flashKanji.progress.v2");
+    const progress = raw ? JSON.parse(raw) : {};
+    const review = progress.kanaCourses?.courses?.hiragana?.review || {};
+    for (const card of Object.values(review) as Array<Record<string, unknown>>) {
+      card.dueAt = "2026-01-01T00:00:00.000Z";
+      card.state = "Learning";
+    }
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify(progress));
+  });
+  await page.addInitScript(() => {
+    const raw = localStorage.getItem("flashKanji.progress.v2");
+    const progress = raw ? JSON.parse(raw) : {};
+    const review = progress.kanaCourses?.courses?.hiragana?.review || {};
+    for (const card of Object.values(review) as Array<Record<string, unknown>>) {
+      card.dueAt = "2026-01-01T00:00:00.000Z";
+      card.state = "Learning";
+    }
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify(progress));
+  });
+
+  await page.goto("./#review");
+  await page.reload();
+  await expect(page.locator('#app [data-review-kind="kana"]')).toBeVisible();
+  await expect(page.locator('#app [data-review-kind="kana"]')).toHaveCount(1);
+  await expect(page.locator("#app .kana-review-card")).toHaveCount(0);
+  await expect(page.locator("#app .study-card")).toContainText(/Осталось:|Remaining:/);
+  await page.locator('[data-action="rate-kana-review"][data-rating="remember"]').click();
+  await expect(page.locator('#app [data-review-kind="kana"]')).toBeVisible();
+  for (let index = 0; index < 4; index += 1) {
+    await page.locator('[data-action="rate-kana-review"][data-rating="remember"]').click();
+  }
+  await expect(page.locator("#app .review-complete-card")).toContainText(/Повторение завершено|Review complete/);
+  await expect(page.locator("#app .review-complete-card")).toContainText(/Помню|Remember/);
 
   await page.goto("./#textbooks/katakana");
   await expect(page.locator("#app .kana-course-page")).toBeVisible();
