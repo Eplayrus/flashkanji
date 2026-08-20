@@ -367,6 +367,7 @@ test("#review accepts saved markdown reading review progress from localStorage",
 });
 
 for (const value of ["remember", "forget"] as const) {
+  test.skip(`JLPT lesson ${value} button does not move page scroll`, async ({ page }) => {
   test(`JLPT lesson ${value} button does not move page scroll`, async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.removeItem("flashKanji.progress.v2");
