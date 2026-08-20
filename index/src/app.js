@@ -23,6 +23,13 @@ import {
     markChangelogHandled,
     normalizeChangelogPayload
 } from "./services/changelog";
+import {
+    normalizeMoonFragmentsBalance,
+    normalizeShopEquipped,
+    normalizeShopIdArray,
+    resolveShopPurchase
+} from "./services/shop";
+import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
 
 (() => {
     "use strict";
@@ -269,6 +276,8 @@ import {
         n1Reading: [],
         n1Listening: [],
         n1FinalTest: null,
+        jlptCourseDataStatus: { N5: "idle", N4: "idle", N3: "idle", N2: "idle", N1: "idle" },
+        jlptCourseDataErrors: { N5: null, N4: null, N3: null, N2: null, N1: null },
         jlptReadingMarkdown: "",
         jlptReadingByLevel: { N5: [], N4: [], N3: [], N2: [], N1: [] },
         jlptReadingTranslations: {},
@@ -277,6 +286,7 @@ import {
         kanaCourseLoading: {},
         kanaCourseErrors: {},
         kanaExerciseDrafts: {},
+        kanaLessonCharacterIndex: {},
         monetization: null,
         customizationCatalog: { categories: [], items: [] },
         customization: null,
@@ -363,6 +373,7 @@ import {
     let deferredPwaInstallPrompt = null;
     let notificationPromptTimer = 0;
     let notificationPromptAutoDockTimer = 0;
+    const activeShopPurchases = new Set();
     let onboardingScheduleTimer = 0;
     let onboardingLayoutRaf = 0;
     let onboardingScrollHandler = null;
@@ -384,6 +395,7 @@ import {
     let deferredDataScheduleToken = 0;
     let n1CourseDataPromise = null;
     let n1CourseDataError = null;
+    const jlptCourseDataPromises = new Map();
     let learningPathMapPromise = null;
     let learningPathMetaPromise = null;
     const learningPathLessonPromises = new Map();
@@ -511,7 +523,7 @@ import {
         syncHeaderSocialToggleButton();
         applyTheme();
         try {
-            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, kanaCatalog, changelogPayload] = await Promise.all([
+            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, changelogPayload] = await Promise.all([
                 loadCourse({ initialOnly: true }),
                 fetchJson(DATA_URLS.i18n),
                 fetchJson(DATA_URLS.dialogues),
@@ -520,6 +532,7 @@ import {
                 fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
                 fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
                 fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
+                fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
                 fetchJson(DATA_URLS.changelog, () => null)
             ]);
             const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
@@ -533,6 +546,7 @@ import {
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
             state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
+            state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
             state.rewards.achievements = state.achievements;
             const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             hydrateProgress();
@@ -544,7 +558,7 @@ import {
             recordAppOpen();
             refreshFlashKanjiOnboardingAudience(hadPriorVisit);
             claimDailyBonus();
-            evaluateAchievements();
+            evaluateAchievements({ silent: true });
             applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
             const shouldFocusChangelog = applyChangelogPayload(changelogPayload, hadPriorVisit);
             saveProgress();
@@ -925,6 +939,7 @@ import {
             state.n1Listening = normalizeN1Collection(n1Listening);
             state.n1FinalTest = normalizeN1FinalTest(n1FinalTest);
             applyN1CatalogToCards();
+            refreshJlptCourseDataStatuses();
             state.kanjiMeta = kanjiMeta.items || {};
             state.kanjiHints = kanjiHints.items || {};
             state.kanjiTranslations = kanjiTranslations.items || {};
@@ -939,7 +954,7 @@ import {
             state.deferredDataLoading = false;
             if (state.progress) {
                 hydrateProgress();
-                evaluateAchievements();
+                evaluateAchievements({ silent: true });
                 saveProgress();
             }
             applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
@@ -950,45 +965,309 @@ import {
         });
         return deferredDataPromise;
     }
-    async function ensureN1CourseData({ renderAfter = true } = {}) {
-        if (state.n1Textbook?.items?.length && state.n1KanjiCatalog?.length)
-            return state.n1Textbook;
-        if (n1CourseDataPromise)
-            return n1CourseDataPromise;
-        n1CourseDataError = null;
-        n1CourseDataPromise = fetchJsonEntriesInBatches([
-            ["n1Meta", DATA_URLS.n1Meta],
-            ["n1Lessons", DATA_URLS.n1Lessons],
-            ["n1Kanji", DATA_URLS.n1Kanji],
-            ["n1Grammar", DATA_URLS.n1Grammar],
-            ["n1Exercises", DATA_URLS.n1Exercises],
-            ["n1Reading", DATA_URLS.n1Reading],
-            ["n1Listening", DATA_URLS.n1Listening],
-            ["n1FinalTest", DATA_URLS.n1FinalTest]
-        ], 4).then((payloads) => {
-            state.n1Meta = normalizeN1Meta(payloads.n1Meta);
-            state.n1Textbook = normalizeN1Textbook(payloads.n1Lessons);
-            state.n1KanjiCatalog = normalizeN1KanjiCatalog(payloads.n1Kanji);
-            state.n1Grammar = normalizeN1Grammar(payloads.n1Grammar);
-            state.n1Exercises = normalizeN1ExerciseConfig(payloads.n1Exercises);
-            state.n1Reading = normalizeN1Collection(payloads.n1Reading);
-            state.n1Listening = normalizeN1Collection(payloads.n1Listening);
-            state.n1FinalTest = normalizeN1FinalTest(payloads.n1FinalTest);
+    function jlptCourseKeys(level) {
+        const canonical = canonicalJlptLevel(level);
+        const prefix = canonical.toLowerCase();
+        return canonical ? {
+            meta: `${prefix}Meta`,
+            lessons: `${prefix}Lessons`,
+            kanji: `${prefix}Kanji`,
+            grammar: `${prefix}Grammar`,
+            exercises: `${prefix}Exercises`,
+            reading: `${prefix}Reading`,
+            listening: `${prefix}Listening`,
+            finalTest: `${prefix}FinalTest`
+        } : null;
+    }
+    function jlptCourseDataEntries(level) {
+        const canonical = canonicalJlptLevel(level);
+        const prefix = canonical.toLowerCase();
+        if (!canonical)
+            return [];
+        const entries = [
+            ["meta", DATA_URLS[`${prefix}Meta`]],
+            ["lessons", DATA_URLS[`${prefix}Lessons`]],
+            ["kanji", DATA_URLS[`${prefix}Kanji`]],
+            ["exercises", DATA_URLS[`${prefix}Exercises`]]
+        ];
+        if (canonical !== "N5") {
+            entries.push(
+                ["grammar", DATA_URLS[`${prefix}Grammar`]],
+                ["reading", DATA_URLS[`${prefix}Reading`]],
+                ["listening", DATA_URLS[`${prefix}Listening`]],
+                ["finalTest", DATA_URLS[`${prefix}FinalTest`]]
+            );
+        }
+        else {
+            entries.push(["finalTest", DATA_URLS.n5FinalTest]);
+        }
+        return entries.filter(([, url]) => Boolean(url));
+    }
+    function markJlptCourseDataStatus(level, status, error = null) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return;
+        state.jlptCourseDataStatus[canonical] = status;
+        state.jlptCourseDataErrors[canonical] = error || null;
+        if (canonical === "N1")
+            n1CourseDataError = error || null;
+    }
+    function jlptCourseDataStatus(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return "error";
+        if (state.jlptCourseDataStatus[canonical] !== "ready" && isJlptCourseDataReady(canonical)) {
+            try {
+                assertJlptCourseDataIntegrity(canonical);
+                markJlptCourseDataStatus(canonical, "ready");
+            }
+            catch (error) {
+                markJlptCourseDataStatus(canonical, "incomplete", error);
+            }
+        }
+        if (state.jlptCourseDataStatus[canonical] === "ready" && !isJlptCourseDataReady(canonical))
+            markJlptCourseDataStatus(canonical, "incomplete", new Error(courseDataErrorMessage()));
+        return state.jlptCourseDataStatus[canonical] || "idle";
+    }
+    function isJlptCourseDataReady(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return false;
+        const lessons = textbookLessonsForLevel(canonical);
+        const cards = jlptAllCardsForLevel(canonical);
+        const exercises = jlptExerciseConfigForLevel(canonical);
+        return lessons.length > 0 && cards.length > 0 && Boolean(exercises);
+    }
+    function jlptAllCardsForLevel(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (canonical === "N5")
+            return n5AllCards();
+        if (canonical === "N4")
+            return n4AllCards();
+        if (canonical === "N3")
+            return n3AllCards();
+        if (canonical === "N2")
+            return n2AllCards();
+        if (canonical === "N1")
+            return n1AllCards();
+        return [];
+    }
+    function jlptExerciseConfigForLevel(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (canonical === "N5")
+            return state.n5Exercises;
+        if (canonical === "N4")
+            return state.n4Exercises;
+        if (canonical === "N3")
+            return state.n3Exercises;
+        if (canonical === "N2")
+            return state.n2Exercises;
+        if (canonical === "N1")
+            return state.n1Exercises;
+        return null;
+    }
+    function normalizeAndApplyJlptCourseData(level, payloads = {}) {
+        const canonical = canonicalJlptLevel(level);
+        if (canonical === "N5") {
+            state.n5Meta = normalizeN5Meta(payloads.meta);
+            state.n5Textbook = normalizeN5Textbook(payloads.lessons);
+            state.n5KanjiCatalog = normalizeN5KanjiCatalog(payloads.kanji);
+            applyN5CatalogToCards();
+            state.n5Exercises = normalizeN5ExerciseConfig(payloads.exercises);
+            if (payloads.finalTest)
+                state.n5FinalTest = normalizeN5FinalTest(payloads.finalTest);
+        }
+        if (canonical === "N4") {
+            state.n4Meta = normalizeN4Meta(payloads.meta);
+            state.n4Textbook = normalizeN4Textbook(payloads.lessons);
+            state.n4KanjiCatalog = normalizeN4KanjiCatalog(payloads.kanji);
+            state.n4Grammar = normalizeN4Grammar(payloads.grammar);
+            state.n4Exercises = normalizeN4ExerciseConfig(payloads.exercises);
+            state.n4Reading = normalizeN4Collection(payloads.reading);
+            state.n4Listening = normalizeN4Collection(payloads.listening);
+            state.n4FinalTest = normalizeN4FinalTest(payloads.finalTest);
+            applyN4CatalogToCards();
+        }
+        if (canonical === "N3") {
+            state.n3Meta = normalizeN3Meta(payloads.meta);
+            state.n3Textbook = normalizeN3Textbook(payloads.lessons);
+            state.n3KanjiCatalog = normalizeN3KanjiCatalog(payloads.kanji);
+            state.n3Grammar = normalizeN3Grammar(payloads.grammar);
+            state.n3Exercises = normalizeN3ExerciseConfig(payloads.exercises);
+            state.n3Reading = normalizeN3Collection(payloads.reading);
+            state.n3Listening = normalizeN3Collection(payloads.listening);
+            state.n3FinalTest = normalizeN3FinalTest(payloads.finalTest);
+            applyN3CatalogToCards();
+        }
+        if (canonical === "N2") {
+            state.n2Meta = normalizeN2Meta(payloads.meta);
+            state.n2Textbook = normalizeN2Textbook(payloads.lessons);
+            state.n2KanjiCatalog = normalizeN2KanjiCatalog(payloads.kanji);
+            state.n2Grammar = normalizeN2Grammar(payloads.grammar);
+            state.n2Exercises = normalizeN2ExerciseConfig(payloads.exercises);
+            state.n2Reading = normalizeN2Collection(payloads.reading);
+            state.n2Listening = normalizeN2Collection(payloads.listening);
+            state.n2FinalTest = normalizeN2FinalTest(payloads.finalTest);
+            applyN2CatalogToCards();
+        }
+        if (canonical === "N1") {
+            state.n1Meta = normalizeN1Meta(payloads.meta);
+            state.n1Textbook = normalizeN1Textbook(payloads.lessons);
+            state.n1KanjiCatalog = normalizeN1KanjiCatalog(payloads.kanji);
+            state.n1Grammar = normalizeN1Grammar(payloads.grammar);
+            state.n1Exercises = normalizeN1ExerciseConfig(payloads.exercises);
+            state.n1Reading = normalizeN1Collection(payloads.reading);
+            state.n1Listening = normalizeN1Collection(payloads.listening);
+            state.n1FinalTest = normalizeN1FinalTest(payloads.finalTest);
             applyN1CatalogToCards();
+        }
+    }
+    function courseDataErrorMessage() {
+        return lang() === "ru"
+            ? "Не удалось загрузить карточки урока. Проверьте подключение и попробуйте ещё раз."
+            : "Could not load lesson cards. Check your connection and try again.";
+    }
+    function assertJlptCourseDataIntegrity(level) {
+        const canonical = canonicalJlptLevel(level);
+        const lessons = textbookLessonsForLevel(canonical);
+        const cards = jlptAllCardsForLevel(canonical);
+        const exercises = jlptExerciseConfigForLevel(canonical);
+        if (!canonical || !lessons.length || !cards.length || !exercises)
+            throw new Error(courseDataErrorMessage());
+        if (canonical !== "N5")
+            return true;
+        const errors = [];
+        const kanjiByLiteral = new Map(state.n5KanjiCatalog.map((card) => [card.kanji, card]));
+        const cardIds = new Set();
+        state.n5KanjiCatalog.forEach((card) => {
+            if (card.id)
+                cardIds.add(card.id);
+        });
+        if (lessons.length !== 10)
+            errors.push(`N5 lessons expected 10, got ${lessons.length}`);
+        if (state.n5KanjiCatalog.length !== 80)
+            errors.push(`N5 kanji expected 80, got ${state.n5KanjiCatalog.length}`);
+        if (cardIds.size !== state.n5KanjiCatalog.length)
+            errors.push("N5 card identifiers are not unique.");
+        const lessonIds = new Set();
+        lessons.forEach((lesson) => {
+            if (lessonIds.has(lesson.id))
+                errors.push(`Duplicate N5 lesson id: ${lesson.id}`);
+            lessonIds.add(lesson.id);
+            if ((lesson.kanji || []).length !== 8)
+                errors.push(`${lesson.id} expected 8 kanji, got ${(lesson.kanji || []).length}`);
+            const resolved = (lesson.kanji || []).map((kanji) => kanjiByLiteral.get(kanji)).filter(Boolean);
+            if (resolved.length !== (lesson.kanji || []).length)
+                errors.push(`${lesson.id} has unresolved kanji references.`);
+            const lessonCards = n5CardsForLesson(lesson);
+            if (lessonCards.length !== (lesson.kanji || []).length)
+                errors.push(`${lesson.id} cards expected ${lesson.kanji.length}, got ${lessonCards.length}`);
+            if (!buildN5LessonExercises(lesson).length)
+                errors.push(`${lesson.id} has no exercises.`);
+        });
+        if (errors.length)
+            throw new Error(`${courseDataErrorMessage()} ${errors[0]}`);
+        return true;
+    }
+    function refreshJlptCourseDataStatuses() {
+        LEVEL_ORDER.forEach((level) => {
+            try {
+                if (isJlptCourseDataReady(level)) {
+                    assertJlptCourseDataIntegrity(level);
+                    markJlptCourseDataStatus(level, "ready");
+                }
+            }
+            catch (error) {
+                markJlptCourseDataStatus(level, "incomplete", error);
+            }
+        });
+    }
+    function normalizeJlptLessonStudySessionsForLevel(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical || !state.progress)
+            return false;
+        const progress = jlptLessonStudyProgress();
+        const course = textbookCourseProgress(canonical);
+        let changed = false;
+        textbookLessonsForLevel(canonical).forEach((lesson) => {
+            const key = jlptLessonStudyKey(canonical, lesson.id);
+            const session = progress.sessions[key];
+            if (!session)
+                return;
+            const stateInfo = resolveJlptLessonStudyState({
+                cards: jlptCardsForLesson(canonical, lesson),
+                session,
+                confirmedCompleted: Boolean(course?.completedLessons?.[lesson.id] || sessionCompletedLessons.has(`${canonical.toLowerCase()}:${lesson.id}`))
+            });
+            if ((session.phase === "test" || session.phase === "done") && stateInfo.status === "incomplete") {
+                session.phase = "study";
+                session.currentIndex = 0;
+                session.completedAt = null;
+                changed = true;
+            }
+            if (stateInfo.status === "study" && session.currentIndex !== stateInfo.currentIndex) {
+                session.currentIndex = stateInfo.currentIndex;
+                changed = true;
+            }
+            if (stateInfo.status === "study" && session.phase !== "study") {
+                session.phase = "study";
+                changed = true;
+            }
+        });
+        if (changed)
+            progress.lastUpdatedAt = new Date().toISOString();
+        return changed;
+    }
+    async function ensureJlptCourseData(level, { renderAfter = true, force = false } = {}) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return null;
+        if (!force && jlptCourseDataStatus(canonical) === "ready")
+            return textbookLessonsForLevel(canonical);
+        if (!force && jlptCourseDataPromises.has(canonical))
+            return jlptCourseDataPromises.get(canonical);
+        markJlptCourseDataStatus(canonical, "loading");
+        const promise = fetchJsonEntriesRequiredInBatches(jlptCourseDataEntries(canonical), canonical === "N5" ? 4 : 3)
+            .then((payloads) => {
+            normalizeAndApplyJlptCourseData(canonical, payloads);
+            assertJlptCourseDataIntegrity(canonical);
+            markJlptCourseDataStatus(canonical, "ready");
+            const changed = normalizeJlptLessonStudySessionsForLevel(canonical);
             if (state.progress) {
                 hydrateProgress();
-                saveProgress();
+                if (changed)
+                    saveProgress();
             }
-            if (renderAfter && state.route === "textbooks" && state.activeTextbookLevel === "N1")
+            applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
+            if (renderAfter)
                 render();
-            return state.n1Textbook;
-        }).catch((error) => {
-            n1CourseDataError = error;
-            console.warn("N1 textbook data failed to load.", error);
-            if (renderAfter && state.route === "textbooks" && state.activeTextbookLevel === "N1")
+            return textbookLessonsForLevel(canonical);
+        })
+            .catch((error) => {
+            markJlptCourseDataStatus(canonical, "error", error);
+            console.warn(`${canonical} textbook data failed to load.`, error);
+            if (renderAfter && state.route === "textbooks" && state.activeTextbookLevel === canonical)
                 render();
             throw error;
-        }).finally(() => {
+        })
+            .finally(() => {
+            jlptCourseDataPromises.delete(canonical);
+        });
+        jlptCourseDataPromises.set(canonical, promise);
+        if (renderAfter && state.route === "textbooks" && state.activeTextbookLevel === canonical)
+            render();
+        return promise;
+    }
+    function retryJlptCourseData(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return;
+        markJlptCourseDataStatus(canonical, "loading");
+        render();
+        void ensureJlptCourseData(canonical, { renderAfter: true, force: true }).catch(() => {});
+    }
+    async function ensureN1CourseData({ renderAfter = true } = {}) {
+        n1CourseDataPromise = ensureJlptCourseData("N1", { renderAfter }).finally(() => {
             n1CourseDataPromise = null;
         });
         return n1CourseDataPromise;
@@ -1080,6 +1359,10 @@ import {
     }
     async function fetchJsonEntriesInBatches(entries, batchSize = 3) {
         const pairs = await mapInBatches(entries, async ([key, url]) => [key, await fetchJson(url)], batchSize);
+        return Object.fromEntries(pairs);
+    }
+    async function fetchJsonEntriesRequiredInBatches(entries, batchSize = 3) {
+        const pairs = await mapInBatches(entries, async ([key, url]) => [key, await fetchJsonRequired(url)], batchSize);
         return Object.fromEntries(pairs);
     }
     async function mapInBatches(items, mapper, batchSize = 6) {
@@ -1359,16 +1642,53 @@ import {
                 { id: "theme", title_ru: "Темы", title_en: "Themes" },
                 { id: "effect", title_ru: "Эффекты", title_en: "Effects" }
             ],
-            items: items.map((item) => ({
-                ...item,
-                id: String(item.id || ""),
-                type: String(item.type || "effect"),
-                price: Math.max(0, Number(item.price || 0)),
-                rarity: String(item.rarity || "common").toLowerCase(),
-                defaultOwned: Boolean(item.defaultOwned || item.price === 0),
-                unlockCondition: item.unlockCondition || null
-            })).filter((item) => item.id)
+            items: items.map((item) => {
+                const price = normalizeMoonFragmentsBalance(item.price);
+                return {
+                    ...item,
+                    id: String(item.id || ""),
+                    type: String(item.type || "effect"),
+                    price,
+                    asset: String(item.asset || ""),
+                    preview: String(item.preview || item.asset || ""),
+                    rarity: String(item.rarity || "common").toLowerCase(),
+                    defaultOwned: Boolean(item.defaultOwned || price === 0),
+                    unlockCondition: item.unlockCondition || null
+                };
+            }).filter((item) => item.id)
         };
+    }
+    async function fetchJsonRequired(url) {
+        const candidates = buildJsonUrlCandidates(url);
+        let lastError = null;
+        for (const candidate of candidates) {
+            try {
+                const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+                const timeout = controller ? window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS) : 0;
+                try {
+                    const response = await fetch(candidate, { signal: controller?.signal });
+                    if (!response.ok) {
+                        lastError = new Error(`Cannot load ${candidate}: HTTP ${response.status}`);
+                        continue;
+                    }
+                    const text = await response.text();
+                    try {
+                        return JSON.parse(text);
+                    }
+                    catch (parseError) {
+                        lastError = parseError;
+                    }
+                }
+                finally {
+                    if (timeout)
+                        window.clearTimeout(timeout);
+                }
+            }
+            catch (error) {
+                lastError = error;
+            }
+        }
+        throw lastError || new Error(`Cannot load ${url}`);
     }
     function defaultCustomization() {
         return {
@@ -1391,11 +1711,16 @@ import {
             if (!raw)
                 return defaultCustomization();
             const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== "object")
+                return defaultCustomization();
             const base = defaultCustomization();
+            const selectedSource = parsed.selected || parsed.equipped || {};
+            const selectedEntries = Object.entries(normalizeShopEquipped(selectedSource))
+                .filter(([, value]) => Boolean(value));
             return {
-                owned: Array.isArray(parsed.owned) ? parsed.owned.map(String) : base.owned,
-                selected: { ...base.selected, ...((parsed && parsed.selected) || {}) },
-                seen: Array.isArray(parsed.seen) ? parsed.seen.map(String) : base.seen,
+                owned: normalizeShopIdArray(parsed.owned || parsed.ownedItems || parsed.inventory || base.owned),
+                selected: { ...base.selected, ...Object.fromEntries(selectedEntries) },
+                seen: normalizeShopIdArray(parsed.seen || base.seen),
                 updatedAt: parsed.updatedAt || base.updatedAt
             };
         }
@@ -1453,7 +1778,8 @@ import {
     function hydrateCustomization() {
         const customization = readCustomizationStorage();
         const owned = new Set();
-        (customization.owned || []).forEach((id) => {
+        const legacyShopOwned = normalizeShopIdArray(state.progress.shop?.owned || []);
+        normalizeShopIdArray(customization.owned).forEach((id) => {
             const item = customizationShopItem(id) || legacyCustomizationItem(id);
             if (item)
                 owned.add(item.id);
@@ -1462,19 +1788,19 @@ import {
             if (item.defaultOwned || item.price === 0)
                 owned.add(item.id);
         });
-        (state.progress.unlockedBackgrounds || []).forEach((id) => {
+        normalizeShopIdArray(state.progress.unlockedBackgrounds || []).forEach((id) => {
             const item = customizationShopItem(id) || legacyCustomizationItem(id);
             if (item)
                 owned.add(item.id);
         });
-        (state.progress.unlockedEvaSprites || []).forEach((sprite) => {
+        normalizeShopIdArray(state.progress.unlockedEvaSprites || []).forEach((sprite) => {
             const outfit = outfitItemBySprite(sprite);
             if (outfit)
                 owned.add(outfit.id);
-            if (state.progress.shop?.owned?.includes(`eva_sprite:${sprite}`) && outfit)
+            if (legacyShopOwned.includes(`eva_sprite:${sprite}`) && outfit)
                 owned.add(outfit.id);
         });
-        (state.progress.shop?.owned || []).forEach((id) => {
+        legacyShopOwned.forEach((id) => {
             const legacyId = String(id);
             const item = customizationShopItem(legacyId) || legacyCustomizationItem(legacyId);
             if (item)
@@ -1503,7 +1829,7 @@ import {
         state.customization = {
             owned: [...owned],
             selected,
-            seen: [...new Set([...(customization.seen || []), ...owned])],
+            seen: [...new Set([...normalizeShopIdArray(customization.seen || []), ...owned])],
             updatedAt: customization.updatedAt || new Date().toISOString()
         };
         syncCustomizationToProgress();
@@ -1520,11 +1846,11 @@ import {
         if (outfit?.spriteId)
             state.progress.selectedEvaSprite = outfit.spriteId;
         state.progress.unlockedBackgrounds = [...new Set([
-                ...(state.progress.unlockedBackgrounds || []),
+                ...normalizeShopIdArray(state.progress.unlockedBackgrounds || []),
                 ...state.customization.owned.filter((id) => customizationShopItem(id)?.type === "background")
             ])];
         state.progress.unlockedEvaSprites = [...new Set([
-                ...(state.progress.unlockedEvaSprites || []),
+                ...normalizeShopIdArray(state.progress.unlockedEvaSprites || []),
                 ...state.customization.owned
                     .map((id) => customizationShopItem(id))
                     .filter((item) => item?.type === "outfit" && item.spriteId)
@@ -1532,7 +1858,7 @@ import {
             ])];
         state.progress.shop ||= { owned: [], equipped: {} };
         state.progress.shop.owned = [...new Set([
-                ...(state.progress.shop.owned || []),
+                ...normalizeShopIdArray(state.progress.shop.owned || []),
                 ...state.customization.owned,
                 ...state.progress.unlockedEvaSprites.map((sprite) => `eva_sprite:${sprite}`)
             ])];
@@ -2843,6 +3169,7 @@ import {
             lastOpenedJlptLessons: mergeJlptLessonVisits(saved.lastOpenedJlptLessons || {}),
             viewedReadingLevels: mergeJlptLessonViewMap(saved.viewedReadingLevels || {}),
             appOpens: Number(saved.appOpens || base.appOpens),
+            moonFragments: normalizeMoonFragmentsBalance(saved.moonFragments, base.moonFragments),
             totalMoonFragmentsEarned: Number(saved.totalMoonFragmentsEarned || base.totalMoonFragmentsEarned),
             writingPractice: { ...base.writingPractice, ...(saved.writingPractice || {}) },
             secrets: { ...base.secrets, ...(saved.secrets || {}) },
@@ -2882,8 +3209,8 @@ import {
             evaAutonomy: mergeEvaAutonomy(base.evaAutonomy, saved.evaAutonomy || {}),
             evaRelationship: mergeEvaRelationship(base.evaRelationship, saved.evaRelationship || {}),
             shop: {
-                owned: [...new Set([...(base.shop.owned || []), ...((saved.shop && saved.shop.owned) || [])])],
-                equipped: { ...base.shop.equipped, ...((saved.shop && saved.shop.equipped) || {}) }
+                owned: [...new Set([...normalizeShopIdArray(base.shop.owned || []), ...normalizeShopIdArray(saved.shop?.owned || saved.ownedItems || [])])],
+                equipped: { ...base.shop.equipped, ...normalizeShopEquipped(saved.shop?.equipped || saved.equippedItems || {}) }
             }
         };
     }
@@ -3962,6 +4289,8 @@ import {
             return `rate:${state.activeCardId || ""}:${target?.dataset?.rating || ""}`;
         if (action === "rate-kana-review")
             return `rate-kana:${target?.dataset?.course || ""}:${target?.dataset?.card || ""}:${target?.dataset?.rating || ""}`;
+        if (action === "kana-lesson-card")
+            return `kana-lesson-card:${target?.dataset?.course || ""}:${target?.dataset?.lesson || ""}:${target?.dataset?.kana || ""}:${target?.dataset?.rating || ""}`;
         if (action === "jlpt-lesson-answer")
             return `jlpt:${target?.dataset?.level || ""}:${target?.dataset?.lesson || target?.dataset?.lessonId || ""}:${target?.dataset?.card || target?.dataset?.id || ""}`;
         if (action === "reading-review-answer")
@@ -4407,6 +4736,174 @@ import {
             level,
             lessonId
         };
+    }
+    function kanaHomeLabels() {
+        return lang() === "ru"
+            ? {
+                sectionEyebrow: "Японские азбуки",
+                sectionTitle: "Начни с каны",
+                sectionHint: "Хирагана и катакана идут рядом с JLPT, но прогресс и статистика хранятся отдельно.",
+                start: "Начать",
+                continue: "Продолжить",
+                review: "Повторить",
+                lessons: "уроков",
+                passed: "пройдено",
+                due: "к повторению",
+                mastered: "освоено",
+                characters: "знаков",
+                active: "выбранный курс",
+                hiragana: "Хирагана",
+                katakana: "Катакана"
+            }
+            : {
+                sectionEyebrow: "Japanese syllabaries",
+                sectionTitle: "Start with kana",
+                sectionHint: "Hiragana and katakana live next to JLPT, while progress and stats stay separate.",
+                start: "Start",
+                continue: "Continue",
+                review: "Review",
+                lessons: "lessons",
+                passed: "passed",
+                due: "due",
+                mastered: "mastered",
+                characters: "characters",
+                active: "selected course",
+                hiragana: "Hiragana",
+                katakana: "Katakana"
+            };
+    }
+    function kanaCourseStarted(progress) {
+        if (!progress)
+            return false;
+        return Boolean(progress.currentRoute
+            || Object.keys(progress.lessons || {}).length
+            || Object.keys(progress.practices || {}).length
+            || Object.keys(progress.review || {}).length
+            || Object.keys(progress.writing || {}).length
+            || progress.finalTest?.completed);
+    }
+    function kanaCourseDueReviewCount(slug) {
+        if (!isKanaCourseSlug(slug))
+            return 0;
+        const now = Date.now();
+        const review = normalizeKanaReviewStorage(slug);
+        const cards = Object.entries(review).map(([cardId, progress]) => ({ cardId, ...migrateCardProgress(progress) }));
+        return createReviewSession(cards, now).initial.length;
+    }
+    function kanaCourseMasteredCount(slug) {
+        if (!isKanaCourseSlug(slug))
+            return 0;
+        return Object.values(normalizeKanaReviewStorage(slug))
+            .map((progress) => migrateCardProgress(progress))
+            .filter((progress) => progress.state === "Mastered").length;
+    }
+    function kanaCourseTouchedCount(slug) {
+        if (!isKanaCourseSlug(slug))
+            return 0;
+        return Object.values(normalizeKanaReviewStorage(slug))
+            .map((progress) => migrateCardProgress(progress))
+            .filter((progress) => progress.state !== "New" || Number(progress.reviewCount || 0) > 0).length;
+    }
+    function kanaHomeCourseItems() {
+        const labels = kanaHomeLabels();
+        return (state.kanaCatalog?.courses || []).map((entry) => {
+            const slug = String(entry.slug || "").toLowerCase();
+            const course = kanaCourseData(slug);
+            const progress = kanaCourseProgress(slug);
+            const firstLesson = course?.lessons?.[0]?.id || "lesson-1";
+            const currentRoute = progress.currentRoute || firstLesson;
+            const totalLessons = Math.max(Number(course?.lessons?.length || 0), Number(entry.lesson_count || 0));
+            const completedLessons = course?.lessons?.length
+                ? course.lessons.filter((lesson) => kanaLessonSummary(slug, lesson).passed).length
+                : Object.values(progress.lessons || {}).filter((lessonProgress) => lessonProgress?.passed).length;
+            const totalCharacters = Math.max(Number(course?.base_characters?.length || 0), Number(entry.base_character_count || 0));
+            const touchedCharacters = kanaCourseTouchedCount(slug);
+            const dueCount = kanaCourseDueReviewCount(slug);
+            const lessonPercent = progressWidth(completedLessons, Math.max(1, totalLessons));
+            const characterPercent = progressWidth(touchedCharacters, Math.max(1, totalCharacters));
+            const started = kanaCourseStarted(progress);
+            const title = slug === "katakana" ? labels.katakana : labels.hiragana;
+            return {
+                slug,
+                title,
+                subtitle: entry.title || title,
+                nativeTitle: entry.native_title || (slug === "katakana" ? "カタカナ" : "ひらがな"),
+                description: entry.description || "",
+                currentRoute,
+                started,
+                dueCount,
+                completedLessons,
+                totalLessons,
+                totalCharacters,
+                masteredCount: kanaCourseMasteredCount(slug),
+                progressPercent: Math.max(lessonPercent, characterPercent),
+                updatedAt: progress.updatedAt || null
+            };
+        }).filter((item) => isKanaCourseSlug(item.slug));
+    }
+    function activeHomeKanaSlug(items) {
+        const started = items.filter((item) => item.started || item.updatedAt);
+        if (!started.length)
+            return "";
+        return started.sort((a, b) => (Date.parse(b.updatedAt || "") || 0) - (Date.parse(a.updatedAt || "") || 0))[0]?.slug || "";
+    }
+    function renderHomeKanaCourseCard(item, activeSlug, labels) {
+        const isActive = item.slug === activeSlug;
+        const actionLabel = item.started ? labels.continue : labels.start;
+        const continueHref = `#textbooks/${escapeAttr(item.slug)}/${escapeAttr(item.currentRoute || "lesson-1")}`;
+        const lessonText = item.totalLessons > 0
+            ? `${item.completedLessons}/${item.totalLessons} ${labels.lessons}`
+            : `0 ${labels.lessons}`;
+        const masteredText = item.totalCharacters > 0
+            ? `${item.masteredCount}/${item.totalCharacters} ${labels.mastered}`
+            : `${item.masteredCount} ${labels.mastered}`;
+        return `
+      <article class="home-kana-card${isActive ? " is-active" : ""}" data-kana-course="${escapeAttr(item.slug)}">
+        <div class="home-kana-card-top">
+          <span class="home-kana-symbol" lang="ja" aria-hidden="true">${escapeHtml(item.nativeTitle)}</span>
+          <div>
+            <div class="tag-row compact-tags">
+              ${isActive ? `<span class="pill">${escapeHtml(labels.active)}</span>` : ""}
+              <span class="pill">${escapeHtml(`${item.dueCount} ${labels.due}`)}</span>
+            </div>
+            <h3>${escapeHtml(item.title)}</h3>
+            <p>${escapeHtml(item.subtitle)}</p>
+          </div>
+        </div>
+        <div class="home-kana-stats">
+          <span>${escapeHtml(lessonText)}</span>
+          <span>${escapeHtml(masteredText)}</span>
+          <strong>${escapeHtml(`${item.progressPercent}%`)}</strong>
+        </div>
+        <div class="progress mini" aria-hidden="true"><span style="width:${item.progressPercent}%"></span></div>
+        <div class="home-kana-actions">
+          ${item.dueCount > 0
+                ? `<button class="btn primary" type="button" data-action="home-review">${escapeHtml(labels.review)} · ${escapeHtml(item.dueCount)}</button><a class="btn ghost" href="${continueHref}">${escapeHtml(actionLabel)}</a>`
+                : `<a class="btn primary" href="${continueHref}">${escapeHtml(actionLabel)}</a><button class="btn ghost" type="button" disabled aria-disabled="true">${escapeHtml(labels.review)} · 0</button>`}
+        </div>
+      </article>
+    `;
+    }
+    function renderHomeKanaSection() {
+        const items = kanaHomeCourseItems();
+        if (!items.length)
+            return "";
+        const labels = kanaHomeLabels();
+        const activeSlug = activeHomeKanaSlug(items);
+        return `
+      <article class="study-card home-kana-section" data-section="home-kana-courses">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow accent">${escapeHtml(labels.sectionEyebrow)}</span>
+            <h2>${escapeHtml(labels.sectionTitle)}</h2>
+            <p>${escapeHtml(labels.sectionHint)}</p>
+          </div>
+        </div>
+        <div class="home-kana-grid">
+          ${items.map((item) => renderHomeKanaCourseCard(item, activeSlug, labels)).join("")}
+        </div>
+      </article>
+    `;
     }
     function learningPathSummaryStats() {
         const levelInfo = getLevelInfo();
@@ -5097,12 +5594,18 @@ import {
             markKanaWriting(target.dataset.course || "", target.dataset.lesson || "");
         if (action === "kana-srs")
             handleKanaSrsAction(target.dataset.course || "", target.dataset.card || "", target.dataset.rating || "remember");
+        if (action === "kana-lesson-card")
+            rateKanaLessonCharacter(target.dataset.course || "", target.dataset.lesson || "", target.dataset.kana || "", target.dataset.rating || "remember");
+        if (action === "kana-lesson-card-reset")
+            resetKanaLessonCharacterFlow(target.dataset.course || "", target.dataset.lesson || "");
         if (action === "kana-toggle-romaji")
             toggleKanaRomaji();
         if (action === "play-kana-tts")
             playKanaTts(target.dataset.text || "");
         if (action === "kana-download-pdf")
             reachMetricGoal("kana_pdf_download", { course: target.dataset.course || "" });
+        if (action === "retry-jlpt-course-data")
+            retryJlptCourseData(target.dataset.level || state.activeTextbookLevel || "");
         if (action === "n5-open-lesson")
             openN5Lesson(id);
         if (action === "n5-overview")
@@ -7048,6 +7551,7 @@ import {
         }
         const selectors = {
             "lesson-card": ".study-card, .daily-lesson-card",
+            "kana-character-card": "[data-section='kana-character-study-card']",
             "lesson-tabs": ".lesson-tabs",
             "review-card": "[data-section='review-card']",
             "sentence-practice": "[data-section='sentence-practice']",
@@ -7223,6 +7727,7 @@ import {
         </section>
         <section class="home-dashboard">
           <div class="home-dashboard-main">
+            ${renderHomeKanaSection()}
             <article class="study-card home-route-card">
               <div class="section-head">
                 <div>
@@ -7605,9 +8110,9 @@ import {
                     ? `<button class="btn warning" type="button" data-action="shop-clear-item" data-id="${escapeAttr(item.id)}">${escapeHtml(labels.remove)}</button>`
                     : `<button class="btn" type="button" disabled>${escapeHtml(labels.unavailable)}</button>`;
         return `
-      <article class="custom-shop-card type-${escapeAttr(item.type)} is-${escapeAttr(status)} rarity-${escapeAttr(item.rarity)}">
+      <article class="custom-shop-card type-${escapeAttr(item.type)} is-${escapeAttr(status)} rarity-${escapeAttr(item.rarity)}" data-item-id="${escapeAttr(item.id)}" data-shop-status="${escapeAttr(status)}">
         <div class="custom-shop-preview">
-          <img src="${escapeAttr(item.preview || item.asset)}" alt="${escapeAttr(customizationItemTitle(item))}" loading="lazy" onerror="this.closest('.custom-shop-card').classList.add('is-missing')" />
+          <img src="${escapeAttr(customizationItemPreview(item))}" alt="${escapeAttr(customizationItemTitle(item))}" loading="lazy" onerror="this.onerror=null;this.src='assets/logo.webp';this.closest('.custom-shop-card').classList.add('is-missing')" />
           <span class="rarity-badge">${escapeHtml(rarityLabel(item.rarity))}</span>
         </div>
         <div class="custom-shop-card-body">
@@ -7675,6 +8180,9 @@ import {
     }
     function customizationItemDescription(item) {
         return lang() === "en" ? item.description_en || item.description_ru || "" : item.description_ru || item.description_en || "";
+    }
+    function customizationItemPreview(item) {
+        return item?.preview || item?.asset || "assets/logo.webp";
     }
     function customizationItemPhrase(item) {
         return lang() === "en" ? item.phrase_en || item.phrase_ru || "" : item.phrase_ru || item.phrase_en || "";
@@ -8939,7 +9447,7 @@ import {
         // when any event/dialogue/response generation happens.
         ensureN5CourseProgress();
         if (!options.skipAchievements)
-            evaluateAchievements();
+            evaluateAchievements({ silent: true });
         const detail = { type: normalizeEvaEventType(type), payload: payload || {}, at: Date.now() };
         handleEvaEvent(detail);
         window.dispatchEvent(new CustomEvent("eva:event", {
@@ -9770,29 +10278,50 @@ import {
         const item = customizationShopItem(id);
         if (!item)
             return;
+        if (!state.customization)
+            hydrateCustomization();
+        if (activeShopPurchases.has(item.id))
+            return;
         if (!isCustomizationAvailable(item)) {
             playUxSound("purchase_failed");
             toast(shopLabels().locked);
             return;
         }
+        activeShopPurchases.add(item.id);
+        window.setTimeout(() => activeShopPurchases.delete(item.id), 0);
         if (isCustomizationOwned(item.id)) {
             selectCustomizationItem(item.id);
             return;
         }
-        if (state.progress.moonFragments < item.price) {
+        const purchase = resolveShopPurchase({
+            balance: state.progress.moonFragments,
+            owned: state.customization?.owned || [],
+            itemId: item.id,
+            price: item.price
+        });
+        state.progress.moonFragments = purchase.balance;
+        if (purchase.status === "insufficient-funds") {
             playUxSound("purchase_failed");
             toast(shopLabels().notEnough);
+            saveProgress();
+            render();
             return;
         }
-        state.progress.moonFragments -= item.price;
-        state.customization.owned = [...new Set([...(state.customization.owned || []), item.id])];
+        if (purchase.status !== "purchased") {
+            playUxSound("purchase_failed");
+            toast(shopLabels().unavailable);
+            saveProgress();
+            render();
+            return;
+        }
+        state.customization.owned = purchase.owned;
         state.customization.seen = [...new Set([...(state.customization.seen || []), item.id])];
         state.progress.transactions.unshift({
             at: new Date().toISOString(),
             reason: `customization:${item.type}:${item.id}`,
             label: customizationItemTitle(item),
             xp: 0,
-            coins: -item.price,
+            coins: -purchase.price,
             balance: state.progress.moonFragments
         });
         state.progress.transactions = state.progress.transactions.slice(0, 80);
@@ -9808,6 +10337,8 @@ import {
     }
     function selectCustomizationItem(id) {
         const item = customizationShopItem(id);
+        if (!state.customization)
+            hydrateCustomization();
         if (!item || !isCustomizationOwned(item.id))
             return;
         const slot = customizationSelectionSlot(item);
@@ -10924,6 +11455,12 @@ import {
         if (!isTextbookUnlocked(level)) {
             return renderTextbookLockedPage(textbook);
         }
+        if (LEVEL_ORDER.includes(level) && !isJlptCourseDataReady(level)) {
+            if (jlptCourseDataStatus(level) === "error" || jlptCourseDataStatus(level) === "incomplete")
+                return renderTextbookDataErrorPage(textbook, level, state.jlptCourseDataErrors[level]);
+            void ensureJlptCourseData(level).catch(() => {});
+            return renderTextbookDataLoadingPage(textbook, level);
+        }
         if (String(textbook?.jlpt || "").toUpperCase() === "N5" && state.n5Textbook?.items?.length) {
             return renderN5CoursePage(textbook);
         }
@@ -11092,14 +11629,14 @@ import {
         const labels = lang() === "ru"
             ? {
                 eyebrow: `${level} · Flash Kanji`,
-                title: `Готовлю интерактивный учебник ${level}`,
-                text: "Подгружаю главы, карточки, грамматику и финальный тест. Сейчас откроется рабочая оболочка, не старый экран.",
+                title: "Загружаем урок…",
+                text: `Подгружаю карточки и упражнения ${level}. Адрес сохранён — после загрузки откроется нужный урок.`,
                 back: "Все учебники"
             }
             : {
                 eyebrow: `${level} · Flash Kanji`,
-                title: `Preparing the interactive ${level} textbook`,
-                text: "Loading lessons, cards, grammar, and the final test. The full app shell will open in a moment.",
+                title: "Loading lesson…",
+                text: `Loading ${level} cards and exercises. The URL is preserved and the requested lesson will open next.`,
                 back: "All textbooks"
             };
         return `
@@ -11123,6 +11660,48 @@ import {
             <div class="achievement-progress" aria-hidden="true"><i style="width:60%"></i></div>
           </div>
           ${renderMascot("eva", "calm", "loading", "n5-hero-mascot")}
+        </article>
+      </section>
+    `;
+    }
+    function renderTextbookDataErrorPage(textbook, level, error = null) {
+        const labels = lang() === "ru"
+            ? {
+                eyebrow: `${level} · Flash Kanji`,
+                title: "Не удалось загрузить карточки урока",
+                text: "Проверьте подключение и попробуйте ещё раз. Прогресс, XP и Moon Fragments не изменились.",
+                retry: "Повторить",
+                back: "К списку уроков"
+            }
+            : {
+                eyebrow: `${level} · Flash Kanji`,
+                title: "Could not load lesson cards",
+                text: "Check your connection and try again. Progress, XP, and Moon Fragments were not changed.",
+                retry: "Retry",
+                back: "Lesson list"
+            };
+        const detail = error instanceof Error ? error.message : String(error || "");
+        return `
+      <section class="page textbooks-page n5-course-page textbook-data-error-page" data-course-data-error="${escapeAttr(level)}">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">${escapeHtml(labels.eyebrow)}</p>
+            <h1>${escapeHtml(labels.title)}</h1>
+            <p>${escapeHtml(labels.text)}</p>
+            ${detail ? `<p class="label">${escapeHtml(detail)}</p>` : ""}
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="retry-jlpt-course-data" data-level="${escapeAttr(level)}">${escapeHtml(labels.retry)}</button>
+            <a class="btn ghost" href="#textbooks/${escapeAttr(level)}">${escapeHtml(labels.back)}</a>
+          </div>
+        </div>
+        <article class="n5-hero n1-hero">
+          <div class="n5-hero-copy">
+            <span class="pill danger-pill">${escapeHtml(level)} · ${escapeHtml(lang() === "ru" ? "данные недоступны" : "data unavailable")}</span>
+            <h2>${escapeHtml(localized(textbook?.displayTitle || textbook?.title || { ru: level, en: level }))}</h2>
+            <p>${escapeHtml(localized(textbook?.description || {}))}</p>
+          </div>
+          ${renderMascot("eva", "concerned", "error", "n5-hero-mascot")}
         </article>
       </section>
     `;
@@ -11167,6 +11746,13 @@ import {
                 lessonProgress: "Прогресс урока",
                 newSigns: "Новые знаки",
                 newSignsHint: "Сначала узнаём форму и чтение каждого нового знака.",
+                characterCard: "Карточка знака",
+                characterCardHint: "Идём как в кандзи-уроке: один знак, быстрое решение, следующая карточка.",
+                cardComplete: "Все знаки урока открыты",
+                cardCompleteHint: "Теперь можно закрепить их в упражнениях, прописи и общем повторении.",
+                backToFirstCard: "Повторить карточки",
+                cardProgress: "Карточка",
+                exampleWord: "Пример слова",
                 readWrite: "Как читать и писать",
                 readWriteHint: "Произнесите знак, посмотрите количество штрихов и переходите к ручной прописи.",
                 reading: "Чтение",
@@ -11222,6 +11808,13 @@ import {
                 lessonProgress: "Lesson progress",
                 newSigns: "New signs",
                 newSignsHint: "Start by recognizing the shape and reading of each new sign.",
+                characterCard: "Character card",
+                characterCardHint: "Use the kanji lesson rhythm: one sign, one decision, then the next card.",
+                cardComplete: "All lesson signs are introduced",
+                cardCompleteHint: "Now reinforce them with exercises, handwriting, and shared review.",
+                backToFirstCard: "Repeat cards",
+                cardProgress: "Card",
+                exampleWord: "Example word",
                 readWrite: "How to read and write",
                 readWriteHint: "Play the sound, check the stroke count, then move to handwriting practice.",
                 reading: "Reading",
@@ -11293,6 +11886,7 @@ import {
         const progress = kanaCourseProgress(course.slug);
         const firstLesson = course.lessons?.[0]?.id || "";
         const currentRoute = progress.currentRoute || firstLesson;
+        rememberKanaRoute(course.slug, currentRoute);
         const completedLessons = course.lessons.filter((lesson) => kanaLessonSummary(course.slug, lesson).passed).length;
         return `
       <section class="page textbooks-page n5-course-page kana-course-page">
@@ -11390,7 +11984,7 @@ import {
     }
     function renderKanaLessonPage(course, lesson, labels) {
         const courseProgress = kanaCourseProgress(course.slug);
-        courseProgress.currentRoute = lesson.id;
+        rememberKanaRoute(course.slug, lesson.id);
         const summary = kanaLessonSummary(course.slug, lesson);
         const total = kanaExerciseTotal(lesson.exercises);
         const sections = parseKanaLessonBody(lesson);
@@ -11399,8 +11993,7 @@ import {
       <section class="page textbooks-page n5-course-page n5-lesson-page kana-course-page kana-lesson-page">
         <div class="kana-lesson-shell">
           ${renderKanaLessonHero(course, lesson, labels, sections, summary, total)}
-          ${renderKanaNewSignsSection(lesson, labels)}
-          ${renderKanaReadWriteSection(lesson, labels)}
+          ${renderKanaLessonCharacterFlow(course, lesson, labels, sections)}
           ${renderKanaExplanationSection(sections.explanations, labels)}
           ${renderKanaExamplesSection(sections.examples, labels)}
           <section class="kana-lesson-step kana-practice-step" aria-labelledby="kanaPracticeTitle">
@@ -11517,6 +12110,122 @@ import {
         </article>
       `;
     }
+    function kanaLessonCardKey(slug, lessonId) {
+        return `${String(slug || "").toLowerCase()}:${String(lessonId || "")}`;
+    }
+    function kanaLessonCharacterIndex(slug, lesson) {
+        const key = kanaLessonCardKey(slug, lesson?.id || "");
+        const total = lesson?.focus_characters?.length || 0;
+        const value = Number(state.kanaLessonCharacterIndex[key] || 0);
+        return clamp(Number.isFinite(value) ? value : 0, 0, total);
+    }
+    function kanaLessonExampleForCharacter(examples, kana) {
+        const rows = Array.isArray(examples?.rows) ? examples.rows : [];
+        const glyph = String(kana || "");
+        const row = rows.find((item) => String(item?.[0] || "").includes(glyph)) || rows[0] || null;
+        if (!row)
+            return null;
+        return {
+            word: String(row[0] || ""),
+            reading: String(row[1] || ""),
+            meaning: String(row[2] || "")
+        };
+    }
+    function renderKanaLessonCharacterFlow(course, lesson, labels, sections) {
+        const characters = lesson.focus_characters || [];
+        if (!characters.length)
+            return "";
+        const index = kanaLessonCharacterIndex(course.slug, lesson);
+        const isComplete = index >= characters.length;
+        const current = characters[Math.min(index, characters.length - 1)];
+        const progressLabel = `${Math.min(index + 1, characters.length)} / ${characters.length}`;
+        const percent = progressWidth(Math.min(index, characters.length), Math.max(1, characters.length));
+        if (isComplete) {
+            return `
+        <section class="kana-lesson-step kana-character-flow" data-section="kana-character-study-card" aria-labelledby="kanaCharacterFlowTitle">
+          <div class="kana-step-heading">
+            <span class="pill">01</span>
+            <h2 id="kanaCharacterFlowTitle">${escapeHtml(labels.characterCard)}</h2>
+            <p>${escapeHtml(labels.characterCardHint)}</p>
+          </div>
+          <article class="study-card kana-character-study-card is-complete" data-kana-character-card>
+            <div class="study-topline">
+              <div class="tag-row compact-tags">
+                <span class="pill">${escapeHtml(course.title)}</span>
+                <span class="pill">${escapeHtml(labels.cardProgress)} ${escapeHtml(`${characters.length} / ${characters.length}`)}</span>
+              </div>
+            </div>
+            <h3>${escapeHtml(labels.cardComplete)}</h3>
+            <p>${escapeHtml(labels.cardCompleteHint)}</p>
+            <div class="kana-card-strip" lang="ja" aria-label="${escapeAttr(labels.newSigns)}">
+              ${characters.map((item) => `<span class="is-done">${escapeHtml(item.kana)}</span>`).join("")}
+            </div>
+            <div class="actions">
+              <button class="btn ghost" type="button" data-action="kana-lesson-card-reset" data-course="${escapeAttr(course.slug)}" data-lesson="${escapeAttr(lesson.id)}">${escapeHtml(labels.backToFirstCard)}</button>
+              <a class="btn primary" href="#kanaPracticeTitle">${escapeHtml(labels.practiceBlock)}</a>
+            </div>
+          </article>
+        </section>
+      `;
+        }
+        const review = normalizeKanaReviewStorage(course.slug);
+        const cardId = kanaCardNamespace(course.slug, current.kana);
+        const progress = migrateCardProgress(review[cardId] || null);
+        const example = kanaLessonExampleForCharacter(sections.examples, current.kana);
+        const showRomaji = kanaProgressRoot().settings.showRomaji;
+        const labelsSrs = srsButtonLabels();
+        return `
+        <section class="kana-lesson-step kana-character-flow" data-section="kana-character-study-card" aria-labelledby="kanaCharacterFlowTitle">
+          <div class="kana-step-heading">
+            <span class="pill">01</span>
+            <h2 id="kanaCharacterFlowTitle">${escapeHtml(labels.characterCard)}</h2>
+            <p>${escapeHtml(labels.characterCardHint)}</p>
+          </div>
+          <article class="study-card kana-character-study-card" data-kana-character-card data-kana-card-id="${escapeAttr(cardId)}">
+            <div class="study-topline">
+              <div class="tag-row compact-tags">
+                <span class="pill">${escapeHtml(course.title)}</span>
+                ${renderStatePill(progress.state)}
+                <span class="pill">${escapeHtml(labels.cardProgress)} ${escapeHtml(progressLabel)}</span>
+              </div>
+              <button class="audio-trigger" type="button" data-action="play-kana-tts" data-text="${escapeAttr(current.kana)}" aria-label="${escapeAttr(labels.tts)}">🔊</button>
+            </div>
+            <div class="kanji-focus kana-lesson-focus" lang="ja" aria-label="${escapeAttr(current.kana)}">${escapeHtml(current.kana)}</div>
+            <h3>${escapeHtml(labels.reading)}: ${escapeHtml(showRomaji && current.romaji ? current.romaji : current.kana)}</h3>
+            <p class="label">${escapeHtml(course.title)} · ${escapeHtml(current.strokes ? `${current.strokes} ${labels.strokes.toLowerCase()}` : labels.characters)} · ${escapeHtml(formatDue(progress.dueAt))}</p>
+            <div class="kana-character-details">
+              <div>
+                <span>${escapeHtml(labels.reading)}</span>
+                <strong>${escapeHtml(current.romaji || "—")}</strong>
+              </div>
+              <div>
+                <span>${escapeHtml(labels.strokes)}</span>
+                <strong>${escapeHtml(current.strokes || "—")}</strong>
+              </div>
+              <div>
+                <span>${escapeHtml(labels.strokeOrder)}</span>
+                <a href="#kana-writing-practice">${escapeHtml(labels.manualWriting)}</a>
+              </div>
+            </div>
+            ${example ? `
+              <div class="lesson-player-sentence kana-character-example">
+                <small>${escapeHtml(labels.exampleWord)}</small>
+                <strong lang="ja">${escapeHtml(example.word)}</strong>
+                <p>${escapeHtml(example.reading)} · ${escapeHtml(example.meaning)}</p>
+              </div>
+            ` : ""}
+            <div class="kana-card-strip" lang="ja" aria-label="${escapeAttr(labels.newSigns)}">
+              ${characters.map((item, itemIndex) => `<span class="${itemIndex < index ? "is-done" : itemIndex === index ? "is-current" : ""}">${escapeHtml(item.kana)}</span>`).join("")}
+            </div>
+            <div class="progress mini" aria-hidden="true"><span style="width:${percent}%"></span></div>
+            <div class="rating-grid srs-binary-grid">
+              <button class="btn danger" type="button" data-action="kana-lesson-card" data-course="${escapeAttr(course.slug)}" data-lesson="${escapeAttr(lesson.id)}" data-kana="${escapeAttr(current.kana)}" data-rating="forgot">${escapeHtml(labelsSrs.forgot)} <small>${escapeHtml(labelsSrs.forgotHint)}</small></button>
+              <button class="btn success" type="button" data-action="kana-lesson-card" data-course="${escapeAttr(course.slug)}" data-lesson="${escapeAttr(lesson.id)}" data-kana="${escapeAttr(current.kana)}" data-rating="remember">${escapeHtml(labelsSrs.remember)} <small>${escapeHtml(labelsSrs.rememberHint)}</small></button>
+            </div>
+          </article>
+        </section>
+      `;
+    }
     function renderKanaNewSignsSection(lesson, labels) {
         return `
         <section class="kana-lesson-step" aria-labelledby="kanaNewSignsTitle">
@@ -11612,8 +12321,7 @@ import {
       `;
     }
     function renderKanaPracticePage(course, practice, labels) {
-        const courseProgress = kanaCourseProgress(course.slug);
-        courseProgress.currentRoute = practice.id;
+        rememberKanaRoute(course.slug, practice.id);
         return `
       <section class="page textbooks-page n5-course-page kana-course-page kana-practice-page">
         ${renderKanaPageHead(course, practice.title, labels, practice.id)}
@@ -11629,8 +12337,7 @@ import {
     `;
     }
     function renderKanaFinalPage(course, labels) {
-        const courseProgress = kanaCourseProgress(course.slug);
-        courseProgress.currentRoute = "final";
+        rememberKanaRoute(course.slug, "final");
         return `
       <section class="page textbooks-page n5-course-page n5-final-page kana-course-page kana-final-page">
         ${renderKanaPageHead(course, labels.final, labels, "final")}
@@ -11948,6 +12655,57 @@ import {
         toast(kanaLabels().writeDone);
         renderImmediatePreservingScroll();
     }
+    function resetKanaLessonCharacterFlow(slug, lessonId) {
+        const key = String(slug || "").toLowerCase();
+        const lessonKey = kanaLessonCardKey(key, lessonId);
+        if (!isKanaCourseSlug(key) || !lessonId)
+            return;
+        state.kanaLessonCharacterIndex[lessonKey] = 0;
+        state.pendingFocus = "kana-character-card";
+        renderImmediate();
+    }
+    function rateKanaLessonCharacter(slug, lessonId, kana, rating) {
+        const key = String(slug || "").toLowerCase();
+        if (!isKanaCourseSlug(key) || !lessonId || !kana)
+            return;
+        const course = kanaCourseData(key);
+        const lesson = course?.lessons?.find((item) => item.id === lessonId) || null;
+        if (!course || !lesson)
+            return;
+        const cardId = kanaCardNamespace(key, kana);
+        if (!cardId)
+            return;
+        const progress = kanaCourseProgress(key);
+        const review = normalizeKanaReviewStorage(key);
+        const before = cloneProgress(migrateCardProgress(review[cardId] || null));
+        const normalizedRating = isForgottenRating(rating) ? "forgot" : "remember";
+        const after = kanaReviewProgress(before, normalizedRating);
+        review[cardId] = after;
+        progress.review = review;
+        progress.currentRoute = lessonId;
+        progress.updatedAt = new Date().toISOString();
+        updateDailyStats(before, after, normalizedRating);
+        updateStreak({ skipAchievements: true });
+        if (normalizedRating === "forgot") {
+            state.progress.totalWrong += 1;
+            state.progress.correctCombo = 0;
+            dispatchEvaEvent("answer_wrong", { cardId, kana, rating: normalizedRating }, { skipAchievements: true });
+        }
+        else {
+            state.progress.totalCorrect += 1;
+            state.progress.correctCombo += 1;
+            state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
+            dispatchEvaEvent("answer_correct", { cardId, kana, rating: normalizedRating, combo: state.progress.correctCombo }, { skipAchievements: true });
+        }
+        const lessonKey = kanaLessonCardKey(key, lessonId);
+        const currentIndex = lesson.focus_characters.findIndex((item) => item.kana === kana);
+        const fallbackIndex = kanaLessonCharacterIndex(key, lesson);
+        state.kanaLessonCharacterIndex[lessonKey] = Math.min((currentIndex >= 0 ? currentIndex : fallbackIndex) + 1, lesson.focus_characters.length);
+        state.pendingFocus = "kana-character-card";
+        playUxSound(normalizedRating === "forgot" ? "answer_wrong" : "answer_correct");
+        saveProgress();
+        renderImmediate();
+    }
     function handleKanaSrsAction(slug, cardId, rating) {
         rateActiveKanaCard(slug, cardId, rating);
     }
@@ -12088,6 +12846,14 @@ import {
     function jlptLessonStudySectionId(level, lessonId, kind = "player") {
         return `jlpt-${String(level || "").toLowerCase()}-${kind}-${String(lessonId || "").replace(/[^a-z0-9_-]+/gi, "-")}`;
     }
+    function isJlptLessonConfirmedCompleted(level, lessonId) {
+        const canonical = canonicalJlptLevel(level);
+        const rawLessonId = String(lessonId || "");
+        if (!canonical || !rawLessonId)
+            return false;
+        const course = textbookCourseProgress(canonical);
+        return Boolean(course?.completedLessons?.[rawLessonId] || sessionCompletedLessons.has(`${canonical.toLowerCase()}:${rawLessonId}`));
+    }
     function jlptLessonStudySession(level, lesson, cards) {
         const progress = jlptLessonStudyProgress();
         const key = jlptLessonStudyKey(level, lesson?.id);
@@ -12109,28 +12875,31 @@ import {
         session.phase = normalizeJlptLessonStudyPhase(session.phase);
         session.startedAt ||= new Date().toISOString();
         session.updatedAt ||= new Date().toISOString();
-        const total = Array.isArray(cards) ? cards.length : 0;
-        const pendingIndex = total
-            ? cards.findIndex((card) => !session.answers[card.id])
-            : -1;
-        const answeredCount = Object.keys(session.answers || {}).length;
-        if (session.completedAt) {
-            session.phase = "done";
-            session.currentIndex = total;
-        }
-        else if (pendingIndex < 0) {
-            session.currentIndex = total;
-            session.phase = "test";
+        const resolved = resolveJlptLessonStudyState({
+            cards,
+            session,
+            confirmedCompleted: isJlptLessonConfirmedCompleted(level, lesson?.id)
+        });
+        session.currentIndex = resolved.currentIndex;
+        session.phase = resolved.phase;
+        if (resolved.status !== "done" && !isJlptLessonConfirmedCompleted(level, lesson?.id))
+            session.completedAt = null;
+        if (resolved.status === "test-ready")
             session.testOpenedAt ||= session.updatedAt || new Date().toISOString();
-        }
-        else {
-            session.currentIndex = pendingIndex;
-            if (session.phase !== "test")
-                session.phase = "study";
-        }
+        if (resolved.status === "incomplete")
+            session.testOpenedAt = null;
         progress.activeSessionKey = key;
         progress.lastUpdatedAt = new Date().toISOString();
-        return { session, key, answeredCount, currentIndex: session.currentIndex, total };
+        return {
+            session,
+            key,
+            status: resolved.status,
+            expectedCardIds: resolved.expectedCardIds,
+            answeredExpectedCardIds: resolved.answeredExpectedCardIds,
+            answeredCount: resolved.answeredCount,
+            currentIndex: resolved.currentIndex,
+            total: resolved.total
+        };
     }
     function jlptLessonStudyCurrentCard(sessionInfo, cards) {
         if (!sessionInfo || !Array.isArray(cards) || !cards.length)
@@ -12209,16 +12978,32 @@ import {
       </article>
     `;
     }
-    function renderJlptLessonStudyComplete(level, lesson, labels, totalCards, answeredCount) {
+    function renderJlptLessonStudyComplete(level, lesson, labels, totalCards, answeredCount, status = "test-ready") {
+        const done = status === "done";
         return `
       <article class="lesson-player-card lesson-study-complete">
         <div class="lesson-study-complete-copy">
-          <span class="pill">${escapeHtml(lang() === "ru" ? "Карточки пройдены" : "Cards completed")}</span>
-          <h2>${escapeHtml(labels.lessonComplete)}</h2>
-          <p>${escapeHtml(lang() === "ru" ? "Все карточки урока уже отвечены. Тест открыт ниже." : "All lesson cards are answered. The test is open below.")}</p>
+          <span class="pill">${escapeHtml(done ? labels.completed : (lang() === "ru" ? "Карточки изучены" : "Cards studied"))}</span>
+          <h2>${escapeHtml(done ? labels.lessonComplete : (lang() === "ru" ? "Карточки изучены. Перейдите к упражнениям" : "Cards studied. Continue to the exercises"))}</h2>
+          <p>${escapeHtml(done ? (lang() === "ru" ? "Урок завершён штатно, прогресс сохранён." : "The lesson is completed and progress is saved.") : (lang() === "ru" ? "Все карточки урока отвечены. Выполните упражнения ниже, чтобы завершить урок." : "All lesson cards are answered. Complete the exercises below to finish the lesson."))}</p>
           <div class="tag-row">
             <span class="pill">${escapeHtml(lang() === "ru" ? `Кандзи ${answeredCount}/${totalCards}` : `Kanji ${answeredCount}/${totalCards}`)}</span>
-            <span class="pill">${escapeHtml(labels.completed)}</span>
+            <span class="pill">${escapeHtml(done ? labels.completed : (lang() === "ru" ? "упражнения ниже" : "exercises below"))}</span>
+          </div>
+        </div>
+      </article>
+    `;
+    }
+    function renderJlptLessonStudyUnavailable(level, lesson, labels) {
+        return `
+      <article class="lesson-player-card lesson-study-complete lesson-study-unavailable">
+        <div class="lesson-study-complete-copy">
+          <span class="pill danger-pill">${escapeHtml(level || "")} · ${escapeHtml(lang() === "ru" ? "карточки недоступны" : "cards unavailable")}</span>
+          <h2>${escapeHtml(lang() === "ru" ? "Не удалось загрузить карточки урока" : "Could not load lesson cards")}</h2>
+          <p>${escapeHtml(courseDataErrorMessage())}</p>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="retry-jlpt-course-data" data-level="${escapeAttr(level)}">${escapeHtml(lang() === "ru" ? "Повторить" : "Retry")}</button>
+            <a class="btn ghost" href="#textbooks/${escapeAttr(level)}">${escapeHtml(lang() === "ru" ? "К списку уроков" : "Lesson list")}</a>
           </div>
         </div>
       </article>
@@ -12235,8 +13020,10 @@ import {
             ? `${lang() === "ru" ? "Кандзи" : "Kanji"} ${Math.min(answeredCount + 1, totalCards)}/${totalCards}`
             : (study.session?.phase === "done"
                 ? (lang() === "ru" ? "Урок завершён" : "Lesson complete")
-                : (lang() === "ru" ? "Тест открыт" : "Test open"));
-        const title = currentCard ? cardMeaning(currentCard) : labels.lessonComplete;
+                : study.status === "incomplete"
+                    ? (lang() === "ru" ? "Карточки не загружены" : "Cards not loaded")
+                    : (lang() === "ru" ? "Карточки изучены" : "Cards studied"));
+        const title = currentCard ? cardMeaning(currentCard) : (study.status === "done" ? labels.lessonComplete : currentLabel);
         return `
       <article class="study-card lesson-player lesson-study-player" id="${escapeAttr(playerId)}">
         <div class="lesson-player-progress">
@@ -12246,7 +13033,9 @@ import {
         </div>
         ${currentCard
             ? renderJlptLessonStudyCard(level, lesson, currentCard, study.currentIndex, totalCards, labels, options)
-            : renderJlptLessonStudyComplete(level, lesson, labels, totalCards, answeredCount)}
+            : study.status === "incomplete"
+                ? renderJlptLessonStudyUnavailable(level, lesson, labels)
+                : renderJlptLessonStudyComplete(level, lesson, labels, totalCards, answeredCount, study.status)}
       </article>
     `;
     }
@@ -13554,6 +14343,17 @@ import {
         });
     }
     function handleJlptLessonAnswer(level, lessonId, cardId, remembered) {
+        const preservedScrollX = typeof window !== "undefined" ? window.scrollX : 0;
+        const preservedScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+        const restoreLessonAnswerScroll = () => {
+            restoreViewportScroll(preservedScrollX, preservedScrollY);
+            requestAnimationFrame(() => {
+                restoreViewportScroll(preservedScrollX, preservedScrollY);
+                requestAnimationFrame(() => restoreViewportScroll(preservedScrollX, preservedScrollY));
+            });
+            window.setTimeout(() => restoreViewportScroll(preservedScrollX, preservedScrollY), 120);
+            window.setTimeout(() => restoreViewportScroll(preservedScrollX, preservedScrollY), 320);
+        };
         const canonical = canonicalJlptLevel(level) || String(level || "").toUpperCase();
         const lesson = canonical === "N5"
             ? n5LessonById(lessonId)
@@ -13581,15 +14381,20 @@ import {
             rating: remembered ? "good" : "again",
             answeredAt: now
         };
-        const cardIndex = cards.findIndex((item) => String(item.id) === String(card.id));
-        study.session.currentIndex = cardIndex >= 0 ? cardIndex + 1 : Math.min(Number(study.session.currentIndex || 0) + 1, cards.length);
-        study.session.phase = study.session.currentIndex >= cards.length ? "test" : "study";
+        const nextState = resolveJlptLessonStudyState({
+            cards,
+            session: study.session,
+            confirmedCompleted: isJlptLessonConfirmedCompleted(canonical, lesson.id)
+        });
+        study.session.currentIndex = nextState.currentIndex;
+        study.session.phase = nextState.phase;
         study.session.updatedAt = now;
-        if (study.session.phase === "test") {
+        if (nextState.status === "test-ready") {
             study.session.testOpenedAt ||= now;
         }
         state.pendingFocus = null;
         renderImmediatePreservingScroll();
+        restoreLessonAnswerScroll();
         saveProgress();
         scheduleNonCriticalTask(`${canonical} lesson SRS post-render commit`, () => {
             const rating = remembered ? "good" : "again";
@@ -13603,6 +14408,7 @@ import {
                 handleN2SrsAction(card.id, rating, "review");
             else if (canonical === "N1")
                 handleN1SrsAction(card.id, rating, "review");
+            restoreLessonAnswerScroll();
         });
     }
     function handleN5SrsAction(cardId, rating, source = "review") {
@@ -14076,7 +14882,7 @@ import {
         const course = ensureN4CourseProgress();
         if (!course.opened) {
             course.opened = true;
-            evaluateAchievements();
+            evaluateAchievements({ silent: true });
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
@@ -15768,7 +16574,7 @@ import {
         const course = ensureN3CourseProgress();
         if (!course.opened) {
             course.opened = true;
-            evaluateAchievements();
+            evaluateAchievements({ silent: true });
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
@@ -17499,7 +18305,7 @@ import {
         const course = ensureN2CourseProgress();
         if (!course.opened) {
             course.opened = true;
-            evaluateAchievements();
+            evaluateAchievements({ silent: true });
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
@@ -19227,7 +20033,7 @@ import {
         const course = ensureN1CourseProgress();
         if (!course.opened) {
             course.opened = true;
-            evaluateAchievements();
+            evaluateAchievements({ silent: true });
             saveProgress();
         }
         const subroute = String(state.activeTextbookSubroute || "");
@@ -24552,9 +25358,10 @@ import {
             state.progress.streakHistory = state.progress.streakHistory.slice(-120);
         }
     }
-    function evaluateAchievements() {
+    function evaluateAchievements(options = {}) {
         if (!achievementList().length)
             return 0;
+        const silent = Boolean(options.silent);
         let unlockedCount = 0;
         achievementList().forEach((achievement) => {
             if (isAchievementUnlocked(achievement.id))
@@ -24569,18 +25376,20 @@ import {
                 rewardXp: xp,
                 rewardFragments: coins
             };
-            queueReward({
-                type: "achievement",
-                title: achievementTitle(achievement),
-                message: achievementDescription(achievement),
-                xp,
-                coins,
-                icon: achievement.icon,
-                mascot: "eva",
-                mood: "happy",
-                dialog: "achievement"
-            });
-            addReward(xp, coins, `achievement:${achievement.id}`);
+            if (!silent) {
+                queueReward({
+                    type: "achievement",
+                    title: achievementTitle(achievement),
+                    message: achievementDescription(achievement),
+                    xp,
+                    coins,
+                    icon: achievement.icon,
+                    mascot: "eva",
+                    mood: "happy",
+                    dialog: "achievement"
+                });
+            }
+            addReward(xp, coins, `achievement:${achievement.id}`, { silent });
         });
         return unlockedCount;
     }
@@ -24725,14 +25534,15 @@ import {
         if ((reward?.xp || 0) > 0 || (reward?.coins || 0) > 0)
             playUxSound("notification_reward");
     }
-    function addReward(xp, coins, reason = "reward") {
+    function addReward(xp, coins, reason = "reward", options = {}) {
+        const silent = Boolean(options.silent);
         const previousLevel = state.progress.level || calculateLevel(state.progress.xp);
         state.progress.xp += xp;
         state.progress.moonFragments += coins;
         const quietReward = shouldQuietPerCardReward(reason);
-        if (!quietReward && xp > 0)
+        if (!silent && !quietReward && xp > 0)
             playUxSound("xp_gain");
-        if (!quietReward && coins > 0)
+        if (!silent && !quietReward && coins > 0)
             playUxSound("moon_fragment_gain");
         if (coins > 0)
             state.progress.totalMoonFragmentsEarned = Number(state.progress.totalMoonFragmentsEarned || 0) + coins;
@@ -24748,6 +25558,8 @@ import {
             state.progress.transactions = state.progress.transactions.slice(0, 80);
         }
         if (state.progress.level > previousLevel) {
+            if (silent)
+                return;
             playUxSound("level_up");
             dispatchEvaEvent("level_up", { level: state.progress.level, xp: state.progress.xp, moonFragments: state.progress.moonFragments });
             const levelInfo = getLevelInfo();
@@ -26763,6 +27575,25 @@ import {
     function kanaCourseProgress(slug) {
         return ensureKanaCourseProgress(kanaProgressRoot(), slug);
     }
+    function rememberKanaRoute(slug, routeId) {
+        const key = String(slug || "").toLowerCase();
+        const nextRoute = String(routeId || "").trim();
+        if (!isKanaCourseSlug(key) || !nextRoute)
+            return;
+        const progress = kanaCourseProgress(key);
+        const timestamp = new Date().toISOString();
+        let changed = false;
+        if (progress.currentRoute !== nextRoute) {
+            progress.currentRoute = nextRoute;
+            changed = true;
+        }
+        if (!progress.updatedAt) {
+            progress.updatedAt = timestamp;
+            changed = true;
+        }
+        if (changed)
+            saveProgress();
+    }
     function ensureKanaCourseData(slug) {
         const key = String(slug || "").toLowerCase();
         const entry = kanaCatalogEntry(key);
@@ -26913,6 +27744,16 @@ import {
         const canonical = canonicalJlptLevel(level);
         if (!canonical)
             return [];
+        if (canonical === "N5" && state.n5Textbook?.items?.length)
+            return state.n5Textbook.items;
+        if (canonical === "N4" && state.n4Textbook?.items?.length)
+            return state.n4Textbook.items;
+        if (canonical === "N3" && state.n3Textbook?.items?.length)
+            return state.n3Textbook.items;
+        if (canonical === "N2" && state.n2Textbook?.items?.length)
+            return state.n2Textbook.items;
+        if (canonical === "N1" && state.n1Textbook?.items?.length)
+            return state.n1Textbook.items;
         const textbook = jlptCatalogByLevel(canonical);
         const courseLessons = state.lessons.filter((item) => String(item.jlpt || "").toUpperCase() === canonical);
         const textbookLessons = textbook
@@ -27328,6 +28169,16 @@ import {
         if (canonical !== "N5" && expandedSubroutes.has(rawSubroute))
             return true;
         return textbookLessonsForLevel(canonical).some((lesson) => lesson.id === rawSubroute);
+    }
+    function shouldDeferJlptTextbookEntityValidation(level, subroute) {
+        const canonical = canonicalJlptLevel(level);
+        const rawSubroute = String(subroute || "");
+        if (!canonical || !rawSubroute)
+            return false;
+        const status = jlptCourseDataStatus(canonical);
+        if (status === "ready" || status === "error" || status === "incomplete")
+            return false;
+        return /^[A-Za-z0-9_-]+$/.test(rawSubroute);
     }
     function kanaSubrouteExists(slug, subroute) {
         const key = String(slug || "").toLowerCase();
@@ -29132,6 +29983,8 @@ import {
                 return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
             }
             if (level && subroute && !textbookSubrouteExists(level, subroute)) {
+                if (shouldDeferJlptTextbookEntityValidation(level, subroute))
+                    return routeMatch;
                 return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
             }
         }

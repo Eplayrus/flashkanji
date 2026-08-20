@@ -1,7 +1,7 @@
-const SW_BUILD_VERSION = "2026-07-28-performance-cache-v1";
+const SW_BUILD_VERSION = "2026-08-20-n5-lesson-availability-v1";
 const CACHE_PREFIX = "flash-kanji-";
 const STATIC_CACHE = `${CACHE_PREFIX}static-${SW_BUILD_VERSION}`;
-const DATA_CACHE = `${CACHE_PREFIX}data-v1`;
+const DATA_CACHE = `${CACHE_PREFIX}data-${SW_BUILD_VERSION}`;
 const AUDIO_CACHE = `${CACHE_PREFIX}audio-v1`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-v1`;
 const CURRENT_CACHES = new Set([STATIC_CACHE, DATA_CACHE, AUDIO_CACHE, RUNTIME_CACHE]);
@@ -148,6 +148,10 @@ function isDataRequest(url) {
   return url.pathname.includes("/data/");
 }
 
+function isCriticalJlptCourseDataRequest(url) {
+  return /\/data\/jlpt\/n[1-5]\/(?:meta|lessons|kanji|exercises)\.json$/i.test(url.pathname);
+}
+
 function isAudioRequest(request, url) {
   return request.destination === "audio" || /\/audio\/|\/sounds\//i.test(url.pathname);
 }
@@ -188,6 +192,11 @@ self.addEventListener("fetch", (event) => {
       return;
     }
     event.respondWith(networkFirst(request, ["./index.html", "./"]));
+    return;
+  }
+
+  if (isCriticalJlptCourseDataRequest(url)) {
+    event.respondWith(networkFirst(request, [], DATA_CACHE));
     return;
   }
 

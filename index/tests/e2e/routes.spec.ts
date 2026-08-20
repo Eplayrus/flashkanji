@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.use({ serviceWorkers: "block" });
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
@@ -95,6 +97,67 @@ test("known hash shape with missing entity renders entity-not-found", async ({ p
   await expectAppNotFound(page, "entity-not-found");
 });
 
+test("cold direct N5 lesson deep links wait for data and open real lessons", async ({ page }) => {
+  for (const lessonId of ["n5-lesson-1", "n5-lesson-5", "n5-lesson-10"] as const) {
+    await page.goto(`./#textbooks/N5/${lessonId}`);
+    await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+    await expect(page.locator("#app .lesson-study-card")).toBeVisible();
+    await expect(page.locator("#app")).toContainText(/Кандзи 1 из 8|Kanji 1 of 8|Кандзи 1\/8|Kanji 1\/8/);
+    await expect(page.locator("#app")).not.toContainText(/Кандзи 0\/0|Kanji 0\/0|Урок завершён|Lesson complete/);
+  }
+});
+
+test("N5 required JSON failure shows retry without completing the lesson", async ({ page }) => {
+  let fail = true;
+  await page.route("**/data/jlpt/n5/kanji.json", async (route) => {
+    if (fail) {
+      await route.fulfill({ status: 503, body: "temporarily unavailable" });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("./#textbooks/N5/n5-lesson-5");
+  await expect(page.locator('#app [data-course-data-error="N5"]')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#app")).toContainText(/Не удалось загрузить карточки урока|Could not load lesson cards/);
+  await expect(page.locator("#app")).not.toContainText(/Урок завершён|Lesson complete|Кандзи 0\/0|Kanji 0\/0/);
+
+  fail = false;
+  await page.locator('[data-action="retry-jlpt-course-data"][data-level="N5"]').click();
+  await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
+  await expect(page).toHaveURL(/#textbooks\/N5\/n5-lesson-5$/);
+});
+
+test("old zero-card JLPT study session is migrated back to study after data loads", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      jlptLessonStudy: {
+        activeSessionKey: "N5:n5-lesson-5",
+        sessions: {
+          "N5:n5-lesson-5": {
+            level: "N5",
+            lessonId: "n5-lesson-5",
+            currentIndex: 0,
+            answers: {},
+            phase: "test",
+            startedAt: "2026-08-20T00:00:00.000Z",
+            updatedAt: "2026-08-20T00:00:00.000Z",
+            completedAt: null,
+            testOpenedAt: "2026-08-20T00:00:00.000Z"
+          }
+        }
+      }
+    }));
+  });
+
+  await page.goto("./#textbooks/N5/n5-lesson-5");
+  await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#app .lesson-study-card")).toBeVisible();
+  await expect(page.locator("#app")).toContainText(/Кандзи 1 из 8|Kanji 1 of 8|Кандзи 1\/8|Kanji 1\/8/);
+  await expect(page.locator("#app")).not.toContainText(/Урок завершён|Lesson complete|Кандзи 0\/0|Kanji 0\/0/);
+});
+
 test("Back and Forward keep valid routes and Not Found states distinct", async ({ page }) => {
   await page.goto("./#home");
   await page.locator('.bottom-nav [data-route="textbooks"]').click();
@@ -143,7 +206,7 @@ test("SRS answer scrolls to the top of review after each card", async ({ page })
     const dueAt = new Date(Date.now() - 60_000).toISOString();
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.09");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.20");
     localStorage.setItem("flashKanji.hasVisited", "true");
     localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
       appOpens: 2,

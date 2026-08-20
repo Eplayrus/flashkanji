@@ -8796,14 +8796,96 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 }
 
 .home-route-card,
+.home-kana-section,
 .home-task-card,
 .home-install-card {
   padding: 18px;
 }
 
 .home-route-card .section-head,
+.home-kana-section .section-head,
 .home-task-card .section-head {
   margin: 0 0 14px;
+}
+
+.home-kana-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home-kana-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 94% 10%, color-mix(in srgb, var(--accent-3), transparent 82%), transparent 38%),
+    color-mix(in srgb, var(--surface-2), transparent 2%);
+  box-shadow: 0 16px 34px var(--shadow);
+}
+
+.home-kana-card.is-active {
+  border-color: color-mix(in srgb, var(--accent), transparent 20%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent), transparent 70%), 0 18px 38px color-mix(in srgb, var(--accent), transparent 84%);
+}
+
+.home-kana-card-top {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.home-kana-symbol {
+  display: grid;
+  place-items: center;
+  min-height: 78px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface), #000 10%);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4vw, 2.75rem);
+  line-height: 1;
+  text-shadow: 0 4px 0 var(--accent), 0 0 18px color-mix(in srgb, var(--accent), transparent 62%);
+}
+
+.home-kana-card h3,
+.home-kana-card p {
+  margin: 0;
+}
+
+.home-kana-card h3 {
+  margin-top: 8px;
+  font-size: 1.1rem;
+}
+
+.home-kana-card p,
+.home-kana-stats {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.home-kana-stats,
+.home-kana-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.home-kana-stats strong {
+  margin-left: auto;
+  color: var(--accent-2);
+  font-size: 1.2rem;
+}
+
+.home-kana-actions .btn {
+  flex: 1 1 150px;
+  min-width: 0;
 }
 
 .home-route-track {
@@ -9216,6 +9298,10 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 
   .home-route-track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-kana-grid {
+    grid-template-columns: 1fr;
   }
 
   .home-dashboard-side .home-eva-vn {
@@ -9806,6 +9892,103 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   font-size: clamp(1.45rem, 3vw, 2.2rem);
 }
 
+.kana-character-flow {
+  display: grid;
+  gap: 14px;
+}
+
+.kana-character-study-card {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.kana-character-study-card .study-topline {
+  align-items: flex-start;
+}
+
+.kana-lesson-focus {
+  font-size: clamp(6.5rem, 24vw, 12rem);
+  text-shadow:
+    6px 6px 0 color-mix(in srgb, var(--accent), transparent 12%),
+    0 0 36px color-mix(in srgb, var(--accent-2), transparent 72%);
+}
+
+.kana-character-study-card h3 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4vw, 2.2rem);
+}
+
+.kana-character-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kana-character-details > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface), transparent 8%);
+}
+
+.kana-character-details span,
+.kana-character-example small {
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.kana-character-details strong,
+.kana-character-details a {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.kana-card-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kana-card-strip span {
+  display: grid;
+  min-width: 38px;
+  min-height: 38px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--kana-card-surface-strong);
+  color: var(--muted);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.kana-card-strip span.is-current {
+  border-color: color-mix(in srgb, var(--accent), transparent 12%);
+  color: var(--text);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent), transparent 65%);
+}
+
+.kana-card-strip span.is-done {
+  border-color: color-mix(in srgb, var(--accent-3), transparent 34%);
+  color: var(--accent-3);
+}
+
+.kana-character-study-card.is-complete {
+  text-align: center;
+}
+
+.kana-character-study-card.is-complete .kana-card-strip,
+.kana-character-study-card.is-complete .actions {
+  justify-content: center;
+}
+
 .kana-new-sign-grid {
   grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
 }
@@ -10032,8 +10215,13 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   }
 
   .kana-readwrite-grid,
-  .kana-explanation-grid {
+  .kana-explanation-grid,
+  .kana-character-details {
     grid-template-columns: 1fr;
+  }
+
+  .kana-character-study-card {
+    padding: 14px;
   }
 
   .kana-readwrite-card {
