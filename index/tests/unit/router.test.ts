@@ -27,6 +27,26 @@ describe("hash router", () => {
     });
   });
 
+  it("routes kana courses through the same strict textbooks registry", () => {
+    expect(parseHash("#textbooks/hiragana")).toMatchObject({
+      status: "valid",
+      route: "textbooks",
+      params: { course: "hiragana", subroute: "" },
+      segments: ["textbooks", "hiragana"]
+    });
+    expect(parseHash("#textbooks/katakana/lesson-11")).toMatchObject({
+      status: "valid",
+      route: "textbooks",
+      params: { course: "katakana", subroute: "lesson-11" },
+      segments: ["textbooks", "katakana", "lesson-11"]
+    });
+    expect(parseHash("#textbooks/hentaigana")).toMatchObject({
+      status: "not-found",
+      route: NOT_FOUND_ROUTE,
+      reason: "invalid-parameter"
+    });
+  });
+
   it("does not silently coerce unknown hashes to Home", () => {
     expect(parseHash("#does-not-exist")).toMatchObject({
       status: "not-found",
@@ -73,6 +93,14 @@ describe("hash router", () => {
       kind: "textbook-level",
       params: { level: "N1" },
       canonicalPath: "/en/textbooks/n1/"
+    });
+    expect(matchPathname("/ru/textbooks/hiragana/")).toMatchObject({
+      status: "valid",
+      route: "textbooks",
+      locale: "ru",
+      kind: "kana-course",
+      params: { course: "hiragana" },
+      canonicalPath: "/ru/textbooks/hiragana/"
     });
     expect(matchPathname("/en/kanji/u4e0a-ue/")).toMatchObject({
       status: "valid",

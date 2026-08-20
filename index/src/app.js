@@ -1,7 +1,16 @@
 import { NOT_FOUND_ROUTE, createRenderCoordinator, installHashRouter, isAppShellPathname, isRegisteredRoute, matchPathname, notFound, parseHash } from "./router";
-import { calculateNextProgress, migrateCardProgress } from "./services/srs";
+import { calculateNextProgress, createReviewSession, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
+import {
+    ensureKanaCourseProgress,
+    isKanaCourseSlug,
+    kanaReviewProgress,
+    mergeKanaProgress,
+    normalizeKanaAnswer,
+    scoreKanaExercise,
+    summarizeKanaExerciseMap
+} from "./features/kana-courses/kanaCourse";
 import {
     primeMetrikaPageView,
     trackMetrikaGoal,
@@ -99,6 +108,7 @@ import {
         n1FinalTest: "data/jlpt/n1/final-test.json",
         jlptReadingMarkdown: "data/jlpt/reading-texts_N5_N1.md",
         jlptReadingTranslations: "data/jlpt/reading-texts_N5_N1.translations.json",
+        kanaCatalog: "data/kana/index.json",
         monetization: "data/monetization/catalog.json",
         customizationShop: "data/customization-shop.json",
         evaBackgrounds: "data/eva-backgrounds.json",
@@ -262,6 +272,11 @@ import {
         jlptReadingMarkdown: "",
         jlptReadingByLevel: { N5: [], N4: [], N3: [], N2: [], N1: [] },
         jlptReadingTranslations: {},
+        kanaCatalog: { schema_version: 1, content_version: "", courses: [] },
+        kanaCourses: {},
+        kanaCourseLoading: {},
+        kanaCourseErrors: {},
+        kanaExerciseDrafts: {},
         monetization: null,
         customizationCatalog: { categories: [], items: [] },
         customization: null,
@@ -277,7 +292,7 @@ import {
         progress: null,
         activeLessonId: null,
         activeJlptLesson: initialRouteMatch.status === "valid" ? (initialRouteMatch.params.level || null) : null,
-        activeTextbookLevel: initialRouteMatch.status === "valid" && initialRouteMatch.route === "textbooks" ? (initialRouteMatch.params.level || null) : null,
+        activeTextbookLevel: initialRouteMatch.status === "valid" && initialRouteMatch.route === "textbooks" ? (initialRouteMatch.params.level || initialRouteMatch.params.course || null) : null,
         activeTextbookSubroute: initialRouteMatch.status === "valid" && initialRouteMatch.route === "textbooks" ? (initialRouteMatch.params.subroute || null) : null,
         activeLearnView: initialRouteMatch.status === "valid" && initialRouteMatch.route === "learn" ? (initialRouteMatch.params.view || LEARNING_PATH_MAP_VIEW) : LEARNING_PATH_MAP_VIEW,
         activeLearnNodeId: initialRouteMatch.status === "valid" && initialRouteMatch.route === "learn" && initialRouteMatch.params.view === LEARNING_PATH_LESSON_VIEW ? (initialRouteMatch.params.targetId || null) : null,
@@ -433,7 +448,7 @@ import {
         const route = routeMatch.route;
         const params = routeMatch.status === "valid" ? routeMatch.params : {};
         const kanjiPageId = route === "kanji" ? (params.cardId || null) : null;
-        const textbookLevel = route === "textbooks" ? (params.level || null) : null;
+        const textbookLevel = route === "textbooks" ? (params.level || params.course || null) : null;
         const textbookSubroute = route === "textbooks" ? (params.subroute || null) : null;
         const jlptLessonLevel = route === "jlpt-lesson" ? (params.level || null) : null;
         const learnView = route === "learn" ? (params.view || LEARNING_PATH_MAP_VIEW) : LEARNING_PATH_MAP_VIEW;
@@ -459,7 +474,7 @@ import {
             state.kanjiPageId = route === "kanji" ? kanjiPageId : null;
             state.activeTextbookLevel = route === "textbooks" ? textbookLevel : null;
             state.activeTextbookSubroute = route === "textbooks" ? textbookSubroute : null;
-            state.activeJlptLesson = route === "jlpt-lesson" ? jlptLessonLevel : state.activeJlptLesson;
+            state.activeJlptLesson = route === "jlpt-lesson" ? jlptLessonLevel : (params.level || state.activeJlptLesson);
             state.activeLearnView = route === "learn" ? learnView : LEARNING_PATH_MAP_VIEW;
             state.activeLearnNodeId = route === "learn" ? learnNodeId : null;
             state.activeLearnLegacyLessonId = route === "learn" ? learnLegacyLessonId : null;
@@ -496,7 +511,7 @@ import {
         syncHeaderSocialToggleButton();
         applyTheme();
         try {
-            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, changelogPayload] = await Promise.all([
+            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, kanaCatalog, changelogPayload] = await Promise.all([
                 loadCourse({ initialOnly: true }),
                 fetchJson(DATA_URLS.i18n),
                 fetchJson(DATA_URLS.dialogues),
@@ -504,6 +519,7 @@ import {
                 fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
                 fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
                 fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
+                fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
                 fetchJson(DATA_URLS.changelog, () => null)
             ]);
             const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
@@ -516,6 +532,7 @@ import {
             state.achievementCategories = achievementBundle.categories;
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
+            state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
             state.rewards.achievements = state.achievements;
             const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             hydrateProgress();
@@ -1603,6 +1620,25 @@ import {
                 kanjiCount: Number(item.kanjiCount || 0),
                 cardCount: Number(item.cardCount || 0)
             })).filter((item) => item.jlpt).sort((a, b) => LEVEL_ORDER.indexOf(a.jlpt) - LEVEL_ORDER.indexOf(b.jlpt))
+        };
+    }
+    function normalizeKanaCatalog(payload) {
+        const courses = Array.isArray(payload?.courses) ? payload.courses : [];
+        return {
+            schema_version: Number(payload?.schema_version || 1),
+            content_version: String(payload?.content_version || ""),
+            courses: courses.map((item) => ({
+                ...item,
+                slug: String(item.slug || "").toLowerCase(),
+                title: String(item.title || ""),
+                native_title: String(item.native_title || ""),
+                description: String(item.description || ""),
+                course_file: String(item.course_file || ""),
+                pdf_url: String(item.pdf_url || ""),
+                lesson_count: Number(item.lesson_count || 0),
+                base_character_count: Number(item.base_character_count || 0),
+                task_count: Number(item.task_count || 0)
+            })).filter((item) => isKanaCourseSlug(item.slug))
         };
     }
     function normalizeJlptPracticeLessons(payload) {
@@ -2758,6 +2794,7 @@ import {
             n3Course: defaultN3CourseProgress(),
             n2Course: defaultN2CourseProgress(),
             n1Course: defaultN1CourseProgress(),
+            kanaCourses: mergeKanaProgress(null),
             unlockedJlptLevels: LEVEL_ORDER.slice(), // JLPT textbooks and lesson modules start fully open; the list stays for compatibility and stats.
             unlockedBackgrounds: ["bg_study_hub"],
             selectedEvaRoomBackground: "bg_study_hub",
@@ -2819,6 +2856,7 @@ import {
             n3Course: mergeN3CourseProgress(base.n3Course, saved.n3Course || {}),
             n2Course: mergeN2CourseProgress(base.n2Course, saved.n2Course || {}),
             n1Course: mergeN1CourseProgress(base.n1Course, saved.n1Course || {}),
+            kanaCourses: mergeKanaProgress(saved.kanaCourses || base.kanaCourses),
             unlockedJlptLevels: [...new Set([
                     ...(Array.isArray(base.unlockedJlptLevels) ? base.unlockedJlptLevels : []),
                     ...(Array.isArray(saved.unlockedJlptLevels) ? saved.unlockedJlptLevels : []),
@@ -3922,6 +3960,8 @@ import {
             return "";
         if (action === "rate")
             return `rate:${state.activeCardId || ""}:${target?.dataset?.rating || ""}`;
+        if (action === "rate-kana-review")
+            return `rate-kana:${target?.dataset?.course || ""}:${target?.dataset?.card || ""}:${target?.dataset?.rating || ""}`;
         if (action === "jlpt-lesson-answer")
             return `jlpt:${target?.dataset?.level || ""}:${target?.dataset?.lesson || target?.dataset?.lessonId || ""}:${target?.dataset?.card || target?.dataset?.id || ""}`;
         if (action === "reading-review-answer")
@@ -5051,6 +5091,18 @@ import {
             checkJlptLessonPractice();
         if (action === "next-jlpt-practice")
             nextJlptLessonPractice();
+        if (action === "kana-submit-exercise")
+            submitKanaExercise(target);
+        if (action === "kana-writing-done")
+            markKanaWriting(target.dataset.course || "", target.dataset.lesson || "");
+        if (action === "kana-srs")
+            handleKanaSrsAction(target.dataset.course || "", target.dataset.card || "", target.dataset.rating || "remember");
+        if (action === "kana-toggle-romaji")
+            toggleKanaRomaji();
+        if (action === "play-kana-tts")
+            playKanaTts(target.dataset.text || "");
+        if (action === "kana-download-pdf")
+            reachMetricGoal("kana_pdf_download", { course: target.dataset.course || "" });
         if (action === "n5-open-lesson")
             openN5Lesson(id);
         if (action === "n5-overview")
@@ -5414,6 +5466,8 @@ import {
         }
         if (action === "rate")
             rateActiveCard(target.dataset.rating);
+        if (action === "rate-kana-review")
+            rateActiveKanaCard(target.dataset.course || "", target.dataset.card || "", target.dataset.rating || "remember");
         if (action === "open-card") {
             markKanjiSeenAndSave(findCard(id), "card_details");
             state.detailCardId = id;
@@ -5584,6 +5638,17 @@ import {
             }
             return;
         }
+        const kanaInput = event.target.closest("[data-kana-exercise-form] input");
+        if (kanaInput) {
+            const form = kanaInput.closest("[data-kana-exercise-form]");
+            const draftKey = kanaExerciseDraftKey(form?.dataset.course || "", form?.dataset.owner || "", form?.dataset.ownerType || "", form?.dataset.exercise || "");
+            const itemNumber = String(kanaInput.name || "").replace(/^kana-/, "");
+            if (draftKey && itemNumber) {
+                state.kanaExerciseDrafts[draftKey] ||= {};
+                state.kanaExerciseDrafts[draftKey][itemNumber] = kanaInput.value;
+            }
+            return;
+        }
         const input = event.target.closest("[data-filter]");
         if (!input)
             return;
@@ -5703,15 +5768,18 @@ import {
         if (previousRoute !== state.route && (previousRoute === "review" || state.route === "review"))
             state.reviewSession = null;
         if (state.route === "textbooks") {
-            const requestedLevel = subroute ? String(subroute).toUpperCase() : "";
-            if (requestedLevel && !canonicalJlptLevel(requestedLevel)) {
-                applyRouteMatch(notFound("hash", "invalid-parameter", `textbooks/${requestedLevel}`, ["textbooks", requestedLevel]));
-                replaceRouteUrl(`#textbooks/${encodeURIComponent(requestedLevel)}`);
+            const requestedRaw = subroute ? String(subroute) : "";
+            const requestedLevel = canonicalJlptLevel(requestedRaw);
+            const requestedCourse = isKanaCourseSlug(requestedRaw) ? requestedRaw.toLowerCase() : "";
+            const requestedTextbook = requestedLevel || requestedCourse;
+            if (requestedRaw && !requestedTextbook) {
+                applyRouteMatch(notFound("hash", "invalid-parameter", `textbooks/${requestedRaw}`, ["textbooks", requestedRaw]));
+                replaceRouteUrl(`#textbooks/${encodeURIComponent(requestedRaw)}`);
                 state.pendingFocus = focus;
                 renderImmediate();
                 return;
             }
-            state.activeTextbookLevel = requestedLevel || null;
+            state.activeTextbookLevel = requestedTextbook || null;
             state.activeTextbookSubroute = null;
         }
         else if (state.route === "jlpt-lesson") {
@@ -5824,6 +5892,15 @@ import {
             if (isTextbookLessonMetrikaSubroute(subroute))
                 reachMetricGoal("lesson_open", { route: "textbooks", level: params.level, lessonId: subroute, source: "textbook" });
         }
+        if (routeMatch.route === "textbooks" && params.course) {
+            const subroute = String(params.subroute || "");
+            if (!subroute)
+                reachMetricGoal("kana_course_open", { route: "textbooks", course: params.course });
+            else if (subroute === "final" || subroute === "final-test")
+                reachMetricGoal("kana_final_test_start", { route: "textbooks", course: params.course });
+            else if (/^lesson-\d+$/i.test(subroute))
+                reachMetricGoal("kana_lesson_open", { route: "textbooks", course: params.course, lessonId: subroute });
+        }
     }
     function isTextbookLessonMetrikaSubroute(subroute) {
         const raw = String(subroute || "").trim().toLowerCase();
@@ -5884,7 +5961,7 @@ import {
             if (!renderContext.isCurrent())
                 return;
             app.innerHTML = `${html}${renderSiteFooter()}${renderGlobalOverlays()}`;
-            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || state.rewardModal || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal));
+            document.body.classList.toggle("modal-open", Boolean(state.detailCardId || isRewardModalVisible() || state.finalTestModal || state.contactModal || state.pwaInstallHelpVisible || state.changelogModal));
             syncMascotSpeechTimers();
             requestAnimationFrame(() => {
                 applyPendingFocus();
@@ -8855,13 +8932,14 @@ import {
         const fallback = lines.filter((line) => !recent.has(line.id));
         return sample(fallback.length ? fallback : lines);
     }
-    function dispatchEvaEvent(type, payload = {}) {
+    function dispatchEvaEvent(type, payload = {}, options = {}) {
         if (!type)
             return;
         // Ensure Eva always has fresh N5 lesson progress (same source as lesson cards)
         // when any event/dialogue/response generation happens.
         ensureN5CourseProgress();
-        evaluateAchievements();
+        if (!options.skipAchievements)
+            evaluateAchievements();
         const detail = { type: normalizeEvaEventType(type), payload: payload || {}, at: Date.now() };
         handleEvaEvent(detail);
         window.dispatchEvent(new CustomEvent("eva:event", {
@@ -10697,7 +10775,11 @@ import {
     }
     function renderTextbooksPage() {
         const items = state.jlptCatalog?.items || [];
-        const activeLevel = String(state.activeTextbookLevel || "").toUpperCase();
+        const activeTextbookId = String(state.activeTextbookLevel || "");
+        if (isKanaCourseSlug(activeTextbookId)) {
+            return renderKanaCoursePage(activeTextbookId);
+        }
+        const activeLevel = activeTextbookId.toUpperCase();
         const activeTextbook = activeLevel ? jlptCatalogByLevel(activeLevel) : null;
         if (activeTextbook) {
             state.activeTextbookLevel = activeTextbook.jlpt;
@@ -10707,18 +10789,45 @@ import {
         const labels = lang() === "ru"
             ? {
                 title: "Учебники Flash Kanji",
-                description: "Функциональные страницы учебников JLPT N5–N1 с переходом к урокам, повторению и материалам внутри уровня.",
+                description: "Выберите азбуку для старта с нуля или продолжайте учебники JLPT N5–N1.",
                 open: "Открыть страницу",
                 pdf: "Скачать PDF",
-                study: "К урокам"
+                study: "К урокам",
+                kanaBadge: "Курс на русском",
+                kanaMeta: "знаков",
+                kanaTasks: "заданий"
             }
             : {
                 title: "Flash Kanji Textbooks",
-                description: "Functional JLPT N5-N1 textbook pages with lesson links, review entry points, and level materials.",
+                description: "Choose a kana course from zero or continue JLPT N5-N1 textbooks.",
                 open: "Open page",
                 pdf: "Download PDF",
-                study: "Go to lessons"
+                study: "Go to lessons",
+                kanaBadge: "Russian course",
+                kanaMeta: "characters",
+                kanaTasks: "tasks"
             };
+        const kanaCards = (state.kanaCatalog?.courses || []).map((course) => `
+            <article class="textbook-card kana-textbook-card is-unlocked" id="textbook-${escapeAttr(course.slug)}">
+              <div class="textbook-cover-wrap kana-cover-wrap">
+                <div class="kana-cover-symbol" aria-hidden="true">${escapeHtml(course.native_title)}</div>
+                <span class="pill textbook-level">${escapeHtml(labels.kanaBadge)}</span>
+              </div>
+              <div class="textbook-body">
+                <h2>${escapeHtml(course.title)}</h2>
+                <p>${escapeHtml(course.description)}</p>
+                <div class="textbook-meta">
+                  <span class="pill">${escapeHtml(course.lesson_count)} ${escapeHtml(lang() === "ru" ? "уроков" : "lessons")}</span>
+                  <span class="pill">${escapeHtml(course.base_character_count)} ${escapeHtml(labels.kanaMeta)}</span>
+                  <span class="pill">${escapeHtml(course.task_count)} ${escapeHtml(labels.kanaTasks)}</span>
+                </div>
+                <div class="textbook-actions">
+                  <a class="btn primary" href="#textbooks/${escapeAttr(course.slug)}">${escapeHtml(labels.open)}</a>
+                  <a class="btn ghost" href="${escapeAttr(course.pdf_url)}" download="${escapeAttr((course.pdf_url || "").split("/").pop() || `${course.slug}.pdf`)}" target="_blank" rel="noopener" data-action="kana-download-pdf" data-course="${escapeAttr(course.slug)}">${escapeHtml(labels.pdf)}</a>
+                </div>
+              </div>
+            </article>
+          `).join("");
         return `
       <section class="page textbooks-page">
         <div class="section-head">
@@ -10732,6 +10841,7 @@ import {
           </div>
         </div>
         <div class="textbook-grid" id="textbook-grid">
+          ${kanaCards}
           ${items.map((item) => `
             <article class="textbook-card ${isTextbookUnlocked(item.jlpt) ? "is-unlocked" : "is-locked"}" id="textbook-${escapeAttr(item.jlpt)}">
               <div class="textbook-cover-wrap">
@@ -11016,6 +11126,854 @@ import {
         </article>
       </section>
     `;
+    }
+    function kanaLabels() {
+        return lang() === "ru"
+            ? {
+                allTextbooks: "Все учебники",
+                start: "Начать курс",
+                continue: "Продолжить",
+                downloadPdf: "Скачать PDF",
+                reference: "Справочник",
+                lessons: "Уроки",
+                practice: "Практикум чтения",
+                final: "Итоговая контрольная",
+                review: "Повторение",
+                sources: "Источники",
+                russianCourse: "Курс на русском",
+                showRomaji: "Показывать ромадзи",
+                hideRomaji: "Скрыть ромадзи",
+                check: "Проверить",
+                score: "Результат",
+                passed: "зачёт",
+                notPassed: "повторить",
+                correct: "верно",
+                wrong: "ошибка",
+                writeDone: "Пропись выполнена",
+                markWriting: "Я написал(а) от руки",
+                manualWriting: "Ручная пропись",
+                noAutoWriting: "Почерк не оценивается автоматически: отметьте шаг, когда написали знаки от руки.",
+                noCourse: "Курс не найден",
+                loading: "Загружаю курс",
+                offlineHint: "Если вы уже открывали этот урок, service worker отдаст его из кэша. Иначе появится понятный offline fallback.",
+                remember: "Помню",
+                forgot: "Не помню",
+                noReview: "Повторений пока нет. Пройдите урок или откройте знаки курса.",
+                sourcePdf: "Оригинальный PDF",
+                taskCount: "заданий",
+                characters: "знаков",
+                lessonsCount: "уроков",
+                lesson: "урок",
+                lessonProgress: "Прогресс урока",
+                newSigns: "Новые знаки",
+                newSignsHint: "Сначала узнаём форму и чтение каждого нового знака.",
+                readWrite: "Как читать и писать",
+                readWriteHint: "Произнесите знак, посмотрите количество штрихов и переходите к ручной прописи.",
+                reading: "Чтение",
+                strokes: "Штрихи",
+                tts: "Звук",
+                strokeOrder: "Stroke-order",
+                explanation: "Объяснение",
+                explanationHint: "Ключевые правила урока вынесены в отдельные карточки.",
+                examples: "Примеры",
+                examplesHint: "Короткие слова и записи для чтения.",
+                example: "Пример",
+                meaning: "Значение",
+                practiceBlock: "Практика",
+                practiceHint: "Выполняйте задания небольшими блоками и проверяйте ответы сразу.",
+                selfCheck: "Проверь себя",
+                selfCheckHint: "Завершите ручную часть и отметьте пропись после тренировки."
+            }
+            : {
+                allTextbooks: "All textbooks",
+                start: "Start course",
+                continue: "Continue",
+                downloadPdf: "Download PDF",
+                reference: "Reference",
+                lessons: "Lessons",
+                practice: "Reading practice",
+                final: "Final test",
+                review: "Review",
+                sources: "Sources",
+                russianCourse: "Russian course",
+                showRomaji: "Show romaji",
+                hideRomaji: "Hide romaji",
+                check: "Check",
+                score: "Score",
+                passed: "passed",
+                notPassed: "retry",
+                correct: "correct",
+                wrong: "wrong",
+                writeDone: "Writing done",
+                markWriting: "I wrote it by hand",
+                manualWriting: "Manual writing",
+                noAutoWriting: "Handwriting is not graded automatically: mark this step after writing the signs by hand.",
+                noCourse: "Course not found",
+                loading: "Loading course",
+                offlineHint: "If you opened this lesson before, the service worker can serve it from cache. Otherwise a clear offline fallback appears.",
+                remember: "Remember",
+                forgot: "Forgot",
+                noReview: "No kana reviews yet. Finish a lesson or open course signs first.",
+                sourcePdf: "Original PDF",
+                taskCount: "tasks",
+                characters: "characters",
+                lessonsCount: "lessons",
+                lesson: "lesson",
+                lessonProgress: "Lesson progress",
+                newSigns: "New signs",
+                newSignsHint: "Start by recognizing the shape and reading of each new sign.",
+                readWrite: "How to read and write",
+                readWriteHint: "Play the sound, check the stroke count, then move to handwriting practice.",
+                reading: "Reading",
+                strokes: "Strokes",
+                tts: "Sound",
+                strokeOrder: "Stroke order",
+                explanation: "Explanation",
+                explanationHint: "The key lesson notes are separated into contrast cards.",
+                examples: "Examples",
+                examplesHint: "Short words and spellings for reading practice.",
+                example: "Example",
+                meaning: "Meaning",
+                practiceBlock: "Practice",
+                practiceHint: "Complete the exercises in compact blocks and check immediately.",
+                selfCheck: "Check yourself",
+                selfCheckHint: "Finish the handwriting step after practicing by hand."
+            };
+    }
+    function renderKanaCoursePage(slug) {
+        const key = String(slug || "").toLowerCase();
+        const entry = kanaCatalogEntry(key);
+        const labels = kanaLabels();
+        if (!entry)
+            return renderRouteError(new Error(labels.noCourse));
+        const course = kanaCourseData(key);
+        if (!course) {
+            void ensureKanaCourseData(key).then(() => render()).catch(() => render());
+            if (state.kanaCourseErrors[key])
+                return renderRouteError(state.kanaCourseErrors[key]);
+            return renderKanaLoadingPage(entry, labels);
+        }
+        const subroute = String(state.activeTextbookSubroute || "").toLowerCase();
+        if (subroute === "reference")
+            return renderKanaReferencePage(course, labels);
+        if (subroute === "sources")
+            return renderKanaSourcesPage(course, labels);
+        if (subroute === "review")
+            return renderKanaReviewPage(course, labels);
+        if (subroute === "final" || subroute === "final-test")
+            return renderKanaFinalPage(course, labels);
+        if (/^practice-\d+$/i.test(subroute)) {
+            const practice = course.reading_practice?.find((item) => item.id === subroute);
+            return practice ? renderKanaPracticePage(course, practice, labels) : renderNotFoundPage(notFound("hash", "entity-not-found", `textbooks/${key}/${subroute}`, ["textbooks", key, subroute]));
+        }
+        if (/^lesson-\d+$/i.test(subroute)) {
+            const lesson = course.lessons?.find((item) => item.id === subroute);
+            return lesson ? renderKanaLessonPage(course, lesson, labels) : renderNotFoundPage(notFound("hash", "entity-not-found", `textbooks/${key}/${subroute}`, ["textbooks", key, subroute]));
+        }
+        return renderKanaOverviewPage(course, labels);
+    }
+    function renderKanaLoadingPage(entry, labels) {
+        return `
+      <section class="page textbooks-page n5-course-page kana-course-page" aria-busy="true">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">${escapeHtml(labels.russianCourse)}</p>
+            <h1>${escapeHtml(labels.loading)}: ${escapeHtml(entry.title)}</h1>
+            <p>${escapeHtml(labels.offlineHint)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn ghost" href="${escapeAttr(entry.pdf_url)}" download="${escapeAttr((entry.pdf_url || "").split("/").pop() || "kana.pdf")}" target="_blank" rel="noopener">${escapeHtml(labels.downloadPdf)}</a>
+          </div>
+        </div>
+      </section>
+    `;
+    }
+    function renderKanaOverviewPage(course, labels) {
+        const progress = kanaCourseProgress(course.slug);
+        const firstLesson = course.lessons?.[0]?.id || "";
+        const currentRoute = progress.currentRoute || firstLesson;
+        const completedLessons = course.lessons.filter((lesson) => kanaLessonSummary(course.slug, lesson).passed).length;
+        return `
+      <section class="page textbooks-page n5-course-page kana-course-page">
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">Flash Kanji · ${escapeHtml(labels.russianCourse)}</p>
+            <h1>${escapeHtml(course.title)} <span lang="ja">${escapeHtml(course.native_title)}</span></h1>
+            <p>${escapeHtml(course.description)}</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <a class="btn primary" href="#textbooks/${escapeAttr(course.slug)}/${escapeAttr(currentRoute)}">${escapeHtml(progress.currentRoute ? labels.continue : labels.start)}</a>
+            <a class="btn ghost" href="${escapeAttr(course.source.pdf_file)}" download="${escapeAttr((course.source.pdf_file || "").split("/").pop() || `${course.slug}.pdf`)}" target="_blank" rel="noopener" data-action="kana-download-pdf" data-course="${escapeAttr(course.slug)}">${escapeHtml(labels.downloadPdf)}</a>
+          </div>
+        </div>
+        <article class="jlpt-textbook-hero kana-course-hero">
+          <div class="kana-hero-symbol" aria-hidden="true">${escapeHtml(course.native_title)}</div>
+          <div class="jlpt-textbook-body">
+            <span class="pill">${escapeHtml(labels.russianCourse)}</span>
+            <h2>${escapeHtml(course.title)}</h2>
+            <p>${escapeHtml(course.reference?.body?.slice(0, 3).join(" ") || course.description)}</p>
+            <div class="tag-row">
+              <span class="pill">${escapeHtml(course.stats.lesson_count)} ${escapeHtml(labels.lessonsCount)}</span>
+              <span class="pill">${escapeHtml(course.stats.base_character_count)} ${escapeHtml(labels.characters)}</span>
+              <span class="pill">${escapeHtml(course.stats.task_count)} ${escapeHtml(labels.taskCount)}</span>
+            </div>
+          </div>
+        </article>
+        <div class="metric-grid">
+          ${renderMetric(labels.lessons, completedLessons, `${course.lessons.length}`, progressWidth(completedLessons, Math.max(1, course.lessons.length)))}
+          ${renderMetric(labels.practice, course.reading_practice.length, labels.russianCourse, 100)}
+          ${renderMetric(labels.final, progress.finalTest?.score || 0, `${progress.finalTest?.total || 0}`, progressWidth(progress.finalTest?.score || 0, Math.max(1, progress.finalTest?.total || 1)))}
+          ${renderMetric(labels.review, kanaReviewCards(course, "due").length, labels.characters, progressWidth(kanaReviewCards(course, "due").length, Math.max(1, course.base_characters.length)))}
+        </div>
+        <div class="actions kana-course-tabs">
+          <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/reference">${escapeHtml(labels.reference)}</a>
+          <button class="btn ghost" type="button" data-action="route" data-route="review">${escapeHtml(labels.review)}</button>
+          <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/final">${escapeHtml(labels.final)}</a>
+          <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/sources">${escapeHtml(labels.sources)}</a>
+          <button class="btn ghost" type="button" data-action="kana-toggle-romaji">${escapeHtml(kanaProgressRoot().settings.showRomaji ? labels.hideRomaji : labels.showRomaji)}</button>
+        </div>
+        <div class="section-head">
+          <div>
+            <h2>${escapeHtml(labels.lessons)}</h2>
+            <p>${escapeHtml(lang() === "ru" ? "Курсы азбук независимы: хирагана не блокирует катакану и наоборот." : "Kana courses are independent: hiragana does not lock katakana and vice versa.")}</p>
+          </div>
+        </div>
+        <div class="lesson-grid kana-lesson-grid">
+          ${course.lessons.map((lesson) => renderKanaLessonTile(course, lesson, labels)).join("")}
+        </div>
+        <div class="section-head">
+          <div>
+            <h2>${escapeHtml(labels.practice)}</h2>
+            <p>${escapeHtml(lang() === "ru" ? "Пять блоков чтения из PDF без обязательного ромадзи." : "Five PDF reading practice blocks without mandatory romaji.")}</p>
+          </div>
+        </div>
+        <div class="lesson-grid kana-practice-grid">
+          ${course.reading_practice.map((practice) => renderKanaPracticeTile(course, practice, labels)).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderKanaLessonTile(course, lesson, labels) {
+        const summary = kanaLessonSummary(course.slug, lesson);
+        const status = summary.passed ? labels.passed : summary.completed ? labels.notPassed : labels.start;
+        const percent = summary.completed ? Math.round((summary.latestScore / Math.max(1, kanaExerciseTotal(lesson.exercises))) * 100) : 0;
+        return `
+        <article class="lesson-card kana-lesson-card">
+          <div class="lesson-card-main">
+            <span class="pill">#${escapeHtml(lesson.order)}</span>
+            <h3>${escapeHtml(lesson.title)}</h3>
+            <p class="kana-character-row" lang="ja">${lesson.focus_characters.slice(0, 16).map((item) => `<span>${escapeHtml(item.kana)}</span>`).join("")}</p>
+            <div class="progress mini"><span style="width:${progressWidth(percent, 100)}%"></span></div>
+            <p>${escapeHtml(status)} · ${escapeHtml(percent)}%</p>
+          </div>
+          <a class="btn primary" href="#textbooks/${escapeAttr(course.slug)}/${escapeAttr(lesson.id)}">${escapeHtml(summary.completed ? labels.continue : labels.start)}</a>
+        </article>
+      `;
+    }
+    function renderKanaPracticeTile(course, practice, labels) {
+        const progress = kanaCourseProgress(course.slug).practices[practice.id];
+        const total = kanaExerciseTotal(practice.exercises);
+        const score = Number(progress?.latestScore || 0);
+        return `
+        <article class="lesson-card kana-lesson-card">
+          <div class="lesson-card-main">
+            <span class="pill">${escapeHtml(labels.practice)} ${escapeHtml(practice.order)}</span>
+            <h3>${escapeHtml(practice.title)}</h3>
+            <p>${escapeHtml((practice.body || []).slice(0, 2).join(" "))}</p>
+            <div class="progress mini"><span style="width:${progressWidth(score, Math.max(1, total))}%"></span></div>
+          </div>
+          <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}/${escapeAttr(practice.id)}">${escapeHtml(labels.practice)}</a>
+        </article>
+      `;
+    }
+    function renderKanaLessonPage(course, lesson, labels) {
+        const courseProgress = kanaCourseProgress(course.slug);
+        courseProgress.currentRoute = lesson.id;
+        const summary = kanaLessonSummary(course.slug, lesson);
+        const total = kanaExerciseTotal(lesson.exercises);
+        const sections = parseKanaLessonBody(lesson);
+        const writingDone = Boolean(courseProgress.writing?.[lesson.id]);
+        return `
+      <section class="page textbooks-page n5-course-page n5-lesson-page kana-course-page kana-lesson-page">
+        <div class="kana-lesson-shell">
+          ${renderKanaLessonHero(course, lesson, labels, sections, summary, total)}
+          ${renderKanaNewSignsSection(lesson, labels)}
+          ${renderKanaReadWriteSection(lesson, labels)}
+          ${renderKanaExplanationSection(sections.explanations, labels)}
+          ${renderKanaExamplesSection(sections.examples, labels)}
+          <section class="kana-lesson-step kana-practice-step" aria-labelledby="kanaPracticeTitle">
+            <div class="kana-step-heading">
+              <span class="pill">05</span>
+              <h2 id="kanaPracticeTitle">${escapeHtml(labels.practiceBlock)}</h2>
+              <p>${escapeHtml(labels.practiceHint)}</p>
+            </div>
+            <div class="kana-practice-stack">
+              ${lesson.exercises.map((exercise) => renderKanaExerciseForm(course.slug, lesson.id, "lesson", exercise, labels)).join("")}
+            </div>
+          </section>
+          <section class="kana-lesson-step kana-self-check-step" aria-labelledby="kanaSelfCheckTitle">
+            <div class="kana-step-heading">
+              <span class="pill">06</span>
+              <h2 id="kanaSelfCheckTitle">${escapeHtml(labels.selfCheck)}</h2>
+              <p>${escapeHtml(labels.selfCheckHint)}</p>
+            </div>
+            <article class="jlpt-section-card kana-writing-card" id="kana-writing-practice">
+              <h3>${escapeHtml(labels.manualWriting)}</h3>
+              <p>${escapeHtml(lesson.writing?.prompt || labels.noAutoWriting)}</p>
+              <p class="muted">${escapeHtml(labels.noAutoWriting)}</p>
+              <button class="btn ${writingDone ? "ghost" : "primary"}" type="button" data-action="kana-writing-done" data-course="${escapeAttr(course.slug)}" data-lesson="${escapeAttr(lesson.id)}">${escapeHtml(writingDone ? labels.writeDone : labels.markWriting)}</button>
+            </article>
+          </section>
+        </div>
+      </section>
+    `;
+    }
+    function parseKanaLessonBody(lesson) {
+        const lines = (lesson.body || []).map((line) => String(line || "").trim()).filter(Boolean);
+        const goal = [];
+        const explanations = [];
+        const examples = { title: "", headers: [], rows: [] };
+        let i = 0;
+        const isHeading = (line) => /^(Цель раздела|Знаки урока|Произношение|Типичная ошибка|Слова для чтения|Пример и узнавание|Модельные|Набор|Три служебных|Одна мора|Пауза|Гласный|Средняя точка)/i.test(line);
+        const isExamples = (line) => /^(Слова для чтения|Пример и узнавание)$/i.test(line);
+        while (i < lines.length) {
+            const line = lines[i];
+            if (/^\d+$/.test(line)) {
+                i += 1;
+                continue;
+            }
+            if (/^Цель раздела$/i.test(line)) {
+                i += 1;
+                while (i < lines.length && !/^Знаки урока$/i.test(lines[i])) {
+                    if (!/^\d+$/.test(lines[i]))
+                        goal.push(lines[i]);
+                    i += 1;
+                }
+                continue;
+            }
+            if (/^Знаки урока$/i.test(line)) {
+                i += 1;
+                while (i < lines.length && !/^(Произношение|Типичная ошибка|Слова для чтения|Пример и узнавание|Модельные|Набор|Три служебных|Одна мора|Пауза|Гласный|Средняя точка)/i.test(lines[i])) {
+                    i += 1;
+                }
+                continue;
+            }
+            if (isExamples(line)) {
+                examples.title = line;
+                const rest = lines.slice(i + 1).filter((item) => !/^\d+$/.test(item));
+                examples.headers = rest.slice(0, 3);
+                const cells = rest.slice(3);
+                for (let index = 0; index + 2 < cells.length; index += 3) {
+                    examples.rows.push(cells.slice(index, index + 3));
+                }
+                break;
+            }
+            if (isHeading(line)) {
+                const title = line;
+                const body = [];
+                i += 1;
+                while (i < lines.length && !isHeading(lines[i])) {
+                    if (!/^\d+$/.test(lines[i]))
+                        body.push(lines[i]);
+                    i += 1;
+                }
+                if (body.length)
+                    explanations.push({ title, body });
+                continue;
+            }
+            i += 1;
+        }
+        return { goal, explanations, examples };
+    }
+    function renderKanaLessonHero(course, lesson, labels, sections, summary, total) {
+        const score = Number(summary?.latestScore || 0);
+        const percent = progressWidth(score, Math.max(1, total));
+        const goal = sections.goal.length ? sections.goal.join(" ") : (lesson.body || []).slice(0, 2).join(" ");
+        return `
+        <article class="kana-lesson-hero-card" aria-labelledby="kanaLessonTitle">
+          <div class="kana-lesson-hero-copy">
+            <p class="eyebrow">Flash Kanji · ${escapeHtml(course.title)} · ${escapeHtml(labels.lesson)} ${escapeHtml(lesson.order || "")}</p>
+            <h1 id="kanaLessonTitle">${escapeHtml(lesson.title)} <span lang="ja">${escapeHtml(course.native_title)}</span></h1>
+            <p>${escapeHtml(goal)}</p>
+            <div class="kana-lesson-progress-row">
+              <span>${escapeHtml(labels.lessonProgress)}: ${escapeHtml(score)}/${escapeHtml(total)}</span>
+              <div class="achievement-progress" aria-hidden="true"><i style="width:${percent}%"></i></div>
+            </div>
+          </div>
+          <div class="kana-lesson-hero-aside" aria-label="${escapeAttr(labels.newSigns)}">
+            <span class="pill">${escapeHtml(labels.newSigns)} · ${escapeHtml(lesson.focus_characters.length)}</span>
+            <div class="kana-hero-signs" lang="ja">
+              ${lesson.focus_characters.map((item) => `<span>${escapeHtml(item.kana)}</span>`).join("")}
+            </div>
+            <div class="actions">
+              <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}">${escapeHtml(course.title)}</a>
+              <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+              <button class="btn ghost" type="button" data-action="kana-toggle-romaji">${escapeHtml(kanaProgressRoot().settings.showRomaji ? labels.hideRomaji : labels.showRomaji)}</button>
+              ${renderShareButton("textbook", { level: course.slug, subroute: lesson.id })}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+    function renderKanaNewSignsSection(lesson, labels) {
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaNewSignsTitle">
+          <div class="kana-step-heading">
+            <span class="pill">01</span>
+            <h2 id="kanaNewSignsTitle">${escapeHtml(labels.newSigns)}</h2>
+            <p>${escapeHtml(labels.newSignsHint)}</p>
+          </div>
+          <div class="kana-new-sign-grid">
+            ${lesson.focus_characters.map((item) => `
+              <article class="kana-new-sign-card">
+                <span lang="ja">${escapeHtml(item.kana)}</span>
+                ${kanaProgressRoot().settings.showRomaji && item.romaji ? `<small>${escapeHtml(item.romaji)}</small>` : ""}
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaReadWriteSection(lesson, labels) {
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaReadWriteTitle">
+          <div class="kana-step-heading">
+            <span class="pill">02</span>
+            <h2 id="kanaReadWriteTitle">${escapeHtml(labels.readWrite)}</h2>
+            <p>${escapeHtml(labels.readWriteHint)}</p>
+          </div>
+          <div class="kana-readwrite-grid">
+            ${lesson.focus_characters.map((item) => `
+              <article class="kana-readwrite-card">
+                <div>
+                  <span class="kana-readwrite-symbol" lang="ja">${escapeHtml(item.kana)}</span>
+                  <p>${escapeHtml(labels.reading)}: <strong>${escapeHtml(item.romaji || "—")}</strong></p>
+                  <p>${escapeHtml(labels.strokes)}: <strong>${escapeHtml(item.strokes || "—")}</strong></p>
+                </div>
+                <div class="actions">
+                  <button class="btn ghost" type="button" data-action="play-kana-tts" data-text="${escapeAttr(item.kana)}">🔊 ${escapeHtml(labels.tts)}</button>
+                  <a class="btn ghost" href="#kana-writing-practice">${escapeHtml(labels.strokeOrder)}</a>
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaExplanationSection(explanations, labels) {
+        if (!explanations.length)
+            return "";
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaExplanationTitle">
+          <div class="kana-step-heading">
+            <span class="pill">03</span>
+            <h2 id="kanaExplanationTitle">${escapeHtml(labels.explanation)}</h2>
+            <p>${escapeHtml(labels.explanationHint)}</p>
+          </div>
+          <div class="kana-explanation-grid">
+            ${explanations.map((section) => `
+              <article class="jlpt-section-card kana-explanation-card">
+                <h3>${escapeHtml(section.title)}</h3>
+                ${section.body.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaExamplesSection(examples, labels) {
+        if (!examples?.rows?.length)
+            return "";
+        const headers = examples.headers.length === 3 ? examples.headers : [labels.example, labels.reading, labels.meaning];
+        return `
+        <section class="kana-lesson-step" aria-labelledby="kanaExamplesTitle">
+          <div class="kana-step-heading">
+            <span class="pill">04</span>
+            <h2 id="kanaExamplesTitle">${escapeHtml(labels.examples)}</h2>
+            <p>${escapeHtml(examples.title || labels.examplesHint)}</p>
+          </div>
+          <div class="kana-examples-table-wrap">
+            <table class="kana-examples-table">
+              <thead>
+                <tr>${headers.map((header) => `<th scope="col">${escapeHtml(header)}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${examples.rows.map((row) => `
+                  <tr>
+                    ${row.map((cell, index) => `<td data-label="${escapeAttr(headers[index] || "")}"${index === 0 ? ' lang="ja"' : ""}>${escapeHtml(cell)}</td>`).join("")}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+    function renderKanaPracticePage(course, practice, labels) {
+        const courseProgress = kanaCourseProgress(course.slug);
+        courseProgress.currentRoute = practice.id;
+        return `
+      <section class="page textbooks-page n5-course-page kana-course-page kana-practice-page">
+        ${renderKanaPageHead(course, practice.title, labels, practice.id)}
+        <article class="jlpt-lesson-hero">
+          <div>
+            <span class="pill">${escapeHtml(labels.practice)} ${escapeHtml(practice.order)}</span>
+            <h2>${escapeHtml(practice.title)}</h2>
+            ${renderKanaBodySections(practice.body)}
+          </div>
+        </article>
+        ${practice.exercises.map((exercise) => renderKanaExerciseForm(course.slug, practice.id, "practice", exercise, labels)).join("")}
+      </section>
+    `;
+    }
+    function renderKanaFinalPage(course, labels) {
+        const courseProgress = kanaCourseProgress(course.slug);
+        courseProgress.currentRoute = "final";
+        return `
+      <section class="page textbooks-page n5-course-page n5-final-page kana-course-page kana-final-page">
+        ${renderKanaPageHead(course, labels.final, labels, "final")}
+        <article class="jlpt-lesson-hero">
+          <div>
+            <span class="pill">${escapeHtml(labels.final)}</span>
+            <h2>${escapeHtml(course.final_test.title)}</h2>
+            <p>${escapeHtml((course.final_test.body || []).slice(0, 4).join(" "))}</p>
+          </div>
+        </article>
+        ${(course.final_test.sections || []).map((exercise) => renderKanaExerciseForm(course.slug, "final", "final", exercise, labels)).join("")}
+      </section>
+    `;
+    }
+    function renderKanaReferencePage(course, labels) {
+        return `
+      <section class="page textbooks-page n5-course-page kana-course-page">
+        ${renderKanaPageHead(course, labels.reference, labels, "reference")}
+        <article class="jlpt-section-card">
+          <h2>${escapeHtml(course.reference.title)}</h2>
+          ${renderKanaBodySections(course.reference.body)}
+        </article>
+        <div class="kana-table-grid">
+          ${course.base_characters.map((item) => renderKanaCharacterButton(item)).join("")}
+        </div>
+      </section>
+    `;
+    }
+    function renderKanaSourcesPage(course, labels) {
+        return `
+      <section class="page textbooks-page n5-course-page kana-course-page">
+        ${renderKanaPageHead(course, labels.sources, labels, "sources")}
+        <article class="jlpt-section-card">
+          <h2>${escapeHtml(labels.sourcePdf)}</h2>
+          <p>SHA-256: <code>${escapeHtml(course.source.sha256)}</code></p>
+          <p>${escapeHtml(course.source.publisher)} · ${escapeHtml(course.source.revision)} · ${escapeHtml(course.source.site)}</p>
+          <a class="btn primary" href="${escapeAttr(course.source.pdf_file)}" download="${escapeAttr((course.source.pdf_file || "").split("/").pop() || `${course.slug}.pdf`)}" target="_blank" rel="noopener">${escapeHtml(labels.downloadPdf)}</a>
+        </article>
+        <article class="jlpt-section-card">
+          <h2>${escapeHtml(labels.sources)}</h2>
+          <ul>${(course.sources || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </article>
+      </section>
+    `;
+    }
+    function renderKanaReviewPage(course, labels) {
+        return `
+      <section class="page textbooks-page n5-course-page kana-course-page kana-review-page">
+        ${renderKanaPageHead(course, labels.review, labels, "review")}
+        <article class="empty-state kana-review-entry">
+          <span class="kanji-char" lang="ja">${escapeHtml(course.native_title)}</span>
+          <h2>${escapeHtml(lang() === "ru" ? "Повторение теперь общее" : "Review is unified now")}</h2>
+          <p>${escapeHtml(lang() === "ru"
+            ? "Хирагана, катакана и кандзи идут через один экран SRS Flash Kanji: одна карточка за раз, общие кнопки «Не помню» и «Помню», раздельная статистика по ID."
+            : "Hiragana, katakana and kanji now use the same Flash Kanji SRS screen: one card at a time, shared Forgot/Remember actions, independent card IDs.")}</p>
+          <div class="actions">
+            <button class="btn primary" type="button" data-action="route" data-route="review">${escapeHtml(labels.review)}</button>
+            <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}">${escapeHtml(course.title)}</a>
+          </div>
+        </article>
+      </section>
+    `;
+    }
+    function renderKanaPageHead(course, title, labels, subroute) {
+        return `
+        <div class="section-head n5-course-head">
+          <div>
+            <p class="eyebrow">Flash Kanji · ${escapeHtml(course.title)}</p>
+            <h1>${escapeHtml(title)} <span lang="ja">${escapeHtml(course.native_title)}</span></h1>
+          </div>
+          <div class="actions">
+            <a class="btn ghost" href="#textbooks/${escapeAttr(course.slug)}">${escapeHtml(course.title)}</a>
+            <button class="btn ghost" type="button" data-action="route" data-route="textbooks">${escapeHtml(labels.allTextbooks)}</button>
+            <button class="btn ghost" type="button" data-action="kana-toggle-romaji">${escapeHtml(kanaProgressRoot().settings.showRomaji ? labels.hideRomaji : labels.showRomaji)}</button>
+            ${renderShareButton("textbook", { level: course.slug, subroute })}
+          </div>
+        </div>
+      `;
+    }
+    function renderKanaBodySections(lines = []) {
+        const chunks = [];
+        for (const line of lines.slice(0, 40)) {
+            if (/^(Цель раздела|Знаки урока|Произношение|Типичная ошибка|Слова|Пример|Модельные|Набор|Три служебных|Одна мора|Пауза|Гласный|Средняя точка)/i.test(line)) {
+                chunks.push(`<h3>${escapeHtml(line)}</h3>`);
+            }
+            else {
+                chunks.push(`<p>${escapeHtml(line)}</p>`);
+            }
+        }
+        return chunks.join("");
+    }
+    function renderKanaCharacterButton(item) {
+        return `
+        <button class="kana-char-chip" type="button" data-action="play-kana-tts" data-text="${escapeAttr(item.kana)}">
+          <span lang="ja">${escapeHtml(item.kana)}</span>
+          ${kanaProgressRoot().settings.showRomaji && item.romaji ? `<small>${escapeHtml(item.romaji)}</small>` : ""}
+        </button>
+      `;
+    }
+    function renderKanaExerciseForm(courseSlug, ownerId, ownerType, exercise, labels) {
+        const result = kanaExerciseProgress(courseSlug, ownerId, ownerType, exercise.id);
+        const draft = state.kanaExerciseDrafts[kanaExerciseDraftKey(courseSlug, ownerId, ownerType, exercise.id)] || {};
+        return `
+        <form class="jlpt-section-card kana-exercise-card" data-kana-exercise-form data-course="${escapeAttr(courseSlug)}" data-owner="${escapeAttr(ownerId)}" data-owner-type="${escapeAttr(ownerType)}" data-exercise="${escapeAttr(exercise.id)}">
+          <h3>${escapeHtml(exercise.label)}</h3>
+          <p>${escapeHtml(exercise.instruction || "")}</p>
+          <div class="kana-exercise-items">
+            ${exercise.items.map((item) => renderKanaExerciseItem(item, result, labels, draft)).join("")}
+          </div>
+          ${result?.completed ? `<p class="exercise-feedback ${result.passed ? "is-correct" : "is-wrong"}" aria-live="polite">${escapeHtml(labels.score)}: ${escapeHtml(result.score)}/${escapeHtml(result.total)} · ${escapeHtml(result.passed ? labels.passed : labels.notPassed)}</p>` : ""}
+          <button class="btn primary" type="button" data-action="kana-submit-exercise">${escapeHtml(labels.check)}</button>
+        </form>
+      `;
+    }
+    function renderKanaExerciseItem(item, result, labels, draft = {}) {
+        const value = Object.prototype.hasOwnProperty.call(draft, item.number) ? draft[item.number] : (result?.answers?.[item.number] || "");
+        const checked = result?.completed ? result.correct?.[item.number] : null;
+        return `
+        <label class="kana-answer-row ${checked === true ? "is-correct" : checked === false ? "is-wrong" : ""}">
+          <span>${escapeHtml(item.number)}. ${escapeHtml(item.prompt)}</span>
+          <input type="text" name="kana-${escapeAttr(item.number)}" value="${escapeAttr(value)}" autocomplete="off" inputmode="text" />
+          ${checked === null ? "" : `<small>${escapeHtml(checked ? labels.correct : `${labels.wrong}: ${item.solution || item.accepted_answers?.[0] || ""}`)}</small>`}
+        </label>
+      `;
+    }
+    function kanaExerciseTotal(exercises = []) {
+        return (exercises || []).reduce((sum, exercise) => sum + (exercise.items || []).length, 0);
+    }
+    function kanaLessonSummary(courseSlug, lesson) {
+        const progress = kanaCourseProgress(courseSlug).lessons[lesson.id];
+        if (progress)
+            return progress;
+        return { completed: false, passed: false, latestScore: 0, bestScore: 0, exercises: {}, updatedAt: null };
+    }
+    function kanaExerciseProgress(courseSlug, ownerId, ownerType, exerciseId) {
+        const course = kanaCourseProgress(courseSlug);
+        if (ownerType === "lesson")
+            return course.lessons?.[ownerId]?.exercises?.[exerciseId] || null;
+        if (ownerType === "practice")
+            return course.practices?.[ownerId]?.exercises?.[exerciseId] || null;
+        if (ownerType === "final")
+            return course.finalTest?.[exerciseId] || course.finalTest?.sections?.[exerciseId] || null;
+        return null;
+    }
+    function kanaCardNamespace(slug, kana) {
+        const key = String(slug || "").toLowerCase();
+        const glyph = String(kana || "").trim();
+        const codePoint = Array.from(glyph)[0]?.codePointAt(0);
+        if (!isKanaCourseSlug(key) || !Number.isInteger(codePoint))
+            return "";
+        return `kana:${key}:${codePoint.toString(16).toUpperCase()}`;
+    }
+    function parseKanaReviewCardId(cardId, fallbackSlug = "") {
+        const value = String(cardId || "").trim();
+        const namespaced = value.match(/^kana:(hiragana|katakana):([0-9a-f]+)$/i);
+        if (namespaced) {
+            const codePoint = Number.parseInt(namespaced[2], 16);
+            if (!Number.isInteger(codePoint) || codePoint <= 0)
+                return null;
+            return { slug: namespaced[1].toLowerCase(), kana: String.fromCodePoint(codePoint), id: kanaCardNamespace(namespaced[1], String.fromCodePoint(codePoint)) };
+        }
+        const legacy = value.match(/^(hiragana|katakana):(.+)$/i);
+        if (legacy) {
+            const slug = legacy[1].toLowerCase();
+            const kana = legacy[2].trim();
+            return { slug, kana, id: kanaCardNamespace(slug, kana) };
+        }
+        const fallback = String(fallbackSlug || "").toLowerCase();
+        if (isKanaCourseSlug(fallback) && value) {
+            return { slug: fallback, kana: value, id: kanaCardNamespace(fallback, value) };
+        }
+        return null;
+    }
+    function normalizeKanaReviewStorage(slug) {
+        const key = String(slug || "").toLowerCase();
+        if (!isKanaCourseSlug(key))
+            return {};
+        const progress = kanaCourseProgress(key);
+        const source = progress.review && typeof progress.review === "object" ? progress.review : {};
+        const normalized = {};
+        let changed = false;
+        Object.entries(source).forEach(([cardId, cardProgress]) => {
+            const parsed = parseKanaReviewCardId(cardId, key);
+            const nextId = parsed?.slug === key ? parsed.id : "";
+            const migrated = migrateCardProgress(cardProgress);
+            if (!nextId) {
+                normalized[cardId] = migrated;
+                return;
+            }
+            const existing = normalized[nextId];
+            if (!existing || Number(migrated.reviewCount || 0) > Number(existing.reviewCount || 0)
+                || (Date.parse(String(migrated.lastReviewedAt || "")) || 0) > (Date.parse(String(existing.lastReviewedAt || "")) || 0)) {
+                normalized[nextId] = migrated;
+            }
+            if (nextId !== cardId)
+                changed = true;
+        });
+        const previousKeys = Object.keys(source).sort().join("|");
+        const nextKeys = Object.keys(normalized).sort().join("|");
+        if (changed || previousKeys !== nextKeys)
+            progress.review = normalized;
+        return progress.review;
+    }
+    function findKanaCharacter(slug, kana) {
+        const course = kanaCourseData(slug);
+        const value = String(kana || "");
+        return course?.base_characters?.find((item) => item.kana === value) || null;
+    }
+    function kanaCourseReviewLabel(slug) {
+        const course = kanaCourseData(slug) || kanaCatalogEntry(slug);
+        if (course?.title)
+            return course.title;
+        return String(slug || "").toLowerCase() === "katakana"
+            ? (lang() === "ru" ? "Катакана" : "Katakana")
+            : (lang() === "ru" ? "Хирагана" : "Hiragana");
+    }
+    function kanaReviewCards(course, mode = "due") {
+        const review = normalizeKanaReviewStorage(course.slug);
+        const now = Date.now();
+        return (course.base_characters || []).map((item) => {
+            const id = kanaCardNamespace(course.slug, item.kana);
+            const cardProgress = review[id] || null;
+            return { ...item, id, progress: cardProgress };
+        }).filter((card) => {
+            if (mode === "all")
+                return true;
+            const session = createReviewSession(card.progress ? [{ cardId: card.id, ...card.progress }] : [], now);
+            return session.initial.length > 0;
+        });
+    }
+    function findKanaExercise(course, ownerId, ownerType, exerciseId) {
+        if (!course)
+            return null;
+        if (ownerType === "lesson") {
+            const lesson = course.lessons?.find((item) => item.id === ownerId);
+            return lesson?.exercises?.find((item) => item.id === exerciseId) || null;
+        }
+        if (ownerType === "practice") {
+            const practice = course.reading_practice?.find((item) => item.id === ownerId);
+            return practice?.exercises?.find((item) => item.id === exerciseId) || null;
+        }
+        if (ownerType === "final")
+            return course.final_test?.sections?.find((item) => item.id === exerciseId) || null;
+        return null;
+    }
+    function kanaExerciseDraftKey(courseSlug, ownerId, ownerType, exerciseId) {
+        const parts = [courseSlug, ownerType, ownerId, exerciseId].map((item) => String(item || "").trim());
+        return parts.every(Boolean) ? parts.join(":") : "";
+    }
+    function submitKanaExercise(target) {
+        const form = target.closest?.("[data-kana-exercise-form]");
+        if (!form)
+            return;
+        const slug = String(form.dataset.course || "").toLowerCase();
+        const ownerId = String(form.dataset.owner || "");
+        const ownerType = String(form.dataset.ownerType || "");
+        const exerciseId = String(form.dataset.exercise || "");
+        if (!isKanaCourseSlug(slug))
+            return;
+        const course = kanaCourseData(slug);
+        const exercise = findKanaExercise(course, ownerId, ownerType, exerciseId);
+        if (!course || !exercise)
+            return;
+        const values = {};
+        const draftKey = kanaExerciseDraftKey(slug, ownerId, ownerType, exerciseId);
+        const formData = new FormData(form);
+        exercise.items.forEach((item) => {
+            const value = formData.get(`kana-${item.number}`);
+            values[item.number] = normalizeKanaAnswer(typeof value === "string" ? value : "");
+        });
+        const result = scoreKanaExercise(exercise, values);
+        const progress = kanaCourseProgress(slug);
+        progress.currentRoute = ownerId;
+        progress.updatedAt = result.updatedAt;
+        if (ownerType === "lesson") {
+            const lesson = course.lessons.find((item) => item.id === ownerId);
+            const lessonProgress = progress.lessons[ownerId] || { exercises: {}, completed: false, passed: false, latestScore: 0, bestScore: 0, updatedAt: null };
+            lessonProgress.exercises[exerciseId] = result;
+            const summary = summarizeKanaExerciseMap(lesson?.exercises || [], lessonProgress.exercises);
+            Object.assign(lessonProgress, summary, { bestScore: Math.max(Number(lessonProgress.bestScore || 0), summary.latestScore), updatedAt: result.updatedAt });
+            progress.lessons[ownerId] = lessonProgress;
+            if (lessonProgress.passed)
+                seedKanaReviewCards(course, lesson?.focus_characters || []);
+        }
+        if (ownerType === "practice") {
+            const practice = course.reading_practice.find((item) => item.id === ownerId);
+            const practiceProgress = progress.practices[ownerId] || { exercises: {}, completed: false, passed: false, latestScore: 0, bestScore: 0, updatedAt: null };
+            practiceProgress.exercises[exerciseId] = result;
+            const summary = summarizeKanaExerciseMap(practice?.exercises || [], practiceProgress.exercises);
+            Object.assign(practiceProgress, summary, { bestScore: Math.max(Number(practiceProgress.bestScore || 0), summary.latestScore), updatedAt: result.updatedAt });
+            progress.practices[ownerId] = practiceProgress;
+        }
+        if (ownerType === "final") {
+            progress.finalTest ||= {};
+            progress.finalTest.sections ||= {};
+            progress.finalTest.sections[exerciseId] = result;
+            const summary = summarizeKanaExerciseMap(course.final_test?.sections || [], progress.finalTest.sections);
+            Object.assign(progress.finalTest, summary, { bestScore: Math.max(Number(progress.finalTest.bestScore || 0), summary.latestScore), updatedAt: result.updatedAt });
+        }
+        if (draftKey)
+            delete state.kanaExerciseDrafts[draftKey];
+        playUxSound(result.passed ? "answer_correct" : "answer_wrong");
+        saveProgress();
+        renderImmediatePreservingScroll();
+    }
+    function markKanaWriting(slug, lessonId) {
+        const key = String(slug || "").toLowerCase();
+        if (!isKanaCourseSlug(key) || !lessonId)
+            return;
+        const progress = kanaCourseProgress(key);
+        progress.writing[lessonId] = new Date().toISOString();
+        progress.currentRoute = lessonId;
+        progress.updatedAt = progress.writing[lessonId];
+        saveProgress();
+        toast(kanaLabels().writeDone);
+        renderImmediatePreservingScroll();
+    }
+    function handleKanaSrsAction(slug, cardId, rating) {
+        rateActiveKanaCard(slug, cardId, rating);
+    }
+    function seedKanaReviewCards(course, characters = []) {
+        const progress = kanaCourseProgress(course.slug);
+        const review = normalizeKanaReviewStorage(course.slug);
+        characters.forEach((item) => {
+            const cardId = kanaCardNamespace(course.slug, item.kana);
+            if (cardId)
+                review[cardId] ||= kanaReviewProgress(null, "remember");
+        });
+        progress.review = review;
+    }
+    function toggleKanaRomaji() {
+        const root = kanaProgressRoot();
+        root.settings.showRomaji = !root.settings.showRomaji;
+        saveProgress();
+        renderImmediatePreservingScroll();
+    }
+    function playKanaTts(text) {
+        const value = String(text || "").trim();
+        if (!value)
+            return;
+        stopKanjiAudio();
+        if (!speakJapaneseReading(value))
+            toast(lang() === "ru" ? "Системная озвучка недоступна." : "System speech is not available.");
     }
     function renderN5CoursePage(textbook) {
         state.activeTextbookLevel = "N5";
@@ -20156,7 +21114,13 @@ import {
                 ? findCard(active.card?.id || active.cardId || active.progress?.cardId || "")
                 : null;
         activateReviewQueueItem(active);
-        const activeMarkup = active ? (active.kind === "card" ? (activeCard ? renderStudyCard(activeCard) : renderNoReview()) : renderReviewExerciseItem(active)) : renderNoReview();
+        const activeMarkup = active
+            ? (active.kind === "card"
+                ? (activeCard ? renderStudyCard(activeCard) : renderNoReview())
+                : active.kind === "kana"
+                    ? renderKanaStudyCard(active, queueCount)
+                    : renderReviewExerciseItem(active))
+            : renderNoReview();
         return `
       <section class="page">
         <div class="section-head">
@@ -21309,6 +22273,43 @@ import {
       </article>
     `;
     }
+    function reviewSessionPositionLabel(queueCount) {
+        const initial = Math.max(Number(state.reviewSession?.initialSize || queueCount || 0), queueCount || 0, 1);
+        const done = clamp(initial - Math.max(Number(queueCount || 0), 0), 0, initial);
+        const current = Math.min(done + 1, initial);
+        return lang() === "ru"
+            ? `Осталось: ${queueCount} · ${current} / ${initial}`
+            : `Remaining: ${queueCount} · ${current} / ${initial}`;
+    }
+    function renderKanaStudyCard(item, queueCount) {
+        const resolved = resolveKanaReviewItem(item);
+        if (!resolved)
+            return renderNoReview();
+        const progress = resolved.progress || migrateCardProgress(null);
+        const labels = srsButtonLabels();
+        const courseLabel = kanaCourseReviewLabel(resolved.courseSlug);
+        const showRomaji = kanaProgressRoot().settings.showRomaji;
+        return `
+      <article class="study-card kana-srs-card" data-review-card-id="${escapeAttr(resolved.cardId)}" data-review-kind="kana">
+        <div class="study-topline">
+          <div class="tag-row compact-tags">
+            <span class="pill">${escapeHtml(courseLabel)}</span>
+            ${renderStatePill(progress.state)}
+            <span class="pill">${escapeHtml(reviewSessionPositionLabel(queueCount))}</span>
+          </div>
+          <button class="audio-trigger" type="button" data-action="play-kana-tts" data-text="${escapeAttr(resolved.kana)}" aria-label="${escapeAttr(lang() === "ru" ? "Озвучить знак" : "Speak kana")}">🔊</button>
+        </div>
+        <div class="kanji-focus kana-srs-focus" lang="ja" aria-label="${escapeAttr(resolved.kana)}">${escapeHtml(resolved.kana)}</div>
+        <h2>${escapeHtml(showRomaji && resolved.romaji ? resolved.romaji : (lang() === "ru" ? "Вспомни чтение" : "Recall the reading"))}</h2>
+        <p class="label">${escapeHtml(courseLabel)} · ${escapeHtml(resolved.strokes ? `${resolved.strokes} ${t("strokes")}` : (lang() === "ru" ? "знак каны" : "kana card"))} · ${escapeHtml(formatDue(progress.dueAt))}</p>
+        ${showRomaji && resolved.romaji ? `<p class="kana-srs-reading"><span lang="ja">${escapeHtml(resolved.kana)}</span> · ${escapeHtml(resolved.romaji)}</p>` : ""}
+        <div class="rating-grid srs-binary-grid">
+          <button class="btn danger" type="button" data-action="rate-kana-review" data-course="${escapeAttr(resolved.courseSlug)}" data-card="${escapeAttr(resolved.cardId)}" data-rating="forgot">${escapeHtml(labels.forgot)} <small>${escapeHtml(labels.forgotHint)}</small></button>
+          <button class="btn success" type="button" data-action="rate-kana-review" data-course="${escapeAttr(resolved.courseSlug)}" data-card="${escapeAttr(resolved.cardId)}" data-rating="remember">${escapeHtml(labels.remember)} <small>${escapeHtml(labels.rememberHint)}</small></button>
+        </div>
+      </article>
+    `;
+    }
     function renderReadingCheck(card) {
         const check = state.readingCheck.cardId === card.id ? state.readingCheck : { value: "", status: null, message: "" };
         const statusClass = check.status ? ` is-${check.status}` : "";
@@ -21408,6 +22409,13 @@ import {
             }
             return;
         }
+        if (item.kind === "kana") {
+            state.activeCardId = null;
+            clearReviewExerciseState();
+            state.revealed = false;
+            resetReadingCheck();
+            return;
+        }
         if (item.kind === "exercise") {
             const sameExercise = state.activeExerciseReviewId === item.exerciseId
                 && state.activeExerciseReviewLevel === item.level
@@ -21495,6 +22503,29 @@ import {
         const progress = course?.exerciseSrs?.[exerciseId] || null;
         return buildReviewExerciseItem(level, exerciseId, progress?.lessonId || "", progress, null, "textbook");
     }
+    function resolveKanaReviewItem(item) {
+        if (!item || item.kind !== "kana")
+            return null;
+        const parsed = parseKanaReviewCardId(item.cardId || item.key || "", item.courseSlug || "");
+        if (!parsed?.id || !isKanaCourseSlug(parsed.slug))
+            return null;
+        const review = normalizeKanaReviewStorage(parsed.slug);
+        const progress = migrateCardProgress(item.progress || review[parsed.id] || null);
+        const character = item.character || findKanaCharacter(parsed.slug, parsed.kana) || {};
+        return {
+            ...item,
+            kind: "kana",
+            key: parsed.id,
+            courseSlug: parsed.slug,
+            cardId: parsed.id,
+            kana: parsed.kana,
+            romaji: String(character.romaji || item.romaji || ""),
+            strokes: Number(character.strokes || item.strokes || 0),
+            progress,
+            character,
+            dueAt: item.dueAt || (progress.dueAt ? new Date(progress.dueAt).getTime() : 0)
+        };
+    }
     function resolveReviewExerciseItem(item) {
         if (!item || item.kind !== "exercise")
             return null;
@@ -21519,6 +22550,8 @@ import {
                 dueAt: item.dueAt || (progress.dueAt ? new Date(progress.dueAt).getTime() : 0)
             };
         }
+        if (item.kind === "kana")
+            return resolveKanaReviewItem(item);
         if (item.kind === "exercise")
             return resolveReviewExerciseItem(item);
         return null;
@@ -21540,13 +22573,14 @@ import {
         const activeCard = state.activeCardId ? safeQueue.find((item) => item.kind === "card" && item.card?.id === state.activeCardId) : null;
         if (activeCard)
             return activeCard;
-        const preferredKind = state.reviewQueueLastKind === "card"
-            ? "exercise"
+        const cardLikeKinds = ["card", "kana"];
+        const preferredKinds = cardLikeKinds.includes(state.reviewQueueLastKind)
+            ? ["exercise"]
             : state.reviewQueueLastKind === "exercise"
-                ? "card"
-                : "";
-        if (preferredKind) {
-            const preferredItem = safeQueue.find((item) => item.kind === preferredKind);
+                ? cardLikeKinds
+                : [];
+        if (preferredKinds.length) {
+            const preferredItem = safeQueue.find((item) => preferredKinds.includes(item.kind));
             if (preferredItem)
                 return preferredItem;
         }
@@ -21749,7 +22783,39 @@ import {
       </article>
     `;
     }
+    function renderReviewSessionComplete() {
+        const results = state.reviewSession?.results || {};
+        const remembered = Number(results.remember || 0);
+        const forgotten = Number(results.forgot || 0);
+        const reviewed = remembered + forgotten;
+        const upcoming = (Array.isArray(results.items) ? results.items : [])
+            .filter((item) => item?.dueAt)
+            .sort((a, b) => (Date.parse(a.dueAt) || 0) - (Date.parse(b.dueAt) || 0))
+            .slice(0, 4);
+        return `
+      <article class="empty-state review-complete-card">
+        <span class="kanji-char">済</span>
+        <h2>${escapeHtml(lang() === "ru" ? "Повторение завершено" : "Review complete")}</h2>
+        <p>${escapeHtml(lang() === "ru" ? "Карточки закрыты. Вот короткий итог с ближайшими возвращениями." : "Cards are done. Here is a short summary and the nearest returns.")}</p>
+        <div class="mini-stat-row">
+          ${renderMetric(lang() === "ru" ? "Помню" : "Remember", remembered, `${reviewed}`, progressWidth(remembered, Math.max(1, reviewed)))}
+          ${renderMetric(lang() === "ru" ? "Не помню" : "Forgot", forgotten, `${reviewed}`, progressWidth(forgotten, Math.max(1, reviewed)))}
+        </div>
+        ${upcoming.length ? `<ul class="review-upcoming-list">
+          ${upcoming.map((item) => `<li><strong>${escapeHtml(item.label || item.kind || "")}</strong><span>${escapeHtml(item.course || "")}</span><small>${escapeHtml(formatDue(item.dueAt))}</small></li>`).join("")}
+        </ul>` : ""}
+        <div class="actions" style="justify-content:center">
+          <button class="btn primary" type="button" data-action="route" data-route="textbooks">▶ ${escapeHtml(t("learn"))}</button>
+          <button class="btn ghost" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
+        </div>
+      </article>
+    `;
+    }
     function renderNoReview() {
+        const results = state.reviewSession?.results || {};
+        const reviewed = Number(results.remember || 0) + Number(results.forgot || 0);
+        if (state.route === "review" && Number(state.reviewSession?.initialSize || 0) > 0 && reviewed > 0)
+            return renderReviewSessionComplete();
         return `
       <article class="empty-state">
         <span class="kanji-char">休</span>
@@ -22567,7 +23633,7 @@ import {
         return lang() === "ru" ? "Операция" : "Transaction";
     }
     function renderRewardModal() {
-        if (!state.rewardModal)
+        if (!isRewardModalVisible())
             return "";
         const reward = state.rewardModal;
         const isLevel = reward.type === "level";
@@ -22955,6 +24021,7 @@ import {
             }
         }
         state.reviewQueueLastKind = "card";
+        recordReviewSessionResult("kanji", rating, { label: card.kanji, level: card.jlpt, dueAt: after.dueAt, cardId: card.id });
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
@@ -22970,6 +24037,57 @@ import {
             checkDailyGoal();
             evaluateAchievements();
         }, { scrollTop: true });
+    }
+    function isRewardModalVisible() {
+        return Boolean(state.rewardModal && state.route !== "review");
+    }
+    function rateActiveKanaCard(slug, cardId, rating) {
+        const parsed = parseKanaReviewCardId(cardId, slug);
+        if (!parsed?.id || !isKanaCourseSlug(parsed.slug))
+            return;
+        const progress = kanaCourseProgress(parsed.slug);
+        const review = normalizeKanaReviewStorage(parsed.slug);
+        const before = cloneProgress(migrateCardProgress(review[parsed.id] || null));
+        const normalizedRating = isForgottenRating(rating) ? "forgot" : "remember";
+        const after = kanaReviewProgress(before, normalizedRating);
+        review[parsed.id] = after;
+        progress.review = review;
+        progress.currentRoute = "review";
+        progress.updatedAt = new Date().toISOString();
+        updateDailyStats(before, after, normalizedRating);
+        updateStreak({ skipAchievements: true });
+        const previousCombo = Number(state.progress.correctCombo || 0);
+        const answerTone = normalizedRating === "forgot" ? "again" : "ok";
+        if (normalizedRating === "forgot") {
+            state.progress.totalWrong += 1;
+            state.progress.correctCombo = 0;
+            adjustEvaRelationship({ discipline: -0.5, trust: -0.1 }, "kana_answer_again");
+            dispatchEvaEvent("answer_wrong", { cardId: parsed.id, kana: parsed.kana, rating: normalizedRating, comboLost: previousCombo > 0 }, { skipAchievements: true });
+            toast(dialogueText("eva", "wrong"));
+        }
+        else {
+            state.progress.totalCorrect += 1;
+            state.progress.correctCombo += 1;
+            state.progress.bestCorrectCombo = Math.max(state.progress.bestCorrectCombo, state.progress.correctCombo);
+            adjustEvaRelationship({ trust: 0.25, discipline: 0.2, curiosity: 0.1 }, "kana_answer_remember");
+            dispatchEvaEvent("answer_correct", { cardId: parsed.id, kana: parsed.kana, rating: normalizedRating, combo: state.progress.correctCombo }, { skipAchievements: true });
+            toast(dialogueText("eva", "correct"));
+        }
+        state.reviewQueueLastKind = "kana";
+        recordReviewSessionResult("kana", normalizedRating, { label: parsed.kana, course: kanaCourseReviewLabel(parsed.slug), dueAt: after.dueAt, cardId: parsed.id });
+        state.revealed = false;
+        state.activeCardId = null;
+        clearReviewExerciseState();
+        resetReadingCheck();
+        state.pendingFocus = "__scroll-top__";
+        trackReviewSessionComplete("kana");
+        renderImmediate();
+        saveProgress();
+        scheduleStudySideEffects("kana review post-render effects", () => {
+            stopKanjiAudio();
+            playTone(answerTone);
+            syncEvaRelationshipFromProgress();
+        }, { scrollTop: state.route === "review" });
     }
     function srsButtonLabels() {
         return lang() === "ru"
@@ -23578,6 +24696,8 @@ import {
         return 0;
     }
     function queueReward(reward) {
+        if (reward?.type === "achievement" && state.route === "review" && getReviewQueueCount() > 0)
+            return;
         if (!state.rewardModal) {
             state.rewardModal = reward;
             showRewardFeedback(reward);
@@ -23661,7 +24781,7 @@ import {
         today.minutes = round(today.reviews * 0.75 + today.learned * 1.25, 1);
         state.progress.daily[todayKey()] = today;
     }
-    function updateStreak() {
+    function updateStreak(options = {}) {
         claimPendingStreakReward();
         const today = todayKey();
         const last = state.progress.streak.lastStudyDate;
@@ -23684,7 +24804,7 @@ import {
                 availableOn: shiftDayKey(today, 1)
             };
         }
-        dispatchEvaEvent("streak_up", { streak: state.progress.streak.current, lost });
+        dispatchEvaEvent("streak_up", { streak: state.progress.streak.current, lost }, { skipAchievements: Boolean(options.skipAchievements) });
         saveProgress();
     }
     function renderCharts() {
@@ -24657,6 +25777,33 @@ import {
             .filter(Boolean)
             .sort(compareReviewQueueItems);
     }
+    function getDueKanaReviewItems() {
+        const now = Date.now();
+        return ["hiragana", "katakana"].flatMap((slug) => {
+            if (!isKanaCourseSlug(slug))
+                return [];
+            const review = normalizeKanaReviewStorage(slug);
+            const cards = Object.entries(review).map(([cardId, progress]) => ({ cardId, ...migrateCardProgress(progress) }));
+            return createReviewSession(cards, now).initial.map((cardProgress) => {
+                const parsed = parseKanaReviewCardId(cardProgress.cardId, slug);
+                if (!parsed?.id || parsed.slug !== slug)
+                    return null;
+                const character = findKanaCharacter(slug, parsed.kana);
+                return resolveKanaReviewItem({
+                    kind: "kana",
+                    key: parsed.id,
+                    courseSlug: slug,
+                    cardId: parsed.id,
+                    kana: parsed.kana,
+                    romaji: character?.romaji || "",
+                    strokes: character?.strokes || 0,
+                    character,
+                    progress: cardProgress,
+                    dueAt: cardProgress.dueAt ? Date.parse(cardProgress.dueAt) : 0
+                });
+            }).filter(Boolean);
+        }).sort(compareReviewQueueItems);
+    }
     function buildCurrentReviewQueueItems() {
         const cards = getDueNowCards().map((card) => {
             if (!card?.id)
@@ -24671,12 +25818,13 @@ import {
                 progress
             };
         }).filter(Boolean);
+        const cardLikeItems = [...cards, ...getDueKanaReviewItems()].sort(compareReviewQueueItems);
         const exercises = [...getDueTextbookExerciseItems(), ...getDueReadingExerciseItems()].sort(compareReviewQueueItems);
-        return normalizeReviewQueueItems(interleaveReviewQueueItems(cards, exercises, REVIEW_EXERCISE_CARD_GAP));
+        return normalizeReviewQueueItems(interleaveReviewQueueItems(cardLikeItems, exercises, REVIEW_EXERCISE_CARD_GAP));
     }
     function resetReviewSession(items = buildCurrentReviewQueueItems()) {
         const keys = Object.freeze(normalizeReviewQueueItems(items).map((item) => item.key).filter(Boolean));
-        state.reviewSession = { keys, initialSize: keys.length, startedAt: new Date().toISOString() };
+        state.reviewSession = { keys, initialSize: keys.length, startedAt: new Date().toISOString(), results: { remember: 0, forgot: 0, items: [] } };
     }
     function getReviewQueueItems() {
         const current = buildCurrentReviewQueueItems();
@@ -24687,22 +25835,52 @@ import {
         const currentByKey = new Map(current.map((item) => [item.key, item]));
         const sessionKeys = Array.isArray(state.reviewSession?.keys) ? state.reviewSession.keys : [];
         const sessionItems = sessionKeys.map((key) => currentByKey.get(key)).filter(Boolean);
-        if (sessionItems.length !== sessionKeys.length || (!sessionItems.length && current.length)) {
+        if (!sessionKeys.length && current.length) {
             resetReviewSession(current);
             return current;
         }
         return normalizeReviewQueueItems(sessionItems);
     }
+    function recordReviewSessionResult(kind, rating, item = {}) {
+        if (state.route !== "review" || !state.reviewSession)
+            return;
+        const resultKey = isForgottenRating(rating) ? "forgot" : "remember";
+        const results = state.reviewSession.results || { remember: 0, forgot: 0, items: [] };
+        results.remember = Number(results.remember || 0);
+        results.forgot = Number(results.forgot || 0);
+        results[resultKey] += 1;
+        results.items = Array.isArray(results.items) ? results.items : [];
+        results.items.push({
+            kind,
+            rating: resultKey,
+            label: String(item.label || item.kana || item.kanji || item.cardId || ""),
+            course: String(item.course || item.level || ""),
+            dueAt: item.dueAt || null
+        });
+        state.reviewSession.results = results;
+    }
     function getLearningLaterCount() {
         const now = Date.now();
-        return getJlptReviewPoolCards().filter((card) => {
+        const kanjiCount = getJlptReviewPoolCards().filter((card) => {
             const progress = getCardProgress(card.id);
             const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
             return progress.state === "Learning" && dueAt > now;
         }).length;
+        const kanaCount = getAllKanaSrsProgress().filter((progress) => {
+            const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
+            return progress.state === "Learning" && dueAt > now;
+        }).length;
+        return kanjiCount + kanaCount;
+    }
+    function getAllKanaSrsProgress() {
+        return ["hiragana", "katakana"].flatMap((slug) => {
+            if (!isKanaCourseSlug(slug))
+                return [];
+            return Object.values(normalizeKanaReviewStorage(slug)).map((progress) => migrateCardProgress(progress));
+        });
     }
     function getTotalSrsCardCount() {
-        return getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length;
+        return getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length + getAllKanaSrsProgress().filter((progress) => progress.state !== "New").length;
     }
     function getReviewQueueCount() {
         if (reviewQueueCountRenderActive && reviewQueueCountRenderCache !== null)
@@ -24721,8 +25899,13 @@ import {
         const bPriority = studyCardPriority(bProgress);
         if (aPriority !== bPriority)
             return bPriority - aPriority;
-        if (a.kind !== b.kind)
-            return a.kind === "card" ? -1 : 1;
+        if (a.kind !== b.kind) {
+            const aCardLike = a.kind === "card" || a.kind === "kana";
+            const bCardLike = b.kind === "card" || b.kind === "kana";
+            if (aCardLike !== bCardLike)
+                return aCardLike ? -1 : 1;
+            return String(a.kind || "").localeCompare(String(b.kind || ""));
+        }
         if (a.kind === "card" && b.kind === "card")
             return Number(a.card?.id || 0) - Number(b.card?.id || 0);
         return String(a.key || "").localeCompare(String(b.key || ""));
@@ -25565,6 +26748,45 @@ import {
         const key = String(jlpt || "").toUpperCase();
         return state.jlptCatalog?.items?.find((item) => item.jlpt === key) || null;
     }
+    function kanaCatalogEntry(slug) {
+        const key = String(slug || "").toLowerCase();
+        return state.kanaCatalog?.courses?.find((item) => item.slug === key) || null;
+    }
+    function kanaCourseData(slug) {
+        const key = String(slug || "").toLowerCase();
+        return state.kanaCourses?.[key] || null;
+    }
+    function kanaProgressRoot() {
+        state.progress.kanaCourses = mergeKanaProgress(state.progress.kanaCourses || null);
+        return state.progress.kanaCourses;
+    }
+    function kanaCourseProgress(slug) {
+        return ensureKanaCourseProgress(kanaProgressRoot(), slug);
+    }
+    function ensureKanaCourseData(slug) {
+        const key = String(slug || "").toLowerCase();
+        const entry = kanaCatalogEntry(key);
+        if (!entry || !isKanaCourseSlug(key))
+            return Promise.resolve(null);
+        if (state.kanaCourses[key])
+            return Promise.resolve(state.kanaCourses[key]);
+        if (state.kanaCourseLoading[key])
+            return state.kanaCourseLoading[key];
+        state.kanaCourseErrors[key] = null;
+        const promise = fetchJson(entry.course_file)
+            .then((course) => {
+            state.kanaCourses[key] = course;
+            state.kanaCourseLoading[key] = null;
+            return course;
+        })
+            .catch((error) => {
+            state.kanaCourseLoading[key] = null;
+            state.kanaCourseErrors[key] = error;
+            throw error;
+        });
+        state.kanaCourseLoading[key] = promise;
+        return promise;
+    }
     function textbookCourseProgress(level) {
         const key = String(level || "").toUpperCase();
         if (key === "N5")
@@ -26106,6 +27328,29 @@ import {
         if (canonical !== "N5" && expandedSubroutes.has(rawSubroute))
             return true;
         return textbookLessonsForLevel(canonical).some((lesson) => lesson.id === rawSubroute);
+    }
+    function kanaSubrouteExists(slug, subroute) {
+        const key = String(slug || "").toLowerCase();
+        const rawSubroute = String(subroute || "").trim().toLowerCase();
+        if (!isKanaCourseSlug(key))
+            return false;
+        if (!rawSubroute)
+            return true;
+        const course = kanaCourseData(key);
+        if (course) {
+            return ["review", "final", "final-test", "reference", "sources"].includes(rawSubroute)
+                || course.lessons?.some((lesson) => lesson.id === rawSubroute)
+                || course.reading_practice?.some((practice) => practice.id === rawSubroute);
+        }
+        const entry = kanaCatalogEntry(key);
+        const lessonCount = Number(entry?.lesson_count || (key === "hiragana" ? 10 : 11));
+        if (/^lesson-\d+$/i.test(rawSubroute)) {
+            const order = Number(rawSubroute.replace(/\D+/g, ""));
+            return order >= 1 && order <= lessonCount;
+        }
+        if (/^practice-[1-5]$/i.test(rawSubroute))
+            return true;
+        return ["review", "final", "final-test", "reference", "sources"].includes(rawSubroute);
     }
     function firstTextbookLessonId(level) {
         return textbookLessonsForLevel(level)[0]?.id || "";
@@ -27778,7 +29023,8 @@ import {
         return String(value) === String(current) ? "selected" : "";
     }
     function textbooksRoutePath(level = "", subroute = "") {
-        const normalizedLevel = String(level || "").trim().toUpperCase();
+        const rawLevel = String(level || "").trim();
+        const normalizedLevel = isKanaCourseSlug(rawLevel) ? rawLevel.toLowerCase() : rawLevel.toUpperCase();
         const normalizedSubroute = String(subroute || "").trim();
         const base = normalizedLevel ? `/textbooks/${encodeURIComponent(normalizedLevel)}` : "/textbooks/";
         return normalizedSubroute ? `${base}/${encodeURIComponent(normalizedSubroute)}` : base;
@@ -27806,7 +29052,8 @@ import {
         return pathname.endsWith("/") ? pathname : `${pathname}/`;
     }
     function textbooksRouteHash(level = "", subroute = "") {
-        const normalizedLevel = String(level || "").trim().toUpperCase();
+        const rawLevel = String(level || "").trim();
+        const normalizedLevel = isKanaCourseSlug(rawLevel) ? rawLevel.toLowerCase() : rawLevel.toUpperCase();
         const normalizedSubroute = String(subroute || "").trim();
         const base = normalizedLevel ? `#textbooks/${encodeURIComponent(normalizedLevel)}` : "#textbooks/";
         return normalizedSubroute ? `${base}/${encodeURIComponent(normalizedSubroute)}` : base;
@@ -27822,6 +29069,9 @@ import {
     function readCurrentRouteMatch() {
         const pathMatch = matchPathname(location.pathname || "/");
         if (pathMatch.status === "valid" && pathMatch.kind === "download" && !location.hash) {
+            return pathMatch;
+        }
+        if (pathMatch.status === "valid" && ["textbooks", "textbook-level", "kana-course"].includes(pathMatch.kind || "") && !location.hash) {
             return pathMatch;
         }
         if (!isAppShellPathname(location.pathname || "/")) {
@@ -27843,7 +29093,7 @@ import {
         state.routeNotFound = routeMatch.status === "not-found" ? routeMatch : null;
         state.route = route;
         state.kanjiPageId = route === "kanji" ? (params.cardId || null) : null;
-        state.activeTextbookLevel = route === "textbooks" ? (params.level || null) : null;
+        state.activeTextbookLevel = route === "textbooks" ? (params.level || params.course || null) : null;
         state.activeTextbookSubroute = route === "textbooks" ? (params.subroute || null) : null;
         state.activeJlptLesson = route === "jlpt-lesson"
             ? (params.level || null)
@@ -27867,8 +29117,17 @@ import {
             return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
         }
         if (routeMatch.route === "textbooks") {
-            const level = params.level || "";
+            const level = params.level || params.course || "";
             const subroute = params.subroute || "";
+            if (level && isKanaCourseSlug(level)) {
+                if (!kanaCatalogEntry(level)) {
+                    return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+                }
+                if (subroute && !kanaSubrouteExists(level, subroute)) {
+                    return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
+                }
+                return routeMatch;
+            }
             if (level && !jlptCatalogByLevel(level)) {
                 return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
             }
@@ -27901,7 +29160,7 @@ import {
     }
     function readTextbookRouteLevel() {
         const match = parseHash(location.hash);
-        return match.status === "valid" && match.route === "textbooks" ? (match.params.level || "") : "";
+        return match.status === "valid" && match.route === "textbooks" ? (match.params.level || match.params.course || "") : "";
     }
     function readTextbookRouteSubroute() {
         const match = parseHash(location.hash);

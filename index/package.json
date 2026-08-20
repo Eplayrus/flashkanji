@@ -15,6 +15,7 @@
     "generate:wiki": "node tools/generate-kanji-wiki.mjs",
     "generate:seo": "node tools/generate-seo.mjs",
     "generate:n1": "python tools/generate-n1-textbook.py",
+    "validate:kana": "node tools/validate-kana-courses.mjs",
     "validate:srs": "node tools/validate-srs.mjs",
     "validate:readings": "node tools/validate-readings.mjs",
     "validate:n1": "node tools/validate-n1-textbook.mjs",

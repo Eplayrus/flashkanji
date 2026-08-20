@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "content_version": "2026-08-kana-v1",
+  "generated_at": "2026-08-15T00:00:00+03:00",
+  "courses": [
+    {
+      "slug": "hiragana",
+      "title": "Хирагана с нуля",
+      "native_title": "ひらがな",
+      "description": "Интерактивный курс для абсолютного новичка на основе официального PDF Flash Kanji.",
+      "course_file": "data/kana/hiragana.json",
+      "pdf_url": "docs/flash-kanji-hiragana-textbook-ru.pdf",
+      "lesson_count": 10,
+      "base_character_count": 46,
+      "task_count": 362,
+      "expected_task_count": 362
+    },
+    {
+      "slug": "katakana",
+      "title": "Катакана с нуля",
+      "native_title": "カタカナ",
+      "description": "Интерактивный курс для абсолютного новичка на основе официального PDF Flash Kanji.",
+      "course_file": "data/kana/katakana.json",
+      "pdf_url": "docs/flash-kanji-katakana-textbook-ru.pdf",
+      "lesson_count": 11,
+      "base_character_count": 46,
+      "task_count": 400,
+      "expected_task_count": 400
+    }
+  ]
+}

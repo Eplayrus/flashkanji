@@ -15,7 +15,11 @@ import {
 } from "./seo-foundation.mjs";
 
 const FORBIDDEN_URL_RE = /\/index\/|\/index\/dist\/|#|\/assets\/|\.json$|service-worker\.js/i;
-const OLD_COUNT_RE = /("kanjiCount"\s*:\s*220|"lessonCount"\s*:\s*11|"kanjiCount"\s*:\s*367|"lessonCount"\s*:\s*19|data-source-kanji-count="220"|data-source-lesson-count="11"|data-source-kanji-count="367"|data-source-lesson-count="19")/i;
+const OLD_COUNT_RE = /("kanjiCount"\s*:\s*(220|367)|"lessonCount"\s*:\s*(11|19)|data-source-kanji-count="(220|367)"|data-source-lesson-count="(11|19)")/i;
+const OLD_COUNT_SIGNATURES = [
+  { kanjiCount: "220", lessonCount: "11" },
+  { kanjiCount: "367", lessonCount: "19" }
+];
 const MOJIBAKE_RE = /â€™|â€œ|â€|вЂ|гЃ|ж—|ењ/i;
 
 function assert(condition, message) {
@@ -132,7 +136,12 @@ async function validateNoOldPages() {
   const rootIndex = path.join(ROOT_DIR, "index.html");
   for (const file of htmlFiles) {
     const html = await readFile(file, "utf8");
-    assert(!OLD_COUNT_RE.test(html), `${file}: old N1/N2 SEO count detected`);
+    const hasOldCount = OLD_COUNT_RE.test(html) && OLD_COUNT_SIGNATURES.some(({ kanjiCount, lessonCount }) => {
+      const hasJsonPair = html.includes(`"kanjiCount": ${kanjiCount}`) && html.includes(`"lessonCount": ${lessonCount}`);
+      const hasHtmlPair = html.includes(`data-source-kanji-count="${kanjiCount}"`) && html.includes(`data-source-lesson-count="${lessonCount}"`);
+      return hasJsonPair || hasHtmlPair;
+    });
+    assert(!hasOldCount, `${file}: old N1/N2 SEO count detected`);
     if (file !== rootIndex) {
       assert(!MOJIBAKE_RE.test(html), `${file}: mojibake detected in public HTML`);
     }
