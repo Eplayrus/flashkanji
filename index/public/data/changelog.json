@@ -1,6 +1,28 @@
 {
-  "currentVersion": "2026.08.09",
+  "currentVersion": "2026.08.20",
   "entries": [
+    {
+      "version": "2026.08.20",
+      "date": "2026-08-20",
+      "title": {
+        "ru": "Уроки открываются корректно",
+        "en": "Lessons now open correctly"
+      },
+      "items": {
+        "ru": [
+          "У новых пользователей уроки больше не отображаются завершёнными до начала обучения.",
+          "Прямые ссылки на существующие уроки теперь ждут загрузку курса и не открывают ложную страницу 404.",
+          "Если карточки не загрузились, Flash Kanji покажет понятное сообщение и предложит повторить попытку, не меняя прогресс.",
+          "Загрузка данных курса и офлайн-кэш стали надёжнее; уже сохранённый прогресс остаётся на месте."
+        ],
+        "en": [
+          "Lessons no longer appear completed before a new user has started studying.",
+          "Direct links to existing lessons now wait for course data instead of opening a false 404 page.",
+          "If cards fail to load, Flash Kanji shows a clear message and a retry action without changing progress.",
+          "Course loading and offline caching are more reliable, while existing saved progress remains intact."
+        ]
+      }
+    },
     {
       "version": "2026.08.09",
       "date": "2026-08-09",

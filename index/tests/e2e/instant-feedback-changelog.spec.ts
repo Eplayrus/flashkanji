@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const CHANGELOG_VERSION = "2026.08.09";
+const CHANGELOG_VERSION = "2026.08.20";
 const LAST_SEEN_KEY = "flashKanji.changelog.lastSeenVersion";
 const HAS_VISITED_KEY = "flashKanji.hasVisited";
 
@@ -112,7 +112,8 @@ test("existing user sees changelog once per version", async ({ page }) => {
 
   await page.goto("./#home");
   await expect(page.locator(".changelog-modal")).toBeVisible();
-  await expect(page.locator(".changelog-modal")).toContainText("Озвучка стала аккуратнее");
+  await expect(page.locator(".changelog-modal")).toContainText("Уроки открываются корректно");
+  await expect(page.locator(".changelog-modal")).toContainText("У новых пользователей уроки больше не отображаются завершёнными");
   await page.locator('[data-action="close-changelog"]').click();
   await expect(page.locator(".changelog-modal")).toHaveCount(0);
   await expect.poll(async () => page.evaluate((key) => localStorage.getItem(key), LAST_SEEN_KEY)).toBe(CHANGELOG_VERSION);
@@ -138,8 +139,8 @@ test("changelog content follows saved English language", async ({ page }) => {
 
   await page.goto("./#home");
   await expect(page.locator(".changelog-modal")).toBeVisible();
-  await expect(page.locator(".changelog-modal")).toContainText("Audio playback is cleaner");
-  await expect(page.locator(".changelog-modal")).toContainText("Kanji pronunciation no longer overlaps itself");
+  await expect(page.locator(".changelog-modal")).toContainText("Lessons now open correctly");
+  await expect(page.locator(".changelog-modal")).toContainText("Lessons no longer appear completed before a new user has started studying");
 });
 
 declare global {

@@ -5,7 +5,7 @@ test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
-    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.09");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.20");
     localStorage.setItem("flashKanji.hasVisited", "true");
   });
 });
@@ -26,6 +26,66 @@ test("kana courses appear in textbooks and load lazily inside the app shell", as
   await expect(page.locator("#app .kana-course-page")).toBeVisible();
   await expect(page.locator("#app h1").first()).toContainText("Хирагана");
   await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+});
+
+test("home treats kana as first-class learning content and kana lesson uses one study card", async ({ page }) => {
+  await page.goto("./#home");
+  await expect(page.locator('[data-section="home-kana-courses"]')).toBeVisible();
+  await expect(page.locator('[data-kana-course="hiragana"]')).toContainText("Хирагана");
+  await expect(page.locator('[data-kana-course="katakana"]')).toContainText("Катакана");
+
+  await page.locator('[data-kana-course="hiragana"] a[href="#textbooks/hiragana/lesson-1"]').click();
+  await expect(page).toHaveURL(/#textbooks\/hiragana\/lesson-1$/);
+  await expect(page.locator("#app .kana-lesson-page")).toBeVisible();
+  await expect(page.locator("#app [data-kana-character-card]")).toHaveCount(1);
+  await expect(page.locator("#app .kana-new-sign-grid")).toHaveCount(0);
+  await expect(page.locator("#app .kana-readwrite-grid")).toHaveCount(0);
+  await expect(page.locator("#app [data-section='kana-character-study-card'] .kana-lesson-focus")).toContainText("あ");
+
+  await expect.poll(async () => page.evaluate(() => {
+    const raw = localStorage.getItem("flashKanji.progress.v2");
+    const progress = raw ? JSON.parse(raw) : {};
+    return progress.kanaCourses?.courses?.hiragana?.currentRoute || "";
+  })).toBe("lesson-1");
+
+  await page.locator('[data-action="kana-lesson-card"][data-rating="forgot"]').click();
+  await expect(page.locator("#app [data-section='kana-character-study-card'] .kana-lesson-focus")).toContainText("い");
+
+  await expect.poll(async () => page.evaluate(() => {
+    const raw = localStorage.getItem("flashKanji.progress.v2");
+    const progress = raw ? JSON.parse(raw) : {};
+    return Object.keys(progress.kanaCourses?.courses?.hiragana?.review || {});
+  })).toEqual(["kana:hiragana:3042"]);
+
+  await page.evaluate(() => {
+    const raw = localStorage.getItem("flashKanji.progress.v2");
+    const progress = raw ? JSON.parse(raw) : {};
+    const review = progress.kanaCourses?.courses?.hiragana?.review || {};
+    for (const card of Object.values(review) as Array<Record<string, unknown>>) {
+      card.dueAt = "2026-01-01T00:00:00.000Z";
+      card.state = "Learning";
+    }
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify(progress));
+  });
+  await page.addInitScript(() => {
+    const raw = localStorage.getItem("flashKanji.progress.v2");
+    const progress = raw ? JSON.parse(raw) : {};
+    const review = progress.kanaCourses?.courses?.hiragana?.review || {};
+    for (const card of Object.values(review) as Array<Record<string, unknown>>) {
+      card.dueAt = "2026-01-01T00:00:00.000Z";
+      card.state = "Learning";
+    }
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify(progress));
+  });
+  await page.reload();
+
+  await page.goto("./#home");
+  await expect(page.locator('[data-kana-course="hiragana"]')).toContainText(/Продолжить|Continue/);
+  await expect(page.locator('[data-kana-course="hiragana"]')).toContainText(/1 к повторению|1 due/);
+
+  await page.goto("./#review");
+  await expect(page.locator('#app [data-review-kind="kana"]')).toBeVisible();
+  await expect(page.locator('#app [data-review-kind="kana"] .kana-srs-focus')).toContainText("あ");
 });
 
 test("hiragana exercise checks accepted answers and persists progress without touching katakana", async ({ page, request }) => {
