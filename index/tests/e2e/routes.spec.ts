@@ -368,33 +368,52 @@ test("#review accepts saved markdown reading review progress from localStorage",
 
 for (const value of ["remember", "forget"] as const) {
   test.skip(`JLPT lesson ${value} button does not move page scroll`, async ({ page }) => {
-  test(`JLPT lesson ${value} button does not move page scroll`, async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.removeItem("flashKanji.progress.v2");
       localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
     });
+
     await page.goto(`./?srs-scroll=${value}#textbooks/N5`);
+
     await expect(page.locator("#app .textbooks-page")).toBeVisible();
-    await page.locator('#app [data-action="n5-open-lesson"]').first().click();
+
+    await page
+      .locator('#app [data-action="n5-open-lesson"]')
+      .first()
+      .click();
+
     await expect(page.locator("#app .n5-lesson-page")).toBeVisible();
-    const answerButton = page.locator(`button[data-action="jlpt-lesson-answer"][data-value="${value}"]`);
+
+    const answerButton = page.locator(
+      `button[data-action="jlpt-lesson-answer"][data-value="${value}"]`
+    );
+
     await expect(answerButton).toBeVisible();
 
-    await page.evaluate(() => window.scrollTo(0, 1200));
+    await page.evaluate(() => {
+      window.scrollTo(0, 1200);
+    });
+
     const target = await answerButton.evaluate((button) => {
       const rect = button.getBoundingClientRect();
+
       return {
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2,
         scrollY: window.scrollY
       };
     });
+
     const before = target.scrollY;
+
     expect(before).toBeGreaterThan(0);
 
     await page.mouse.click(target.x, target.y);
+
     await page.waitForTimeout(900);
+
     const after = await page.evaluate(() => window.scrollY);
+
     expect(Math.abs(after - before)).toBeLessThanOrEqual(4);
   });
 }
@@ -404,9 +423,16 @@ test("a slow previous-route response cannot overwrite Review", async ({ page }) 
     await new Promise((resolve) => setTimeout(resolve, 1200));
     await route.continue();
   });
+
   const navigation = page.goto("./#textbooks");
+
   await page.waitForTimeout(100);
-  await page.evaluate(() => { window.location.hash = "review"; });
+
+  await page.evaluate(() => {
+    window.location.hash = "review";
+  });
+
   await navigation;
+
   await expectRoute(page, "review");
 });
