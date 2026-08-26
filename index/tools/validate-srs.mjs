@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
-const dataRoot = path.join(projectRoot, "data");
+const dataRoot = path.join(projectRoot, "public", "data");
 const fixMode = process.argv.includes("--fix");
 const summaryOnly = process.argv.includes("--summary");
 
@@ -63,6 +63,11 @@ const smallVowels = {
   ァ: "a", ィ: "i", ゥ: "u", ェ: "e", ォ: "o"
 };
 
+const standaloneSmallKana = {
+  ゃ: "ya", ゅ: "yu", ょ: "yo",
+  っ: "tsu"
+};
+
 function listJsonFiles(dir) {
   const result = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -108,6 +113,7 @@ function normalizeRomaji(value) {
 function romanizeKana(input, options = {}) {
   const original = String(input || "").trim();
   if (!original) return "";
+  if (original === "・" || original === "･") return "middle dot";
   if (original === "は" && options.particleMode) return "wa";
   if (original === "へ" && options.particleMode) return "e";
   if (original === "を" && options.particleMode) return "o";
@@ -122,13 +128,14 @@ function romanizeKana(input, options = {}) {
     const next = chars[i + 1] || "";
 
     if (char === "っ" || char === "ッ") {
+      if (!next) result += standaloneSmallKana.っ;
       geminate = true;
       continue;
     }
 
     if (char === "ー") {
       const vowel = lastVowel(result);
-      if (vowel) result += vowel;
+      result += vowel || "-";
       continue;
     }
 
@@ -153,6 +160,8 @@ function romanizeKana(input, options = {}) {
       roma = basicKana[char];
     } else if (smallVowels[char]) {
       roma = smallVowels[char];
+    } else if (standaloneSmallKana[char]) {
+      roma = standaloneSmallKana[char];
     } else if (/[a-zA-Z0-9]/.test(char)) {
       roma = char.toLowerCase();
     } else {

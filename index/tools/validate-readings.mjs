@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
-const dataRoot = path.join(projectRoot, "data");
+const dataRoot = path.join(projectRoot, "public", "data");
 const fixMode = process.argv.includes("--fix");
 const summaryOnly = process.argv.includes("--summary");
 
@@ -68,6 +68,11 @@ const smallVowels = {
   ぁ: "a", ぃ: "i", ぅ: "u", ぇ: "e", ぉ: "o"
 };
 
+const standaloneSmallKana = {
+  ゃ: "ya", ゅ: "yu", ょ: "yo",
+  っ: "tsu"
+};
+
 function toHiragana(value) {
   return String(value || "").normalize("NFKC").replace(/[\u30a1-\u30f6]/g, (char) =>
     String.fromCharCode(char.charCodeAt(0) - 0x60)
@@ -108,6 +113,8 @@ function lastVowel(value) {
 }
 
 function romanizeKana(value, options = {}) {
+  const original = String(value || "").trim();
+  if (original === "・" || original === "･") return "middle dot";
   const source = cleanKana(value);
   if (!source) return "";
   if (options.particleMode && source === "は") return "wa";
@@ -122,13 +129,14 @@ function romanizeKana(value, options = {}) {
     const next = chars[i + 1] || "";
 
     if (char === "っ") {
+      if (!next) result += standaloneSmallKana.っ;
       geminate = true;
       continue;
     }
 
     if (char === "ー") {
       const vowel = lastVowel(result);
-      if (vowel) result += vowel;
+      result += vowel || "-";
       continue;
     }
 
@@ -152,6 +160,8 @@ function romanizeKana(value, options = {}) {
       roma = basicKana[char];
     } else if (smallVowels[char]) {
       roma = smallVowels[char];
+    } else if (standaloneSmallKana[char]) {
+      roma = standaloneSmallKana[char];
     } else if (/[a-zA-Z0-9]/u.test(char)) {
       roma = char.toLowerCase();
     } else {
@@ -280,6 +290,9 @@ function validatePairedFields(file, pathLabel, node, kanaKey, romajiKey, kanji) 
   const kanaIsArray = Array.isArray(node[kanaKey]);
   const romajiIsArray = Array.isArray(node[romajiKey]);
   const kanaParts = splitReadingText(node[kanaKey], { keepEmpty: true }).filter((part) => part || (kanaIsArray && !isBlank(node[kanaKey])));
+  if (!kanaParts.length && typeof node[kanaKey] === "string" && isKanaText(node[kanaKey])) {
+    kanaParts.push(node[kanaKey].trim());
+  }
   const romajiParts = splitRomajiText(node[romajiKey], { keepEmpty: true }).filter((part) => part || (romajiIsArray && !isBlank(node[romajiKey])));
   const particleMode = !kanaIsArray
     && ["hiragana", "reading"].includes(kanaKey)

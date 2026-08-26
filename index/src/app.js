@@ -4564,7 +4564,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 openTextbook: "Open textbook",
                 openCheckpoint: "Open test",
                 score: "Score",
-                mistakes: "Ошибки",
+                mistakes: "Mistakes",
                 retryMistakes: "Retry mistakes",
                 continuePath: "Continue path",
                 ready: "Done",
@@ -4583,7 +4583,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 level: "Level",
                 xp: "XP",
                 mapHint: "Stay on the current level here. The rest remains in textbooks.",
-                step: "Шаг",
+                step: "Step",
                 finishHint: "After the lesson the cards move to review.",
                 scoreHint: "Retry mistakes or keep moving."
             };
@@ -4628,6 +4628,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         };
     }
     function fallbackN5PathNodes() {
+        const cardsPerLesson = Number(state.n5Meta?.kanjiPerLesson || state.n5Meta?.cardsPerLesson || 8);
         return n5LessonNodeIds().map((id, index) => ({
             id,
             type: "lesson",
@@ -4635,8 +4636,8 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             title: { ru: `N5 · Урок ${index + 1}`, en: `N5 · Lesson ${index + 1}` },
             summary: index === 0
                 ? {
-                    ru: "Первый интерактивный урок: 4 знака, чтения, примеры и мини-практика.",
-                    en: "First interactive lesson: 4 signs, readings, examples, and mini practice."
+                    ru: `Первый интерактивный урок: ${cardsPerLesson} знаков, чтения, примеры и мини-практика.`,
+                    en: `First interactive lesson: ${cardsPerLesson} signs, readings, examples, and mini practice.`
                 }
                 : {
                     ru: "Откроем карточки урока прямо из учебника.",
@@ -7181,13 +7182,13 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 { route: "review", focus: "sentence-practice", icon: "文", title: ru ? "Практика предложений" : "Sentence practice", text: ru ? "Вставь кандзи в пропуск." : "Fill kanji into blanks." }
             ],
             stats: [
-                { route: "stats", focus: "stats-top", icon: "в–Ґ", title: ru ? "Статистика" : "Statistics", text: ru ? "Графики, XP и серия." : "Charts, XP, and streak." },
+                { route: "stats", focus: "stats-top", icon: "▥", title: ru ? "Статистика" : "Statistics", text: ru ? "Графики, XP и серия." : "Charts, XP, and streak." },
                 { route: "achievements", focus: "achievements-top", icon: "月", title: ru ? "Достижения" : "Achievements", text: ru ? "Галерея наград." : "Reward gallery." },
-                { route: "stats", focus: "shop-panel", icon: "в—€", title: ru ? "Магазин" : "Shop", text: ru ? "Moon Fragments и предметы." : "Moon Fragments and items." }
+                { route: "stats", focus: "shop-panel", icon: "◈", title: ru ? "Магазин" : "Shop", text: ru ? "Moon Fragments и предметы." : "Moon Fragments and items." }
             ],
             more: [
                 { route: "writing", focus: "writing-canvas", icon: "筆", title: ru ? "Письмо" : "Writing", text: ru ? "Практика написания." : "Writing practice." },
-                { route: "stats", focus: "stats-top", icon: "в–Ґ", title: ru ? "Профиль" : "Profile", text: ru ? "Статистика, награды и прогресс." : "Stats, achievements, and progress." },
+                { route: "stats", focus: "stats-top", icon: "▥", title: ru ? "Профиль" : "Profile", text: ru ? "Статистика, награды и прогресс." : "Stats, achievements, and progress." },
                 { route: "eva-room", focus: "eva-room", icon: "☾", title: ru ? "Комната Евы" : "Eva room", text: ru ? "Диалоги и уютные фоны." : "Dialogue scenes and cozy rooms." },
                 { route: "download", focus: "download-top", icon: "⇩", title: ru ? "Скачать" : "Download", text: ru ? "APK для Android и PWA-установка." : "Android APK and PWA install." },
                 { route: "about", focus: "about", icon: "ℹ", title: ru ? "О проекте" : "About", text: ru ? "Что такое Flash Kanji." : "What Flash Kanji is." }
@@ -7594,10 +7595,56 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const languageButton = $('[data-action="language"]');
         if (languageButton)
             languageButton.textContent = lang().toUpperCase();
+        syncStaticChromeLabels();
         syncHeaderSoundButton();
         syncHeaderNotificationButton();
         syncHeaderSocialToggleButton();
         syncSidebarChrome();
+    }
+    function syncStaticChromeLabels() {
+        const ru = lang() === "ru";
+        const labels = {
+            sidebar: ru ? "Основная навигация Flash Kanji" : "Flash Kanji main navigation",
+            sidebarNav: ru ? "Разделы Flash Kanji" : "Flash Kanji sections",
+            learning: ru ? "Обучение" : "Learning",
+            project: ru ? "Проект" : "Project",
+            progress: ru ? "Прогресс Flash Kanji" : "Flash Kanji progress",
+            profile: ru ? "Профиль Flash Kanji" : "Flash Kanji profile",
+            home: ru ? "На главную" : "Go home",
+            socialLinks: ru ? "Социальные ссылки" : "Social links",
+            reportBug: ru ? "Сообщить об ошибке" : "Report a bug",
+            theme: ru ? "Сменить тему" : "Toggle theme",
+            themeTitle: ru ? "Тема" : "Theme",
+            language: ru ? "Сменить язык" : "Change language",
+            languageTitle: ru ? "Язык" : "Language",
+            exportProgress: ru ? "Экспорт прогресса" : "Export progress",
+            exportTitle: ru ? "Экспорт" : "Export",
+            importProgress: ru ? "Импорт прогресса" : "Import progress",
+            importTitle: ru ? "Импорт" : "Import",
+            openProfile: ru ? "Открыть профиль" : "Open profile",
+            profileTitle: ru ? "Профиль" : "Profile"
+        };
+        const setLabel = (selector, label, title = label) => {
+            document.querySelectorAll(selector).forEach((element) => {
+                element.setAttribute("aria-label", label);
+                element.setAttribute("title", title);
+            });
+        };
+        document.querySelector(".app-sidebar")?.setAttribute("aria-label", labels.sidebar);
+        document.querySelector(".sidebar-nav")?.setAttribute("aria-label", labels.sidebarNav);
+        document.querySelector(".sidebar-progress")?.setAttribute("aria-label", labels.progress);
+        document.querySelector(".sidebar-user")?.setAttribute("aria-label", labels.profile);
+        document.querySelector("#headerSocialActions")?.setAttribute("aria-label", labels.socialLinks);
+        document.querySelectorAll("[data-nav-caption]").forEach((caption) => {
+            caption.textContent = caption.getAttribute("data-nav-caption") === "project" ? labels.project : labels.learning;
+        });
+        setLabel('.brand-mark[data-action="route"][data-route="home"]', labels.home);
+        setLabel('[data-action="contact-email"]', labels.reportBug);
+        setLabel('[data-action="theme"]', labels.theme, labels.themeTitle);
+        setLabel('[data-action="language"]', labels.language, labels.languageTitle);
+        setLabel('.icon-btn[data-action="export"]', labels.exportProgress, labels.exportTitle);
+        setLabel('.icon-btn[data-action="import"]', labels.importProgress, labels.importTitle);
+        setLabel('.sidebar-user-open[data-action="route"][data-route="stats"]', labels.openProfile, labels.profileTitle);
     }
     function syncSidebarChrome() {
         const progressBar = $("#sidebarProgressBar");
@@ -7625,7 +7672,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 ? `${reviewQueue} ${learningPathLabels().reviewQueue} · ${preview.title || learningPathLabels().mapHint}`
                 : `${preview.title || learningPathLabels().mapHint}${preview.summary ? ` · ${preview.summary}` : ""}`;
         if (userAvatar)
-            userAvatar.textContent = `N${level}`;
+            userAvatar.textContent = `Lv ${level}`;
         if (userTitle)
             userTitle.textContent = lang() === "ru" ? "Flash Kanji" : "Flash Kanji";
         if (userSubtitle)
@@ -7888,7 +7935,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const raw = String(text || "").trim();
         if (!raw)
             return [];
-        const pieces = raw.match(/[^.!?гЂ'пјЃпјџ]+[.!?гЂ'пјЃпјџ]?/g) || [raw];
+        const pieces = raw.match(/[^.!?。！？]+[.!?。！？]?/g) || [raw];
         return pieces.map((piece) => piece.trim()).filter(Boolean);
     }
     function renderEvaDialogueText(text, lineId = "") {
@@ -13393,7 +13440,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 reviewPlan: "План повторения на 30 дней",
                 day: "день",
                 lesson: "Урок",
-                backToN5: "Рљ N5",
+                backToN5: "К N5",
                 lessonChain: "Кандзи -> слово -> предложение -> практика",
                 lessonChainText: "Сначала узнаёшь знак, затем видишь чтение в слове, читаешь предложение, отвечаешь и отправляешь карточку в повторение.",
                 exercises: "Упражнения",
@@ -13479,7 +13526,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 repeatMistakes: "Repeat mistakes",
                 nextLesson: "Next lesson",
                 none: "none",
-                step: "Шаг",
+                step: "Step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
                 remember: "Remember",
@@ -13500,7 +13547,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 noReviewCards: "No cards in this filter right now.",
                 questions: "Questions",
                 score: "Score",
-                mistakes: "Ошибки",
+                mistakes: "Mistakes",
                 resetTest: "Reset test",
                 submitFinal: "Finish test",
                 reviewAll: "Review all N5",
@@ -13887,7 +13934,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             id: `${lesson.id}-word-4`,
             type: "missing-word",
             title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Insert the word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}В»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            prompt: missingWordPrompt(wordExample),
             answer: wordExample.word,
             answerLabel: wordExample.word,
             kanji: wordCard.kanji,
@@ -15154,7 +15201,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
         if (!sentence)
             return "";
-        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[гЂњ~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[“~〜].*/, ""))) || lesson.grammarFocus?.[0] || "";
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
@@ -15183,7 +15230,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
               <p>${escapeHtml(localized(item.explanation))}</p>
               ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
               ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
-              <button class="btn ghost" type="button" data-action="n4-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n4Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+              <button class="btn ghost" type="button" data-action="n4-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(localizedGrammarAnswer(item))}">${escapeHtml(n4Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
             </article>
           `).join("")}
         </div>
@@ -15343,11 +15390,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
-                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                  ${(localizedGrammarOptions(item).length ? localizedGrammarOptions(item) : [localizedGrammarAnswer(item)]).map((option) => `
                     <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n4-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
                   `).join("")}
                 </div>
-                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${localizedGrammarAnswer(item)}`)}</p>` : ""}
               </article>
             `;
         }).join("")}
@@ -15520,7 +15567,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 pdf: "PDF-учебник",
                 kanji: "кандзи",
                 grammar: "грамматика",
-                courseMap: "�?нтерактивный учебник N4 после N5",
+                courseMap: "Интерактивный учебник N4 после N5",
                 continue: "Продолжить",
                 review: "Повторять N4",
                 openKanji: "Открыть список кандзи",
@@ -15620,7 +15667,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 completedGrammar: "Grammar",
                 reviews: "Reviews",
                 difficult: "Difficult",
-                srs: "Повторение",
+                srs: "SRS",
                 lessons: "lessons",
                 lessonsTitle: "17 lessons, about 10 kanji each",
                 lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, exercise, writing, and SRS.",
@@ -15649,7 +15696,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 repeatMistakes: "Repeat mistakes",
                 nextLesson: "Next lesson",
                 none: "none",
-                step: "Шаг",
+                step: "Step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
                 remember: "Remember",
@@ -15682,7 +15729,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 listeningText: "Read dialogues aloud or use them as listening scripts.",
                 questions: "Questions",
                 score: "Score",
-                mistakes: "Ошибки",
+                mistakes: "Mistakes",
                 resetTest: "Reset test",
                 submitFinal: "Finish test",
                 reviewAll: "Review all N4",
@@ -15879,7 +15926,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             id: `${lesson.id}-word-4`,
             type: "missing-word",
             title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}В»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            prompt: missingWordPrompt(wordExample),
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -15907,12 +15954,12 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 type: "grammar-link",
                 title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
-                answer: grammar.answer,
-                answerLabel: grammar.answer,
+                answer: localizedGrammarAnswer(grammar),
+                answerLabel: localizedGrammarAnswer(grammar),
                 kanji: cards[0].kanji,
                 cardId: cards[0].id,
                 grammarId: grammar.id,
-                options: n4OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+                options: n4OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), 1),
                 ...getReward("grammar-link")
             });
         }
@@ -16166,8 +16213,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const item = state.n4Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
         if (!item)
             return;
-        const selected = value || item.answer;
-        const correct = selected === item.answer;
+        const expected = localizedGrammarAnswer(item);
+        const selected = value || expected;
+        const correct = selected === expected;
         const course = n4Course();
         course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
         if (correct && !course.completedGrammar[item.id]) {
@@ -16358,9 +16406,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                     type,
                     grammarId: grammar.id,
                     prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
-                    answer: grammar.answer,
-                    answerLabel: grammar.answer,
-                    options: n4OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+                    answer: localizedGrammarAnswer(grammar),
+                    answerLabel: localizedGrammarAnswer(grammar),
+                    options: n4OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), index)
                 };
             }
         }
@@ -16874,7 +16922,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
         if (!sentence)
             return "";
-        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[гЂњ~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[“~〜].*/, ""))) || lesson.grammarFocus?.[0] || "";
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
@@ -16903,7 +16951,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
               <p>${escapeHtml(localized(item.explanation))}</p>
               ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
               ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
-              <button class="btn ghost" type="button" data-action="n3-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n3Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+              <button class="btn ghost" type="button" data-action="n3-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(localizedGrammarAnswer(item))}">${escapeHtml(n3Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
             </article>
           `).join("")}
         </div>
@@ -17063,11 +17111,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
-                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                  ${(localizedGrammarOptions(item).length ? localizedGrammarOptions(item) : [localizedGrammarAnswer(item)]).map((option) => `
                     <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n3-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
                   `).join("")}
                 </div>
-                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${localizedGrammarAnswer(item)}`)}</p>` : ""}
               </article>
             `;
         }).join("")}
@@ -17238,7 +17286,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 pdf: "PDF-учебник",
                 kanji: "кандзи",
                 grammar: "грамматика",
-                courseMap: "�?нтерактивный учебник N3 как мост к среднему уровню",
+                courseMap: "Интерактивный учебник N3 как мост к среднему уровню",
                 continue: "Продолжить",
                 review: "Повторять N3",
                 openKanji: "Открыть список кандзи",
@@ -17344,7 +17392,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 completedListening: "Listening",
                 reviews: "Reviews",
                 difficult: "Difficult",
-                srs: "Повторение",
+                srs: "SRS",
                 lessons: "lessons",
                 lessonsTitle: "37 lessons, about 10 kanji each",
                 lessonsDescription: "Each lesson connects kanji, word, grammar, sentence, mini reading, exercises, writing, and SRS.",
@@ -17373,7 +17421,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 repeatMistakes: "Repeat mistakes",
                 nextLesson: "Next lesson",
                 none: "none",
-                step: "Шаг",
+                step: "Step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
                 remember: "Remember",
@@ -17408,7 +17456,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 listeningText: "Read dialogues aloud, use TTS, or shadow them as listening scripts.",
                 questions: "Questions",
                 score: "Score",
-                mistakes: "Ошибки",
+                mistakes: "Mistakes",
                 resetTest: "Reset test",
                 submitFinal: "Finish test",
                 reviewAll: "Review all N3",
@@ -17607,7 +17655,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             id: `${lesson.id}-word-4`,
             type: "missing-word",
             title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}В»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            prompt: missingWordPrompt(wordExample),
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -17635,12 +17683,12 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 type: "grammar-link",
                 title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
-                answer: grammar.answer,
-                answerLabel: grammar.answer,
+                answer: localizedGrammarAnswer(grammar),
+                answerLabel: localizedGrammarAnswer(grammar),
                 kanji: cards[0].kanji,
                 cardId: cards[0].id,
                 grammarId: grammar.id,
-                options: n3OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+                options: n3OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), 1),
                 ...getReward("grammar-link")
             });
         }
@@ -17893,8 +17941,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const item = state.n3Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
         if (!item)
             return;
-        const selected = value || item.answer;
-        const correct = selected === item.answer;
+        const expected = localizedGrammarAnswer(item);
+        const selected = value || expected;
+        const correct = selected === expected;
         const course = n3Course();
         course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
         if (correct && !course.completedGrammar[item.id]) {
@@ -18089,9 +18138,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                     type,
                     grammarId: grammar.id,
                     prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
-                    answer: grammar.answer,
-                    answerLabel: grammar.answer,
-                    options: n3OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+                    answer: localizedGrammarAnswer(grammar),
+                    answerLabel: localizedGrammarAnswer(grammar),
+                    options: n3OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), index)
                 };
             }
         }
@@ -18605,7 +18654,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
         if (!sentence)
             return "";
-        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[гЂњ~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[“~〜].*/, ""))) || lesson.grammarFocus?.[0] || "";
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
@@ -18634,7 +18683,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
               <p>${escapeHtml(localized(item.explanation))}</p>
               ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
               ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
-              <button class="btn ghost" type="button" data-action="n2-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n2Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+              <button class="btn ghost" type="button" data-action="n2-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(localizedGrammarAnswer(item))}">${escapeHtml(n2Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
             </article>
           `).join("")}
         </div>
@@ -18794,11 +18843,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
-                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                  ${(localizedGrammarOptions(item).length ? localizedGrammarOptions(item) : [localizedGrammarAnswer(item)]).map((option) => `
                     <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n2-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
                   `).join("")}
                 </div>
-                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${localizedGrammarAnswer(item)}`)}</p>` : ""}
               </article>
             `;
         }).join("")}
@@ -18969,7 +19018,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 pdf: "PDF-учебник",
                 kanji: "кандзи",
                 grammar: "грамматика",
-                courseMap: "�?нтерактивный учебник N2: абзацы, аргументы, выводы и позиция автора",
+                courseMap: "Интерактивный учебник N2: абзацы, аргументы, выводы и позиция автора",
                 continue: "Продолжить",
                 review: "Повторять N2",
                 openKanji: "Открыть список кандзи",
@@ -19104,7 +19153,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 repeatMistakes: "Repeat mistakes",
                 nextLesson: "Next lesson",
                 none: "none",
-                step: "Шаг",
+                step: "Step",
                 onyomi: "onyomi",
                 kunyomi: "kunyomi",
                 addToSrs: "Send to review",
@@ -19136,7 +19185,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 listeningText: "Read dialogues aloud, use TTS, or shadow them as listening scripts.",
                 questions: "Questions",
                 score: "Score",
-                mistakes: "Ошибки",
+                mistakes: "Mistakes",
                 resetTest: "Reset test",
                 submitFinal: "Finish test",
                 reviewAll: "Review all N2",
@@ -19335,7 +19384,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             id: `${lesson.id}-word-4`,
             type: "missing-word",
             title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}В»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            prompt: missingWordPrompt(wordExample),
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -19363,12 +19412,12 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 type: "grammar-link",
                 title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
-                answer: grammar.answer,
-                answerLabel: grammar.answer,
+                answer: localizedGrammarAnswer(grammar),
+                answerLabel: localizedGrammarAnswer(grammar),
                 kanji: cards[0].kanji,
                 cardId: cards[0].id,
                 grammarId: grammar.id,
-                options: n2OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+                options: n2OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), 1),
                 ...getReward("grammar-link")
             });
         }
@@ -19621,8 +19670,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const item = state.n2Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
         if (!item)
             return;
-        const selected = value || item.answer;
-        const correct = selected === item.answer;
+        const expected = localizedGrammarAnswer(item);
+        const selected = value || expected;
+        const correct = selected === expected;
         const course = n2Course();
         course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
         if (correct && !course.completedGrammar[item.id]) {
@@ -19817,9 +19867,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                     type,
                     grammarId: grammar.id,
                     prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
-                    answer: grammar.answer,
-                    answerLabel: grammar.answer,
-                    options: n2OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+                    answer: localizedGrammarAnswer(grammar),
+                    answerLabel: localizedGrammarAnswer(grammar),
+                    options: n2OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), index)
                 };
             }
         }
@@ -20333,7 +20383,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const sentence = lesson.sentences.find((item) => item.jp.includes(card.kanji)) || lesson.sentences[0];
         if (!sentence)
             return "";
-        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[гЂњ~].*/, ""))) || lesson.grammarFocus?.[0] || "";
+        const grammar = (lesson.grammarFocus || []).find((item) => sentence.jp.includes(String(item).replace(/[“~〜].*/, ""))) || lesson.grammarFocus?.[0] || "";
         return `
       <div class="n5-card-sentence">
         <strong>${escapeHtml(sentence.jp)}</strong>
@@ -20362,7 +20412,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
               <p>${escapeHtml(localized(item.explanation))}</p>
               ${item.formula ? `<code>${escapeHtml(item.formula)}</code>` : ""}
               ${item.examples?.[0] ? `<div class="n5-card-sentence"><strong>${escapeHtml(item.examples[0].jp)}</strong><span>${escapeHtml(item.examples[0].reading || "")}</span><small>${escapeHtml(localized({ ru: item.examples[0].ru, en: item.examples[0].en }))}</small></div>` : ""}
-              <button class="btn ghost" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(item.answer)}">${escapeHtml(n1Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
+              <button class="btn ghost" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(localizedGrammarAnswer(item))}">${escapeHtml(n1Course().completedGrammar[item.id] ? labels.completed : labels.markGrammar)}</button>
             </article>
           `).join("")}
         </div>
@@ -20524,11 +20574,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 ${(item.examples || []).slice(0, 2).map((example) => `<div class="n5-card-sentence"><strong>${escapeHtml(example.jp)}</strong><span>${escapeHtml(displayHiragana(example.reading || ""))}</span><small>${escapeHtml(localized({ ru: example.ru, en: example.en }))}</small></div>`).join("")}
                 ${item.question ? `<h4>${escapeHtml(localized(item.question))}</h4>` : ""}
                 <div class="n5-option-grid">
-                  ${(item.options.length ? item.options : [item.answer]).map((option) => `
+                  ${(localizedGrammarOptions(item).length ? localizedGrammarOptions(item) : [localizedGrammarAnswer(item)]).map((option) => `
                     <button class="btn ${result?.selected === option ? (result.correct ? "success" : "warning") : "ghost"}" type="button" data-action="n1-grammar-complete" data-id="${escapeAttr(item.id)}" data-value="${escapeAttr(option)}">${escapeHtml(option)}</button>
                   `).join("")}
                 </div>
-                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${item.answer}`)}</p>` : ""}
+                ${result ? `<p class="n5-feedback">${escapeHtml(result.correct ? labels.correctAnswer : `${labels.wrongAnswer}: ${localizedGrammarAnswer(item)}`)}</p>` : ""}
               </article>
             `;
         }).join("")}
@@ -21067,7 +21117,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             id: `${lesson.id}-word-4`,
             type: "missing-word",
             title: exerciseTitles["missing-word"] || { ru: "Вставь слово", en: "Missing word" },
-            prompt: lang() === "ru" ? `Какое слово подходит к значению «${exampleTranslation(wordExample)}В»?` : `Which word matches "${exampleTranslation(wordExample)}"?`,
+            prompt: missingWordPrompt(wordExample),
             answer: wordExample.word || wordCard.kanji,
             answerLabel: wordExample.word || wordCard.kanji,
             kanji: wordCard.kanji,
@@ -21095,12 +21145,12 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                 type: "grammar-link",
                 title: exerciseTitles["grammar-link"] || { ru: "Грамматическая связка", en: "Grammar link" },
                 prompt: localized(grammar.question || grammar.explanation),
-                answer: grammar.answer,
-                answerLabel: grammar.answer,
+                answer: localizedGrammarAnswer(grammar),
+                answerLabel: localizedGrammarAnswer(grammar),
                 kanji: cards[0].kanji,
                 cardId: cards[0].id,
                 grammarId: grammar.id,
-                options: n1OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), 1),
+                options: n1OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), 1),
                 ...getReward("grammar-link")
             });
         }
@@ -21353,8 +21403,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const item = state.n1Grammar.find((grammar) => grammar.id === id || grammar.pattern === id);
         if (!item)
             return;
-        const selected = value || item.answer;
-        const correct = selected === item.answer;
+        const expected = localizedGrammarAnswer(item);
+        const selected = value || expected;
+        const correct = selected === expected;
         const course = n1Course();
         course.grammarResults[item.id] = { selected, correct, checkedAt: new Date().toISOString() };
         if (correct && !course.completedGrammar[item.id]) {
@@ -21549,9 +21600,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                     type,
                     grammarId: grammar.id,
                     prompt: `${grammar.pattern}: ${localized(grammar.question || grammar.explanation)}`,
-                    answer: grammar.answer,
-                    answerLabel: grammar.answer,
-                    options: n1OptionSet({ value: grammar.answer, label: grammar.answer }, grammar.options.filter((item) => item !== grammar.answer).map((item) => ({ value: item, label: item })), index)
+                    answer: localizedGrammarAnswer(grammar),
+                    answerLabel: localizedGrammarAnswer(grammar),
+                    options: n1OptionSet({ value: localizedGrammarAnswer(grammar), label: localizedGrammarAnswer(grammar) }, localizedGrammarOptions(grammar).filter((item) => item !== localizedGrammarAnswer(grammar)).map((item) => ({ value: item, label: item })), index)
                 };
             }
         }
@@ -21906,7 +21957,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             cursor += answerLength;
             const content = tiles.length
                 ? tiles.map((tile) => `<span>${escapeHtml(tile.kanji)}</span>`).join("")
-                : `<span>${escapeHtml("в–Ў".repeat(answerLength))}</span>`;
+                : `<span>${escapeHtml("□".repeat(answerLength))}</span>`;
             return `${escapeHtml(part)}<span class="sentence-blank ${wrong ? "is-wrong" : ""}">${content}</span>`;
         }).join("");
     }
@@ -22700,7 +22751,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     function kanjiReadingCandidates(kanji) {
         const card = state.cards.find((item) => item.kanji === kanji);
         const readings = [card?.hiragana, card?.onyomi, card?.kunyomi]
-            .flatMap((value) => String(value || "").split(/[\/,;гѓ»гЂЃ\s]+/))
+            .flatMap((value) => String(value || "").split(/[\/,;・、\s]+/u))
             .map((value) => toHiragana(value.trim()))
             .filter(Boolean);
         return [...new Set(readings)];
@@ -23417,11 +23468,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         if (!text)
             return "";
         return text
-            .split(/([гЂ'пјЃпјџгЂЃ\n]+)/u)
+            .split(/([。！？、\n]+)/u)
             .map((part) => {
             if (!part)
                 return "";
-            if (/^[гЂ'пјЃпјџгЂЃ\n]+$/u.test(part))
+            if (/^[。！？、\n]+$/u.test(part))
                 return part === "\n" ? "\n" : `${part} `;
             const romaji = romanizeReadingKana(part);
             return romaji ? `${romaji} ` : "";
@@ -23429,8 +23480,8 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             .join("")
             .replace(/\s+\n/gu, "\n")
             .replace(/[ \t]+/gu, " ")
-            .replace(/\s+([гЂ'пјЃпјџгЂЃ])/gu, "$1 ")
-            .replace(/([гЂ'пјЃпјџгЂЃ])\s*$/gu, "$1")
+            .replace(/\s+([。！？、])/gu, "$1 ")
+            .replace(/([。！？、])\s*$/gu, "$1")
             .trim();
     }
     function readingExerciseTranslationPanel(exercise) {
@@ -23920,7 +23971,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             if (!jp.includes(item.literal) || seen.has(jp))
                 return false;
             seen.add(jp);
-            const compactLength = jp.replace(/[\sгЂ'гЂЃпјЃпјџ!?гЂЊгЂЌгЂЋгЂЏпј€пј‰()гѓ»гЂњгѓј]/g, "").length;
+            const compactLength = jp.replace(/[\s。、！？!?「」『』（）()・ー]/gu, "").length;
             if (compactLength < 3 || compactLength > 44)
                 return false;
             return true;
@@ -24217,7 +24268,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
           </div>
           <div class="actions">
             ${renderShareButton("stats")}
-            <button class="btn primary" type="button" data-action="route" data-route="achievements">в—ђ ${escapeHtml(t("achievements"))}</button>
+            <button class="btn primary" type="button" data-action="route" data-route="achievements">✦ ${escapeHtml(t("achievements"))}</button>
           </div>
         </div>
         <div class="metric-grid">
@@ -24256,7 +24307,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
               <div class="settings-row">
                 <span>
                   <strong>${escapeHtml(lang() === "ru" ? "Экскурсия" : "Onboarding")}</strong>
-                  <small>${escapeHtml(lang() === "ru" ? "Повторить первое знакомство СЃ Flash Kanji." : "Replay the first-time tour.")}</small>
+                  <small>${escapeHtml(lang() === "ru" ? "Повторить первое знакомство с Flash Kanji." : "Replay the first-time tour.")}</small>
                 </span>
                 <button class="btn ghost" type="button" data-action="repeat-onboarding">${escapeHtml(lang() === "ru" ? "Повторить" : "Repeat tour")}</button>
               </div>
@@ -24297,16 +24348,16 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     function achievementIcon(icon) {
         const icons = {
             moon: "月",
-            book: "ж›ё",
+            book: "文",
             memory: "記",
-            flame: "зЃ«",
+            flame: "火",
             star: "星",
-            brush: "з­†",
+            brush: "筆",
             text: "文",
-            lock: "йЌµ",
+            lock: "鍵",
             eye: "眼"
         };
-        return icons[icon] || "в—†";
+        return icons[icon] || "✦";
     }
     function renderAchievementsPreview() {
         const items = achievementList();
@@ -24337,7 +24388,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
           </div>
           <div class="actions">
             ${renderShareButton("achievements")}
-            <button class="btn" type="button" data-action="route" data-route="stats">в–Ґ ${escapeHtml(t("stats"))}</button>
+            <button class="btn" type="button" data-action="route" data-route="stats">▥ ${escapeHtml(t("stats"))}</button>
           </div>
         </div>
         <div class="metric-grid">
@@ -26933,13 +26984,13 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     }
     function normalizeKanaTokens(value) {
         return String(value || "")
-            .split(/[\/,гЂЃпјЊ\s]+/u)
+            .split(/[\/,、，\s]+/u)
             .map(normalizeKanaToken)
             .filter(Boolean);
     }
     function normalizeKanaToken(value) {
         const kana = kataToHira(String(value || "").normalize("NFKC"))
-            .replace(/[гѓ»пЅҐ.\-]/gu, "")
+            .replace(/[・･.\-]/gu, "")
             .replace(/\s+/gu, "");
         return expandKanaLongVowels(kana).trim();
     }
@@ -26965,7 +27016,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     function kanaVowel(char) {
         if ("あかさたなはまやらわがざだばぱゃぁ".includes(char))
             return "あ";
-        if ("いきしちにひみりぎ�?ぢびぴぃ".includes(char))
+        if ("いきしちにひみりぎじぢびぴぃ".includes(char))
             return "い";
         if ("うくすつぬふむゆるぐずづぶぷゅぅ".includes(char))
             return "う";
@@ -27157,7 +27208,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     function splitReadingText(value) {
         const source = Array.isArray(value) ? value.join(" / ") : String(value || "");
         return source
-            .split(/[\/пјЏ,пјЊгЂЃгѓ»пЅҐ;пј›]+/u)
+            .split(/[\/／,，、・･;；]+/u)
             .map((part) => part.trim())
             .filter(Boolean);
     }
@@ -27238,7 +27289,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         return String(value || "")
             .toLowerCase()
             .normalize("NFKD")
-            .replace(/[̀-ͯ]/gu, "")
+            .replace(/[\u0300-\u036f]/gu, "")
             .replace(/[^a-z0-9]+/gu, "");
     }
     function readingLabel(kind) {
@@ -27256,7 +27307,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         return [
             `${readingShortLabel("onyomi")}: ${readings.onyomi.kana || "—"} (${readings.onyomi.romaji || "—"})`,
             `${readingShortLabel("kunyomi")}: ${readings.kunyomi.kana || "—"} (${readings.kunyomi.romaji || "—"})`
-        ].join(" Р'· ");
+        ].join(" · ");
     }
     function getKanjiAudioPath(card) {
         if (!card)
@@ -27287,7 +27338,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             .trim()
             .toLowerCase()
             .normalize("NFKD")
-            .replace(/[̀-ͯ]/g, "")
+            .replace(/[\u0300-\u036f]/g, "")
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-+|-+$/g, "");
     }
@@ -28686,7 +28737,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         syncUxSoundSettings();
         syncHeaderSoundButton();
         saveProgress();
-        toast(state.progress.settings.sound ? "в™Є" : "Г—");
+        toast(state.progress.settings.sound ? "♪" : "×");
     }
     function toggleUxSound() {
         toggleSound();
@@ -28920,6 +28971,27 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             return vocabularyMatch.translation_en;
         return commonExampleTranslationsEn[normalizeRomaji(example.romaji)] || example.translation || "";
     }
+    function missingWordPrompt(example) {
+        const translation = exampleTranslation(example);
+        return lang() === "ru"
+            ? `Какое слово подходит к значению «${translation}»?`
+            : `Which word matches "${translation}"?`;
+    }
+    function localizedGrammarAnswer(item) {
+        if (!item)
+            return "";
+        if (lang() === "en")
+            return String(item.answerEn || item.answer_en || item.answer || "");
+        return String(item.answer || item.answerRu || "");
+    }
+    function localizedGrammarOptions(item) {
+        if (!item)
+            return [];
+        const options = lang() === "en" && Array.isArray(item.optionsEn) && item.optionsEn.length
+            ? item.optionsEn
+            : item.options;
+        return Array.isArray(options) ? options.map(String).filter(Boolean) : [];
+    }
     function normalizeRomaji(value) {
         return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
     }
@@ -28974,7 +29046,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const clean = String(text || "").replace(/\s+/g, " ").trim();
         if (clean.length <= 132)
             return clean;
-        const parts = clean.match(/[^.!?гЂ'пјЃпјџ]+[.!?гЂ'пјЃпјџ]?/g) || [clean];
+        const parts = clean.match(/[^.!?。！？]+[.!?。！？]?/g) || [clean];
         let compact = "";
         for (const part of parts) {
             const next = `${compact} ${part.trim()}`.trim();

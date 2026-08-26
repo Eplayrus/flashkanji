@@ -16,3 +16,7 @@ console.log("Largest assets:");
 for (const entry of report.entries.slice(0, 10)) {
   console.log(`${entry.fileName}: ${kb(entry.gzipBytes)} gzip, ${kb(entry.rawBytes)} raw`);
 }
+
+if (!budgets.initialJsWithinBudget || !budgets.cssWithinBudget || !budgets.asyncChunksWithinBudget) {
+  process.exitCode = 1;
+}

@@ -629,8 +629,8 @@ async function writeKanjiPage(locale, card) {
     <p class="seo-eyebrow">${esc(card.jlpt || card.level || "JLPT")} · ${esc(copy.level)}</p>
     <div class="seo-kanji" lang="ja">${esc(card.kanji)}</div>
     <h1 class="seo-title">${esc(meaning)}</h1>
-    <p class="seo-description">${esc(copy.readings)}: <span lang="ja">${esc(readingsText(card))}</span></p>
-    ${indexable ? "" : `<p class="seo-alert">${esc(copy.editorialPending)}</p>`}
+    <p class="seo-description">${esc(copy.readings)}: <span lang="ja">${esc(readingsText(card))}</span></p>${indexable ? "" : `
+    <p class="seo-alert">${esc(copy.editorialPending)}</p>`}
     <div class="seo-actions"><a class="seo-button primary" href="${esc(relativeApp(3, `#kanji/${encodeURIComponent(card.kanji)}`))}">${esc(copy.app)}</a></div>
   </article>
   ${examplesHtml(card, locale)}`;

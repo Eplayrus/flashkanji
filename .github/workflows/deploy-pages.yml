@@ -47,21 +47,41 @@ jobs:
         working-directory: index
         run: npm test
 
+      - name: Validate N5 textbook data
+        working-directory: index
+        run: npm run validate:n5
+
+      - name: Validate kana courses
+        working-directory: index
+        run: npm run validate:kana
+
+      - name: Validate SRS data
+        working-directory: index
+        run: npm run validate:srs
+
+      - name: Validate readings data
+        working-directory: index
+        run: npm run validate:readings
+
       - name: Validate N1 textbook data
         working-directory: index
         run: npm run validate:n1
-
-      - name: Generate SEO pages
-        working-directory: index
-        run: npm run generate:seo
 
       - name: Validate i18n registry
         working-directory: index
         run: npm run validate:i18n
 
+      - name: Generate SEO pages
+        working-directory: index
+        run: npm run generate:seo
+
       - name: Validate SEO output
         working-directory: index
         run: npm run validate:seo
+
+      - name: Validate English content
+        working-directory: index
+        run: npm run validate:en-content
 
       - name: Build
         working-directory: index
