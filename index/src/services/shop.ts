@@ -15,6 +15,24 @@ export interface ShopPurchaseResult {
   price: number;
 }
 
+export interface ShopCatalogItemLike {
+  id?: unknown;
+  type?: unknown;
+  price?: unknown;
+  defaultOwned?: unknown;
+}
+
+export interface CustomizationBackgroundSelectionInput {
+  catalogItems?: ShopCatalogItemLike[] | null;
+  owned?: unknown;
+  customizationSelected?: unknown;
+  progressEquipped?: unknown;
+  progressSelected?: unknown;
+  fallbackId?: string;
+}
+
+export const DEFAULT_EVA_ROOM_BACKGROUND_ID = "bg_study_hub";
+
 export function normalizeMoonFragmentsBalance(value: unknown, fallback = 0): number {
   const primary = Number(value);
   const fallbackNumber = Number(fallback);
@@ -42,6 +60,43 @@ export function normalizeShopIdArray(value: unknown): string[] {
   }
 
   return [...new Set(ids)];
+}
+
+function normalizeShopItemId(value: unknown): string {
+  return String(value ?? "").trim();
+}
+
+function backgroundItems(items: ShopCatalogItemLike[] | null | undefined): ShopCatalogItemLike[] {
+  return (Array.isArray(items) ? items : []).filter((item) => String(item?.type || "") === "background" && normalizeShopItemId(item?.id));
+}
+
+function isDefaultOwnedItem(item: ShopCatalogItemLike | undefined): boolean {
+  return Boolean(item?.defaultOwned) || normalizeMoonFragmentsBalance(item?.price) === 0;
+}
+
+export function resolveCustomizationBackgroundSelection(input: CustomizationBackgroundSelectionInput): string {
+  const fallbackId = normalizeShopItemId(input.fallbackId) || DEFAULT_EVA_ROOM_BACKGROUND_ID;
+  const catalog = backgroundItems(input.catalogItems);
+  const byId = new Map(catalog.map((item) => [normalizeShopItemId(item.id), item]));
+  const ownedIds = new Set(normalizeShopIdArray(input.owned));
+  catalog.forEach((item) => {
+    const id = normalizeShopItemId(item.id);
+    if (isDefaultOwnedItem(item)) ownedIds.add(id);
+  });
+
+  const resolveOwnedBackground = (raw: unknown): string | null => {
+    const id = normalizeShopItemId(raw);
+    if (!id) return null;
+    const item = byId.get(id);
+    if (!item) return null;
+    return ownedIds.has(id) || isDefaultOwnedItem(item) ? id : null;
+  };
+
+  return resolveOwnedBackground(input.customizationSelected)
+    || resolveOwnedBackground(input.progressEquipped)
+    || resolveOwnedBackground(input.progressSelected)
+    || resolveOwnedBackground(fallbackId)
+    || fallbackId;
 }
 
 export function normalizeShopEquipped(value: unknown): Record<string, string | null> {

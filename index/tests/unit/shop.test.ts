@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeMoonFragmentsBalance,
+  resolveCustomizationBackgroundSelection,
   normalizeShopEquipped,
   normalizeShopIdArray,
   resolveShopPurchase
@@ -62,5 +63,40 @@ describe("customization shop state", () => {
       frame: null,
       effect: null
     });
+  });
+
+  it("keeps an explicitly selected customization background ahead of legacy progress defaults", () => {
+    expect(resolveCustomizationBackgroundSelection({
+      catalogItems: [
+        { id: "bg_study_hub", type: "background", price: 0, defaultOwned: true },
+        { id: "bg_classroom", type: "background", price: 35 }
+      ],
+      owned: ["bg_classroom"],
+      customizationSelected: "bg_classroom",
+      progressSelected: "bg_study_hub"
+    })).toBe("bg_classroom");
+  });
+
+  it("uses legacy selected progress background when customization storage has no explicit background", () => {
+    expect(resolveCustomizationBackgroundSelection({
+      catalogItems: [
+        { id: "bg_study_hub", type: "background", price: 0, defaultOwned: true },
+        { id: "bg_library", type: "background", price: 45 }
+      ],
+      owned: ["bg_library"],
+      customizationSelected: null,
+      progressSelected: "bg_library"
+    })).toBe("bg_library");
+  });
+
+  it("falls back to the default background when selected background is not owned", () => {
+    expect(resolveCustomizationBackgroundSelection({
+      catalogItems: [
+        { id: "bg_study_hub", type: "background", price: 0, defaultOwned: true },
+        { id: "bg_cyber_room", type: "background", price: 420 }
+      ],
+      owned: [],
+      customizationSelected: "bg_cyber_room"
+    })).toBe("bg_study_hub");
   });
 });

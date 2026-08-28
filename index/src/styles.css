@@ -6190,6 +6190,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.46)),
     var(--eva-bg) center / cover no-repeat,
+    var(--eva-bg-fallback) center / cover no-repeat,
     linear-gradient(135deg, var(--surface-2), var(--bg));
 }
 

@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-08-20-n5-lesson-availability-v1";
+const SW_BUILD_VERSION = "2026-08-27-lesson-completion-eva-bg-v1";
 const CACHE_PREFIX = "flash-kanji-";
 const STATIC_CACHE = `${CACHE_PREFIX}static-${SW_BUILD_VERSION}`;
 const DATA_CACHE = `${CACHE_PREFIX}data-${SW_BUILD_VERSION}`;

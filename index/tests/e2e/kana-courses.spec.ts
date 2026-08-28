@@ -5,7 +5,7 @@ test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
-    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.20");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
     localStorage.setItem("flashKanji.hasVisited", "true");
   });
 });

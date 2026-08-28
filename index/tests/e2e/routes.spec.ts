@@ -158,6 +158,76 @@ test("old zero-card JLPT study session is migrated back to study after data load
   await expect(page.locator("#app")).not.toContainText(/Урок завершён|Lesson complete|Кандзи 0\/0|Kanji 0\/0/);
 });
 
+test("completed N5 lesson facts migrate to canonical completedLessons", async ({ page }) => {
+  await page.addInitScript(() => {
+    const now = "2026-08-27T00:00:00.000Z";
+    const lessonKanji = ["日", "一", "国", "人", "年", "大", "十", "二"];
+    const cardIds = ["n5-001", "n5-002", "n5-003", "n5-004", "n5-005", "n5-006", "n5-007", "n5-008"];
+    const exercises = [
+      "n5-lesson-1-meaning-0",
+      "n5-lesson-1-kanji-1",
+      "n5-lesson-1-reading-2",
+      "n5-lesson-1-sentence-3",
+      "n5-lesson-1-word-4",
+      "n5-lesson-1-active-5"
+    ];
+
+    localStorage.setItem("flashKanji.hasVisited", "1");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      settings: { language: "ru", languageManuallySelected: true },
+      appOpens: 3,
+      n5Course: {
+        currentLessonId: "n5-lesson-1",
+        studiedKanji: Object.fromEntries(lessonKanji.map((kanji) => [kanji, now])),
+        exerciseResults: Object.fromEntries(exercises.map((id) => [id, { selected: "ok", correct: true, checkedAt: now }])),
+        completedExercises: Object.fromEntries(exercises.map((id) => [id, now])),
+        completedLessons: {}
+      },
+      jlptLessonStudy: {
+        activeSessionKey: "N5:n5-lesson-1",
+        sessions: {
+          "N5:n5-lesson-1": {
+            level: "N5",
+            lessonId: "n5-lesson-1",
+            currentIndex: 8,
+            answers: Object.fromEntries(cardIds.map((id) => [id, { remembered: true, rating: "good", answeredAt: now }])),
+            phase: "test",
+            startedAt: now,
+            updatedAt: now,
+            completedAt: null,
+            testOpenedAt: now
+          }
+        }
+      }
+    }));
+  });
+
+  await page.goto("./#textbooks/N5/n5-lesson-1");
+  await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#app")).toContainText(/Урок завершён|Lesson completed/);
+  await expect(page.locator('#app button[data-action="n5-complete-lesson"]')).toBeDisabled();
+
+  await expect.poll(async () => page.evaluate(() => {
+    const progress = JSON.parse(localStorage.getItem("flashKanji.progress.v2") || "{}");
+    const session = progress.jlptLessonStudy?.sessions?.["N5:n5-lesson-1"] || {};
+    return {
+      completed: Boolean(progress.n5Course?.completedLessons?.["n5-lesson-1"]),
+      currentLessonId: progress.n5Course?.currentLessonId,
+      phase: session.phase,
+      completedAt: Boolean(session.completedAt)
+    };
+  })).toMatchObject({
+    completed: true,
+    currentLessonId: "n5-lesson-2",
+    phase: "done",
+    completedAt: true
+  });
+
+  await page.goto("./#home");
+  await expect(page.locator("#app")).toContainText(/1\/10 уроков|1\/10 lessons/);
+});
+
 test("Back and Forward keep valid routes and Not Found states distinct", async ({ page }) => {
   await page.goto("./#home");
   await page.locator('.bottom-nav [data-route="textbooks"]').click();
@@ -206,7 +276,7 @@ test("SRS answer scrolls to the top of review after each card", async ({ page })
     const dueAt = new Date(Date.now() - 60_000).toISOString();
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.20");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
     localStorage.setItem("flashKanji.hasVisited", "true");
     localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
       appOpens: 2,

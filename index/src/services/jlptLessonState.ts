@@ -30,6 +30,34 @@ export interface JlptLessonStudyState {
   currentCardId: string | null;
 }
 
+export interface JlptLessonExerciseRef {
+  id?: string | number | null;
+}
+
+export interface JlptLessonExerciseResultLike {
+  correct?: unknown;
+}
+
+export interface JlptLessonCompletionStateInput {
+  cards?: JlptLessonCardRef[] | null;
+  session?: JlptLessonStudySessionLike | null;
+  confirmedCompleted?: boolean;
+  exercises?: JlptLessonExerciseRef[] | null;
+  exerciseResults?: Record<string, JlptLessonExerciseResultLike | unknown> | null;
+  completedExercises?: Record<string, unknown> | null;
+  isCardStudied?: (card: JlptLessonCardRef) => boolean;
+}
+
+export interface JlptLessonCompletionState {
+  study: JlptLessonStudyState;
+  cardStudyComplete: boolean;
+  exerciseComplete: boolean;
+  correctExerciseCount: number;
+  totalExercises: number;
+  complete: boolean;
+  canMigrateCompletion: boolean;
+}
+
 function normalizePhase(value: string | null | undefined): JlptLessonStudyPhase {
   const phase = String(value || "").toLowerCase();
   return phase === "test" || phase === "done" ? phase : "study";
@@ -75,8 +103,8 @@ export function resolveJlptLessonStudyState(input: JlptLessonStudyStateInput): J
       phase: "done",
       total,
       expectedCardIds,
-      answeredExpectedCardIds,
-      answeredCount,
+      answeredExpectedCardIds: expectedCardIds,
+      answeredCount: total,
       currentIndex: total,
       currentCardId: null
     };
@@ -109,5 +137,59 @@ export function resolveJlptLessonStudyState(input: JlptLessonStudyStateInput): J
     answeredCount,
     currentIndex: safeIndex,
     currentCardId: expectedCardIds[safeIndex] || null
+  };
+}
+
+function exerciseIds(exercises: JlptLessonExerciseRef[] | null | undefined): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const exercise of Array.isArray(exercises) ? exercises : []) {
+    const id = String(exercise?.id ?? "").trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
+}
+
+function isExerciseCorrect(
+  exerciseId: string,
+  results: Record<string, JlptLessonExerciseResultLike | unknown>,
+  completedExercises: Record<string, unknown>
+): boolean {
+  const result = results[exerciseId];
+  if (result && typeof result === "object" && Boolean((result as JlptLessonExerciseResultLike).correct)) {
+    return true;
+  }
+  return Boolean(completedExercises[exerciseId]);
+}
+
+export function resolveJlptLessonCompletionState(input: JlptLessonCompletionStateInput): JlptLessonCompletionState {
+  const study = resolveJlptLessonStudyState({
+    cards: input.cards,
+    session: input.session,
+    confirmedCompleted: input.confirmedCompleted
+  });
+  const cards = Array.isArray(input.cards) ? input.cards : [];
+  const cardStudyCompleteBySession = study.status === "done" || study.status === "test-ready";
+  const cardStudyCompleteByLegacyProgress = study.total > 0
+    && cards.length >= study.total
+    && cards.every((card) => Boolean(input.isCardStudied?.(card)));
+  const cardStudyComplete = cardStudyCompleteBySession || cardStudyCompleteByLegacyProgress;
+  const ids = exerciseIds(input.exercises);
+  const results = input.exerciseResults && typeof input.exerciseResults === "object" ? input.exerciseResults : {};
+  const completedExercises = input.completedExercises && typeof input.completedExercises === "object" ? input.completedExercises : {};
+  const correctExerciseCount = ids.filter((id) => isExerciseCorrect(id, results, completedExercises)).length;
+  const exerciseComplete = ids.length > 0 && correctExerciseCount === ids.length;
+  const complete = Boolean(input.confirmedCompleted) || (cardStudyComplete && exerciseComplete);
+
+  return {
+    study,
+    cardStudyComplete,
+    exerciseComplete,
+    correctExerciseCount,
+    totalExercises: ids.length,
+    complete,
+    canMigrateCompletion: !input.confirmedCompleted && cardStudyComplete && exerciseComplete
   };
 }

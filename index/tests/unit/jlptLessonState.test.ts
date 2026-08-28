@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveJlptLessonStudyState } from "../../src/services/jlptLessonState";
+import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from "../../src/services/jlptLessonState";
 
 const cards = Array.from({ length: 8 }, (_, index) => ({ id: `card-${index + 1}` }));
 
@@ -85,6 +85,97 @@ describe("JLPT lesson study state", () => {
       phase: "done",
       answeredCount: 8,
       currentIndex: 8
+    });
+  });
+
+  it("uses canonical completion as full card progress for legacy saves without answers", () => {
+    expect(resolveJlptLessonStudyState({
+      cards,
+      session: { phase: "done", completedAt: "2026-08-27T00:00:00.000Z", answers: {} },
+      confirmedCompleted: true
+    })).toMatchObject({
+      status: "done",
+      phase: "done",
+      answeredCount: 8,
+      currentIndex: 8,
+      currentCardId: null
+    });
+  });
+});
+
+describe("JLPT lesson completion state", () => {
+  it("does not complete a lesson from cards-only progress", () => {
+    const answers = Object.fromEntries(cards.map((card) => [card.id, { remembered: true }]));
+
+    expect(resolveJlptLessonCompletionState({
+      cards,
+      session: { answers },
+      exercises: [{ id: "meaning" }, { id: "reading" }],
+      exerciseResults: {}
+    })).toMatchObject({
+      cardStudyComplete: true,
+      exerciseComplete: false,
+      complete: false,
+      canMigrateCompletion: false
+    });
+  });
+
+  it("allows migration when lesson cards and every exercise are complete", () => {
+    const answers = Object.fromEntries(cards.map((card) => [card.id, { remembered: true }]));
+
+    expect(resolveJlptLessonCompletionState({
+      cards,
+      session: { answers },
+      exercises: [{ id: "meaning" }, { id: "reading" }],
+      exerciseResults: {
+        meaning: { correct: true },
+        reading: { correct: true }
+      }
+    })).toMatchObject({
+      cardStudyComplete: true,
+      exerciseComplete: true,
+      correctExerciseCount: 2,
+      totalExercises: 2,
+      complete: true,
+      canMigrateCompletion: true
+    });
+  });
+
+  it("supports safe legacy migration from studied cards plus completedExercises", () => {
+    expect(resolveJlptLessonCompletionState({
+      cards,
+      session: null,
+      exercises: [{ id: "meaning" }, { id: "reading" }],
+      completedExercises: {
+        meaning: "2026-08-27T00:00:00.000Z",
+        reading: "2026-08-27T00:00:00.000Z"
+      },
+      isCardStudied: () => true
+    })).toMatchObject({
+      cardStudyComplete: true,
+      exerciseComplete: true,
+      complete: true,
+      canMigrateCompletion: true
+    });
+  });
+
+  it("keeps confirmed completed lessons done even when exercises are not rebuilt yet", () => {
+    expect(resolveJlptLessonCompletionState({
+      cards,
+      session: {
+        phase: "done",
+        completedAt: "2026-08-27T00:00:00.000Z",
+        answers: Object.fromEntries(cards.map((card) => [card.id, { remembered: true }]))
+      },
+      confirmedCompleted: true,
+      exercises: []
+    })).toMatchObject({
+      complete: true,
+      canMigrateCompletion: false,
+      study: {
+        status: "done",
+        phase: "done"
+      }
     });
   });
 });

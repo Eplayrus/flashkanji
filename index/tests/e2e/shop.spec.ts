@@ -5,7 +5,7 @@ test.use({ serviceWorkers: "block" });
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
-    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.20");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
     localStorage.setItem("flashKanji.hasVisited", "true");
     if (!localStorage.getItem("flashKanji.progress.v2")) {
       localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
@@ -124,3 +124,71 @@ test("customization shop shows catalog, charges once, and persists purchase", as
     purchaseTransactions: 1
   });
 });
+
+test("Eva Room applies the selected shop background instead of legacy progress default", async ({ page }) => {
+  const failedBackgroundUrls: string[] = [];
+  page.on("response", (response) => {
+    const url = response.url();
+    if (response.status() >= 400 && /\/assets\/bg\/.*\.webp/i.test(url)) {
+      failedBackgroundUrls.push(`${response.status()} ${url}`);
+    }
+  });
+
+  await page.addInitScript(() => {
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      settings: { language: "ru", languageManuallySelected: true },
+      appOpens: 3,
+      moonFragments: 100,
+      selectedEvaRoomBackground: "bg_study_hub",
+      unlockedBackgrounds: ["bg_study_hub", "bg_classroom"],
+      shop: {
+        owned: ["bg_study_hub", "bg_classroom"],
+        equipped: { background: "bg_study_hub", outfit: "outfit_default_assassin", theme: "theme_default_dark" }
+      }
+    }));
+    localStorage.setItem("flashkanji_customization", JSON.stringify({
+      owned: ["bg_study_hub", "bg_classroom"],
+      selected: { background: "bg_classroom", outfit: "outfit_default_assassin", theme: "theme_default_dark" },
+      seen: ["bg_study_hub", "bg_classroom"],
+      updatedAt: "2026-08-27T00:00:00.000Z"
+    }));
+  });
+
+  await page.goto("./#eva-room");
+  await expect(page.locator("#app .eva-room-page")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator("#app .eva-vn-bg")).toBeVisible();
+
+  await expect.poll(async () => page.evaluate(() => document.documentElement.dataset.customRoom)).toBe("bg_classroom");
+  await expect.poll(async () => page.evaluate(() => {
+    const debug = window.FLASH_KANJI_EVA_ROOM_DEBUG?.getBackground?.();
+    const scene = document.querySelector(".eva-vn-scene") as HTMLElement | null;
+    const bg = document.querySelector(".eva-vn-bg");
+    return {
+      currentId: debug?.currentId,
+      selectedCustomization: debug?.selectedCustomization,
+      selectedProgress: debug?.selectedProgress,
+      sceneCss: scene?.style.getPropertyValue("--eva-bg") || "",
+      computedBackground: bg ? getComputedStyle(bg).backgroundImage : ""
+    };
+  })).toMatchObject({
+    currentId: "bg_classroom",
+    selectedCustomization: "bg_classroom",
+    selectedProgress: "bg_classroom"
+  });
+
+  const sceneCss = await page.locator(".eva-vn-scene").evaluate((node) => (node as HTMLElement).style.getPropertyValue("--eva-bg"));
+  expect(sceneCss).toContain("bg_classroom.webp");
+  expect(failedBackgroundUrls).toEqual([]);
+});
+
+declare global {
+  interface Window {
+    FLASH_KANJI_EVA_ROOM_DEBUG?: {
+      getBackground?: () => {
+        currentId?: string | null;
+        selectedCustomization?: string | null;
+        selectedProgress?: string | null;
+      };
+    };
+  }
+}

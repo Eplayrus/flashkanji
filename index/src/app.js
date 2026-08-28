@@ -25,11 +25,12 @@ import {
 } from "./services/changelog";
 import {
     normalizeMoonFragmentsBalance,
+    resolveCustomizationBackgroundSelection,
     normalizeShopEquipped,
     normalizeShopIdArray,
     resolveShopPurchase
 } from "./services/shop";
-import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
+import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from "./services/jlptLessonState";
 
 (() => {
     "use strict";
@@ -395,6 +396,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     let deferredDataScheduleToken = 0;
     let n1CourseDataPromise = null;
     let n1CourseDataError = null;
+    let n1CardLookupCache = null;
     const jlptCourseDataPromises = new Map();
     let learningPathMapPromise = null;
     let learningPathMetaPromise = null;
@@ -1218,6 +1220,54 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             progress.lastUpdatedAt = new Date().toISOString();
         return changed;
     }
+    function normalizeJlptLessonCompletionsForLevel(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical || !state.progress)
+            return false;
+        const spec = jlptLessonSpec(canonical);
+        if (!spec)
+            return false;
+        const course = spec.course();
+        if (!hasJlptCompletionMigrationSignals(canonical, course))
+            return false;
+        let changed = false;
+        spec.lessons().forEach((lesson) => {
+            if (migrateJlptLessonCompletionIfReady(canonical, lesson))
+                changed = true;
+        });
+        const currentLesson = spec.lessonById(course.currentLessonId);
+        if (currentLesson && isJlptLessonPersistedCompleted(canonical, course, currentLesson)) {
+            const firstOpen = spec.lessons().find((lesson) => !isJlptLessonPersistedCompleted(canonical, course, lesson));
+            const nextCurrentLessonId = firstOpen?.id || currentLesson.id;
+            if (course.currentLessonId !== nextCurrentLessonId) {
+                course.currentLessonId = nextCurrentLessonId;
+                changed = true;
+            }
+        }
+        return changed;
+    }
+    function normalizeJlptCurrentLessonPointers() {
+        if (!state.progress)
+            return false;
+        let changed = false;
+        LEVEL_ORDER.forEach((level) => {
+            const spec = jlptLessonSpec(level);
+            if (!spec || !spec.lessons().length)
+                return;
+            const course = spec.course();
+            const currentAliases = jlptLessonIdAliases(spec.level, course.currentLessonId);
+            const currentIsCompleted = currentAliases.some((id) => Boolean(course.completedLessons?.[id]));
+            if (!currentIsCompleted)
+                return;
+            const firstOpen = spec.lessons().find((lesson) => !isJlptLessonPersistedCompleted(spec.level, course, lesson));
+            const nextLessonId = firstOpen?.id || fallbackNextJlptLessonId(spec, { id: course.currentLessonId }, course.currentLessonId) || course.currentLessonId;
+            if (nextLessonId && course.currentLessonId !== nextLessonId) {
+                course.currentLessonId = nextLessonId;
+                changed = true;
+            }
+        });
+        return changed;
+    }
     async function ensureJlptCourseData(level, { renderAfter = true, force = false } = {}) {
         const canonical = canonicalJlptLevel(level);
         if (!canonical)
@@ -1232,10 +1282,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             normalizeAndApplyJlptCourseData(canonical, payloads);
             assertJlptCourseDataIntegrity(canonical);
             markJlptCourseDataStatus(canonical, "ready");
-            const changed = normalizeJlptLessonStudySessionsForLevel(canonical);
             if (state.progress) {
                 hydrateProgress();
-                if (changed)
+                const studySessionChanged = normalizeJlptLessonStudySessionsForLevel(canonical);
+                const lessonCompletionChanged = normalizeJlptLessonCompletionsForLevel(canonical);
+                if (studySessionChanged || lessonCompletionChanged)
                     saveProgress();
             }
             applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
@@ -1729,6 +1780,20 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             return defaultCustomization();
         }
     }
+    function readStoredCustomizationBackgroundId() {
+        try {
+            const raw = localStorage.getItem(CUSTOMIZATION_STORAGE_KEY);
+            if (!raw)
+                return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== "object")
+                return null;
+            return parsed.selected?.background || parsed.equipped?.background || null;
+        }
+        catch {
+            return null;
+        }
+    }
     function saveCustomizationStorage() {
         if (!state.customization)
             return false;
@@ -1776,6 +1841,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         }
     }
     function hydrateCustomization() {
+        const storedCustomizationBackgroundId = readStoredCustomizationBackgroundId();
         const customization = readCustomizationStorage();
         const owned = new Set();
         const legacyShopOwned = normalizeShopIdArray(state.progress.shop?.owned || []);
@@ -1811,9 +1877,18 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
                     owned.add(outfit.id);
             }
         });
-        const selected = normalizeCustomizationSelection({ ...defaultCustomization().selected, ...(customization.selected || {}) });
-        if (state.progress.selectedEvaRoomBackground)
-            selected.background = normalizeCustomizationItemId(state.progress.selectedEvaRoomBackground);
+        const selected = normalizeCustomizationSelection({
+            ...defaultCustomization().selected,
+            ...normalizeShopEquipped(state.progress.shop?.equipped || {}),
+            ...(customization.selected || {})
+        });
+        selected.background = resolveCustomizationBackgroundSelection({
+            catalogItems: customizationShopItems(),
+            owned: [...owned],
+            customizationSelected: storedCustomizationBackgroundId,
+            progressEquipped: state.progress.shop?.equipped?.background,
+            progressSelected: state.progress.selectedEvaRoomBackground
+        });
         if (state.progress.selectedEvaSprite)
             selected.outfit = outfitItemBySprite(state.progress.selectedEvaSprite)?.id || selected.outfit;
         if (!owned.has(selected.background))
@@ -2825,6 +2900,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     function applyN1CatalogToCards() {
         if (!Array.isArray(state.n1KanjiCatalog) || !state.n1KanjiCatalog.length)
             return;
+        n1CardLookupCache = null;
         const detailsByKanji = new Map(state.n1KanjiCatalog.map((item) => [item.kanji, item]));
         const n1KanjiInCards = new Set();
         state.cards = state.cards.map((card) => {
@@ -2851,6 +2927,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             }, detail));
             n1KanjiInCards.add(detail.kanji);
         });
+        n1CardLookupCache = null;
     }
     function mergeN1CardDetail(card, detail) {
         const readings = detail.readings || {};
@@ -4205,6 +4282,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     function flushPendingProgressState() {
         if (!state.progress)
             return false;
+        normalizeJlptCurrentLessonPointers();
         state.progress.level = calculateLevel(state.progress.xp);
         state.progress.updatedAt = new Date().toISOString();
         progressSaveQueued = false;
@@ -4300,7 +4378,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         return "";
     }
     function hydrateProgress() {
-        state.cards.forEach((card) => getCardProgress(card.id));
+        Object.keys(state.progress.cards || {}).forEach((cardId) => getCardProgress(cardId));
             state.progress.level = calculateLevel(state.progress.xp);
             state.progress.totalMoonFragmentsEarned = Math.max(Number(state.progress.totalMoonFragmentsEarned || 0), Number(state.progress.moonFragments || 0), totalPositiveFragmentsFromHistory());
             ensureEvaRoomProgress();
@@ -4317,10 +4395,12 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             syncTextbookExerciseSrs(n4Course(), "N4"),
             syncTextbookExerciseSrs(n3Course(), "N3"),
             syncTextbookExerciseSrs(n2Course(), "N2"),
+            syncTextbookExerciseSrs(n1Course(), "N1"),
             seedTextbookExercisesFromCourse(n5Course(), "N5"),
             seedTextbookExercisesFromCourse(n4Course(), "N4"),
             seedTextbookExercisesFromCourse(n3Course(), "N3"),
-            seedTextbookExercisesFromCourse(n2Course(), "N2")
+            seedTextbookExercisesFromCourse(n2Course(), "N2"),
+            seedTextbookExercisesFromCourse(n1Course(), "N1")
         ].some(Boolean);
         [n5Course(), n4Course(), n3Course(), n2Course(), typeof n1Course === "function" ? n1Course() : null].filter(Boolean).forEach((course) => normalizeJlptCourseStudyMaps(course));
         if (textbookExerciseSyncChanged || readingExerciseSyncChanged)
@@ -4932,9 +5012,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             const textbook = jlptCatalogByLevel(level);
             const lessons = textbookLessonsForLevel(level);
             const progress = textbookCourseProgress(level);
-            const completedLessonsCount = level === "N5"
-                ? getN5CompletedLessonsCount()
-                : Object.keys(progress?.completedLessons || {}).length;
+            const completedLessonsCount = getJlptCompletedLessonsCount(level);
             const totalLessons = Math.max(Number(textbook?.lessonCount || 0), lessons.length || 0);
             const unlocked = isTextbookUnlocked(level);
             const completed = textbookCompleted(level);
@@ -7980,7 +8058,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
 
         ${renderEvaRelationshipStats()}
         ${renderEvaAutonomyPanel(scene)}
-        <article class="eva-vn-scene ${scene.isAutonomy ? "is-autonomous" : ""} is-${escapeAttr(presenceState)}" data-eva-state="${escapeAttr(presenceState)}" data-eva-mood="${escapeAttr(scene.mood || evaRelationship().mood)}" data-eva-emotion="${escapeAttr(scene.emotion || "calm")}" style="--eva-bg:url('${escapeAttr(bg.file)}')">
+        <article class="eva-vn-scene ${scene.isAutonomy ? "is-autonomous" : ""} is-${escapeAttr(presenceState)}" data-eva-state="${escapeAttr(presenceState)}" data-eva-mood="${escapeAttr(scene.mood || evaRelationship().mood)}" data-eva-emotion="${escapeAttr(scene.emotion || "calm")}" style="--eva-bg:${escapeAttr(cssImageUrl(bg.file))}; --eva-bg-fallback:${escapeAttr(cssImageUrl("assets/bg/bg_study_hub.webp"))}">
           <div class="eva-vn-bg" aria-hidden="true"></div>
           <button class="eva-sprite-button" type="button" data-action="eva-click" aria-label="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}">
             <img class="${escapeAttr(evaSpriteMotionClass(scene))}" src="${escapeAttr(sprite)}" alt="${escapeAttr(localized(node.speaker || { ru: "Ева", en: "Eva" }))}" onerror="this.src='assets/mascots/eva_normal.webp'" />
@@ -8817,16 +8895,8 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         return true;
     }
     function evaRoomBackgrounds() {
-        const base = state.evaBackgrounds?.length ? state.evaBackgrounds : [{
-                id: "bg_study_hub",
-                title: { ru: "Учебная комната", en: "Study Hub" },
-                file: "assets/bg/bg_study_hub.webp",
-                price: 0,
-                defaultUnlocked: true
-            }];
-        const existing = new Set(base.map((item) => item.id));
         const shopBackgrounds = customizationShopItems()
-            .filter((item) => item.type === "background" && !existing.has(item.id))
+            .filter((item) => item.type === "background")
             .map((item) => ({
             id: item.id,
             title: { ru: item.title_ru, en: item.title_en },
@@ -8834,14 +8904,30 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             price: item.price,
             defaultUnlocked: item.defaultOwned
         }));
-        return [...base, ...shopBackgrounds];
+        if (shopBackgrounds.length)
+            return shopBackgrounds;
+        return state.evaBackgrounds?.length ? state.evaBackgrounds : [{
+                id: "bg_study_hub",
+                title: { ru: "Учебная комната", en: "Study Hub" },
+                file: "assets/bg/bg_study_hub.webp",
+                price: 0,
+                defaultUnlocked: true
+            }];
     }
     function getEvaRoomBackground(id) {
         return evaRoomBackgrounds().find((item) => item.id === id) || evaRoomBackgrounds()[0];
     }
     function currentEvaRoomBackground() {
         ensureEvaRoomProgress();
-        const selected = state.progress.selectedEvaRoomBackground || state.customization?.selected?.background;
+        const selected = resolveCustomizationBackgroundSelection({
+            catalogItems: customizationShopItems(),
+            owned: state.customization?.owned || state.progress.unlockedBackgrounds || [],
+            customizationSelected: state.customization?.selected?.background,
+            progressEquipped: state.progress?.shop?.equipped?.background,
+            progressSelected: state.progress.selectedEvaRoomBackground
+        });
+        if (selected && state.progress.selectedEvaRoomBackground !== selected)
+            state.progress.selectedEvaRoomBackground = selected;
         return getEvaRoomBackground(selected) || getEvaRoomBackground("bg_study_hub");
     }
     function isEvaRoomBackgroundUnlocked(id) {
@@ -12899,7 +12985,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         if (!canonical || !rawLessonId)
             return false;
         const course = textbookCourseProgress(canonical);
-        return Boolean(course?.completedLessons?.[rawLessonId] || sessionCompletedLessons.has(`${canonical.toLowerCase()}:${rawLessonId}`));
+        const persistedCompleted = isJlptLessonPersistedCompleted(canonical, course, rawLessonId);
+        const sessionCompleted = jlptLessonIdAliases(canonical, rawLessonId).some((id) => sessionCompletedLessons.has(`${canonical.toLowerCase()}:${id}`));
+        return Boolean(persistedCompleted || sessionCompleted);
     }
     function jlptLessonStudySession(level, lesson, cards) {
         const progress = jlptLessonStudyProgress();
@@ -12922,14 +13010,19 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         session.phase = normalizeJlptLessonStudyPhase(session.phase);
         session.startedAt ||= new Date().toISOString();
         session.updatedAt ||= new Date().toISOString();
+        let confirmedCompleted = isJlptLessonConfirmedCompleted(level, lesson?.id);
+        if (!confirmedCompleted && migrateJlptLessonCompletionIfReady(level, lesson)) {
+            confirmedCompleted = true;
+            saveProgress();
+        }
         const resolved = resolveJlptLessonStudyState({
             cards,
             session,
-            confirmedCompleted: isJlptLessonConfirmedCompleted(level, lesson?.id)
+            confirmedCompleted
         });
         session.currentIndex = resolved.currentIndex;
         session.phase = resolved.phase;
-        if (resolved.status !== "done" && !isJlptLessonConfirmedCompleted(level, lesson?.id))
+        if (resolved.status !== "done" && !confirmedCompleted)
             session.completedAt = null;
         if (resolved.status === "test-ready")
             session.testOpenedAt ||= session.updatedAt || new Date().toISOString();
@@ -12954,6 +13047,245 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         if (sessionInfo.session?.phase !== "study")
             return null;
         return cards[Math.min(Math.max(Number(sessionInfo.currentIndex || 0), 0), cards.length - 1)] || null;
+    }
+    function jlptLessonSpec(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (canonical === "N5")
+            return { level: canonical, course: n5Course, lessons: n5Lessons, lessonById: n5LessonById, cardsForLesson: n5CardsForLesson, buildExercises: buildN5LessonExercises };
+        if (canonical === "N4")
+            return { level: canonical, course: n4Course, lessons: n4Lessons, lessonById: n4LessonById, cardsForLesson: n4CardsForLesson, buildExercises: buildN4LessonExercises };
+        if (canonical === "N3")
+            return { level: canonical, course: n3Course, lessons: n3Lessons, lessonById: n3LessonById, cardsForLesson: n3CardsForLesson, buildExercises: buildN3LessonExercises };
+        if (canonical === "N2")
+            return { level: canonical, course: n2Course, lessons: n2Lessons, lessonById: n2LessonById, cardsForLesson: n2CardsForLesson, buildExercises: buildN2LessonExercises };
+        if (canonical === "N1")
+            return { level: canonical, course: n1Course, lessons: n1Lessons, lessonById: n1LessonById, cardsForLesson: n1CardsForLesson, buildExercises: buildN1LessonExercises };
+        return null;
+    }
+    function jlptCourseProgressKey(level) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical)
+            return "";
+        return `${canonical.toLowerCase()}Course`;
+    }
+    function jlptLessonIdAliases(level, lessonOrId) {
+        const canonical = canonicalJlptLevel(level);
+        const raw = String(typeof lessonOrId === "object" && lessonOrId ? lessonOrId.id : lessonOrId || "").trim();
+        const aliases = new Set(raw ? [raw] : []);
+        const prefix = String(canonical || "").toLowerCase();
+        if (prefix) {
+            const legacyMatch = raw.match(/^lesson-(\d+)$/i);
+            if (legacyMatch)
+                aliases.add(`${prefix}-lesson-${legacyMatch[1]}`);
+            const canonicalMatch = raw.match(new RegExp(`^${prefix}-lesson-(\\d+)$`, "i"));
+            if (canonicalMatch)
+                aliases.add(`lesson-${canonicalMatch[1]}`);
+        }
+        return [...aliases].filter(Boolean);
+    }
+    function isJlptLessonPersistedCompleted(level, course, lessonOrId) {
+        const completedLessons = course?.completedLessons || {};
+        return jlptLessonIdAliases(level, lessonOrId).some((id) => Boolean(completedLessons[id]));
+    }
+    function nextJlptLessonAfter(spec, lesson) {
+        if (!spec || !lesson)
+            return null;
+        const lessons = spec.lessons();
+        const nextByOrder = lessons.find((item) => Number(item.order || 0) === Number(lesson.order || 0) + 1);
+        if (nextByOrder)
+            return nextByOrder;
+        const index = lessons.findIndex((item) => item.id === lesson.id);
+        return index >= 0 ? (lessons[index + 1] || null) : null;
+    }
+    function fallbackNextJlptLessonId(spec, lesson, currentLessonId = "") {
+        if (!spec || !lesson)
+            return "";
+        const lessons = spec.lessons();
+        const ids = [...new Set([
+                currentLessonId,
+                ...jlptLessonIdAliases(spec.level, lesson)
+            ].map(String).filter(Boolean))];
+        for (const id of ids) {
+            const match = id.match(/^(.*?)(\d+)$/);
+            if (!match)
+                continue;
+            const nextNumber = Number(match[2]) + 1;
+            if (lessons.length && nextNumber > lessons.length)
+                continue;
+            const candidate = `${match[1]}${nextNumber}`;
+            const resolved = spec.lessonById(candidate);
+            if (resolved && resolved.id !== lesson.id)
+                return resolved.id;
+            return candidate;
+        }
+        return "";
+    }
+    function advanceJlptCurrentLessonPastCompleted(spec, course, completedLesson) {
+        if (!spec || !course || !completedLesson)
+            return;
+        const lessons = spec.lessons();
+        const currentLesson = spec.lessonById(course.currentLessonId);
+        const currentIsCompleted = currentLesson
+            ? (isJlptLessonPersistedCompleted(spec.level, course, currentLesson) || isJlptLessonPersistedCompleted(spec.level, course, course.currentLessonId))
+            : (!course.currentLessonId || course.currentLessonId === completedLesson.id || isJlptLessonPersistedCompleted(spec.level, course, course.currentLessonId));
+        if (!currentIsCompleted)
+            return;
+        const firstOpen = lessons.find((item) => !isJlptLessonPersistedCompleted(spec.level, course, item));
+        course.currentLessonId = firstOpen?.id || fallbackNextJlptLessonId(spec, completedLesson, course.currentLessonId) || currentLesson?.id || completedLesson.id;
+    }
+    function hasJlptCompletionMigrationSignals(level, course) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical || !course)
+            return false;
+        const maps = [
+            course.completedLessons,
+            course.studiedKanji,
+            course.srsKanji,
+            course.difficultKanji,
+            course.exerciseResults,
+            course.completedExercises
+        ];
+        if (maps.some((map) => map && typeof map === "object" && Object.keys(map).length > 0))
+            return true;
+        const prefix = `${canonical}:`;
+        return Object.keys(state.progress?.jlptLessonStudy?.sessions || {}).some((key) => key.startsWith(prefix));
+    }
+    function jlptLessonSessionKey(level, lessonId) {
+        const canonical = canonicalJlptLevel(level);
+        return `${String(canonical || level || "").toLowerCase()}:${String(lessonId || "")}`;
+    }
+    function jlptLessonCompletionInfo(level, lessonOrId) {
+        const spec = jlptLessonSpec(level);
+        if (!spec)
+            return null;
+        const lesson = typeof lessonOrId === "object" && lessonOrId
+            ? lessonOrId
+            : spec.lessonById(lessonOrId);
+        if (!lesson)
+            return null;
+        const course = spec.course();
+        const cards = spec.cardsForLesson(lesson);
+        const exercises = spec.buildExercises(lesson);
+        const session = state.progress?.jlptLessonStudy?.sessions?.[jlptLessonStudyKey(spec.level, lesson.id)] || null;
+        const confirmedCompleted = isJlptLessonConfirmedCompleted(spec.level, lesson.id);
+        return {
+            ...resolveJlptLessonCompletionState({
+                cards,
+                session,
+                confirmedCompleted,
+                exercises,
+                exerciseResults: course.exerciseResults || {},
+                completedExercises: course.completedExercises || {},
+                isCardStudied: (card) => Boolean(course.studiedKanji?.[card.kanji] || course.difficultKanji?.[card.kanji] || cardProgressWasTouched(card))
+            }),
+            level: spec.level,
+            lesson,
+            course,
+            cards,
+            exercises
+        };
+    }
+    function markJlptLessonStudySessionDone(level, lessonId, totalCards, completedAt) {
+        const canonical = canonicalJlptLevel(level);
+        if (!canonical || !lessonId)
+            return false;
+        const studyProgress = jlptLessonStudyProgress();
+        const key = jlptLessonStudyKey(canonical, lessonId);
+        const session = studyProgress.sessions[key];
+        if (!session)
+            return false;
+        session.phase = "done";
+        session.completedAt = completedAt;
+        session.updatedAt = completedAt;
+        session.currentIndex = Math.max(0, Number(totalCards || 0));
+        studyProgress.activeSessionKey = key;
+        studyProgress.lastUpdatedAt = completedAt;
+        return true;
+    }
+    function markJlptLessonCompletedState(level, lesson, course, cards, completedAt = new Date().toISOString()) {
+        const spec = jlptLessonSpec(level);
+        if (!spec || !lesson || !course)
+            return false;
+        const courseKey = jlptCourseProgressKey(spec.level);
+        const canonicalCourse = (courseKey && state.progress?.[courseKey]) || course;
+        if (courseKey && state.progress && !state.progress[courseKey])
+            state.progress[courseKey] = canonicalCourse;
+        canonicalCourse.completedLessons ||= {};
+        const aliases = jlptLessonIdAliases(spec.level, lesson);
+        const wasCompleted = aliases.some((id) => Boolean(canonicalCourse.completedLessons[id]));
+        const completedAtStamp = aliases.map((id) => canonicalCourse.completedLessons[id]).find(Boolean) || completedAt;
+        aliases.forEach((id) => {
+            canonicalCourse.completedLessons[id] = completedAtStamp;
+        });
+        if (course !== canonicalCourse) {
+            course.completedLessons ||= {};
+            aliases.forEach((id) => {
+                course.completedLessons[id] = completedAtStamp;
+            });
+        }
+        aliases.forEach((id) => sessionCompletedLessons.add(jlptLessonSessionKey(spec.level, id)));
+        markJlptLessonStudySessionDone(spec.level, lesson.id, cards?.length || 0, completedAtStamp);
+        const nextLesson = nextJlptLessonAfter(spec, lesson);
+        const activeLesson = spec.lessonById(canonicalCourse.currentLessonId);
+        const nextLessonId = nextLesson?.id || fallbackNextJlptLessonId(spec, lesson, canonicalCourse.currentLessonId) || lesson.id;
+        const currentAliases = jlptLessonIdAliases(spec.level, canonicalCourse.currentLessonId);
+        const currentPointsToCompletedLesson = currentAliases.some((id) => aliases.includes(id));
+        const currentIsAlreadyCompleted = currentAliases.some((id) => Boolean(canonicalCourse.completedLessons[id]));
+        if (!canonicalCourse.currentLessonId
+            || canonicalCourse.currentLessonId === lesson.id
+            || activeLesson?.id === lesson.id
+            || currentPointsToCompletedLesson
+            || currentIsAlreadyCompleted)
+            canonicalCourse.currentLessonId = nextLessonId;
+        advanceJlptCurrentLessonPastCompleted(spec, canonicalCourse, lesson);
+        if (course !== canonicalCourse)
+            course.currentLessonId = canonicalCourse.currentLessonId;
+        maybeUnlockNextJlptLevel(spec.level);
+        return !wasCompleted;
+    }
+    function migrateJlptLessonCompletionIfReady(level, lesson) {
+        const info = jlptLessonCompletionInfo(level, lesson);
+        if (!info)
+            return false;
+        const persistedCompleted = isJlptLessonPersistedCompleted(info.level, info.course, info.lesson);
+        const transientCompleted = jlptLessonIdAliases(info.level, info.lesson).some((id) => sessionCompletedLessons.has(jlptLessonSessionKey(info.level, id)));
+        const requiredFactsComplete = Boolean(info.cardStudyComplete && info.exerciseComplete);
+        if (persistedCompleted || !(info.canMigrateCompletion || requiredFactsComplete || transientCompleted))
+            return false;
+        return markJlptLessonCompletedState(info.level, info.lesson, info.course, info.cards);
+    }
+    function jlptLessonStatus(level, lessonId) {
+        const info = jlptLessonCompletionInfo(level, lessonId);
+        if (!info)
+            return "new";
+        if (info.complete)
+            return "completed";
+        if (info.study.answeredCount > 0 || info.cardStudyComplete || info.correctExerciseCount > 0)
+            return "started";
+        const kanjiTouched = (info.lesson.kanji || []).some((kanji) => info.course.studiedKanji?.[kanji] || info.course.difficultKanji?.[kanji]);
+        return kanjiTouched ? "started" : "new";
+    }
+    function getJlptCompletedLessonsCount(level) {
+        const spec = jlptLessonSpec(level);
+        if (!spec)
+            return 0;
+        return spec.lessons().filter((lesson) => jlptLessonStatus(spec.level, lesson.id) === "completed").length;
+    }
+    function maybeUnlockNextJlptLevel(level) {
+        const canonical = canonicalJlptLevel(level);
+        const nextLevel = { N5: "N4", N4: "N3", N3: "N2", N2: "N1" }[canonical];
+        const spec = jlptLessonSpec(canonical);
+        const lessons = spec?.lessons() || [];
+        if (!canonical || !nextLevel || !lessons.length)
+            return false;
+        if (getJlptCompletedLessonsCount(canonical) < lessons.length)
+            return false;
+        state.progress.unlockedJlptLevels ||= [];
+        [canonical, nextLevel].forEach((item) => {
+            if (!state.progress.unlockedJlptLevels.includes(item))
+                state.progress.unlockedJlptLevels.push(item);
+        });
+        return true;
     }
     function renderJlptLessonStudyExampleList(examples) {
         const items = Array.isArray(examples) ? examples : [];
@@ -13837,15 +14169,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         };
     }
     function n5LessonStatus(lessonId) {
-        const course = n5Course();
-        const sessKey = `n5:${lessonId}`;
-        // Radical reliable: session local isLessonCompleted takes precedence for immediate UI update after complete this session.
-        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId])
-            return "completed";
-        const lesson = n5LessonById(lessonId);
-        if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji]))
-            return "started";
-        return "new";
+        return jlptLessonStatus("N5", lessonId);
     }
     function n5LessonStatusLabel(status) {
         if (status === "completed")
@@ -13861,8 +14185,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
     // Counts lessons where status === "completed" (which respects both persisted completedLessons
     // AND the in-memory sessionCompletedLessons for immediate post-complete update without reload).
     function getN5CompletedLessonsCount() {
-        const lessons = n5Lessons();
-        return lessons.filter((lesson) => n5LessonStatus(lesson.id) === "completed").length;
+        return getJlptCompletedLessonsCount("N5");
     }
     function buildN5LessonExercises(lesson) {
         const cards = n5CardsForLesson(lesson);
@@ -14553,14 +14876,14 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n5Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
         const n5StudyProgress = jlptLessonStudyProgress();
-        const n5StudySession = n5StudyProgress.sessions[n5SessKey];
+        const n5StudySession = n5StudyProgress.sessions[jlptLessonStudyKey("N5", lesson.id)];
         if (n5StudySession) {
             const doneAt = new Date().toISOString();
             n5StudySession.phase = "done";
             n5StudySession.completedAt = doneAt;
             n5StudySession.updatedAt = doneAt;
             n5StudySession.currentIndex = lessonCards.length;
-            n5StudyProgress.activeSessionKey = n5SessKey;
+            n5StudyProgress.activeSessionKey = jlptLessonStudyKey("N5", lesson.id);
             n5StudyProgress.lastUpdatedAt = doneAt;
         }
         // Radical: force re-ensure to produce a clean merged course object carrying the just-set completedLessons + studiedKanji.
@@ -14572,21 +14895,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         state.progress.n5Course.completedLessons = state.progress.n5Course.completedLessons || {};
         state.progress.n5Course.completedLessons[lesson.id] = new Date().toISOString();
         saveProgress({ immediate: true });
-        // Жесткая принудительная разблокировка следующего уровня JLPT
-        // После завершения урока N5, если теперь все 10/10 уроков + 80/80 кандзи — принудительно добавляем N4 в глобальный unlockedJlptLevels.
-        // Это обновляет store/state, сохраняется, и isTextbookUnlocked сразу вернет true для N4 (и UI на главной странице учебников обновится).
-        if (getN5CompletedLessonsCount() >= 10) {
-            const studied = Object.keys(course.studiedKanji || {}).length;
-            if (studied >= 80) {
-                state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-                if (!state.progress.unlockedJlptLevels.includes("N5"))
-                    state.progress.unlockedJlptLevels.push("N5");
-                if (!state.progress.unlockedJlptLevels.includes("N4")) {
-                    state.progress.unlockedJlptLevels.push("N4");
-                }
-                // Optionally unlock further if somehow more done, but for N5 complete -> at least N4
-            }
-        }
+        maybeUnlockNextJlptLevel("N5");
         const xp = state.n5Meta?.rewards?.lessonCompleteXp || 45;
         const coins = state.n5Meta?.rewards?.lessonCompleteMoon || 6;
         addReward(xp, coins, `n5_lesson:${lesson.id}`);
@@ -15823,31 +16132,17 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             if (getCardProgress(card.id).state !== "New")
                 studied.add(card.kanji);
         });
-        const effectiveCompleted = { ...(course.completedLessons || {}) };
-        for (const k of sessionCompletedLessons) {
-            if (k.startsWith("n4:")) {
-                const id = k.slice(3);
-                effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
-            }
-        }
         return {
             total: state.n4Meta?.kanjiCount || cards.length || 170,
             studied: studied.size,
-            completedLessons: Object.keys(effectiveCompleted).length,
+            completedLessons: getJlptCompletedLessonsCount("N4"),
             completedGrammar: Object.keys(course.completedGrammar || {}).length,
             reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviewCount || 0), 0),
             difficult: Object.keys(course.difficultKanji || {}).length
         };
     }
     function n4LessonStatus(lessonId) {
-        const course = n4Course();
-        const sessKey = `n4:${lessonId}`;
-        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId])
-            return "completed";
-        const lesson = n4LessonById(lessonId);
-        if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji]))
-            return "started";
-        return "new";
+        return jlptLessonStatus("N4", lessonId);
     }
     function n4LessonStatusLabel(status) {
         if (status === "completed")
@@ -16154,27 +16449,19 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n4Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
         const n4StudyProgress = jlptLessonStudyProgress();
-        const n4StudySession = n4StudyProgress.sessions[n4SessKey];
+        const n4StudySession = n4StudyProgress.sessions[jlptLessonStudyKey("N4", lesson.id)];
         if (n4StudySession) {
             const doneAt = new Date().toISOString();
             n4StudySession.phase = "done";
             n4StudySession.completedAt = doneAt;
             n4StudySession.updatedAt = doneAt;
             n4StudySession.currentIndex = lessonCards.length;
-            n4StudyProgress.activeSessionKey = n4SessKey;
+            n4StudyProgress.activeSessionKey = jlptLessonStudyKey("N4", lesson.id);
             n4StudyProgress.lastUpdatedAt = doneAt;
         }
         // Radical: force re-ensure so subsequent reads (tiles, summary, status on overview) see completed + studied immediately.
         n4Course();
-        // Жёсткая разблокировка следующего (N3) при полном завершении N4 уроков
-        const n4Count = Object.keys(course.completedLessons || {}).length;
-        if (n4Count >= 9) { // approx for N4
-            state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-            if (!state.progress.unlockedJlptLevels.includes("N4"))
-                state.progress.unlockedJlptLevels.push("N4");
-            if (!state.progress.unlockedJlptLevels.includes("N3"))
-                state.progress.unlockedJlptLevels.push("N3");
-        }
+        maybeUnlockNextJlptLevel("N4");
         const xp = state.n4Meta?.rewards?.lessonCompleteXp || 65;
         const coins = state.n4Meta?.rewards?.lessonCompleteMoon || 8;
         addReward(xp, coins, `n4_lesson:${lesson.id}`);
@@ -17550,17 +17837,10 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             if (getCardProgress(card.id).state !== "New")
                 studied.add(card.kanji);
         });
-        const effectiveCompleted = { ...(course.completedLessons || {}) };
-        for (const k of sessionCompletedLessons) {
-            if (k.startsWith("n3:")) {
-                const id = k.slice(3);
-                effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
-            }
-        }
         return {
             total: state.n3Meta?.kanjiCount || cards.length || 370,
             studied: studied.size,
-            completedLessons: Object.keys(effectiveCompleted).length,
+            completedLessons: getJlptCompletedLessonsCount("N3"),
             completedGrammar: Object.keys(course.completedGrammar || {}).length,
             completedReading: Object.keys(course.completedReading || {}).length,
             completedListening: Object.keys(course.completedListening || {}).length,
@@ -17569,14 +17849,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         };
     }
     function n3LessonStatus(lessonId) {
-        const course = n3Course();
-        const sessKey = `n3:${lessonId}`;
-        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId])
-            return "completed";
-        const lesson = n3LessonById(lessonId);
-        if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji]))
-            return "started";
-        return "new";
+        return jlptLessonStatus("N3", lessonId);
     }
     function n3LessonStatusLabel(status) {
         if (status === "completed")
@@ -17883,26 +18156,18 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n3Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
         const n3StudyProgress = jlptLessonStudyProgress();
-        const n3StudySession = n3StudyProgress.sessions[n3SessKey];
+        const n3StudySession = n3StudyProgress.sessions[jlptLessonStudyKey("N3", lesson.id)];
         if (n3StudySession) {
             const doneAt = new Date().toISOString();
             n3StudySession.phase = "done";
             n3StudySession.completedAt = doneAt;
             n3StudySession.updatedAt = doneAt;
             n3StudySession.currentIndex = lessonCards.length;
-            n3StudyProgress.activeSessionKey = n3SessKey;
+            n3StudyProgress.activeSessionKey = jlptLessonStudyKey("N3", lesson.id);
             n3StudyProgress.lastUpdatedAt = doneAt;
         }
         n3Course();
-        // Force unlock N2 on N3 full complete
-        const n3Count = Object.keys(course.completedLessons || {}).length;
-        if (n3Count >= 37) {
-            state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-            ["N3", "N2"].forEach(l => {
-                if (!state.progress.unlockedJlptLevels.includes(l))
-                    state.progress.unlockedJlptLevels.push(l);
-            });
-        }
+        maybeUnlockNextJlptLevel("N3");
         const xp = state.n3Meta?.rewards?.lessonCompleteXp || 75;
         const coins = state.n3Meta?.rewards?.lessonCompleteMoon || 9;
         addReward(xp, coins, `n3_lesson:${lesson.id}`);
@@ -19279,17 +19544,10 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             if (getCardProgress(card.id).state !== "New")
                 studied.add(card.kanji);
         });
-        const effectiveCompleted = { ...(course.completedLessons || {}) };
-        for (const k of sessionCompletedLessons) {
-            if (k.startsWith("n2:")) {
-                const id = k.slice(3);
-                effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
-            }
-        }
         return {
             total: state.n2Meta?.kanjiCount || cards.length || 380,
             studied: studied.size,
-            completedLessons: Object.keys(effectiveCompleted).length,
+            completedLessons: getJlptCompletedLessonsCount("N2"),
             completedGrammar: Object.keys(course.completedGrammar || {}).length,
             completedReading: Object.keys(course.completedReading || {}).length,
             completedListening: Object.keys(course.completedListening || {}).length,
@@ -19298,14 +19556,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         };
     }
     function n2LessonStatus(lessonId) {
-        const course = n2Course();
-        const sessKey = `n2:${lessonId}`;
-        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId])
-            return "completed";
-        const lesson = n2LessonById(lessonId);
-        if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji]))
-            return "started";
-        return "new";
+        return jlptLessonStatus("N2", lessonId);
     }
     function n2LessonStatusLabel(status) {
         if (status === "completed")
@@ -19612,26 +19863,18 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n2Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
         const n2StudyProgress = jlptLessonStudyProgress();
-        const n2StudySession = n2StudyProgress.sessions[n2SessKey];
+        const n2StudySession = n2StudyProgress.sessions[jlptLessonStudyKey("N2", lesson.id)];
         if (n2StudySession) {
             const doneAt = new Date().toISOString();
             n2StudySession.phase = "done";
             n2StudySession.completedAt = doneAt;
             n2StudySession.updatedAt = doneAt;
             n2StudySession.currentIndex = lessonCards.length;
-            n2StudyProgress.activeSessionKey = n2SessKey;
+            n2StudyProgress.activeSessionKey = jlptLessonStudyKey("N2", lesson.id);
             n2StudyProgress.lastUpdatedAt = doneAt;
         }
         n2Course();
-        // Force unlock N1 on N2 full complete
-        const n2Count = Object.keys(course.completedLessons || {}).length;
-        if (n2Count >= 38) {
-            state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-            ["N2", "N1"].forEach(l => {
-                if (!state.progress.unlockedJlptLevels.includes(l))
-                    state.progress.unlockedJlptLevels.push(l);
-            });
-        }
+        maybeUnlockNextJlptLevel("N2");
         const xp = state.n2Meta?.rewards?.lessonCompleteXp || 85;
         const coins = state.n2Meta?.rewards?.lessonCompleteMoon || 10;
         addReward(xp, coins, `n2_lesson:${lesson.id}`);
@@ -20957,22 +21200,54 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         return n1LessonById(n1Course().currentLessonId) || n1Lessons().find((lesson) => !n1Course().completedLessons[lesson.id]) || n1Lessons()[0] || null;
     }
     function n1CardsForLesson(lesson) {
-        return (lesson?.kanji || []).map((kanji) => n1CardByKanji(kanji)).filter(Boolean);
+        const lookup = n1CardLookupMaps();
+        return (lesson?.kanji || []).map((kanji) => n1CardByKanji(kanji, lookup)).filter(Boolean);
     }
     function n1AllCards() {
+        const lookup = n1CardLookupMaps();
         const seen = new Set();
-        return (state.n1KanjiCatalog || []).map((detail) => n1CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
+        return (state.n1KanjiCatalog || []).map((detail) => n1CardByKanji(detail.kanji, lookup)).filter(Boolean).filter((card) => {
             if (seen.has(card.kanji))
                 return false;
             seen.add(card.kanji);
             return true;
         });
     }
-    function n1CardByKanji(kanji) {
+    function n1CardLookupMaps() {
+        if (n1CardLookupCache?.catalog === state.n1KanjiCatalog && n1CardLookupCache?.cards === state.cards)
+            return n1CardLookupCache;
+        const detailsByKanji = new Map();
+        (state.n1KanjiCatalog || []).forEach((detail) => {
+            if (detail?.kanji)
+                detailsByKanji.set(detail.kanji, detail);
+        });
+        const cardsByKanji = new Map();
+        const cardsById = new Map();
+        state.cards.forEach((card) => {
+            if (card?.id)
+                cardsById.set(String(card.id), card);
+            if (!card?.kanji)
+                return;
+            const level = String(card.jlpt || "").toUpperCase();
+            if (level === "N1" || detailsByKanji.has(card.kanji)) {
+                if (!cardsByKanji.has(card.kanji) || level === "N1")
+                    cardsByKanji.set(card.kanji, card);
+            }
+        });
+        n1CardLookupCache = {
+            catalog: state.n1KanjiCatalog,
+            cards: state.cards,
+            detailsByKanji,
+            cardsByKanji,
+            cardsById
+        };
+        return n1CardLookupCache;
+    }
+    function n1CardByKanji(kanji, lookup = n1CardLookupMaps()) {
         const literal = String(kanji || "");
-        const detail = state.n1KanjiCatalog?.find((item) => item.kanji === literal) || null;
-        const card = state.cards.find((item) => item.kanji === literal && String(item.jlpt || "").toUpperCase() === "N1")
-            || (detail ? state.cards.find((item) => String(item.id) === String(detail.courseCardId || detail.id)) : null)
+        const detail = lookup.detailsByKanji.get(literal) || null;
+        const card = lookup.cardsByKanji.get(literal)
+            || (detail ? lookup.cardsById.get(String(detail.courseCardId || detail.id)) : null)
             || null;
         if (card && detail)
             return mergeN1CardDetail(card, detail);
@@ -21009,36 +21284,23 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const course = n1Course();
         const studied = new Set(Object.keys(course.studiedKanji || {}));
         cards.forEach((card) => {
-            if (getCardProgress(card.id).state !== "New")
+            const progress = state.progress.cards?.[String(card.id)];
+            if (progress && migrateCardProgress(progress).state !== "New")
                 studied.add(card.kanji);
         });
-        const effectiveCompleted = { ...(course.completedLessons || {}) };
-        for (const k of sessionCompletedLessons) {
-            if (k.startsWith("n1:")) {
-                const id = k.slice(3);
-                effectiveCompleted[id] = effectiveCompleted[id] || new Date().toISOString();
-            }
-        }
         return {
             total: state.n1Meta?.kanjiCount || cards.length || 1047,
             studied: studied.size,
-            completedLessons: Object.keys(effectiveCompleted).length,
+            completedLessons: getJlptCompletedLessonsCount("N1"),
             completedGrammar: Object.keys(course.completedGrammar || {}).length,
             completedReading: Object.keys(course.completedReading || {}).length,
             completedListening: Object.keys(course.completedListening || {}).length,
-            reviews: cards.reduce((sum, card) => sum + Number(getCardProgress(card.id).reviewCount || 0), 0),
+            reviews: cards.reduce((sum, card) => sum + Number(state.progress.cards?.[String(card.id)]?.reviewCount || 0), 0),
             difficult: Object.keys(course.difficultKanji || {}).length
         };
     }
     function n1LessonStatus(lessonId) {
-        const course = n1Course();
-        const sessKey = `n1:${lessonId}`;
-        if (sessionCompletedLessons.has(sessKey) || course.completedLessons[lessonId])
-            return "completed";
-        const lesson = n1LessonById(lessonId);
-        if (lesson?.kanji?.some((kanji) => course.studiedKanji[kanji] || course.difficultKanji[kanji]))
-            return "started";
-        return "new";
+        return jlptLessonStatus("N1", lessonId);
     }
     function n1LessonStatusLabel(status) {
         if (status === "completed")
@@ -21345,26 +21607,18 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         course.completedLessons[lesson.id] = new Date().toISOString();
         course.currentLessonId = n1Lessons().find((item) => item.order === lesson.order + 1)?.id || lesson.id;
         const n1StudyProgress = jlptLessonStudyProgress();
-        const n1StudySession = n1StudyProgress.sessions[n1SessKey];
+        const n1StudySession = n1StudyProgress.sessions[jlptLessonStudyKey("N1", lesson.id)];
         if (n1StudySession) {
             const doneAt = new Date().toISOString();
             n1StudySession.phase = "done";
             n1StudySession.completedAt = doneAt;
             n1StudySession.updatedAt = doneAt;
             n1StudySession.currentIndex = lessonCards.length;
-            n1StudyProgress.activeSessionKey = n1SessKey;
+            n1StudyProgress.activeSessionKey = jlptLessonStudyKey("N1", lesson.id);
             n1StudyProgress.lastUpdatedAt = doneAt;
         }
         n1Course();
-        // Force unlock N1 on N1 full complete
-        const n1Count = Object.keys(course.completedLessons || {}).length;
-        if (n1Count >= 53) {
-            state.progress.unlockedJlptLevels = state.progress.unlockedJlptLevels || [];
-            ["N1", "N1"].forEach(l => {
-                if (!state.progress.unlockedJlptLevels.includes(l))
-                    state.progress.unlockedJlptLevels.push(l);
-            });
-        }
+        maybeUnlockNextJlptLevel("N1");
         const xp = state.n1Meta?.rewards?.lessonCompleteXp || 85;
         const coins = state.n1Meta?.rewards?.lessonCompleteMoon || 10;
         addReward(xp, coins, `n1_lesson:${lesson.id}`);
@@ -25185,6 +25439,9 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         if (!builder?.length && !builder)
             return false;
         course.exerciseSrs ||= {};
+        const existingExerciseEntries = Object.entries(course.exerciseSrs);
+        if (!existingExerciseEntries.length)
+            return false;
         const exercisesById = new Map();
         lessons.forEach((lesson) => {
             (builder(lesson) || []).forEach((exercise) => {
@@ -25193,7 +25450,7 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
             });
         });
         let changed = false;
-        Object.entries(course.exerciseSrs).forEach(([exerciseId, progress]) => {
+        existingExerciseEntries.forEach(([exerciseId, progress]) => {
             const match = exercisesById.get(String(exerciseId));
             if (!match)
                 return;
@@ -27740,21 +27997,11 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         // считаем учебник "completed" для цепочки разблокировки следующего уровня.
         // Это позволяет разблокировать N4 сразу после последнего урока N5, даже без финального теста.
         const textbook = jlptCatalogByLevel(key);
-        const expected = textbook?.lessonCount || (key === "N5" ? 10 : 0);
-        let actual = 0;
-        if (key === "N5") {
-            actual = getN5CompletedLessonsCount();
-            const studied = Object.keys(course.studiedKanji || {}).length;
-            if (actual >= 10 && studied >= 80)
-                return true;
-            if (actual >= expected)
-                return true;
-        }
-        else {
-            actual = Object.keys(course.completedLessons || {}).length;
-            if (actual >= expected)
-                return true;
-        }
+        const lessons = textbookLessonsForLevel(key);
+        const expected = Math.max(Number(textbook?.lessonCount || 0), lessons.length || 0);
+        const actual = getJlptCompletedLessonsCount(key);
+        if (expected > 0 && actual >= expected)
+            return true;
         return false;
     }
     function isTextbookUnlocked(level) {
@@ -28896,6 +29143,30 @@ import { resolveJlptLessonStudyState } from "./services/jlptLessonState";
         const activeEffectId = activeCustomizationEffectId();
         document.documentElement.dataset.customEffect = activeEffectId || "none";
         document.querySelector('meta[name="theme-color"]')?.setAttribute("content", state.progress.settings.theme === "light" ? "#f8f7f2" : "#08080c");
+        installEvaRoomBackgroundDebug();
+    }
+    function isLocalDebugHost() {
+        return ["localhost", "127.0.0.1", "::1", ""].includes(window.location.hostname);
+    }
+    function installEvaRoomBackgroundDebug() {
+        if (!isLocalDebugHost())
+            return;
+        window.FLASH_KANJI_EVA_ROOM_DEBUG = {
+            getBackground: () => {
+                const bg = currentEvaRoomBackground();
+                return {
+                    selectedCustomization: state.customization?.selected?.background || null,
+                    selectedProgress: state.progress?.selectedEvaRoomBackground || null,
+                    equippedProgress: state.progress?.shop?.equipped?.background || null,
+                    currentId: bg?.id || null,
+                    currentFile: bg?.file || null,
+                    appRoomCss: document.documentElement.style.getPropertyValue("--app-room-bg"),
+                    sceneCss: document.querySelector(".eva-vn-scene")?.style.getPropertyValue("--eva-bg") || "",
+                    customRoomDataset: document.documentElement.dataset.customRoom || "",
+                    backgrounds: evaRoomBackgrounds().map((item) => ({ id: item.id, file: item.file, defaultUnlocked: Boolean(item.defaultUnlocked) }))
+                };
+            }
+        };
     }
     function cssImageUrl(value) {
         const safe = String(value || "assets/bg/bg_study_hub.webp").replace(/["\\\n\r]/g, "");
