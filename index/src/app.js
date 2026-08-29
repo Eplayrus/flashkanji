@@ -344,6 +344,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         notificationPromptVisible: false,
         changelog: null,
         changelogModal: null,
+        bootAncillaryLoaded: false,
         deferredDataLoaded: false,
         deferredDataLoading: false
     };
@@ -366,6 +367,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let customizationSaveTimer = 0;
     let customizationSaveQueued = false;
     let lastUserInteractionAt = 0;
+    let bootAncillaryDataPromise = null;
     let changelogLoadStarted = false;
     let pendingChangelogExistingUser = false;
     let changelogFocusTimer = 0;
@@ -380,6 +382,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let deferredPwaInstallPrompt = null;
     let notificationPromptTimer = 0;
     let skipPendingFocusOnce = false;
+    let lastSettledViewport = { scrollX: 0, scrollY: 0, at: Date.now() };
+    let lastObservedViewport = { scrollX: 0, scrollY: 0, at: Date.now() };
+    let lastViewportBeforeRecentScroll = null;
+    let lastViewportScrollAt = 0;
+    let viewportSettleTimer = 0;
+    let hasSettledViewport = false;
+    let sentencePracticeInteractionViewport = null;
     let notificationPromptAutoDockTimer = 0;
     const activeShopPurchases = new Set();
     let onboardingScheduleTimer = 0;
@@ -454,6 +463,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     importInput.addEventListener("change", handleImportFile);
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handlePwaInstallAccepted);
+    window.addEventListener("scroll", recordViewportScroll, { passive: true });
     window.addEventListener("scroll", syncScrollToggleButton, { passive: true });
     window.addEventListener("resize", syncScrollToggleButton);
     window.addEventListener("eva:event", (event) => {
@@ -562,7 +572,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             recordAppOpen();
             refreshFlashKanjiOnboardingAudience(hadPriorVisit);
             claimDailyBonus();
-            evaluateAchievements({ silent: true });
             applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
             saveProgress();
             render();
@@ -595,30 +604,43 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
     }
     async function loadBootAncillaryData({ hadPriorVisit = false } = {}) {
-        const [dialogues, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, changelogPayload] = await Promise.all([
-            fetchJson(DATA_URLS.dialogues),
-            fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
-            fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
-            fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
-            fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
-            fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
-            fetchJson(DATA_URLS.changelog, () => null)
-        ]);
-        const achievementBundle = normalizeAchievementData(achievements, state.rewards?.achievements || []);
-        state.dialogues = dialogues;
-        state.achievements = achievementBundle.items;
-        state.achievementCategories = achievementBundle.categories;
-        state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
-        state.jlptLessons = normalizeJlptLessons(jlptLessons);
-        state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
-        state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
-        if (state.rewards)
-            state.rewards.achievements = state.achievements;
-        const shouldFocusChangelog = applyChangelogPayload(changelogPayload, hadPriorVisit);
-        evaluateAchievements({ silent: true });
-        render();
-        if (shouldFocusChangelog)
-            scheduleChangelogFocus();
+        if (state.bootAncillaryLoaded)
+            return;
+        if (bootAncillaryDataPromise)
+            return bootAncillaryDataPromise;
+        bootAncillaryDataPromise = (async () => {
+            const [dialogues, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, changelogPayload] = await Promise.all([
+                fetchJson(DATA_URLS.dialogues),
+                fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
+                fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
+                fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
+                fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
+                fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
+                fetchJson(DATA_URLS.changelog, () => null)
+            ]);
+            const achievementBundle = normalizeAchievementData(achievements, state.rewards?.achievements || []);
+            state.dialogues = dialogues;
+            state.achievements = achievementBundle.items;
+            state.achievementCategories = achievementBundle.categories;
+            state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
+            state.jlptLessons = normalizeJlptLessons(jlptLessons);
+            state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
+            state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
+            state.bootAncillaryLoaded = true;
+            hydrateCustomization();
+            syncEvaRuntimeInventory();
+            applyTheme();
+            if (state.rewards)
+                state.rewards.achievements = state.achievements;
+            const shouldFocusChangelog = applyChangelogPayload(changelogPayload, hadPriorVisit);
+            applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
+            render();
+            if (shouldFocusChangelog)
+                scheduleChangelogFocus();
+        })().finally(() => {
+            bootAncillaryDataPromise = null;
+        });
+        return bootAncillaryDataPromise;
     }
     function setAppBooting(isBooting) {
         const shell = document.querySelector(".app-shell");
@@ -1026,7 +1048,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.deferredDataLoading = false;
             if (state.progress) {
                 hydrateProgress();
-                evaluateAchievements({ silent: true });
                 saveProgress();
             }
             const currentRoute = String(state.route || "");
@@ -1917,12 +1938,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function hydrateCustomization() {
         const storedCustomizationBackgroundId = readStoredCustomizationBackgroundId();
         const customization = readCustomizationStorage();
+        const catalogReady = customizationShopItems().length > 0;
         const owned = new Set();
         const legacyShopOwned = normalizeShopIdArray(state.progress.shop?.owned || []);
         normalizeShopIdArray(customization.owned).forEach((id) => {
             const item = customizationShopItem(id) || legacyCustomizationItem(id);
             if (item)
                 owned.add(item.id);
+            else if (!catalogReady)
+                owned.add(id);
         });
         customizationShopItems().forEach((item) => {
             if (item.defaultOwned || item.price === 0)
@@ -1932,6 +1956,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             const item = customizationShopItem(id) || legacyCustomizationItem(id);
             if (item)
                 owned.add(item.id);
+            else if (!catalogReady)
+                owned.add(id);
         });
         normalizeShopIdArray(state.progress.unlockedEvaSprites || []).forEach((sprite) => {
             const outfit = outfitItemBySprite(sprite);
@@ -1945,6 +1971,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             const item = customizationShopItem(legacyId) || legacyCustomizationItem(legacyId);
             if (item)
                 owned.add(item.id);
+            else if (!catalogReady)
+                owned.add(legacyId);
             if (!item && legacyId.startsWith("eva_sprite:")) {
                 const outfit = outfitItemBySprite(legacyId.replace("eva_sprite:", ""));
                 if (outfit)
@@ -1965,15 +1993,23 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         });
         if (state.progress.selectedEvaSprite)
             selected.outfit = outfitItemBySprite(state.progress.selectedEvaSprite)?.id || selected.outfit;
-        if (!owned.has(selected.background))
+        if (!catalogReady) {
+            selected.background = storedCustomizationBackgroundId
+                || customization.selected?.background
+                || state.progress.shop?.equipped?.background
+                || state.progress.selectedEvaRoomBackground
+                || selected.background
+                || "bg_study_hub";
+        }
+        if (catalogReady && !owned.has(selected.background))
             selected.background = "bg_study_hub";
-        if (!owned.has(selected.outfit))
+        if (catalogReady && !owned.has(selected.outfit))
             selected.outfit = "outfit_default_assassin";
-        if (!owned.has(selected.theme))
+        if (catalogReady && !owned.has(selected.theme))
             selected.theme = "theme_default_dark";
-        if (selected.decoration && !owned.has(selected.decoration))
+        if (catalogReady && selected.decoration && !owned.has(selected.decoration))
             selected.decoration = null;
-        if (selected.effect && !owned.has(selected.effect))
+        if (catalogReady && selected.effect && !owned.has(selected.effect))
             selected.effect = null;
         state.customization = {
             owned: [...owned],
@@ -1982,7 +2018,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             updatedAt: customization.updatedAt || new Date().toISOString()
         };
         syncCustomizationToProgress();
-        saveCustomizationStorage();
+        if (catalogReady)
+            saveCustomizationStorage();
     }
     function syncCustomizationToProgress() {
         if (!state.customization || !state.progress)
@@ -4199,7 +4236,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function syncEvaRuntimeInventory() {
         if (!state.evaRuntime || !state.progress)
             return;
-        const selectedBackground = state.progress.selectedEvaRoomBackground || state.customization?.selected?.background || "bg_study_hub";
+        const selectedBackground = state.customization?.selected?.background
+            || state.progress.shop?.equipped?.background
+            || state.progress.selectedEvaRoomBackground
+            || "bg_study_hub";
         const ownedItems = customizationShopItems().filter((item) => isCustomizationOwned(item.id));
         state.evaRuntime.ownedSkins = [...new Set([
                 "idle",
@@ -4423,6 +4463,53 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             scrollX: window.scrollX,
             scrollY: window.scrollY
         };
+    }
+    function captureTimestampedViewport() {
+        return {
+            ...captureViewport(),
+            at: Date.now()
+        };
+    }
+    function recordViewportScroll() {
+        if (typeof window === "undefined")
+            return;
+        const current = captureTimestampedViewport();
+        const previous = lastObservedViewport;
+        lastViewportScrollAt = current.at;
+        if (previous && (Math.abs(Number(current.scrollY || 0) - Number(previous.scrollY || 0)) > 4
+            || Math.abs(Number(current.scrollX || 0) - Number(previous.scrollX || 0)) > 4)) {
+            lastViewportBeforeRecentScroll = previous;
+        }
+        lastObservedViewport = current;
+        if (viewportSettleTimer)
+            window.clearTimeout(viewportSettleTimer);
+        viewportSettleTimer = window.setTimeout(() => {
+            lastSettledViewport = captureTimestampedViewport();
+            lastObservedViewport = lastSettledViewport;
+            lastViewportBeforeRecentScroll = null;
+            hasSettledViewport = true;
+            viewportSettleTimer = 0;
+        }, 30);
+    }
+    function captureSettledStudyViewport() {
+        const current = captureViewport();
+        const settled = lastViewportBeforeRecentScroll || lastSettledViewport || current;
+        const recentTransientScroll = Date.now() - lastViewportScrollAt < 90;
+        const movedSinceSettled = Math.abs(Number(current.scrollY || 0) - Number(settled.scrollY || 0)) > 4
+            || Math.abs(Number(current.scrollX || 0) - Number(settled.scrollX || 0)) > 4;
+        if ((hasSettledViewport || lastViewportBeforeRecentScroll) && recentTransientScroll && movedSinceSettled)
+            return settled;
+        return current;
+    }
+    function rememberSentencePracticeViewport() {
+        if (!sentencePracticeInteractionViewport)
+            sentencePracticeInteractionViewport = captureSettledStudyViewport();
+        return sentencePracticeInteractionViewport;
+    }
+    function consumeSentencePracticeViewport() {
+        const snapshot = sentencePracticeInteractionViewport || captureSettledStudyViewport();
+        sentencePracticeInteractionViewport = null;
+        return snapshot;
     }
     function renderStudyUpdate({ scrollPolicy = STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot = null } = {}) {
         if (scrollPolicy === STUDY_SCROLL_POLICY.TOP) {
@@ -10644,11 +10731,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         state.progress.transactions = state.progress.transactions.slice(0, 80);
         syncCustomizationToProgress();
         saveCustomizationStorage();
-        evaluateAchievements();
         saveProgress();
         playUxSound("purchase_success");
         playUxSound("item_unlock");
-        dispatchEvaEvent("item_bought", { itemId: item.id, type: item.type, title: customizationItemTitle(item), price: item.price });
+        dispatchEvaEvent("item_bought", { itemId: item.id, type: item.type, title: customizationItemTitle(item), price: item.price }, { skipAchievements: true });
         toast(shopLabels().bought.replace("{item}", customizationItemTitle(item)));
         render();
     }
@@ -10683,7 +10769,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         saveProgress();
         applyTheme();
         playUxSound("notification_soft");
-        dispatchEvaEvent("item_equipped", { itemId: item.id, type: item.type, title: customizationItemTitle(item) });
+        dispatchEvaEvent("item_equipped", { itemId: item.id, type: item.type, title: customizationItemTitle(item) }, { skipAchievements: true });
         toast(shopLabels().selectedToast.replace("{item}", customizationItemTitle(item)));
         render();
     }
@@ -11634,6 +11720,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.activeJlptLesson = activeTextbook.jlpt;
             return renderTextbookDetailPage(activeTextbook);
         }
+        if (activeLevel && !state.bootAncillaryLoaded) {
+            void loadBootAncillaryData({ hadPriorVisit: hasFlashKanjiReturningSignals(state.progress) }).catch((error) => console.warn("Boot ancillary data failed to load.", error));
+            return renderTextbookDataLoadingPage({ jlpt: activeLevel, title: { ru: activeLevel, en: activeLevel } }, activeLevel);
+        }
         const labels = lang() === "ru"
             ? {
                 title: "Учебники Flash Kanji",
@@ -12154,6 +12244,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const key = String(slug || "").toLowerCase();
         const entry = kanaCatalogEntry(key);
         const labels = kanaLabels();
+        if (!entry && !state.bootAncillaryLoaded) {
+            void loadBootAncillaryData({ hadPriorVisit: hasFlashKanjiReturningSignals(state.progress) }).catch((error) => console.warn("Boot ancillary data failed to load.", error));
+            return renderKanaLoadingPage({ title: key, pdf_url: "" }, labels);
+        }
         if (!entry)
             return renderRouteError(new Error(labels.noCourse));
         const course = kanaCourseData(key);
@@ -23267,7 +23361,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (!prepared || !Number.isInteger(index))
             return;
         const labels = sentencePracticeLabels();
-        const viewportSnapshot = captureViewport();
         const practice = state.progress.sentencePractice;
         if (practice.result?.correct || practice.selected.includes(index))
             return;
@@ -23275,6 +23368,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             toast(labels.full);
             return;
         }
+        rememberSentencePracticeViewport();
+        const viewportSnapshot = captureViewport();
         practice.selected.push(index);
         practice.checked = false;
         practice.result = { correct: false, message: labels.inserted, wrongIndexes: [] };
@@ -23285,7 +23380,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const practice = sentencePracticeProgress();
         if (!practice.selected.length || practice.result?.correct)
             return;
-        const viewportSnapshot = captureViewport();
+        const viewportSnapshot = sentencePracticeInteractionViewport || captureViewport();
         practice.selected.pop();
         practice.checked = false;
         practice.result = { correct: false, message: sentencePracticeLabels().removed, wrongIndexes: [] };
@@ -23296,7 +23391,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const practice = sentencePracticeProgress();
         if (practice.result?.correct)
             return;
-        const viewportSnapshot = captureViewport();
+        const viewportSnapshot = sentencePracticeInteractionViewport || captureViewport();
+        sentencePracticeInteractionViewport = null;
         practice.selected = [];
         practice.checked = false;
         practice.result = null;
@@ -23308,7 +23404,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (!prepared)
             return;
         const labels = sentencePracticeLabels();
-        const viewportSnapshot = captureViewport();
+        const viewportSnapshot = consumeSentencePracticeViewport();
         const practice = state.progress.sentencePractice;
         if (practice.selected.length < prepared.answerFlat.length) {
             practice.checked = true;
@@ -23374,6 +23470,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const available = getAvailableSentenceExercises(learned);
         if (!available.length)
             return;
+        sentencePracticeInteractionViewport = null;
         const currentId = state.progress.sentencePractice?.activeId;
         const current = available.find((exercise) => exercise?.id === currentId);
         if (current)
@@ -24742,7 +24839,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
           <article class="chart-panel"><h3>Повторение</h3><div class="chart-box"><canvas id="stateChart"></canvas></div></article>
           <article class="chart-panel"><h3>${escapeHtml(t("errors"))}</h3><div class="chart-box"><canvas id="mistakeChart"></canvas></div></article>
           <article class="tool-panel">${renderAchievementsList()}</article>
-          <article class="tool-panel" data-section="shop-panel">${renderShop()}</article>
+          ${state.bootAncillaryLoaded
+            ? `<article class="tool-panel" data-section="shop-panel">${renderShop()}</article>`
+            : `<article class="tool-panel" data-section="shop-panel-loading"><h3>${escapeHtml(shopLabels().title)}</h3><p>${escapeHtml(lang() === "ru" ? "Загружаю каталог кастомизации…" : "Loading customization catalog…")}</p></article>`}
           <article class="tool-panel">${renderTransactions()}</article>
           <article class="tool-panel">
             <h3>${escapeHtml(t("settings"))}</h3>
@@ -30648,6 +30747,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             const subroute = params.subroute || "";
             if (level && isKanaCourseSlug(level)) {
                 if (!kanaCatalogEntry(level)) {
+                    if (!state.bootAncillaryLoaded)
+                        return routeMatch;
                     return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
                 }
                 if (subroute && !kanaSubrouteExists(level, subroute)) {
@@ -30656,6 +30757,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 return routeMatch;
             }
             if (level && !jlptCatalogByLevel(level)) {
+                if (!state.bootAncillaryLoaded && canonicalJlptLevel(level))
+                    return routeMatch;
                 return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
             }
             if (level && subroute && !textbookSubrouteExists(level, subroute)) {
@@ -30665,6 +30768,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }
         }
         if (routeMatch.route === "jlpt-lesson" && !jlptLessonByLevel(params.level)) {
+            if (!state.bootAncillaryLoaded && canonicalJlptLevel(params.level))
+                return routeMatch;
             return notFound("hash", "entity-not-found", routeMatch.raw, routeMatch.segments, routeMatch.locale);
         }
         if (routeMatch.route === "learn") {
