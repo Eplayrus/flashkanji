@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-08-27-lesson-completion-eva-bg-v1";
+const SW_BUILD_VERSION = "2026-08-29-contextual-study-scroll-v1";
 const CACHE_PREFIX = "flash-kanji-";
 const STATIC_CACHE = `${CACHE_PREFIX}static-${SW_BUILD_VERSION}`;
 const DATA_CACHE = `${CACHE_PREFIX}data-${SW_BUILD_VERSION}`;
@@ -68,6 +68,10 @@ function toRequest(input) {
   return new Request(new URL(input, self.registration.scope).href, { credentials: "same-origin" });
 }
 
+function isCacheableUrl(url) {
+  return url.protocol === "http:" || url.protocol === "https:";
+}
+
 async function trimCache(cacheName, maxEntries) {
   if (!maxEntries) return;
   const cache = await caches.open(cacheName);
@@ -94,6 +98,10 @@ async function matchInCurrentCaches(request) {
 }
 
 async function cacheFirst(request, cacheName = RUNTIME_CACHE, { maxEntries = 120 } = {}) {
+  const url = new URL(request.url);
+  if (!isCacheableUrl(url)) {
+    return fetch(request);
+  }
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   if (cached) return cached;
@@ -102,6 +110,10 @@ async function cacheFirst(request, cacheName = RUNTIME_CACHE, { maxEntries = 120
 }
 
 async function staleWhileRevalidate(event, request, cacheName = DATA_CACHE, { maxEntries = 80 } = {}) {
+  const url = new URL(request.url);
+  if (!isCacheableUrl(url)) {
+    return fetch(request);
+  }
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   const revalidate = fetch(request)
@@ -116,6 +128,10 @@ async function staleWhileRevalidate(event, request, cacheName = DATA_CACHE, { ma
 }
 
 async function networkFirst(request, fallbackRequests = [], cacheName = STATIC_CACHE) {
+  const url = new URL(request.url);
+  if (!isCacheableUrl(url)) {
+    return fetch(request);
+  }
   try {
     const response = await fetch(request);
     if (response.ok) {
@@ -183,7 +199,13 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (request.headers.has("range")) return;
 
-  const url = new URL(request.url);
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return;
+  }
+  if (!isCacheableUrl(url)) return;
   const isDocument = request.destination === "document" || request.mode === "navigate";
 
   if (isDocument) {

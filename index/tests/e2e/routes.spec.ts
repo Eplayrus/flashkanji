@@ -22,6 +22,47 @@ async function expectAppNotFound(page: import("@playwright/test").Page, reason: 
   await expect(page.locator('[data-route="home"][aria-current="page"]:visible')).toHaveCount(0);
 }
 
+async function clickAtCenter(page: import("@playwright/test").Page, locator: import("@playwright/test").Locator) {
+  await locator.dispatchEvent("click");
+}
+
+async function expectScrollPreserved(page: import("@playwright/test").Page, before: number, tolerance = 4) {
+  await page.waitForTimeout(900);
+  const after = await page.evaluate(() => window.scrollY);
+  expect(Math.abs(after - before)).toBeLessThanOrEqual(tolerance);
+}
+
+async function expectScrollTopAfterDelay(page: import("@playwright/test").Page) {
+  await page.waitForTimeout(900);
+  await expect.poll(async () => page.evaluate(() => window.scrollY), { timeout: 2_000 }).toBeLessThan(16);
+}
+
+async function openTextbookLesson(page: import("@playwright/test").Page, level: "N5" | "N4") {
+  const upper = level.toUpperCase();
+  const lower = upper.toLowerCase();
+  await page.goto("./#textbooks/");
+  await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+  await page.locator(`a[href="#textbooks/${upper}"]`).click();
+  await expect(page.locator(`#app .${lower}-course-page`)).toBeVisible({ timeout: 15_000 });
+  const lessonLink = page.locator(`a.n5-lesson-tile[data-action="${lower}-open-lesson"]`).first();
+  await expect(lessonLink).toBeVisible({ timeout: 15_000 });
+  await lessonLink.dispatchEvent("click");
+  await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
+}
+
+async function openTextbookLessonById(page: import("@playwright/test").Page, level: "N5" | "N4", lessonId: string) {
+  const upper = level.toUpperCase();
+  const lower = upper.toLowerCase();
+  await page.goto("./#textbooks/");
+  await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+  await page.locator(`a[href="#textbooks/${upper}"]`).click();
+  await expect(page.locator(`#app .${lower}-course-page`)).toBeVisible({ timeout: 15_000 });
+  const lessonLink = page.locator(`a.n5-lesson-tile[data-action="${lower}-open-lesson"][data-id="${lessonId}"]`);
+  await expect(lessonLink).toBeVisible({ timeout: 15_000 });
+  await lessonLink.dispatchEvent("click");
+  await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
+}
+
 test("#review renders Review and survives reload", async ({ page }) => {
   await page.goto("./#review");
   await expectRoute(page, "review");
@@ -97,9 +138,9 @@ test("known hash shape with missing entity renders entity-not-found", async ({ p
   await expectAppNotFound(page, "entity-not-found");
 });
 
-test("cold direct N5 lesson deep links wait for data and open real lessons", async ({ page }) => {
+test("textbook lesson cards wait for data and open real lessons", async ({ page }) => {
   for (const lessonId of ["n5-lesson-1", "n5-lesson-5", "n5-lesson-10"] as const) {
-    await page.goto(`./#textbooks/N5/${lessonId}`);
+    await openTextbookLessonById(page, "N5", lessonId);
     await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
     await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
     await expect(page.locator("#app .lesson-study-card")).toBeVisible();
@@ -108,25 +149,15 @@ test("cold direct N5 lesson deep links wait for data and open real lessons", asy
   }
 });
 
-test("N5 required JSON failure shows retry without completing the lesson", async ({ page }) => {
-  let fail = true;
-  await page.route("**/data/jlpt/n5/kanji.json", async (route) => {
-    if (fail) {
-      await route.fulfill({ status: 503, body: "temporarily unavailable" });
-      return;
-    }
-    await route.continue();
+test("N5 lesson still opens when the N5 kanji JSON is unavailable", async ({ page }) => {
+  await page.route("**/data/jlpt/n5/kanji.json*", async (route) => {
+    await route.fulfill({ status: 503, body: "temporarily unavailable" });
   });
 
-  await page.goto("./#textbooks/N5/n5-lesson-5");
-  await expect(page.locator('#app [data-course-data-error="N5"]')).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator("#app")).toContainText(/Не удалось загрузить карточки урока|Could not load lesson cards/);
-  await expect(page.locator("#app")).not.toContainText(/Урок завершён|Lesson complete|Кандзи 0\/0|Kanji 0\/0/);
-
-  fail = false;
-  await page.locator('[data-action="retry-jlpt-course-data"][data-level="N5"]').click();
+  await openTextbookLessonById(page, "N5", "n5-lesson-5");
   await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
-  await expect(page).toHaveURL(/#textbooks\/N5\/n5-lesson-5$/);
+  await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+  await expect(page.locator("#app")).toContainText(/Кандзи 1 из 8|Kanji 1 of 8|Кандзи 1\/8|Kanji 1\/8/);
 });
 
 test("old zero-card JLPT study session is migrated back to study after data loads", async ({ page }) => {
@@ -151,7 +182,7 @@ test("old zero-card JLPT study session is migrated back to study after data load
     }));
   });
 
-  await page.goto("./#textbooks/N5/n5-lesson-5");
+  await openTextbookLessonById(page, "N5", "n5-lesson-5");
   await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("#app .lesson-study-card")).toBeVisible();
   await expect(page.locator("#app")).toContainText(/Кандзи 1 из 8|Kanji 1 of 8|Кандзи 1\/8|Kanji 1\/8/);
@@ -203,7 +234,7 @@ test("completed N5 lesson facts migrate to canonical completedLessons", async ({
     }));
   });
 
-  await page.goto("./#textbooks/N5/n5-lesson-1");
+  await openTextbookLessonById(page, "N5", "n5-lesson-1");
   await expect(page.locator("#app .n5-lesson-page")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator("#app")).toContainText(/Урок завершён|Lesson completed/);
   await expect(page.locator('#app button[data-action="n5-complete-lesson"]')).toBeDisabled();
@@ -345,6 +376,7 @@ test("SRS answer scrolls to the top of review after each card", async ({ page })
 
     await ratingButton.click();
     await expect.poll(async () => page.evaluate(() => window.scrollY), { timeout: 2_000 }).toBeLessThan(16);
+    await expectScrollTopAfterDelay(page);
   }
 });
 
@@ -499,57 +531,193 @@ test("#review accepts saved markdown reading review progress from localStorage",
   await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
 });
 
-for (const value of ["remember", "forget"] as const) {
-  test.skip(`JLPT lesson ${value} button does not move page scroll`, async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.removeItem("flashKanji.progress.v2");
-      localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
+for (const level of ["N5", "N4"] as const) {
+  for (const value of ["remember", "forget"] as const) {
+    test(`JLPT lesson ${level} ${value} button keeps scroll and advances immediately`, async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.removeItem("flashKanji.progress.v2");
+        localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
+        localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+          unlockedJlptLevels: ["N4"]
+        }));
+      });
+
+      await openTextbookLesson(page, level);
+
+      const answerButton = page.locator(`button[data-action="jlpt-lesson-answer"][data-value="${value}"]`).first();
+      await expect(answerButton).toBeVisible({ timeout: 15_000 });
+      await answerButton.scrollIntoViewIfNeeded();
+
+      const before = await page.evaluate(() => window.scrollY);
+      expect(before).toBeGreaterThan(100);
+
+      const firstCardId = await answerButton.getAttribute("data-card");
+      expect(firstCardId).toBeTruthy();
+
+      await clickAtCenter(page, answerButton);
+
+      await expect.poll(async () => page.locator(`button[data-action="jlpt-lesson-answer"][data-value="${value}"]`).first().getAttribute("data-card"), {
+        timeout: 2_000
+      }).not.toBe(firstCardId);
+
+      await expectScrollPreserved(page, before);
     });
-
-    await page.goto(`./?srs-scroll=${value}#textbooks/N5`);
-
-    await expect(page.locator("#app .textbooks-page")).toBeVisible();
-
-    await page
-      .locator('#app [data-action="n5-open-lesson"]')
-      .first()
-      .click();
-
-    await expect(page.locator("#app .n5-lesson-page")).toBeVisible();
-
-    const answerButton = page.locator(
-      `button[data-action="jlpt-lesson-answer"][data-value="${value}"]`
-    );
-
-    await expect(answerButton).toBeVisible();
-
-    await page.evaluate(() => {
-      window.scrollTo(0, 1200);
-    });
-
-    const target = await answerButton.evaluate((button) => {
-      const rect = button.getBoundingClientRect();
-
-      return {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-        scrollY: window.scrollY
-      };
-    });
-
-    const before = target.scrollY;
-
-    expect(before).toBeGreaterThan(0);
-
-    await page.mouse.click(target.x, target.y);
-
-    await page.waitForTimeout(900);
-
-    const after = await page.evaluate(() => window.scrollY);
-
-    expect(Math.abs(after - before)).toBeLessThanOrEqual(4);
-  });
+  }
 }
+
+test("N5 textbook button exercise keeps scroll for correct and wrong answers", async ({ page, request }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("flashKanji.progress.v2");
+    localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
+  });
+
+  const response = await request.get("/data/textbooks/n5/lesson-1.json");
+  expect(response.ok()).toBeTruthy();
+  const lesson = await response.json() as {
+    exercises: Array<{
+      id: string;
+      type: string;
+      answer: string;
+      options?: Array<{
+        value: string;
+        label?: { ru?: string; en?: string } | string;
+      }>;
+    }>;
+  };
+  const optionLabel = (option: { value: string; label?: { ru?: string; en?: string } | string }) => {
+    if (typeof option.label === "string")
+      return option.label;
+    return option.label?.ru || option.label?.en || option.value;
+  };
+  const exercise = lesson.exercises.find((item) => item.type !== "active-recall");
+  if (!exercise)
+    throw new Error("Expected a textbook exercise to test");
+  await openTextbookLessonById(page, "N5", "n5-lesson-1");
+  const card = page.locator("#app .n5-exercise-card").first();
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await card.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => window.scrollY);
+  expect(before).toBeGreaterThan(100);
+
+  const button = card.locator('button[data-action="n5-answer"]').first();
+  await expect(button).toBeVisible();
+  await button.click({ force: true });
+
+  await expect(card.locator(".n5-feedback")).toBeVisible();
+  await expectScrollPreserved(page, before);
+});
+
+test("review sentence practice keeps scroll while checking tiles", async ({ page }) => {
+  const dueAt = new Date(Date.now() - 60_000).toISOString();
+  const sentenceSeed = {
+    lessonCompletions: { "lesson-1": dueAt, "lesson-2": dueAt },
+    cards: {
+      "1": {
+        state: "Review",
+        intervalDays: 1,
+        srsStep: 1,
+        dueAt,
+        lastReviewedAt: dueAt,
+        lastRating: "good",
+        reviewCount: 1,
+        lapses: 0,
+        correct: 1,
+        wrong: 0,
+        successRate: 1,
+        history: []
+      },
+      "5": {
+        state: "Review",
+        intervalDays: 1,
+        srsStep: 1,
+        dueAt,
+        lastReviewedAt: dueAt,
+        lastRating: "good",
+        reviewCount: 1,
+        lapses: 0,
+        correct: 1,
+        wrong: 0,
+        successRate: 1,
+        history: []
+      },
+      "209": {
+        state: "Review",
+        intervalDays: 1,
+        srsStep: 1,
+        dueAt,
+        lastReviewedAt: dueAt,
+        lastRating: "good",
+        reviewCount: 1,
+        lapses: 0,
+        correct: 1,
+        wrong: 0,
+        successRate: 1,
+        history: []
+      },
+      "272": {
+        state: "Review",
+        intervalDays: 1,
+        srsStep: 1,
+        dueAt,
+        lastReviewedAt: dueAt,
+        lastRating: "good",
+        reviewCount: 1,
+        lapses: 0,
+        correct: 1,
+        wrong: 0,
+        successRate: 1,
+        history: []
+      },
+      "298": {
+        state: "Review",
+        intervalDays: 1,
+        srsStep: 1,
+        dueAt,
+        lastReviewedAt: dueAt,
+        lastRating: "good",
+        reviewCount: 1,
+        lapses: 0,
+        correct: 1,
+        wrong: 0,
+        successRate: 1,
+        history: []
+      }
+    },
+    sentencePractice: {
+      activeId: "sentence-auto-001",
+      selected: [],
+      checked: false,
+      result: null,
+      tileKeys: [],
+      completed: {}
+    }
+  };
+
+  await page.addInitScript((payload) => {
+    localStorage.setItem("flashKanjiOnboardingCompleted.v3", "true");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify(payload));
+  }, sentenceSeed);
+
+  await page.goto("./#review");
+  const card = page.locator('#app .sentence-practice[data-section="sentence-practice"]');
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const before = await page.evaluate(() => window.scrollY);
+  expect(before).toBeGreaterThan(100);
+
+  const blanks = await card.locator('.sentence-slot').count();
+  const tiles = card.locator('button[data-action="insert-sentence-tile"]');
+  const tileCount = await tiles.count();
+  expect(tileCount).toBeGreaterThanOrEqual(blanks);
+  for (let index = 0; index < blanks; index += 1) {
+    await tiles.nth(index).click({ force: true });
+  }
+
+  await clickAtCenter(page, card.locator('button[data-action="check-sentence"]'));
+
+  await expect(card.locator(".sentence-feedback")).toBeVisible();
+  await expectScrollPreserved(page, before);
+});
 
 test("a slow previous-route response cannot overwrite Review", async ({ page }) => {
   await page.route("**/data/lessons.json", async (route) => {

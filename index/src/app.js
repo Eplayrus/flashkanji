@@ -365,14 +365,21 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let evaSaveQueued = false;
     let customizationSaveTimer = 0;
     let customizationSaveQueued = false;
+    let lastUserInteractionAt = 0;
     let changelogLoadStarted = false;
     let pendingChangelogExistingUser = false;
     let changelogFocusTimer = 0;
     let metrikaInitialRoutePrimed = false;
     let reviewQueueCountRenderActive = false;
     let reviewQueueCountRenderCache = null;
+    let reviewQueueItemsRenderCache = null;
+    let reviewLearningLaterCountRenderCache = null;
+    let reviewTotalSrsCardCountRenderCache = null;
+    let reviewPoolCardsRenderCache = null;
+    let reviewAllReadingExercisesRenderCache = null;
     let deferredPwaInstallPrompt = null;
     let notificationPromptTimer = 0;
+    let skipPendingFocusOnce = false;
     let notificationPromptAutoDockTimer = 0;
     const activeShopPurchases = new Set();
     let onboardingScheduleTimer = 0;
@@ -390,6 +397,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let onboardingTargetElement = null;
     let chartLibraryPromise = null;
     let soundManagerScriptPromise = null;
+    let routeNavigationToken = 0;
+    let homeEvaDialogueWarmupTimer = 0;
     let cyberHudScriptPromise = null;
     let deferredDataPromise = null;
     let deferredDataScheduleTimer = 0;
@@ -428,6 +437,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     const app = $("#app");
     const DEFAULT_DOCUMENT_TITLE = document.title || "Flash Kanji";
     const importInput = $("#progressImport");
+    const STUDY_SCROLL_POLICY = Object.freeze({
+        TOP: "top",
+        PRESERVE: "preserve"
+    });
+    document.addEventListener("pointerdown", recordUserInteraction, { passive: true, capture: true });
+    document.addEventListener("click", recordUserInteraction, { passive: true, capture: true });
+    document.addEventListener("keydown", recordUserInteraction, { passive: true, capture: true });
     document.addEventListener("click", handleClick);
     document.addEventListener("pointerdown", handleEvaDirectPointer);
     document.addEventListener("input", handleInput);
@@ -483,6 +499,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.routeMatch = routeMatch;
             state.routeNotFound = routeMatch.status === "not-found" ? routeMatch : null;
             state.route = route;
+            if (state.route !== "home")
+                clearHomeEvaDialogueWarmup();
             if (previousRoute !== route && (previousRoute === "review" || route === "review"))
                 state.reviewSession = null;
             state.kanjiPageId = route === "kanji" ? kanjiPageId : null;
@@ -502,7 +520,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             scrollPageToTop();
             renderImmediate();
             if (routeNeedsDeferredData(route))
-                scheduleDeferredDataLoad({ route, delay: 0 });
+                scheduleDeferredDataLoad({ route, delay: deferredDataDelayForRoute(route) });
             if (route === "eva-room")
                 dispatchEvaEvent("room_opened");
         }
@@ -525,31 +543,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         syncHeaderSocialToggleButton();
         applyTheme();
         try {
-            const [course, i18n, dialogues, rewards, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, changelogPayload] = await Promise.all([
+            const [course, i18n, rewards] = await Promise.all([
                 loadCourse({ initialOnly: true }),
                 fetchJson(DATA_URLS.i18n),
-                fetchJson(DATA_URLS.dialogues),
-                fetchJson(DATA_URLS.rewards, defaultRewardsPayload),
-                fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
-                fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
-                fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
-                fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
-                fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
-                fetchJson(DATA_URLS.changelog, () => null)
+                fetchJson(DATA_URLS.rewards, defaultRewardsPayload)
             ]);
-            const achievementBundle = normalizeAchievementData(achievements, rewards.achievements || []);
             state.lessons = course.lessons;
             state.cards = course.cards;
             state.i18n = i18n;
-            state.dialogues = dialogues;
             state.rewards = rewards;
-            state.achievements = achievementBundle.items;
-            state.achievementCategories = achievementBundle.categories;
-            state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
-            state.jlptLessons = normalizeJlptLessons(jlptLessons);
-            state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
-            state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
-            state.rewards.achievements = state.achievements;
             const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
             hydrateProgress();
             clearLegacyFlashKanjiOnboardingState();
@@ -562,13 +564,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             claimDailyBonus();
             evaluateAchievements({ silent: true });
             applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
-            const shouldFocusChangelog = applyChangelogPayload(changelogPayload, hadPriorVisit);
             saveProgress();
             render();
-            if (shouldFocusChangelog)
-                scheduleChangelogFocus();
+            scheduleIdleTask(() => {
+                void loadBootAncillaryData({ hadPriorVisit }).catch((error) => console.warn("Boot ancillary data failed to load.", error));
+            }, { timeout: 1500 });
             loadDeferredEnhancements();
-            scheduleDeferredDataLoad({ route: state.route, delay: routeNeedsDeferredData(state.route) ? 0 : DEFERRED_DATA_START_DELAY_MS });
+            scheduleDeferredDataLoad({ route: state.route, delay: deferredDataDelayForRoute(state.route) });
             registerServiceWorker();
             scheduleFlashKanjiOnboarding();
             startEvaAutonomyLoop();
@@ -591,6 +593,32 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         finally {
             setAppBooting(false);
         }
+    }
+    async function loadBootAncillaryData({ hadPriorVisit = false } = {}) {
+        const [dialogues, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, changelogPayload] = await Promise.all([
+            fetchJson(DATA_URLS.dialogues),
+            fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
+            fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
+            fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
+            fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
+            fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
+            fetchJson(DATA_URLS.changelog, () => null)
+        ]);
+        const achievementBundle = normalizeAchievementData(achievements, state.rewards?.achievements || []);
+        state.dialogues = dialogues;
+        state.achievements = achievementBundle.items;
+        state.achievementCategories = achievementBundle.categories;
+        state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
+        state.jlptLessons = normalizeJlptLessons(jlptLessons);
+        state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
+        state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
+        if (state.rewards)
+            state.rewards.achievements = state.achievements;
+        const shouldFocusChangelog = applyChangelogPayload(changelogPayload, hadPriorVisit);
+        evaluateAchievements({ silent: true });
+        render();
+        if (shouldFocusChangelog)
+            scheduleChangelogFocus();
     }
     function setAppBooting(isBooting) {
         const shell = document.querySelector(".app-shell");
@@ -629,6 +657,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         if (!decision.shouldShow || !decision.entry)
             return false;
+        if (state.route !== "home") {
+            markChangelogHandled(decision.currentVersion, safeLocalStorage());
+            return false;
+        }
         state.changelogModal = { version: decision.currentVersion, entry: decision.entry };
         return true;
     }
@@ -805,8 +837,43 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 .catch((error) => console.warn("Cyber HUD module failed to load.", error));
         }, 450);
     }
+    function recordUserInteraction() {
+        lastUserInteractionAt = Date.now();
+    }
+    async function waitForUserInteractionQuiet({ minQuietMs = 450, maxDelayMs = 1200 } = {}) {
+        if (!lastUserInteractionAt)
+            return;
+        const startedAt = Date.now();
+        while (Date.now() - lastUserInteractionAt < minQuietMs && Date.now() - startedAt < maxDelayMs) {
+            const waitMs = Math.min(160, Math.max(16, minQuietMs - (Date.now() - lastUserInteractionAt)));
+            await new Promise((resolve) => window.setTimeout(resolve, waitMs));
+        }
+        await waitForNextPaintOpportunity();
+    }
+    async function waitForDeferredDataCommitWindow(requestedRoute) {
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < 3200) {
+            const currentRoute = String(state.route || "");
+            const canCommitForRoute = requestedRoute === currentRoute || routeNeedsDeferredData(currentRoute);
+            const userIsInteracting = lastUserInteractionAt && Date.now() - lastUserInteractionAt < 650;
+            if (canCommitForRoute && !userIsInteracting)
+                break;
+            await new Promise((resolve) => window.setTimeout(resolve, canCommitForRoute ? 80 : 220));
+        }
+        await waitForNextPaintOpportunity();
+    }
+    function waitForNextPaintOpportunity() {
+        if (document.visibilityState === "hidden")
+            return new Promise((resolve) => window.setTimeout(resolve, 32));
+        return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
     function routeNeedsDeferredData(route = state.route) {
         return DEFERRED_DATA_ROUTES.has(route);
+    }
+    function deferredDataDelayForRoute(route = state.route) {
+        if (!routeNeedsDeferredData(route))
+            return DEFERRED_DATA_START_DELAY_MS;
+        return lastUserInteractionAt && Date.now() - lastUserInteractionAt < 1200 ? 650 : 0;
     }
     function scheduleDeferredDataLoad({ route = state.route, delay = DEFERRED_DATA_START_DELAY_MS, force = false } = {}) {
         if (state.deferredDataLoaded || state.deferredDataLoading || deferredDataPromise)
@@ -823,14 +890,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 return;
             if (!force && !routeNeedsDeferredData(state.route))
                 return;
-            loadDeferredAppData().catch((error) => console.warn("Deferred app data failed to load.", error));
+            loadDeferredAppData({ route }).catch((error) => console.warn("Deferred app data failed to load.", error));
         };
         deferredDataScheduleTimer = window.setTimeout(() => {
             deferredDataScheduleTimer = 0;
             scheduleIdleTask(run, { timeout: 1800 });
         }, Math.max(0, Number(delay) || 0));
     }
-    async function loadDeferredAppData({ renderAfter = true } = {}) {
+    async function loadDeferredAppData({ renderAfter = true, route = state.route } = {}) {
+        const requestedRoute = String(route || state.route || "");
         if (state.deferredDataLoaded)
             return;
         if (deferredDataPromise)
@@ -892,6 +960,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 ]),
                 fetchText(DATA_URLS.jlptReadingMarkdown)
             ]);
+            await waitForUserInteractionQuiet();
+            await waitForDeferredDataCommitWindow(requestedRoute);
             const { kanjiMeta, kanjiHints, kanjiTranslations, kanjiStrokes, kanjiPageSources, lessonTranslations, vocabulary, sentences, jlptPracticeLessons, n5Meta, n5Lessons, n5Kanji, n5Exercises, n5FinalTest, n4Meta, n4Lessons, n4Kanji, n4Grammar, n4Exercises, n4Reading, n4Listening, n4FinalTest, n3Meta, n3Lessons, n3Kanji, n3Grammar, n3Exercises, n3Reading, n3Listening, n3FinalTest, n2Meta, n2Lessons, n2Kanji, n2Grammar, n2Exercises, n2Reading, n2Listening, n2FinalTest, n1Meta, n1Lessons, n1Kanji, n1Grammar, n1Exercises, n1Reading, n1Listening, n1FinalTest, jlptReadingTranslations, n5Reading, monetization } = deferredPayloads;
             state.lessons = course.lessons;
             state.cards = course.cards;
@@ -959,9 +1029,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 evaluateAchievements({ silent: true });
                 saveProgress();
             }
-            applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
-            if (renderAfter)
-                render();
+            const currentRoute = String(state.route || "");
+            const shouldSyncRoute = requestedRoute === currentRoute || routeNeedsDeferredData(currentRoute);
+            if (shouldSyncRoute) {
+                applyRouteMatch(validateRouteMatchEntities(readCurrentRouteMatch()));
+                if (renderAfter)
+                    render();
+            }
         })().finally(() => {
             state.deferredDataLoading = false;
         });
@@ -4315,7 +4389,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         return true;
     }
-    function scheduleNonCriticalTask(label, task, { timeout = 0 } = {}) {
+    function scheduleNonCriticalTask(label, task, { timeout = 0, afterPaint = false } = {}) {
         const run = () => {
             try {
                 const result = task?.();
@@ -4327,14 +4401,43 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 console.warn(`[Flash Kanji] ${label} failed.`, error);
             }
         };
-        requestAnimationFrame(() => window.setTimeout(run, timeout));
+        const scheduleTimeout = () => window.setTimeout(run, timeout);
+        if (afterPaint)
+            requestAnimationFrame(() => requestAnimationFrame(scheduleTimeout));
+        else
+            requestAnimationFrame(scheduleTimeout);
     }
     function renderImmediateScrollingTop() {
+        blurActiveElement();
+        skipPendingFocusOnce = true;
         renderImmediate();
         scrollPageToTop();
         scheduleScrollPageToTop();
         window.setTimeout(scrollPageToTop, 120);
         window.setTimeout(scrollPageToTop, 320);
+    }
+    function captureViewport() {
+        if (typeof window === "undefined")
+            return { scrollX: 0, scrollY: 0 };
+        return {
+            scrollX: window.scrollX,
+            scrollY: window.scrollY
+        };
+    }
+    function renderStudyUpdate({ scrollPolicy = STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot = null } = {}) {
+        if (scrollPolicy === STUDY_SCROLL_POLICY.TOP) {
+            state.pendingFocus = "__scroll-top__";
+            renderImmediateScrollingTop();
+            return;
+        }
+        renderImmediatePreservingScroll(viewportSnapshot || captureViewport());
+    }
+    function blurActiveElement() {
+        if (typeof document === "undefined")
+            return;
+        const active = document.activeElement;
+        if (active && typeof active.blur === "function")
+            active.blur();
     }
     function scheduleStudySideEffects(label, task, options = {}) {
         scheduleNonCriticalTask(label, () => {
@@ -4343,10 +4446,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 result.catch((error) => console.warn(`[Flash Kanji] ${label} failed.`, error));
             }
             saveProgress();
-            if (options.scrollTop)
-                renderImmediateScrollingTop();
-            else
-                renderImmediatePreservingScroll();
+            renderStudyUpdate({
+                scrollPolicy: options.scrollPolicy || (options.scrollTop ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE),
+                viewportSnapshot: options.viewportSnapshot || null
+            });
         });
     }
     function claimStudyAction(target) {
@@ -5012,10 +5115,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             const textbook = jlptCatalogByLevel(level);
             const lessons = textbookLessonsForLevel(level);
             const progress = textbookCourseProgress(level);
-            const completedLessonsCount = getJlptCompletedLessonsCount(level);
+            const completedLessonsCount = getJlptCompletedLessonsCountFast(level, lessons);
             const totalLessons = Math.max(Number(textbook?.lessonCount || 0), lessons.length || 0);
             const unlocked = isTextbookUnlocked(level);
-            const completed = textbookCompleted(level);
+            const completed = textbookCompletedFast(level, lessons, textbook, progress, completedLessonsCount);
             const current = !completed && currentLevel === level;
             const title = localized(textbook?.displayTitle || textbook?.title || {
                 ru: `Учебник ${level}`,
@@ -5036,6 +5139,30 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             const status = completed ? "done" : current ? "current" : unlocked ? "open" : "locked";
             return { level, title, note, status };
         });
+    }
+    function getJlptCompletedLessonsCountFast(level, lessons = textbookLessonsForLevel(level)) {
+        const course = textbookCourseProgress(level);
+        const completed = course?.completedLessons || {};
+        if (!course || !completed || typeof completed !== "object")
+            return 0;
+        const seen = new Set();
+        lessons.forEach((lesson) => {
+            if (!lesson?.id)
+                return;
+            if (jlptLessonIdAliases(level, lesson).some((id) => Boolean(completed[id])))
+                seen.add(lesson.id);
+        });
+        if (seen.size)
+            return seen.size;
+        return Object.values(completed).filter(Boolean).length;
+    }
+    function textbookCompletedFast(level, lessons = textbookLessonsForLevel(level), textbook = jlptCatalogByLevel(level), course = textbookCourseProgress(level), completedLessonsCount = getJlptCompletedLessonsCountFast(level, lessons)) {
+        if (!course)
+            return false;
+        if (course.finalTest?.passed)
+            return true;
+        const expected = Math.max(Number(textbook?.lessonCount || 0), lessons.length || 0);
+        return expected > 0 && completedLessonsCount >= expected;
     }
     function renderHomeJourneyStep(step) {
         const actionAttrs = `data-action="route" data-route="textbooks" data-subroute="${escapeAttr(step.level)}"`;
@@ -5390,14 +5517,14 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.navMenu = null;
             if (route === "writing" && state.detailCardId)
                 state.activeCardId = state.detailCardId;
-            setRoute(route, target.dataset.focus || null, target.dataset.subroute || null);
+            queueRouteNavigation(route, target.dataset.focus || null, target.dataset.subroute || null);
         }
         if (action === "nav-menu-route") {
             const route = target.dataset.route;
             state.navMenu = null;
             if (route === "writing" && state.detailCardId)
                 state.activeCardId = state.detailCardId;
-            setRoute(route, target.dataset.focus || null, target.dataset.subroute || null);
+            queueRouteNavigation(route, target.dataset.focus || null, target.dataset.subroute || null);
         }
         if (action === "share-page")
             shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed"));
@@ -5497,7 +5624,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.finalTestModal = null;
             state.finalTestBusy = false;
             state.pendingFocus = null;
-            openJlptLessonStart(nextLevel, nextLessonId);
+            queueJlptLessonStart(nextLevel, nextLessonId);
             return;
         }
         if (action === "scroll-page-edge") {
@@ -5862,9 +5989,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (action === "n1-final-reset")
             resetN1FinalTest();
         if (action === "review-exercise-next") {
+            const viewportSnapshot = captureViewport();
             clearReviewExerciseState();
-            state.pendingFocus = "__scroll-top__";
-            render();
+            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.TOP, viewportSnapshot });
             return;
         }
         if (action === "play-kanji-audio") {
@@ -5890,27 +6017,28 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 if (!isTextbookUnlocked(jlpt)) {
                     state.activeTextbookLevel = jlpt;
                     state.activeJlptLesson = jlpt;
-                    setRoute("textbooks", null, jlpt);
+                    queueRouteNavigation("textbooks", null, jlpt);
                     toast(textbookUnlockText(jlpt));
                     return;
                 }
                 state.activeJlptLesson = jlpt;
-                setRoute("jlpt-lesson", null, jlpt);
+                queueRouteNavigation("jlpt-lesson", null, jlpt);
             }
         }
         if (action === "open-jlpt-lesson-start") {
             trackLearningStart("jlpt-start", { level: target.dataset.jlpt || defaultJlptLessonLevel() });
-            openJlptLessonStart(target.dataset.jlpt || defaultJlptLessonLevel());
+            queueJlptLessonStart(target.dataset.jlpt || defaultJlptLessonLevel());
         }
         if (action === "social-link")
             reachMetricGoal(`social_${String(target.dataset.network || "").toLowerCase()}_opened`, { route: state.route, source: target.dataset.network || "social" });
         if (action === "play-audio")
             playAudioPlaceholder(target.dataset.audio, target.dataset.label);
         if (action === "close-reward") {
+            const viewportSnapshot = captureViewport();
             state.rewardModal = state.rewardQueue.shift() || null;
             if (state.rewardModal)
                 showRewardFeedback(state.rewardModal);
-            renderImmediatePreservingScroll();
+            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
         }
         if (action === "set-goal") {
             state.progress.settings.dailyGoal = Number(target.dataset.goal);
@@ -5921,30 +6049,27 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (action === "buy-shop")
             buyCustomizationItem(id);
         if (action === "start-due") {
-            setRoute("textbooks");
-            if (!getReviewQueueCount())
-                toast(dialogueText("eva", "welcome"));
+            queueRouteNavigation("textbooks");
+            scheduleNonCriticalTask("start-due-toast", () => {
+                if (!getReviewQueueCount())
+                    toast(dialogueText("eva", "welcome"));
+            });
         }
         if (action === "home-lesson") {
             const level = canonicalJlptLevel(target.dataset.level || "") || defaultJlptLessonLevel();
             const lessonId = String(target.dataset.lessonId || "");
-            openJlptLessonStart(level, lessonId);
+            queueJlptLessonStart(level, lessonId);
         }
         if (action === "home-review") {
-            if (getReviewQueueCount()) {
-                setRoute("review");
-            }
-            else {
-                toast(lang() === "ru" ? "Пока нет повторений." : "No reviews are due right now.");
-            }
+            queueRouteNavigation("review");
         }
         if (action === "home-primary") {
             trackLearningStart("home-primary");
-            openLearningPathPrimaryAction();
+            scheduleNonCriticalTask("home-primary-navigation", openLearningPathPrimaryAction);
         }
         if (action === "learning-path-node") {
             trackLearningStart("learning-path", { lessonId: target.dataset.node || id });
-            openLearningPathNode(target.dataset.node || id);
+            scheduleNonCriticalTask("learning-path-node-navigation", () => openLearningPathNode(target.dataset.node || id));
         }
         if (action === "learning-path-back") {
             setLearnRoute();
@@ -6019,10 +6144,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 dispatchEvaEvent("lesson_start", { lessonId: id, jlpt: lesson.jlpt });
                 const jlptLevel = String(lesson.jlpt || "").toUpperCase();
                 if (/^n[2-5]-lesson-\d+$/i.test(lesson.id) && ["N5", "N4", "N3", "N2"].includes(jlptLevel)) {
-                    setRoute("textbooks", null, jlptLevel);
-                    state.activeTextbookSubroute = lesson.id;
-                    history.replaceState(null, "", `#textbooks/${encodeURIComponent(jlptLevel)}/${encodeURIComponent(lesson.id)}`);
-                    render();
+                    queueJlptLessonStart(jlptLevel, lesson.id);
                 }
                 else {
                     setLearnRoute(LEARNING_PATH_LEGACY_VIEW, lesson.id);
@@ -6327,6 +6449,18 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         scheduleScrollPageToTop();
         scheduleRender();
     }
+    function queueRouteNavigation(route, focus = null, subroute = null) {
+        const token = ++routeNavigationToken;
+        if (token !== routeNavigationToken)
+            return;
+        setRoute(route, focus, subroute);
+    }
+    function queueJlptLessonStart(level, preferredLessonId = "") {
+        const token = ++routeNavigationToken;
+        if (token !== routeNavigationToken)
+            return;
+        openJlptLessonStart(level, preferredLessonId);
+    }
     function setRoute(route, focus = null, subroute = null) {
         if (route === "learn") {
             setLearnRoute(LEARNING_PATH_MAP_VIEW, null, focus);
@@ -6345,6 +6479,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         const previousRoute = state.route;
         state.route = route;
+        if (state.route !== "home")
+            clearHomeEvaDialogueWarmup();
         state.routeMatch = null;
         state.routeNotFound = null;
         if (previousRoute !== state.route && (previousRoute === "review" || state.route === "review"))
@@ -6406,7 +6542,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         scheduleScrollPageToTop();
         renderImmediate();
         if (routeNeedsDeferredData(state.route))
-            scheduleDeferredDataLoad({ route: state.route, delay: 0 });
+            scheduleDeferredDataLoad({ route: state.route, delay: deferredDataDelayForRoute(state.route) });
         if (state.route === "eva-room")
             dispatchEvaEvent("room_opened");
     }
@@ -6493,7 +6629,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function renderNow() {
         const renderContext = routeRenderCoordinator.begin(state.route);
         reviewQueueCountRenderActive = true;
-        reviewQueueCountRenderCache = null;
+        resetTransientReviewRenderCaches();
         destroyCharts();
         try {
             syncChrome();
@@ -6559,7 +6695,16 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         finally {
             reviewQueueCountRenderActive = false;
+            resetTransientReviewRenderCaches();
         }
+    }
+    function resetTransientReviewRenderCaches() {
+        reviewQueueCountRenderCache = null;
+        reviewQueueItemsRenderCache = null;
+        reviewLearningLaterCountRenderCache = null;
+        reviewTotalSrsCardCountRenderCache = null;
+        reviewPoolCardsRenderCache = null;
+        reviewAllReadingExercisesRenderCache = null;
     }
     function scheduleRender() {
         if (renderRaf)
@@ -6586,13 +6731,16 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             behavior: "auto"
         });
     }
-    function renderImmediatePreservingScroll() {
+    function renderImmediatePreservingScroll(viewportSnapshot = null) {
         if (typeof window === "undefined") {
             renderImmediate();
             return;
         }
-        const scrollX = window.scrollX;
-        const scrollY = window.scrollY;
+        skipPendingFocusOnce = true;
+        const snapshot = viewportSnapshot || captureViewport();
+        const scrollX = Number(snapshot?.scrollX || 0);
+        const scrollY = Number(snapshot?.scrollY || 0);
+        blurActiveElement();
         renderImmediate();
         restoreViewportScroll(scrollX, scrollY);
         requestAnimationFrame(() => {
@@ -6601,6 +6749,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         });
         window.setTimeout(() => restoreViewportScroll(scrollX, scrollY), 120);
         window.setTimeout(() => restoreViewportScroll(scrollX, scrollY), 320);
+        window.setTimeout(() => restoreViewportScroll(scrollX, scrollY), 640);
+        window.setTimeout(() => restoreViewportScroll(scrollX, scrollY), 840);
     }
     function render() {
         scheduleRender();
@@ -7622,6 +7772,11 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function applyPendingFocus() {
         if (!state.pendingFocus)
             return;
+        if (skipPendingFocusOnce) {
+            skipPendingFocusOnce = false;
+            state.pendingFocus = null;
+            return;
+        }
         const focus = state.pendingFocus;
         state.pendingFocus = null;
         if (focus === "__scroll-top__") {
@@ -7646,7 +7801,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const element = document.querySelector(selectors[focus] || focus);
         if (!element)
             return;
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        element.scrollIntoView({ behavior: "auto", block: "start" });
         element.classList.add("is-focus-pulse");
         window.setTimeout(() => element.classList.remove("is-focus-pulse"), 900);
     }
@@ -7915,8 +8070,39 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const autonomy = evaAutonomy();
         if (autonomy.currentLine?.text || state.evaRuntime?.currentPhrase?.text)
             return autonomy.currentLine || state.evaRuntime.currentPhrase;
-        forceEvaEventLine("manual");
-        return evaAutonomy().currentLine || state.evaRuntime?.currentPhrase || null;
+        if (Array.isArray(state.evaAutonomyLines) && state.evaAutonomyLines.length)
+            scheduleHomeEvaDialogueWarmup();
+        return {
+            id: "home_eva_idle_fallback",
+            category: "idle",
+            text: {
+                ru: "Я рядом. Начнём с одного спокойного шага.",
+                en: "I'm here. Let's start with one calm step."
+            },
+            sprite: selectedEvaSkinId(),
+            emotion: "calm",
+            state: "speak"
+        };
+    }
+    function scheduleHomeEvaDialogueWarmup() {
+        if (homeEvaDialogueWarmupTimer)
+            return;
+        homeEvaDialogueWarmupTimer = window.setTimeout(() => {
+            homeEvaDialogueWarmupTimer = 0;
+            if (state.route !== "home")
+                return;
+            const autonomy = evaAutonomy();
+            if (autonomy.currentLine?.text || state.evaRuntime?.currentPhrase?.text)
+                return;
+            if (forceEvaEventLine("auto", { allowQuestion: false }))
+                render();
+        }, 260);
+    }
+    function clearHomeEvaDialogueWarmup() {
+        if (!homeEvaDialogueWarmupTimer)
+            return;
+        window.clearTimeout(homeEvaDialogueWarmupTimer);
+        homeEvaDialogueWarmupTimer = 0;
     }
     function renderHomeEvaPanel(scene) {
         const labels = evaRoomLabels();
@@ -8926,8 +9112,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             progressEquipped: state.progress?.shop?.equipped?.background,
             progressSelected: state.progress.selectedEvaRoomBackground
         });
-        if (selected && state.progress.selectedEvaRoomBackground !== selected)
-            state.progress.selectedEvaRoomBackground = selected;
         return getEvaRoomBackground(selected) || getEvaRoomBackground("bg_study_hub");
     }
     function isEvaRoomBackgroundUnlocked(id) {
@@ -9970,7 +10154,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         today.minutes = round(Number(today.reviews || 0) * 0.75 + Number(today.learned || 0) * 1.25, 1);
         state.progress.daily[todayKey()] = today;
         updateStreak();
-        checkDailyGoal();
+        checkDailyGoal({ silent: true });
         evaluateAchievements();
     }
     function findEvaQuizCard(question) {
@@ -10552,7 +10736,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         playUxSound("page_turn");
         render();
     }
-    function forceEvaEventLine(reason = "manual") {
+    function forceEvaEventLine(reason = "manual", options = {}) {
         const line = evaEventLine(reason) || pickEvaAutonomyLine(reason);
         if (!line)
             return false;
@@ -10565,7 +10749,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const effect = chooseEvaAutonomyEffect(line);
         const autonomy = evaAutonomy();
         const now = Date.now();
-        const question = maybeAskEvaQuestion(context, line);
+        const question = options.allowQuestion === false ? null : maybeAskEvaQuestion(context, line);
         autonomy.currentLine = {
             id: line.id,
             category: line.category || reason,
@@ -10796,11 +10980,11 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function openLearningPathPrimaryAction() {
         const action = learningPathPrimaryAction();
         if (action.kind === "review") {
-            setRoute("review");
+            queueRouteNavigation("review");
             return;
         }
         if (state.route === "home") {
-            openJlptLessonStart(currentLearnTextbookLevel() || "N5");
+            queueJlptLessonStart(currentLearnTextbookLevel() || "N5");
             return;
         }
         openLearningPathNode(action.nodeId);
@@ -10817,7 +11001,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return;
         }
         if (node.id === LEARNING_PATH_REVIEW_NODE_ID) {
-            setRoute("review");
+            queueRouteNavigation("review");
             return;
         }
         if (node.id === LEARNING_PATH_CHECKPOINT_NODE_ID) {
@@ -12734,6 +12918,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const exercise = findKanaExercise(course, ownerId, ownerType, exerciseId);
         if (!course || !exercise)
             return;
+        const viewportSnapshot = captureViewport();
         const values = {};
         const draftKey = kanaExerciseDraftKey(slug, ownerId, ownerType, exerciseId);
         const formData = new FormData(form);
@@ -12774,19 +12959,20 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             delete state.kanaExerciseDrafts[draftKey];
         playUxSound(result.passed ? "answer_correct" : "answer_wrong");
         saveProgress();
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function markKanaWriting(slug, lessonId) {
         const key = String(slug || "").toLowerCase();
         if (!isKanaCourseSlug(key) || !lessonId)
             return;
+        const viewportSnapshot = captureViewport();
         const progress = kanaCourseProgress(key);
         progress.writing[lessonId] = new Date().toISOString();
         progress.currentRoute = lessonId;
         progress.updatedAt = progress.writing[lessonId];
         saveProgress();
         toast(kanaLabels().writeDone);
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function resetKanaLessonCharacterFlow(slug, lessonId) {
         const key = String(slug || "").toLowerCase();
@@ -12801,6 +12987,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const key = String(slug || "").toLowerCase();
         if (!isKanaCourseSlug(key) || !lessonId || !kana)
             return;
+        const viewportSnapshot = captureViewport();
         const course = kanaCourseData(key);
         const lesson = course?.lessons?.find((item) => item.id === lessonId) || null;
         if (!course || !lesson)
@@ -12837,7 +13024,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         state.pendingFocus = "kana-character-card";
         playUxSound(normalizedRating === "forgot" ? "answer_wrong" : "answer_correct");
         saveProgress();
-        renderImmediate();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function handleKanaSrsAction(slug, cardId, rating) {
         rateActiveKanaCard(slug, cardId, rating);
@@ -12853,10 +13040,11 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         progress.review = review;
     }
     function toggleKanaRomaji() {
+        const viewportSnapshot = captureViewport();
         const root = kanaProgressRoot();
         root.settings.showRomaji = !root.settings.showRomaji;
         saveProgress();
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function playKanaTts(text) {
         const value = String(text || "").trim();
@@ -14377,6 +14565,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return;
         const now = new Date().toISOString();
         const inReviewMode = isReviewExerciseActive(canonical, exercise.id);
+        const viewportSnapshot = captureViewport();
+        const scrollPolicy = inReviewMode ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE;
+        const quietReward = Boolean(options.quietReward);
         if (inReviewMode && state.reviewExerciseResults?.[exercise.id])
             return;
         const result = {
@@ -14407,7 +14598,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 const rewardXp = Number(options.rewardXp || 0);
                 const rewardMoon = Number(options.rewardMoon || 0);
                 if (rewardXp || rewardMoon)
-                    addReward(rewardXp, rewardMoon, options.rewardKey || `exercise:${exercise.id}`);
+                    addReward(rewardXp, rewardMoon, options.rewardKey || `exercise:${exercise.id}`, { silent: quietReward });
             }
         }
         else {
@@ -14421,14 +14612,12 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                     options.markWordMistake?.(wordMistakeKey);
             }
         }
-        if (inReviewMode)
-            state.pendingFocus = "__scroll-top__";
-        render();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("textbook exercise post-render effects", () => {
             playUxSound(correct ? "answer_correct" : "answer_wrong");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function readingExerciseRewardConfig(exercise) {
         const level = canonicalJlptLevel(exercise?.level || "");
@@ -14466,6 +14655,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return;
         const now = new Date().toISOString();
         const inReviewMode = isReviewExerciseActive(exercise.level, exercise.id, "reading");
+        const viewportSnapshot = captureViewport();
+        const scrollPolicy = inReviewMode ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE;
+        const quietReward = Boolean(options.quietReward);
         const progress = cloneProgress(readingExerciseProgress(exercise) || defaultReadingExerciseProgress(exercise));
         state.reviewExerciseResults ||= {};
         if (exercise.kind === "cloze") {
@@ -14504,21 +14696,19 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             updateStreak();
             const rewards = readingExerciseRewardConfig(exercise);
             if (correct) {
-                addReward(rewards.xp, rewards.moon, `reading:${exercise.id}`);
+                addReward(rewards.xp, rewards.moon, `reading:${exercise.id}`, { silent: quietReward });
             }
             else {
-                addReward(Math.max(1, Math.round(rewards.xp * 0.35)), 0, `reading:${exercise.id}:again`);
+                addReward(Math.max(1, Math.round(rewards.xp * 0.35)), 0, `reading:${exercise.id}:again`, { silent: quietReward });
             }
             if (inReviewMode)
-                state.pendingFocus = "__scroll-top__";
-            if (inReviewMode)
                 trackReviewSessionComplete("reading-cloze");
-            render();
+            renderStudyUpdate({ scrollPolicy, viewportSnapshot });
             saveProgress();
             scheduleStudySideEffects("reading cloze post-render effects", () => {
                 playUxSound(correct ? "answer_correct" : "answer_wrong");
-                evaluateAchievements();
-            });
+                evaluateAchievements({ silent: quietReward });
+            }, { scrollPolicy, viewportSnapshot });
             return;
         }
         const question = exercise.question || exercise.questions?.[0] || null;
@@ -14545,10 +14735,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         saveProgress();
         if (!progress.completed) {
-            render();
+            renderStudyUpdate({ scrollPolicy, viewportSnapshot });
             scheduleStudySideEffects("reading question post-render sound", () => {
                 playUxSound(correct ? "answer_correct" : "answer_wrong");
-            });
+            }, { scrollPolicy, viewportSnapshot });
             return;
         }
         const before = cloneProgress(progress);
@@ -14566,21 +14756,19 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         updateStreak();
         const rewards = readingExerciseRewardConfig(exercise);
         if (allCorrect) {
-            addReward(rewards.xp, rewards.moon, `reading:${exercise.id}`);
+            addReward(rewards.xp, rewards.moon, `reading:${exercise.id}`, { silent: quietReward });
         }
         else {
-            addReward(Math.max(1, Math.round(rewards.xp * 0.25)), 0, `reading:${exercise.id}:again`);
+            addReward(Math.max(1, Math.round(rewards.xp * 0.25)), 0, `reading:${exercise.id}:again`, { silent: quietReward });
         }
         if (inReviewMode)
-            state.pendingFocus = "__scroll-top__";
-        if (inReviewMode)
             trackReviewSessionComplete("reading-exercise");
-        render();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("reading exercise post-render effects", () => {
             playUxSound(correct ? "answer_correct" : "answer_wrong");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function answerReadingReview(target) {
         const active = activeReviewExerciseItem();
@@ -14591,7 +14779,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return;
         const value = String(target.dataset.value || "");
         const correct = value === String(question.answer || "");
-        recordReadingExerciseResult(active.exercise, value, correct, { questionKey: String(target.dataset.question || question.id || active.exercise.id) });
+        recordReadingExerciseResult(active.exercise, value, correct, { questionKey: String(target.dataset.question || question.id || active.exercise.id), quietReward: true });
     }
     function insertReadingReviewTile(index) {
         const active = activeReviewExerciseItem();
@@ -14673,7 +14861,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         recordReadingExerciseResult(exercise, selectedTiles.map((tile) => tile.kanji).join(""), correct, {
             selectedIndices: selected,
             selectedTiles,
-            wrongIndexes
+            wrongIndexes,
+            quietReward: true
         });
     }
     function toggleReadingTranslation() {
@@ -14705,6 +14894,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             rewardXp: Number(exercise.rewardXp || state.n5Meta?.rewards?.exerciseXp || 7),
             rewardMoon: Number(exercise.rewardMoon || state.n5Meta?.rewards?.exerciseMoon || 1),
             rewardKey: `n5_exercise:${exercise.id}`,
+            quietReward: true,
             markStudied: () => markN5KanjiStudied(exercise.kanji, exercise.cardId),
             markDifficult: () => markN5KanjiDifficult(exercise.kanji, exercise.cardId),
             markWordMistake: (key) => {
@@ -14713,17 +14903,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         });
     }
     function handleJlptLessonAnswer(level, lessonId, cardId, remembered) {
-        const preservedScrollX = typeof window !== "undefined" ? window.scrollX : 0;
-        const preservedScrollY = typeof window !== "undefined" ? window.scrollY : 0;
-        const restoreLessonAnswerScroll = () => {
-            restoreViewportScroll(preservedScrollX, preservedScrollY);
-            requestAnimationFrame(() => {
-                restoreViewportScroll(preservedScrollX, preservedScrollY);
-                requestAnimationFrame(() => restoreViewportScroll(preservedScrollX, preservedScrollY));
-            });
-            window.setTimeout(() => restoreViewportScroll(preservedScrollX, preservedScrollY), 120);
-            window.setTimeout(() => restoreViewportScroll(preservedScrollX, preservedScrollY), 320);
-        };
+        const viewportSnapshot = captureViewport();
         const canonical = canonicalJlptLevel(level) || String(level || "").toUpperCase();
         const lesson = canonical === "N5"
             ? n5LessonById(lessonId)
@@ -14763,28 +14943,29 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             study.session.testOpenedAt ||= now;
         }
         state.pendingFocus = null;
-        renderImmediatePreservingScroll();
-        restoreLessonAnswerScroll();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
         saveProgress();
         scheduleNonCriticalTask(`${canonical} lesson SRS post-render commit`, () => {
             const rating = remembered ? "good" : "again";
             if (canonical === "N5")
-                handleN5SrsAction(card.id, rating, "review");
+                handleN5SrsAction(card.id, rating, "review", { scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot, quietReward: true });
             else if (canonical === "N4")
-                handleN4SrsAction(card.id, rating, "review");
+                handleN4SrsAction(card.id, rating, "review", { scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot, quietReward: true });
             else if (canonical === "N3")
-                handleN3SrsAction(card.id, rating, "review");
+                handleN3SrsAction(card.id, rating, "review", { scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot, quietReward: true });
             else if (canonical === "N2")
-                handleN2SrsAction(card.id, rating, "review");
+                handleN2SrsAction(card.id, rating, "review", { scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot, quietReward: true });
             else if (canonical === "N1")
-                handleN1SrsAction(card.id, rating, "review");
-            restoreLessonAnswerScroll();
+                handleN1SrsAction(card.id, rating, "review", { scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot, quietReward: true });
         });
     }
-    function handleN5SrsAction(cardId, rating, source = "review") {
+    function handleN5SrsAction(cardId, rating, source = "review", options = {}) {
         const card = findCard(cardId);
         if (!card)
             return;
+        const scrollPolicy = options.scrollPolicy || (source === "review" ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE);
+        const viewportSnapshot = options.viewportSnapshot || captureViewport();
+        const quietReward = Boolean(options.quietReward);
         const lessonHard = source === "lesson" && rating === "again";
         const progressRating = lessonHard ? "good" : rating;
         const displayRating = lessonHard ? "hard" : rating;
@@ -14798,28 +14979,29 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (lessonHard) {
             markN5KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
-            addReward(state.n5Meta?.rewards?.hardXp || 2, 1, `n5_srs_lesson_hard:${card.id}`);
+            addReward(state.n5Meta?.rewards?.hardXp || 2, 1, `n5_srs_lesson_hard:${card.id}`, { silent: quietReward });
         }
         else if (isForgottenRating(rating)) {
             markN5KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
-            addReward(state.n5Meta?.rewards?.hardXp || 2, 0, `n5_srs_hard:${card.id}`);
+            addReward(state.n5Meta?.rewards?.hardXp || 2, 0, `n5_srs_hard:${card.id}`, { silent: quietReward });
         }
         else {
             state.progress.totalCorrect += 1;
-            addReward(rating === "easy" ? (state.n5Meta?.rewards?.knowXp || 6) : (state.n5Meta?.rewards?.addToSrsXp || 4), 1, `n5_srs:${card.id}`);
+            addReward(rating === "easy" ? (state.n5Meta?.rewards?.knowXp || 6) : (state.n5Meta?.rewards?.addToSrsXp || 4), 1, `n5_srs:${card.id}`, { silent: quietReward });
         }
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("N5 SRS post-render effects", () => {
             playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function markN5Writing(cardId) {
         const card = findCard(cardId);
         if (!card)
             return;
+        const viewportSnapshot = captureViewport();
         const course = n5Course();
         if (!course.writingPractice[card.kanji]) {
             course.writingPractice[card.kanji] = new Date().toISOString();
@@ -14833,7 +15015,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         evaluateAchievements();
         saveProgress();
-        render();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function completeN5Lesson(lessonId) {
         const lesson = n5LessonById(lessonId);
@@ -15290,7 +15472,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             <h2>${escapeHtml(labels.courseMap)}</h2>
             <p>${escapeHtml(principle)}</p>
             <div class="textbook-actions">
-              <a class="btn primary" href="#jlpt/n4/${escapeAttr(current?.id || "n4-lesson-1")}" data-action="n4-open-lesson" data-id="${escapeAttr(current?.id || "n4-lesson-1")}">${escapeHtml(labels.continue)}</a>
+            <a class="btn primary" href="#textbooks/N4/${escapeAttr(current?.id || "n4-lesson-1")}" data-action="n4-open-lesson" data-id="${escapeAttr(current?.id || "n4-lesson-1")}">${escapeHtml(labels.continue)}</a>
               <button class="btn" type="button" data-action="n4-review" data-mode="due">${escapeHtml(labels.review)}</button>
               <button class="btn ghost" type="button" data-action="n4-kanji">${escapeHtml(labels.openKanji)}</button>
               <button class="btn ghost" type="button" data-action="n4-grammar">${escapeHtml(labels.grammarN4)}</button>
@@ -15353,7 +15535,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             learned = lesson.kanji.length;
         }
         return `
-      <a class="n5-lesson-tile ${status}" href="#jlpt/n4/${escapeAttr(lesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(lesson.id)}">
+      <a class="n5-lesson-tile ${status}" href="#textbooks/N4/${escapeAttr(lesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(lesson.id)}">
         <span class="pill">${escapeHtml(labels.lesson)} ${lesson.order}</span>
         <h3>${escapeHtml(localized(lesson.title))}</h3>
         <p>${escapeHtml(localized(lesson.goal))}</p>
@@ -15465,7 +15647,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
           <div class="actions">
             <button class="btn primary" type="button" data-action="n4-complete-lesson" data-id="${escapeAttr(lesson.id)}" ${(isLessonCompleted || !readyToComplete) ? 'disabled' : ''}>${escapeHtml(isLessonCompleted ? (lang() === "ru" ? "Урок завершён" : "Lesson completed") : labels.completeLesson)}</button>
             <button class="btn" type="button" data-action="n4-review" data-mode="difficult">${escapeHtml(labels.repeatMistakes)}</button>
-            ${nextLesson ? `<a class="btn ghost" href="#jlpt/n4/${escapeAttr(nextLesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>`}
+            ${nextLesson ? `<a class="btn ghost" href="#textbooks/N4/${escapeAttr(nextLesson.id)}" data-action="n4-open-lesson" data-id="${escapeAttr(nextLesson.id)}">${escapeHtml(labels.nextLesson)}</a>` : `<button class="btn ghost" type="button" data-action="n4-final">${escapeHtml(labels.finalTest)}</button>`}
           </div>
         </section>
       </section>
@@ -16337,6 +16519,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             rewardXp: Number(exercise.rewardXp || state.n4Meta?.rewards?.exerciseXp || 9),
             rewardMoon: Number(exercise.rewardMoon || state.n4Meta?.rewards?.exerciseMoon || 1),
             rewardKey: `n4_exercise:${exercise.id}`,
+            quietReward: true,
             markStudied: () => markN4KanjiStudied(exercise.kanji, exercise.cardId),
             markDifficult: () => markN4KanjiDifficult(exercise.kanji, exercise.cardId),
             markCompleted: () => {
@@ -16351,10 +16534,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }
         });
     }
-    function handleN4SrsAction(cardId, rating, source = "review") {
+    function handleN4SrsAction(cardId, rating, source = "review", options = {}) {
         const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
         if (!card)
             return;
+        const scrollPolicy = options.scrollPolicy || (source === "review" ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE);
+        const viewportSnapshot = options.viewportSnapshot || captureViewport();
+        const quietReward = Boolean(options.quietReward);
         const lessonHard = source === "lesson" && rating === "again";
         const progressRating = lessonHard ? "good" : rating;
         const displayRating = lessonHard ? "hard" : rating;
@@ -16368,23 +16554,23 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (lessonHard) {
             markN4KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
-            addReward(state.n4Meta?.rewards?.hardXp || 2, 1, `n4_srs_lesson_hard:${card.id}`);
+            addReward(state.n4Meta?.rewards?.hardXp || 2, 1, `n4_srs_lesson_hard:${card.id}`, { silent: quietReward });
         }
         else if (isForgottenRating(rating)) {
             markN4KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
-            addReward(state.n4Meta?.rewards?.hardXp || 2, 0, `n4_srs_hard:${card.id}`);
+            addReward(state.n4Meta?.rewards?.hardXp || 2, 0, `n4_srs_hard:${card.id}`, { silent: quietReward });
         }
         else {
             state.progress.totalCorrect += 1;
-            addReward(rating === "easy" ? (state.n4Meta?.rewards?.knowXp || 7) : (state.n4Meta?.rewards?.addToSrsXp || 5), 1, `n4_srs:${card.id}`);
+            addReward(rating === "easy" ? (state.n4Meta?.rewards?.knowXp || 7) : (state.n4Meta?.rewards?.addToSrsXp || 5), 1, `n4_srs:${card.id}`, { silent: quietReward });
         }
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("N4 SRS post-render effects", () => {
             playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function markN4Writing(cardId) {
         const card = findCard(cardId) || n4AllCards().find((item) => String(item.id) === String(cardId));
@@ -16596,7 +16782,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         state.activeTextbookLevel = "N4";
         state.activeTextbookSubroute = subroute || null;
         n4Course().opened = true;
-        const nextHash = subroute ? `#jlpt/n4/${encodeURIComponent(subroute)}` : "#jlpt/n4";
+        const nextHash = subroute ? `#textbooks/N4/${encodeURIComponent(subroute)}` : "#textbooks/N4";
         replaceRouteUrl(nextHash);
         evaluateAchievements();
         saveProgress();
@@ -18044,6 +18230,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             rewardXp: Number(exercise.rewardXp || state.n3Meta?.rewards?.exerciseXp || 10),
             rewardMoon: Number(exercise.rewardMoon || state.n3Meta?.rewards?.exerciseMoon || 1),
             rewardKey: `n3_exercise:${exercise.id}`,
+            quietReward: true,
             markStudied: () => markN3KanjiStudied(exercise.kanji, exercise.cardId),
             markDifficult: () => markN3KanjiDifficult(exercise.kanji, exercise.cardId),
             markCompleted: () => {
@@ -18058,10 +18245,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }
         });
     }
-    function handleN3SrsAction(cardId, rating, source = "review") {
+    function handleN3SrsAction(cardId, rating, source = "review", options = {}) {
         const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
         if (!card)
             return;
+        const scrollPolicy = options.scrollPolicy || (source === "review" ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE);
+        const viewportSnapshot = options.viewportSnapshot || captureViewport();
+        const quietReward = Boolean(options.quietReward);
         const lessonHard = source === "lesson" && rating === "again";
         const progressRating = lessonHard ? "good" : rating;
         const displayRating = lessonHard ? "hard" : rating;
@@ -18075,23 +18265,23 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (lessonHard) {
             markN3KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
-            addReward(state.n3Meta?.rewards?.hardXp || 2, 1, `n3_srs_lesson_hard:${card.id}`);
+            addReward(state.n3Meta?.rewards?.hardXp || 2, 1, `n3_srs_lesson_hard:${card.id}`, { silent: quietReward });
         }
         else if (isForgottenRating(rating)) {
             markN3KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
-            addReward(state.n3Meta?.rewards?.hardXp || 2, 0, `n3_srs_hard:${card.id}`);
+            addReward(state.n3Meta?.rewards?.hardXp || 2, 0, `n3_srs_hard:${card.id}`, { silent: quietReward });
         }
         else {
             state.progress.totalCorrect += 1;
-            addReward(rating === "easy" ? (state.n3Meta?.rewards?.knowXp || 8) : (state.n3Meta?.rewards?.addToSrsXp || 6), 1, `n3_srs:${card.id}`);
+            addReward(rating === "easy" ? (state.n3Meta?.rewards?.knowXp || 8) : (state.n3Meta?.rewards?.addToSrsXp || 6), 1, `n3_srs:${card.id}`, { silent: quietReward });
         }
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("N3 SRS post-render effects", () => {
             playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function markN3Writing(cardId) {
         const card = findCard(cardId) || n3AllCards().find((item) => String(item.id) === String(cardId));
@@ -19751,6 +19941,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             rewardXp: Number(exercise.rewardXp || state.n2Meta?.rewards?.exerciseXp || 11),
             rewardMoon: Number(exercise.rewardMoon || state.n2Meta?.rewards?.exerciseMoon || 1),
             rewardKey: `n2_exercise:${exercise.id}`,
+            quietReward: true,
             markStudied: () => markN2KanjiStudied(exercise.kanji, exercise.cardId),
             markDifficult: () => markN2KanjiDifficult(exercise.kanji, exercise.cardId),
             markCompleted: () => {
@@ -19765,10 +19956,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }
         });
     }
-    function handleN2SrsAction(cardId, rating, source = "review") {
+    function handleN2SrsAction(cardId, rating, source = "review", options = {}) {
         const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
         if (!card)
             return;
+        const scrollPolicy = options.scrollPolicy || (source === "review" ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE);
+        const viewportSnapshot = options.viewportSnapshot || captureViewport();
+        const quietReward = Boolean(options.quietReward);
         const lessonHard = source === "lesson" && rating === "again";
         const progressRating = lessonHard ? "good" : rating;
         const displayRating = lessonHard ? "hard" : rating;
@@ -19782,23 +19976,23 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (lessonHard) {
             markN2KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
-            addReward(state.n2Meta?.rewards?.hardXp || 2, 1, `n2_srs_lesson_hard:${card.id}`);
+            addReward(state.n2Meta?.rewards?.hardXp || 2, 1, `n2_srs_lesson_hard:${card.id}`, { silent: quietReward });
         }
         else if (isForgottenRating(rating)) {
             markN2KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
-            addReward(state.n2Meta?.rewards?.hardXp || 2, 0, `n2_srs_hard:${card.id}`);
+            addReward(state.n2Meta?.rewards?.hardXp || 2, 0, `n2_srs_hard:${card.id}`, { silent: quietReward });
         }
         else {
             state.progress.totalCorrect += 1;
-            addReward(rating === "easy" ? (state.n2Meta?.rewards?.knowXp || 9) : (state.n2Meta?.rewards?.addToSrsXp || 7), 1, `n2_srs:${card.id}`);
+            addReward(rating === "easy" ? (state.n2Meta?.rewards?.knowXp || 9) : (state.n2Meta?.rewards?.addToSrsXp || 7), 1, `n2_srs:${card.id}`, { silent: quietReward });
         }
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("N2 SRS post-render effects", () => {
             playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function markN2Writing(cardId) {
         const card = findCard(cardId) || n2AllCards().find((item) => String(item.id) === String(cardId));
@@ -21495,6 +21689,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             rewardXp: Number(exercise.rewardXp || state.n1Meta?.rewards?.exerciseXp || 11),
             rewardMoon: Number(exercise.rewardMoon || state.n1Meta?.rewards?.exerciseMoon || 1),
             rewardKey: `n1_exercise:${exercise.id}`,
+            quietReward: true,
             markStudied: () => markN1KanjiStudied(exercise.kanji, exercise.cardId),
             markDifficult: () => markN1KanjiDifficult(exercise.kanji, exercise.cardId),
             markCompleted: () => {
@@ -21509,10 +21704,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }
         });
     }
-    function handleN1SrsAction(cardId, rating, source = "review") {
+    function handleN1SrsAction(cardId, rating, source = "review", options = {}) {
         const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
         if (!card)
             return;
+        const scrollPolicy = options.scrollPolicy || (source === "review" ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE);
+        const viewportSnapshot = options.viewportSnapshot || captureViewport();
+        const quietReward = Boolean(options.quietReward);
         const lessonHard = source === "lesson" && rating === "again";
         const progressRating = lessonHard ? "good" : rating;
         const displayRating = lessonHard ? "hard" : rating;
@@ -21526,23 +21724,23 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (lessonHard) {
             markN1KanjiDifficult(card.kanji, card.id, false);
             state.progress.totalCorrect += 1;
-            addReward(state.n1Meta?.rewards?.hardXp || 2, 1, `n1_srs_lesson_hard:${card.id}`);
+            addReward(state.n1Meta?.rewards?.hardXp || 2, 1, `n1_srs_lesson_hard:${card.id}`, { silent: quietReward });
         }
         else if (isForgottenRating(rating)) {
             markN1KanjiDifficult(card.kanji, card.id);
             state.progress.totalWrong += 1;
-            addReward(state.n1Meta?.rewards?.hardXp || 2, 0, `n1_srs_hard:${card.id}`);
+            addReward(state.n1Meta?.rewards?.hardXp || 2, 0, `n1_srs_hard:${card.id}`, { silent: quietReward });
         }
         else {
             state.progress.totalCorrect += 1;
-            addReward(rating === "easy" ? (state.n1Meta?.rewards?.knowXp || 9) : (state.n1Meta?.rewards?.addToSrsXp || 7), 1, `n1_srs:${card.id}`);
+            addReward(rating === "easy" ? (state.n1Meta?.rewards?.knowXp || 9) : (state.n1Meta?.rewards?.addToSrsXp || 7), 1, `n1_srs:${card.id}`, { silent: quietReward });
         }
-        renderImmediatePreservingScroll();
+        renderStudyUpdate({ scrollPolicy, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("N1 SRS post-render effects", () => {
             playUxSound(isForgottenRating(rating) ? "answer_wrong" : "answer_correct");
-            evaluateAchievements();
-        });
+            evaluateAchievements({ silent: quietReward });
+        }, { scrollPolicy, viewportSnapshot });
     }
     function markN1Writing(cardId) {
         const card = findCard(cardId) || n1AllCards().find((item) => String(item.id) === String(cardId));
@@ -23069,6 +23267,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (!prepared || !Number.isInteger(index))
             return;
         const labels = sentencePracticeLabels();
+        const viewportSnapshot = captureViewport();
         const practice = state.progress.sentencePractice;
         if (practice.result?.correct || practice.selected.includes(index))
             return;
@@ -23080,39 +23279,42 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         practice.checked = false;
         practice.result = { correct: false, message: labels.inserted, wrongIndexes: [] };
         saveProgress();
-        render();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function undoSentenceTile() {
         const practice = sentencePracticeProgress();
         if (!practice.selected.length || practice.result?.correct)
             return;
+        const viewportSnapshot = captureViewport();
         practice.selected.pop();
         practice.checked = false;
         practice.result = { correct: false, message: sentencePracticeLabels().removed, wrongIndexes: [] };
         saveProgress();
-        render();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function clearSentencePractice() {
         const practice = sentencePracticeProgress();
         if (practice.result?.correct)
             return;
+        const viewportSnapshot = captureViewport();
         practice.selected = [];
         practice.checked = false;
         practice.result = null;
         saveProgress();
-        render();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
     function checkSentencePractice() {
         const prepared = ensureSentencePractice();
         if (!prepared)
             return;
         const labels = sentencePracticeLabels();
+        const viewportSnapshot = captureViewport();
         const practice = state.progress.sentencePractice;
         if (practice.selected.length < prepared.answerFlat.length) {
             practice.checked = true;
             practice.result = { correct: false, message: labels.fillAll, wrongIndexes: [] };
             saveProgress();
-            render();
+            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
             return;
         }
         const wrongIndexes = prepared.answerFlat
@@ -23127,7 +23329,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             message: correct ? labels.correct : labels.wrong
         };
         if (correct) {
-            awardSentencePractice(prepared.exercise);
+            awardSentencePractice(prepared.exercise, { quietReward: true });
             adjustEvaRelationship({ trust: 0.8, curiosity: 0.5, discipline: 0.4 }, "sentence_correct");
             dispatchEvaEvent("sentence_complete", { exerciseId: prepared.exercise.id, source: prepared.exercise.source || "builtin" });
             playTone("ok");
@@ -23143,12 +23345,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             playTone("again");
         }
         saveProgress();
-        render();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
     }
-    function awardSentencePractice(exercise) {
+    function awardSentencePractice(exercise, options = {}) {
         const practice = sentencePracticeProgress();
         if (practice.completed[exercise.id])
             return;
+        const quietReward = Boolean(options.quietReward);
         const rewards = state.rewards?.rewards || {};
         const xp = rewards.sentencePracticeXp || sentenceRewardFallback.xp;
         const coins = rewards.sentencePracticeCoins || sentenceRewardFallback.coins;
@@ -23160,11 +23363,11 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         today.reviews += 1;
         today.minutes = round((today.minutes || 0) + 0.8, 1);
         state.progress.daily[todayKey()] = today;
-        addReward(xp, coins, `sentence:${exercise.id}`);
+        addReward(xp, coins, `sentence:${exercise.id}`, { silent: quietReward });
         adjustEvaRelationship({ trust: 0.8, curiosity: 0.7 }, "sentence_complete");
         updateStreak();
-        checkDailyGoal();
-        evaluateAchievements();
+        checkDailyGoal({ silent: true });
+        evaluateAchievements({ silent: quietReward });
     }
     function nextSentencePractice() {
         const learned = getLearnedSentenceCards();
@@ -25095,6 +25298,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const card = findCard(state.activeCardId);
         if (!card || !ratingLabels[rating])
             return;
+        const viewportSnapshot = captureViewport();
         markKanjiSeen(card, "srs_rating");
         const before = cloneProgress(getCardProgress(card.id));
         const after = calculateNextProgress(before, rating);
@@ -25133,21 +25337,21 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         state.reviewQueueLastKind = "card";
         recordReviewSessionResult("kanji", rating, { label: card.kanji, level: card.jlpt, dueAt: after.dueAt, cardId: card.id });
+        removeReviewSessionItem(`card:${card.id}`);
         state.revealed = false;
         state.activeCardId = null;
         resetReadingCheck();
-        state.pendingFocus = "__scroll-top__";
         trackReviewSessionComplete("card");
-        renderImmediate();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.TOP, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("review card post-render effects", () => {
             stopKanjiAudio();
             playTone(answerTone);
             syncEvaRelationshipFromProgress();
             checkLessonCompletion(card.lessonId);
-            checkDailyGoal();
+            checkDailyGoal({ silent: true });
             evaluateAchievements();
-        }, { scrollTop: true });
+        }, { scrollPolicy: STUDY_SCROLL_POLICY.TOP, viewportSnapshot });
     }
     function isRewardModalVisible() {
         return Boolean(state.rewardModal && state.route !== "review");
@@ -25156,6 +25360,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const parsed = parseKanaReviewCardId(cardId, slug);
         if (!parsed?.id || !isKanaCourseSlug(parsed.slug))
             return;
+        const viewportSnapshot = captureViewport();
         const progress = kanaCourseProgress(parsed.slug);
         const review = normalizeKanaReviewStorage(parsed.slug);
         const before = cloneProgress(migrateCardProgress(review[parsed.id] || null));
@@ -25186,19 +25391,19 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         state.reviewQueueLastKind = "kana";
         recordReviewSessionResult("kana", normalizedRating, { label: parsed.kana, course: kanaCourseReviewLabel(parsed.slug), dueAt: after.dueAt, cardId: parsed.id });
+        removeReviewSessionItem(parsed.id);
         state.revealed = false;
         state.activeCardId = null;
         clearReviewExerciseState();
         resetReadingCheck();
-        state.pendingFocus = "__scroll-top__";
         trackReviewSessionComplete("kana");
-        renderImmediate();
+        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.TOP, viewportSnapshot });
         saveProgress();
         scheduleStudySideEffects("kana review post-render effects", () => {
             stopKanjiAudio();
             playTone(answerTone);
             syncEvaRelationshipFromProgress();
-        }, { scrollTop: state.route === "review" });
+        }, { scrollPolicy: STUDY_SCROLL_POLICY.TOP, viewportSnapshot });
     }
     function srsButtonLabels() {
         return lang() === "ru"
@@ -25500,7 +25705,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         });
         maybeShowNotificationPrompt("lesson_complete");
     }
-    function checkDailyGoal() {
+    function checkDailyGoal(options = {}) {
         const key = todayKey();
         const today = todayStats();
         if (today.goalClaimed || today.reviews < state.progress.settings.dailyGoal)
@@ -25509,15 +25714,17 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const xp = state.rewards.rewards.comboXp;
         const coins = state.rewards.rewards.streakCoins;
         addReward(xp, coins, "daily_goal");
-        queueReward({
-            title: t("dailyGoal"),
-            message: dialogueText("leya", "goal"),
-            xp,
-            coins,
-            mascot: "leya",
-            mood: "happy",
-            dialog: "goal"
-        });
+        if (!options.silent) {
+            queueReward({
+                title: t("dailyGoal"),
+                message: dialogueText("leya", "goal"),
+                xp,
+                coins,
+                mascot: "leya",
+                mood: "happy",
+                dialog: "goal"
+            });
+        }
         state.progress.daily[key] = today;
     }
     function recordAppOpen() {
@@ -25813,7 +26020,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return 0;
     }
     function queueReward(reward) {
-        if (reward?.type === "achievement" && state.route === "review" && getReviewQueueCount() > 0)
+        if (reward?.type === "achievement" && reviewSessionHasRemainingItems())
             return;
         if (!state.rewardModal) {
             state.rewardModal = reward;
@@ -26701,6 +26908,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return items.sort(compareReviewQueueItems);
     }
     function allReadingExercises() {
+        if (reviewQueueCountRenderActive && reviewAllReadingExercisesRenderCache)
+            return reviewAllReadingExercisesRenderCache;
         const items = [];
         state.n5Reading.forEach((exercise) => {
             if (exercise?.id)
@@ -26735,14 +26944,18 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 });
             });
         });
-        return [...items, ...jlptReadingMarkdownExercises()];
+        const exercises = [...items, ...jlptReadingMarkdownExercises()];
+        if (reviewQueueCountRenderActive)
+            reviewAllReadingExercisesRenderCache = exercises;
+        return exercises;
     }
     function findReadingExerciseById(exerciseId, level = "") {
         const normalizedId = String(exerciseId || "");
         const canonical = String(level || "").toUpperCase();
-        return allReadingExercises().find((exercise) => String(exercise.id || "") === normalizedId
+        const exercises = allReadingExercises();
+        return exercises.find((exercise) => String(exercise.id || "") === normalizedId
             && (!canonical || String(exercise.level || "").toUpperCase() === canonical))
-            || allReadingExercises().find((exercise) => String(exercise.id || "") === normalizedId)
+            || exercises.find((exercise) => String(exercise.id || "") === normalizedId)
             || null;
     }
     function readingExerciseMeta(exercise) {
@@ -26942,12 +27155,43 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const exercises = [...getDueTextbookExerciseItems(), ...getDueReadingExerciseItems()].sort(compareReviewQueueItems);
         return normalizeReviewQueueItems(interleaveReviewQueueItems(cardLikeItems, exercises, REVIEW_EXERCISE_CARD_GAP));
     }
-    function resetReviewSession(items = buildCurrentReviewQueueItems()) {
+    function currentReviewQueueItemsSnapshot() {
+        if (reviewQueueCountRenderActive && reviewQueueItemsRenderCache)
+            return reviewQueueItemsRenderCache;
+        const items = buildCurrentReviewQueueItems();
+        if (reviewQueueCountRenderActive) {
+            reviewQueueItemsRenderCache = items;
+            reviewQueueCountRenderCache = items.length;
+        }
+        return items;
+    }
+    function resetReviewSession(items = currentReviewQueueItemsSnapshot()) {
         const keys = Object.freeze(normalizeReviewQueueItems(items).map((item) => item.key).filter(Boolean));
         state.reviewSession = { keys, initialSize: keys.length, startedAt: new Date().toISOString(), results: { remember: 0, forgot: 0, items: [] } };
     }
+    function removeReviewSessionItem(key) {
+        if (state.route !== "review" || !state.reviewSession)
+            return false;
+        const normalizedKey = String(key || "").trim();
+        if (!normalizedKey)
+            return false;
+        const currentKeys = Array.isArray(state.reviewSession.keys) ? state.reviewSession.keys : [];
+        const nextKeys = currentKeys.filter((item) => item !== normalizedKey);
+        if (nextKeys.length === currentKeys.length)
+            return false;
+        state.reviewSession.keys = Object.freeze(nextKeys);
+        return true;
+    }
+    function reviewSessionHasRemainingItems() {
+        if (state.route !== "review")
+            return false;
+        const keys = Array.isArray(state.reviewSession?.keys) ? state.reviewSession.keys : null;
+        if (keys)
+            return keys.length > 0;
+        return Boolean(state.activeCardId || state.activeExerciseReviewId);
+    }
     function getReviewQueueItems() {
-        const current = buildCurrentReviewQueueItems();
+        const current = currentReviewQueueItemsSnapshot();
         if (state.route !== "review")
             return current;
         if (!state.reviewSession)
@@ -26980,6 +27224,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         state.reviewSession.results = results;
     }
     function getLearningLaterCount() {
+        if (reviewQueueCountRenderActive && reviewLearningLaterCountRenderCache !== null)
+            return reviewLearningLaterCountRenderCache;
         const now = Date.now();
         const kanjiCount = getJlptReviewPoolCards().filter((card) => {
             const progress = getCardProgress(card.id);
@@ -26990,7 +27236,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
             return progress.state === "Learning" && dueAt > now;
         }).length;
-        return kanjiCount + kanaCount;
+        const count = kanjiCount + kanaCount;
+        if (reviewQueueCountRenderActive)
+            reviewLearningLaterCountRenderCache = count;
+        return count;
     }
     function getAllKanaSrsProgress() {
         return ["hiragana", "katakana"].flatMap((slug) => {
@@ -27000,15 +27249,94 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         });
     }
     function getTotalSrsCardCount() {
-        return getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length + getAllKanaSrsProgress().filter((progress) => progress.state !== "New").length;
+        if (reviewQueueCountRenderActive && reviewTotalSrsCardCountRenderCache !== null)
+            return reviewTotalSrsCardCountRenderCache;
+        const count = getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length + getAllKanaSrsProgress().filter((progress) => progress.state !== "New").length;
+        if (reviewQueueCountRenderActive)
+            reviewTotalSrsCardCountRenderCache = count;
+        return count;
     }
     function getReviewQueueCount() {
         if (reviewQueueCountRenderActive && reviewQueueCountRenderCache !== null)
             return reviewQueueCountRenderCache;
-        const count = buildCurrentReviewQueueItems().length;
+        const count = state.route === "review"
+            ? currentReviewQueueItemsSnapshot().length
+            : countReviewQueueItemsFast();
         if (reviewQueueCountRenderActive)
             reviewQueueCountRenderCache = count;
         return count;
+    }
+    function countReviewQueueItemsFast() {
+        const now = Date.now();
+        return countDueKanjiReviewItemsFast(now)
+            + countDueKanaReviewItemsFast(now)
+            + countDueTextbookExerciseItemsFast(now)
+            + countDueReadingExerciseItemsFast(now);
+    }
+    function isReviewProgressDue(progress, now = Date.now()) {
+        if (!progress || typeof progress !== "object")
+            return false;
+        if (progress.state === "New")
+            return false;
+        const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
+        return Boolean(dueAt && dueAt <= now);
+    }
+    function countDueKanjiReviewItemsFast(now = Date.now()) {
+        return getJlptReviewPoolCards().reduce((count, card) => {
+            const progress = getCardProgress(card.id);
+            return count + (isReviewProgressDue(progress, now) ? 1 : 0);
+        }, 0);
+    }
+    function countDueKanaReviewItemsFast(now = Date.now()) {
+        return ["hiragana", "katakana"].reduce((count, slug) => {
+            if (!isKanaCourseSlug(slug))
+                return count;
+            const review = normalizeKanaReviewStorage(slug);
+            return count + Object.values(review).reduce((innerCount, progress) => {
+                const normalized = migrateCardProgress(progress);
+                return innerCount + (isReviewProgressDue(normalized, now) ? 1 : 0);
+            }, 0);
+        }, 0);
+    }
+    function countDueTextbookExerciseItemsFast(now = Date.now()) {
+        return LEVEL_ORDER.reduce((count, level) => {
+            const course = textbookCourseByLevel(level);
+            return count + Object.entries(course?.exerciseSrs || {}).reduce((innerCount, [exerciseId, progress]) => {
+                const normalized = normalizeTextbookExerciseProgress(progress, {
+                    level,
+                    exerciseId,
+                    lessonId: progress?.lessonId || "",
+                    cardId: progress?.cardId || "",
+                    kanji: progress?.kanji || "",
+                    type: progress?.type || "",
+                    title: progress?.title || null,
+                    prompt: progress?.prompt || "",
+                    answer: progress?.answer || "",
+                    answerLabel: progress?.answerLabel || ""
+                });
+                if (!isReviewProgressDue(normalized, now))
+                    return innerCount;
+                if (!textbookExerciseProgressHasUserActivity(normalized))
+                    return innerCount;
+                if (normalized.lessonId && !isJlptLessonViewed(level, normalized.lessonId))
+                    return innerCount;
+                return innerCount + 1;
+            }, 0);
+        }, 0);
+    }
+    function countDueReadingExerciseItemsFast(now = Date.now()) {
+        return Object.values(state.progress?.readingExercises || {}).reduce((count, progress) => {
+            const level = String(progress?.level || "").toUpperCase();
+            if (level && !isJlptReadingViewed(level))
+                return count;
+            const normalized = normalizeReadingExerciseProgress(progress, {
+                level,
+                id: progress?.exerciseId || progress?.id || ""
+            });
+            if (!readingProgressHasUserActivity(normalized))
+                return count;
+            return count + (isReviewProgressDue(normalized, now) ? 1 : 0);
+        }, 0);
     }
     function compareReviewQueueItems(a, b) {
         if (a.dueAt !== b.dueAt)
@@ -27031,6 +27359,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return String(a.key || "").localeCompare(String(b.key || ""));
     }
     function getJlptReviewPoolCards() {
+        if (reviewQueueCountRenderActive && reviewPoolCardsRenderCache)
+            return reviewPoolCardsRenderCache;
         const seen = new Set();
         const cards = [];
         LEVEL_ORDER.forEach((level) => {
@@ -27042,7 +27372,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 cards.push(card);
             });
         });
-        return cards.sort(compareStudyCards);
+        const sorted = cards.sort(compareStudyCards);
+        if (reviewQueueCountRenderActive)
+            reviewPoolCardsRenderCache = sorted;
+        return sorted;
     }
     function getTodayCards() {
         const end = endOfToday();
@@ -28367,7 +28700,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }, { dedupeKey: `${normalizedLevel || "legacy"}:${normalizedLessonId}` });
     }
     function trackReviewSessionComplete(source = "review") {
-        if (state.route !== "review" || getReviewQueueCount() > 0)
+        if (state.route !== "review" || reviewSessionHasRemainingItems())
             return;
         const sessionKey = state.reviewSession?.startedAt || "current";
         reachMetricGoal("review_session_complete", { route: "review", source }, { dedupeKey: sessionKey });
