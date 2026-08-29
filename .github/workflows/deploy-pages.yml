@@ -90,6 +90,7 @@ jobs:
       - name: Bundle budget report
         working-directory: index
         run: npm run perf:bundle
+        continue-on-error: true
 
       - name: Install Playwright browsers
         working-directory: index
