@@ -24,12 +24,15 @@ import {
     normalizeChangelogPayload
 } from "./services/changelog";
 import {
+    DEFAULT_EVA_OUTFIT_ID,
     normalizeMoonFragmentsBalance,
     resolveCustomizationBackgroundSelection,
+    resolveCustomizationOutfitSelection,
     normalizeShopEquipped,
     normalizeShopIdArray,
     resolveShopPurchase
 } from "./services/shop";
+import { stableShuffledOptions } from "./services/optionShuffle";
 import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from "./services/jlptLessonState";
 
 (() => {
@@ -316,6 +319,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         activeExerciseReviewSelection: [],
         activeExerciseReviewChoice: "",
         activeExerciseReviewTranslationOpen: false,
+        answerOptionOrders: {},
         reviewQueueLastKind: "",
         reviewSession: null,
         kanjiPageId: initialRouteMatch.status === "valid" && initialRouteMatch.route === "kanji" ? (initialRouteMatch.params.cardId || null) : null,
@@ -609,13 +613,14 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (bootAncillaryDataPromise)
             return bootAncillaryDataPromise;
         bootAncillaryDataPromise = (async () => {
-            const [dialogues, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, changelogPayload] = await Promise.all([
+            const [dialogues, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, evaSprites, changelogPayload] = await Promise.all([
                 fetchJson(DATA_URLS.dialogues),
                 fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
                 fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
                 fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
                 fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
                 fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
+                fetchJson(DATA_URLS.evaSprites, () => ({})),
                 fetchJson(DATA_URLS.changelog, () => null)
             ]);
             const achievementBundle = normalizeAchievementData(achievements, state.rewards?.achievements || []);
@@ -626,6 +631,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
             state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
             state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
+            state.evaSprites = evaSprites && typeof evaSprites === "object" && !Array.isArray(evaSprites) ? evaSprites : {};
             state.bootAncillaryLoaded = true;
             hydrateCustomization();
             syncEvaRuntimeInventory();
@@ -1841,7 +1847,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             owned: [],
             selected: {
                 background: "bg_study_hub",
-                outfit: "outfit_default_assassin",
+                outfit: DEFAULT_EVA_OUTFIT_ID,
                 theme: "theme_default_dark",
                 decoration: null,
                 frame: null,
@@ -1991,8 +1997,14 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             progressEquipped: state.progress.shop?.equipped?.background,
             progressSelected: state.progress.selectedEvaRoomBackground
         });
-        if (state.progress.selectedEvaSprite)
-            selected.outfit = outfitItemBySprite(state.progress.selectedEvaSprite)?.id || selected.outfit;
+        selected.outfit = resolveCustomizationOutfitSelection({
+            catalogItems: customizationShopItems(),
+            owned: [...owned],
+            customizationSelected: selected.outfit,
+            progressEquipped: state.progress.shop?.equipped?.outfit,
+            progressSelected: state.progress.selectedEvaSprite,
+            fallbackId: DEFAULT_EVA_OUTFIT_ID
+        });
         if (!catalogReady) {
             selected.background = storedCustomizationBackgroundId
                 || customization.selected?.background
@@ -2004,7 +2016,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (catalogReady && !owned.has(selected.background))
             selected.background = "bg_study_hub";
         if (catalogReady && !owned.has(selected.outfit))
-            selected.outfit = "outfit_default_assassin";
+            selected.outfit = resolveCustomizationOutfitSelection({
+                catalogItems: customizationShopItems(),
+                owned: [...owned],
+                progressEquipped: state.progress.shop?.equipped?.outfit,
+                progressSelected: state.progress.selectedEvaSprite,
+                fallbackId: DEFAULT_EVA_OUTFIT_ID
+            });
         if (catalogReady && !owned.has(selected.theme))
             selected.theme = "theme_default_dark";
         if (catalogReady && selected.decoration && !owned.has(selected.decoration))
@@ -2090,9 +2108,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return customizationShopItems().find((item) => {
             if (item.type !== "outfit")
                 return false;
-            if (item.spriteId === spriteId)
+            if (item.spriteId === spriteId || (item.spriteId && spriteId.startsWith(`${item.spriteId}_`)))
                 return true;
-            if (item.legacySpriteId === spriteId)
+            if (item.legacySpriteId === spriteId || (item.legacySpriteId && spriteId.startsWith(`${item.legacySpriteId}_`)))
                 return true;
             return Array.isArray(item.legacyIds) && item.legacyIds.map(String).includes(legacyToken);
         }) || null;
@@ -4254,8 +4272,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             ].filter(Boolean))];
         state.evaRuntime.ownedEffects = [...new Set(ownedItems.filter((item) => item.type === "effect").map((item) => item.id))];
         state.evaRuntime.ownedDecorations = [...new Set(ownedItems.filter((item) => item.type === "decoration").map((item) => item.id))];
+        const selectedSkin = selectedEvaSkinId();
         state.evaRuntime.currentBackground = selectedBackground;
-        state.evaRuntime.activeSkin = state.evaRuntime.currentSkin || state.progress.selectedEvaSprite || "idle";
+        state.evaRuntime.currentSkin = selectedSkin;
+        state.evaRuntime.activeSkin = selectedSkin;
         state.evaRuntime.activeBackground = selectedBackground;
     }
     function normalizeEvaRoomDialogueData(payload) {
@@ -5604,14 +5624,14 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.navMenu = null;
             if (route === "writing" && state.detailCardId)
                 state.activeCardId = state.detailCardId;
-            queueRouteNavigation(route, target.dataset.focus || null, target.dataset.subroute || null);
+            queueRouteNavigation(route, target.dataset.focus || null, target.dataset.subroute || null, { afterFeedback: true });
         }
         if (action === "nav-menu-route") {
             const route = target.dataset.route;
             state.navMenu = null;
             if (route === "writing" && state.detailCardId)
                 state.activeCardId = state.detailCardId;
-            queueRouteNavigation(route, target.dataset.focus || null, target.dataset.subroute || null);
+            queueRouteNavigation(route, target.dataset.focus || null, target.dataset.subroute || null, { afterFeedback: true });
         }
         if (action === "share-page")
             shareSection(target.dataset.shareSection || state.route, shareContextFromTarget(target)).catch(() => toast(lang() === "ru" ? "Не удалось поделиться" : "Share failed"));
@@ -6536,11 +6556,22 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         scheduleScrollPageToTop();
         scheduleRender();
     }
-    function queueRouteNavigation(route, focus = null, subroute = null) {
+    function queueRouteNavigation(route, focus = null, subroute = null, options = {}) {
         const token = ++routeNavigationToken;
-        if (token !== routeNavigationToken)
+        const run = () => {
+            if (token !== routeNavigationToken)
+                return;
+            setRoute(route, focus, subroute);
+        };
+        if (options?.afterFeedback) {
+            if (renderRaf) {
+                cancelAnimationFrame(renderRaf);
+                renderRaf = 0;
+            }
+            requestAnimationFrame(() => window.setTimeout(run, 0));
             return;
-        setRoute(route, focus, subroute);
+        }
+        run();
     }
     function queueJlptLessonStart(level, preferredLessonId = "") {
         const token = ++routeNavigationToken;
@@ -8141,7 +8172,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const mood = state.evaRuntime?.mood || autonomy.mood || evaRelationship().mood;
         const emotion = state.evaRuntime?.emotion || autonomy.emotion || line?.emotion || "calm";
         const presenceState = line?.state || state.evaRuntime?.presenceState || (question ? "wait_choice" : "speak");
-        const sprite = evaSpritePath(line?.sprite || state.evaRuntime?.currentSkin || selectedEvaSkinId());
+        const sprite = evaSpritePath(resolveEvaSprite(line?.sprite || state.evaRuntime?.currentSkin || selectedEvaSkinId(), emotion));
         return {
             line,
             question,
@@ -9022,17 +9053,45 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     }
     function selectedEvaSkinId() {
         const selectedOutfitId = state.customization?.selected?.outfit || state.progress?.shop?.equipped?.outfit || null;
-        const outfit = customizationShopItem(selectedOutfitId);
+        const outfit = customizationShopItem(selectedOutfitId) || legacyCustomizationItem(selectedOutfitId) || outfitItemBySprite(selectedOutfitId);
         const spriteId = outfit?.spriteId || state.progress?.selectedEvaSprite || "idle";
-        return state.evaSprites?.[spriteId] && isEvaSpriteUnlocked(spriteId) ? spriteId : "idle";
+        return state.evaSprites?.[spriteId] && isEvaSkinAvailable(spriteId) ? spriteId : "idle";
+    }
+    function outfitSpriteBaseId(spriteId) {
+        const value = String(spriteId || "");
+        const outfit = outfitItemBySprite(value);
+        const base = outfit?.spriteId || outfit?.legacySpriteId || "";
+        if (!value || !base)
+            return "";
+        return value === base || value.startsWith(`${base}_`) ? base : "";
+    }
+    function selectedOutfitSpriteForRequest(spriteId) {
+        const value = String(spriteId || "");
+        if (!value)
+            return value;
+        const selectedSkin = selectedEvaSkinId();
+        const requestedOutfitBase = outfitSpriteBaseId(value);
+        return requestedOutfitBase && selectedSkin && requestedOutfitBase !== selectedSkin ? selectedSkin : value;
+    }
+    function isEvaSkinAvailable(spriteId) {
+        const id = String(spriteId || "");
+        if (!id)
+            return false;
+        if (isEvaSpriteUnlocked(id))
+            return true;
+        const outfit = outfitItemBySprite(id);
+        if (!outfit)
+            return false;
+        return Boolean(outfit.defaultOwned || isCustomizationOwned(outfit.id));
     }
     function isBaseEvaEmotionSprite(id) {
         const value = String(id || "");
         return new Set(["normal", "neutral", "idle", "default", "welcome", "happy", "soft_smile", "gentle_smile", "sad", "angry", "shy", "think", "thinking", "focus", "observe", "observation", "explain", "teach", "ready", "reading", "serious", "strict", "determined", "tired", "surprised", "cold", "proud", "approve", "confirm", "achievement", "reward", "review", "correct", "levelup", "writing", "calm", "tea", "speaking"]).has(value);
     }
     function resolveEvaSprite(skinId, emotion = null) {
-        const requestedSkin = skinId && skinId !== "relationship" ? String(skinId) : null;
+        const rawRequestedSkin = skinId && skinId !== "relationship" ? String(skinId) : null;
         const selectedSkin = selectedEvaSkinId();
+        const requestedSkin = selectedOutfitSpriteForRequest(rawRequestedSkin);
         const requestedIsBaseEmotion = isBaseEvaEmotionSprite(requestedSkin);
         const normalizedSkin = requestedSkin && !requestedIsBaseEmotion ? requestedSkin : selectedSkin;
         const mood = state.evaRuntime?.mood || evaRelationship().mood;
@@ -9053,7 +9112,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             "idle",
             "default"
         ].filter(Boolean);
-        const picked = candidates.find((candidate) => state.evaSprites?.[candidate] && (isEvaSpriteUnlocked(candidate) || !normalizedSkin || isEvaSpriteUnlocked(normalizedSkin)));
+        const picked = candidates.find((candidate) => state.evaSprites?.[candidate] && (isEvaSpriteUnlocked(candidate) || !normalizedSkin || isEvaSkinAvailable(normalizedSkin)));
         return picked || "idle";
     }
     function evaSkinnedSpriteCandidates(skin, emotionSprites = []) {
@@ -9271,6 +9330,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function chooseEvaAutonomySprite(line) {
         ensureEvaRoomProgress();
         const mood = state.evaRuntime?.mood || calculateEvaMood(getEvaContext());
+        const selectedSkin = selectedEvaSkinId();
         const moodPrefs = {
             close: ["casual_fox", "librarian_eva", "shy", "idle", "approve"],
             proud: ["academy_instructor", "moon_priestess", "study_session", "approve", "proud", "review"],
@@ -9289,7 +9349,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             quiet: ["fis_mentor", "idle", "default"],
             neutral: ["fis_mentor", "study_session", "librarian_eva", "idle", "think", "review", "default"]
         };
-        const preferred = [line?.sprite, ...(moodPrefs[mood] || moodPrefs.neutral)].filter(Boolean);
+        const preferred = [selectedSkin, line?.sprite, ...(moodPrefs[mood] || moodPrefs.neutral)].filter(Boolean);
         return preferred.find((sprite) => isEvaSpriteUnlocked(sprite) && state.evaSprites?.[sprite]) || state.progress.selectedEvaSprite || "idle";
     }
     function evaRoomNodeById(id) {
@@ -10752,7 +10812,18 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.customization.selected.frame = item.id;
         if (item.type === "outfit" && item.spriteId) {
             state.progress.selectedEvaSprite = item.spriteId;
+            state.progress.evaAutonomy ||= {};
             state.progress.evaAutonomy.currentLine = null;
+            const autonomy = evaAutonomy();
+            autonomy.currentLine = null;
+            autonomy.lastSprite = item.spriteId;
+            if (state.evaRuntime) {
+                state.evaRuntime.currentSkin = item.spriteId;
+                state.evaRuntime.activeSkin = item.spriteId;
+                state.evaRuntime.currentPhrase = null;
+                state.evaRuntime.memory ||= defaultEvaMemory();
+                state.evaRuntime.memory.preferredEvaOutfit = item.id;
+            }
         }
         if (item.type === "background") {
             state.progress.selectedEvaRoomBackground = item.id;
@@ -13873,7 +13944,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         <span class="pill">${escapeHtml(localized(exercise.title))}</span>
         <h3>${escapeHtml(exercise.prompt)}</h3>
         <div class="n5-option-grid">
-          ${exercise.options.map((option) => {
+          ${orderedTextbookExerciseOptions("N5", exercise).map((option) => {
             const selectedOption = result?.selected === option.value;
             const answerOption = result && option.value === exercise.answer;
             return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n5-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(option.label)}</button>`;
@@ -14590,6 +14661,32 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return options;
         const shift = rotateBy % options.length;
         return [...options.slice(shift), ...options.slice(0, shift)];
+    }
+    function answerOptionAttemptScope() {
+        if (state.route === "review")
+            return `review:${state.reviewSession?.startedAt || "active"}`;
+        return `route:${state.route}:${state.activeTextbookLevel || ""}:${state.activeTextbookSubroute || ""}`;
+    }
+    function answerOptionOrderKey(...parts) {
+        return [answerOptionAttemptScope(), ...parts]
+            .map((part) => String(part ?? "").trim().replace(/\s+/g, " "))
+            .join(":");
+    }
+    function orderedAnswerOptions(options, ...keyParts) {
+        const list = Array.isArray(options) ? options : [];
+        if (list.length <= 1)
+            return list;
+        state.answerOptionOrders ||= {};
+        const key = answerOptionOrderKey(...keyParts);
+        const result = stableShuffledOptions(list, state.answerOptionOrders[key]);
+        state.answerOptionOrders[key] = result.order;
+        return result.options;
+    }
+    function orderedTextbookExerciseOptions(level, exercise) {
+        return orderedAnswerOptions(exercise?.options || [], "textbook", level, exercise?.lessonId || "", exercise?.id || "");
+    }
+    function orderedReadingQuestionOptions(resolved, question, index = 0) {
+        return orderedAnswerOptions(question?.options || [], "reading", resolved?.level || "", resolved?.exerciseId || "", question?.id || index);
     }
     function findN5Exercise(id) {
         for (const lesson of n5Lessons()) {
@@ -15846,7 +15943,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         <span class="pill">${escapeHtml(localized(exercise.title))}</span>
         <h3>${escapeHtml(exercise.prompt)}</h3>
         <div class="n5-option-grid">
-          ${exercise.options.map((option) => {
+            ${orderedTextbookExerciseOptions("N4", exercise).map((option) => {
             const selectedOption = result?.selected === option.value;
             const answerOption = result && option.value === exercise.answer;
             return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n4-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(option.label)}</button>`;
@@ -17549,7 +17646,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         <span class="pill">${escapeHtml(localized(exercise.title))}</span>
         <h3>${escapeHtml(exercise.prompt)}</h3>
         <div class="n5-option-grid">
-          ${exercise.options.map((option) => {
+            ${orderedTextbookExerciseOptions("N3", exercise).map((option) => {
             const selectedOption = result?.selected === option.value;
             const answerOption = result && option.value === exercise.answer;
             return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n3-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(option.label)}</button>`;
@@ -19263,7 +19360,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         <span class="pill">${escapeHtml(localized(exercise.title))}</span>
         <h3>${escapeHtml(exercise.prompt)}</h3>
         <div class="n5-option-grid">
-          ${exercise.options.map((option) => {
+            ${orderedTextbookExerciseOptions("N2", exercise).map((option) => {
             const selectedOption = result?.selected === option.value;
             const answerOption = result && option.value === exercise.answer;
             return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n2-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(option.label)}</button>`;
@@ -20974,7 +21071,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         <span class="pill">${escapeHtml(localized(exercise.title))}</span>
         <h3>${escapeHtml(exercise.prompt)}</h3>
         <div class="n5-option-grid">
-          ${exercise.options.map((option) => {
+            ${orderedTextbookExerciseOptions("N1", exercise).map((option) => {
             const selectedOption = result?.selected === option.value;
             const answerOption = result && option.value === exercise.answer;
             return `<button class="btn ${answerOption ? "success" : selectedOption ? "warning" : "ghost"}" type="button" data-action="n1-answer" data-id="${escapeAttr(exercise.id)}" data-value="${escapeAttr(option.value)}" ${reviewLocked ? "disabled" : ""}>${escapeHtml(option.label)}</button>`;
@@ -24075,7 +24172,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function renderReadingReviewQuestion(resolved, question, index, result) {
         const questionKey = String(question?.id || index);
         const answerState = result?.answers?.[questionKey] || null;
-        const options = Array.isArray(question?.options) ? question.options : [];
+        const options = orderedReadingQuestionOptions(resolved, question, index);
         const correctOption = options.find((option) => String(option.value || "") === String(question?.answer || ""));
         const correctLabel = correctOption ? localized(correctOption.label || correctOption) : String(question?.answer || "");
         return `
@@ -26964,7 +27061,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function getDueTextbookExerciseItems() {
         const now = Date.now();
         const items = [];
-        [["N5", n5Course()], ["N4", n4Course()], ["N3", n3Course()], ["N2", n2Course()]].forEach(([level, course]) => {
+        LEVEL_ORDER.forEach((level) => {
+            const course = textbookCourseByLevel(level);
             Object.entries(course?.exerciseSrs || {}).forEach(([exerciseId, progress]) => {
                 const normalized = normalizeTextbookExerciseProgress(progress, {
                     level,
@@ -27359,8 +27457,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (reviewQueueCountRenderActive && reviewQueueCountRenderCache !== null)
             return reviewQueueCountRenderCache;
         const count = state.route === "review"
-            ? currentReviewQueueItemsSnapshot().length
-            : countReviewQueueItemsFast();
+            ? getReviewQueueItems().length
+            : currentReviewQueueItemsSnapshot().length;
         if (reviewQueueCountRenderActive)
             reviewQueueCountRenderCache = count;
         return count;

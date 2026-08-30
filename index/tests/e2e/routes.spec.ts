@@ -408,6 +408,149 @@ test("#home does not invent textbook reviews from viewed lessons", async ({ page
   await expect(page.locator("#app")).not.toContainText(/Повторить: [1-9]|Review: [1-9]|К ПОВТОРЕНИЮ\\s*[1-9]|DUE\\s*[1-9]/i);
 });
 
+test("home and review count zero when saved SRS entries are stale", async ({ page }) => {
+  await page.addInitScript(() => {
+    const dueAt = new Date(Date.now() - 60_000).toISOString();
+    localStorage.setItem("flashKanji.hasVisited", "true");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      settings: { language: "ru", languageManuallySelected: true },
+      appOpens: 2,
+      n1Course: {
+        viewedLessons: { "bulk-n1-01": dueAt },
+        completedLessons: {},
+        exerciseResults: {},
+        exerciseSrs: Object.fromEntries(Array.from({ length: 12 }, (_, index) => {
+          const id = `bulk-n1-01-missing-after-refresh-${index}`;
+          return [id, {
+            level: "N1",
+            lessonId: "bulk-n1-01",
+            exerciseId: id,
+            state: "Review",
+            intervalDays: 1,
+            srsStep: 1,
+            dueAt,
+            reviewCount: 1,
+            answer: "ghost",
+            selected: "ghost"
+          }];
+        }))
+      }
+    }));
+  });
+
+  await page.goto("./#home");
+  await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+  await expect(page.locator('.home-task-item[data-action="home-review"] .home-task-item-count')).toHaveText("0");
+  await expect(page.locator('.home-hero-actions [data-action="home-review"]')).toHaveCount(0);
+
+  await page.goto("./#review");
+  await expectRoute(page, "review");
+  await expect(page.locator("#app")).toContainText(/0 в очереди|0 in queue/i);
+  await expect(page.locator("#app")).toContainText(/Повторов сейчас нет|No reviews right now/i);
+});
+
+test("home and review count only valid due cards when stale entries are mixed in", async ({ page }) => {
+  await page.addInitScript(() => {
+    const dueAt = new Date(Date.now() - 60_000).toISOString();
+    const validCards = Object.fromEntries(["1", "2", "3", "4", "5"].map((id) => [id, {
+      state: "Review",
+      intervalDays: 1,
+      srsStep: 1,
+      dueAt,
+      lastReviewedAt: dueAt,
+      lastRating: "good",
+      reviewCount: 1,
+      lapses: 0,
+      correct: 1,
+      wrong: 0,
+      successRate: 100,
+      history: []
+    }]));
+
+    localStorage.setItem("flashKanji.hasVisited", "true");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      settings: { language: "ru", languageManuallySelected: true },
+      appOpens: 2,
+      cards: validCards,
+      n1Course: {
+        viewedLessons: { "bulk-n1-01": dueAt },
+        completedLessons: {},
+        exerciseResults: {},
+        exerciseSrs: Object.fromEntries(Array.from({ length: 7 }, (_, index) => {
+          const id = `bulk-n1-01-stale-exercise-${index}`;
+          return [id, {
+            level: "N1",
+            lessonId: "bulk-n1-01",
+            exerciseId: id,
+            state: "Review",
+            intervalDays: 1,
+            srsStep: 1,
+            dueAt,
+            reviewCount: 1,
+            answer: "ghost",
+            selected: "ghost"
+          }];
+        }))
+      }
+    }));
+  });
+
+  await page.goto("./#home");
+  await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+  await expect(page.locator('.home-task-item[data-action="home-review"] .home-task-item-count')).toHaveText("5");
+  await expect(page.locator('.home-hero-actions [data-action="home-review"]')).toContainText(/Повторить: 5|Review: 5/i);
+
+  await page.goto("./#review");
+  await expectRoute(page, "review");
+  await expect(page.locator("#app")).toContainText(/5 в очереди|5 in queue/i);
+});
+
+test("finishing the last due card updates review count to zero without reload", async ({ page }) => {
+  await page.addInitScript(() => {
+    const dueAt = new Date(Date.now() - 60_000).toISOString();
+    localStorage.setItem("flashKanji.hasVisited", "true");
+    localStorage.setItem("flashKanji.changelog.lastSeenVersion", "2026.08.27");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      settings: { language: "ru", languageManuallySelected: true },
+      appOpens: 2,
+      cards: {
+        "1": {
+          state: "Review",
+          intervalDays: 1,
+          srsStep: 1,
+          dueAt,
+          lastReviewedAt: dueAt,
+          lastRating: "good",
+          reviewCount: 1,
+          lapses: 0,
+          correct: 1,
+          wrong: 0,
+          successRate: 100,
+          history: []
+        }
+      }
+    }));
+  });
+
+  await page.goto("./#home");
+  await expect(page.locator('.home-task-item[data-action="home-review"] .home-task-item-count')).toHaveText("1");
+
+  await page.goto("./#review");
+  await expectRoute(page, "review");
+  await expect(page.locator("#app")).toContainText(/1 в очереди|1 in queue/i);
+  await page.locator('#app button[data-action="show-answer"]').click();
+  await expect(page.locator('#app button[data-action="rate"][data-rating="remember"]')).toBeVisible();
+  await page.locator('#app button[data-action="rate"][data-rating="remember"]').click();
+  await expect(page.locator("#app")).toContainText(/0 в очереди|0 in queue/i);
+
+  await page.locator('.bottom-nav [data-route="home"]').click();
+  await expect(page).toHaveURL(/#home$/);
+  await expect(page.locator('.home-task-item[data-action="home-review"] .home-task-item-count')).toHaveText("0");
+  await expect(page.locator('.home-hero-actions [data-action="home-review"]')).toHaveCount(0);
+});
+
 test("#textbooks/N1 renders the generated full N1 course", async ({ page, request }) => {
   const [metaResponse, lessonsResponse, kanjiResponse, grammarResponse, readingResponse, listeningResponse, finalResponse] = await Promise.all([
     request.get("/data/jlpt/n1/meta.json"),

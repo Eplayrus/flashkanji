@@ -20,6 +20,9 @@ export interface ShopCatalogItemLike {
   type?: unknown;
   price?: unknown;
   defaultOwned?: unknown;
+  spriteId?: unknown;
+  legacySpriteId?: unknown;
+  legacyIds?: unknown;
 }
 
 export interface CustomizationBackgroundSelectionInput {
@@ -31,7 +34,17 @@ export interface CustomizationBackgroundSelectionInput {
   fallbackId?: string;
 }
 
+export interface CustomizationOutfitSelectionInput {
+  catalogItems?: ShopCatalogItemLike[] | null;
+  owned?: unknown;
+  customizationSelected?: unknown;
+  progressEquipped?: unknown;
+  progressSelected?: unknown;
+  fallbackId?: string;
+}
+
 export const DEFAULT_EVA_ROOM_BACKGROUND_ID = "bg_study_hub";
+export const DEFAULT_EVA_OUTFIT_ID = "outfit_fis_mentor";
 
 export function normalizeMoonFragmentsBalance(value: unknown, fallback = 0): number {
   const primary = Number(value);
@@ -70,6 +83,10 @@ function backgroundItems(items: ShopCatalogItemLike[] | null | undefined): ShopC
   return (Array.isArray(items) ? items : []).filter((item) => String(item?.type || "") === "background" && normalizeShopItemId(item?.id));
 }
 
+function outfitItems(items: ShopCatalogItemLike[] | null | undefined): ShopCatalogItemLike[] {
+  return (Array.isArray(items) ? items : []).filter((item) => String(item?.type || "") === "outfit" && normalizeShopItemId(item?.id));
+}
+
 function isDefaultOwnedItem(item: ShopCatalogItemLike | undefined): boolean {
   return Boolean(item?.defaultOwned) || normalizeMoonFragmentsBalance(item?.price) === 0;
 }
@@ -96,6 +113,49 @@ export function resolveCustomizationBackgroundSelection(input: CustomizationBack
     || resolveOwnedBackground(input.progressEquipped)
     || resolveOwnedBackground(input.progressSelected)
     || resolveOwnedBackground(fallbackId)
+    || fallbackId;
+}
+
+export function resolveCustomizationOutfitSelection(input: CustomizationOutfitSelectionInput): string {
+  const fallbackId = normalizeShopItemId(input.fallbackId) || DEFAULT_EVA_OUTFIT_ID;
+  const catalog = outfitItems(input.catalogItems);
+  const byId = new Map(catalog.map((item) => [normalizeShopItemId(item.id), item]));
+  const ownedIds = new Set(normalizeShopIdArray(input.owned));
+  catalog.forEach((item) => {
+    const id = normalizeShopItemId(item.id);
+    const spriteId = normalizeShopItemId(item.spriteId);
+    if (isDefaultOwnedItem(item)) ownedIds.add(id);
+    if (spriteId && ownedIds.has(spriteId)) ownedIds.add(id);
+  });
+
+  const resolveCatalogOutfit = (raw: unknown): ShopCatalogItemLike | null => {
+    const id = normalizeShopItemId(raw);
+    if (!id) return null;
+    const direct = byId.get(id);
+    if (direct) return direct;
+    const legacySpriteToken = id.startsWith("eva_sprite:") ? id : `eva_sprite:${id}`;
+    return catalog.find((item) => {
+      const spriteId = normalizeShopItemId(item.spriteId);
+      const legacySpriteId = normalizeShopItemId(item.legacySpriteId);
+      const legacyIds = normalizeShopIdArray(item.legacyIds);
+      return spriteId === id
+        || legacySpriteId === id
+        || legacyIds.includes(id)
+        || legacyIds.includes(legacySpriteToken);
+    }) || null;
+  };
+
+  const resolveOwnedOutfit = (raw: unknown): string | null => {
+    const item = resolveCatalogOutfit(raw);
+    if (!item) return null;
+    const id = normalizeShopItemId(item.id);
+    return ownedIds.has(id) || isDefaultOwnedItem(item) ? id : null;
+  };
+
+  return resolveOwnedOutfit(input.customizationSelected)
+    || resolveOwnedOutfit(input.progressEquipped)
+    || resolveOwnedOutfit(input.progressSelected)
+    || resolveOwnedOutfit(fallbackId)
     || fallbackId;
 }
 

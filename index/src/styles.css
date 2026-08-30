@@ -526,6 +526,16 @@ button {
   color: inherit;
 }
 
+:is(button, .btn, .icon-btn, .btn-icon, .nav-btn, .sidebar-nav-btn, .bottom-nav button, [role="button"], [data-action], .lesson-tile, .kanji-tile, .n5-lesson-tile, .n1-lesson-tile, .sentence-tile, .reading-tts-button, .reading-tts-choice, .home-route-step, .home-task-item, .eva-sprite-button, .custom-shop-card) {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:is(button, .btn, .icon-btn, .btn-icon, .nav-btn, .sidebar-nav-btn, .bottom-nav button, .n5-option-grid .btn, .rating-grid .btn, .srs-binary-grid .btn, .lesson-choice-grid .btn, .lesson-study-actions .btn, .sentence-tile, .reading-tts-button, .reading-tts-choice, .home-route-step, .home-task-item, .eva-sprite-button, .custom-shop-card .btn) {
+  touch-action: manipulation;
+}
+
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,

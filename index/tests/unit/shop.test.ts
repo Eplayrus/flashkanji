@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_EVA_OUTFIT_ID,
   normalizeMoonFragmentsBalance,
   resolveCustomizationBackgroundSelection,
+  resolveCustomizationOutfitSelection,
   normalizeShopEquipped,
   normalizeShopIdArray,
   resolveShopPurchase
@@ -98,5 +100,47 @@ describe("customization shop state", () => {
       owned: [],
       customizationSelected: "bg_cyber_room"
     })).toBe("bg_study_hub");
+  });
+
+  it("keeps customization outfit ahead of stale legacy selected sprite", () => {
+    expect(resolveCustomizationOutfitSelection({
+      catalogItems: [
+        { id: "outfit_fis_mentor", type: "outfit", spriteId: "fis_mentor", price: 0, defaultOwned: true, legacyIds: ["outfit_default_assassin", "eva_sprite:idle"] },
+        { id: "outfit_study_session", type: "outfit", spriteId: "study_session", price: 300, legacyIds: ["eva_sprite:review"] }
+      ],
+      owned: ["outfit_study_session"],
+      customizationSelected: "outfit_study_session",
+      progressSelected: "idle"
+    })).toBe("outfit_study_session");
+  });
+
+  it("normalizes legacy outfit ids and sprite ids to the catalog outfit id", () => {
+    const catalogItems = [
+      { id: "outfit_fis_mentor", type: "outfit", spriteId: "fis_mentor", price: 0, defaultOwned: true, legacyIds: ["outfit_default_assassin", "eva_sprite:idle"] },
+      { id: "outfit_study_session", type: "outfit", spriteId: "study_session", price: 300, legacyIds: ["eva_sprite:review", "outfit_school_uniform"] }
+    ];
+
+    expect(resolveCustomizationOutfitSelection({
+      catalogItems,
+      owned: ["outfit_study_session"],
+      customizationSelected: "eva_sprite:review"
+    })).toBe("outfit_study_session");
+
+    expect(resolveCustomizationOutfitSelection({
+      catalogItems,
+      owned: ["outfit_study_session"],
+      customizationSelected: "study_session"
+    })).toBe("outfit_study_session");
+  });
+
+  it("falls back to the real default outfit when selected outfit is not owned", () => {
+    expect(resolveCustomizationOutfitSelection({
+      catalogItems: [
+        { id: "outfit_fis_mentor", type: "outfit", spriteId: "fis_mentor", price: 0, defaultOwned: true },
+        { id: "outfit_study_session", type: "outfit", spriteId: "study_session", price: 300 }
+      ],
+      owned: [],
+      customizationSelected: "outfit_study_session"
+    })).toBe(DEFAULT_EVA_OUTFIT_ID);
   });
 });

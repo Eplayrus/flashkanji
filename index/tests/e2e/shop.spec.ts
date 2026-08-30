@@ -181,6 +181,83 @@ test("Eva Room applies the selected shop background instead of legacy progress d
   expect(failedBackgroundUrls).toEqual([]);
 });
 
+test("buying and equipping an Eva outfit updates the visible Eva sprite and survives reload", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("flashkanji-shop-outfit-seeded") === "true") return;
+    sessionStorage.setItem("flashkanji-shop-outfit-seeded", "true");
+    const now = "2026-08-27T00:00:00.000Z";
+    localStorage.removeItem("flashkanji_eva_state_v2");
+    localStorage.setItem("flashKanji.progress.v2", JSON.stringify({
+      settings: { language: "ru", languageManuallySelected: true },
+      appOpens: 3,
+      level: 3,
+      moonFragments: 500,
+      selectedEvaSprite: "idle",
+      unlockedEvaSprites: ["idle", "fis_mentor"],
+      selectedEvaRoomBackground: "bg_study_hub",
+      achievements: {
+        first_kanji: { unlockedAt: now, rewardXp: 25, rewardFragments: 5 },
+        first_fragment: { unlockedAt: now, rewardXp: 30, rewardFragments: 5 }
+      },
+      transactions: [],
+      shop: {
+        owned: ["bg_study_hub", "outfit_fis_mentor", "eva_sprite:idle", "eva_sprite:fis_mentor"],
+        equipped: { background: "bg_study_hub", outfit: "outfit_fis_mentor", theme: "theme_default_dark" }
+      },
+      evaAutonomy: { currentLine: null }
+    }));
+    localStorage.setItem("flashkanji_customization", JSON.stringify({
+      owned: ["bg_study_hub", "outfit_fis_mentor", "theme_default_dark"],
+      selected: { background: "bg_study_hub", outfit: "outfit_fis_mentor", theme: "theme_default_dark" },
+      seen: ["bg_study_hub", "outfit_fis_mentor", "theme_default_dark"],
+      updatedAt: now
+    }));
+  });
+
+  await page.goto("./#home");
+  const homeEvaImage = page.locator(".home-eva-avatar img").first();
+  await expect(homeEvaImage).toBeVisible({ timeout: 15_000 });
+  const spriteBeforeEquip = await homeEvaImage.getAttribute("src");
+  expect(spriteBeforeEquip).toBeTruthy();
+
+  await page.goto("./#stats");
+  const outfit = page.locator('[data-item-id="outfit_study_session"]');
+  await expect(outfit).toBeVisible({ timeout: 15_000 });
+  await outfit.scrollIntoViewIfNeeded();
+  await outfit.locator('[data-action="shop-buy"]').click();
+  await expect(outfit).toContainText(/Куплено|Выбрать|Выбран/);
+  await outfit.locator('[data-action="shop-select"]').click();
+  await expect(outfit).toContainText("Выбран");
+
+  await expect.poll(async () => page.evaluate(() => {
+    const progress = JSON.parse(localStorage.getItem("flashKanji.progress.v2") || "{}");
+    const customization = JSON.parse(localStorage.getItem("flashkanji_customization") || "{}");
+    return {
+      selectedOutfit: customization.selected?.outfit,
+      selectedSprite: progress.selectedEvaSprite,
+      unlockedStudySprite: progress.unlockedEvaSprites?.includes("study_session") ?? false
+    };
+  })).toEqual({
+    selectedOutfit: "outfit_study_session",
+    selectedSprite: "study_session",
+    unlockedStudySprite: true
+  });
+
+  await page.goto("./#eva-room");
+  const roomEvaImage = page.locator(".eva-vn-sprite").first();
+  await expect(roomEvaImage).toBeVisible({ timeout: 15_000 });
+  await expect.poll(async () => roomEvaImage.getAttribute("src")).toContain("eva_school_uniform");
+
+  await page.goto("./#home");
+  await expect(page.locator(".home-eva-avatar img").first()).toBeVisible({ timeout: 15_000 });
+  await expect.poll(async () => page.locator(".home-eva-avatar img").first().getAttribute("src")).toContain("eva_school_uniform");
+  await expect.poll(async () => page.locator(".home-eva-avatar img").first().getAttribute("src")).not.toBe(spriteBeforeEquip);
+
+  await page.reload();
+  await expect(page.locator(".home-eva-avatar img").first()).toBeVisible({ timeout: 15_000 });
+  await expect.poll(async () => page.locator(".home-eva-avatar img").first().getAttribute("src")).toContain("eva_school_uniform");
+});
+
 declare global {
   interface Window {
     FLASH_KANJI_EVA_ROOM_DEBUG?: {
