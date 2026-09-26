@@ -504,7 +504,8 @@ test("home and review count only valid due cards when stale entries are mixed in
 
   await page.goto("./#review");
   await expectRoute(page, "review");
-  await expect(page.locator("#app")).toContainText(/5 в очереди|5 in queue/i);
+  await expect(page.locator("[data-review-total-due]")).toHaveAttribute("data-review-total-due", "5");
+  await expect(page.locator("#app")).toContainText(/4 в очереди|4 in queue/i);
 });
 
 test("finishing the last due card updates review count to zero without reload", async ({ page }) => {

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { performanceProgress, installPerformanceProbe, measureHome } from "./helpers/performance-fixture.mjs";
 
 declare global {
   interface Window {
@@ -168,4 +169,87 @@ test("review answer controls keep fast feedback without disabling selectable stu
   expect(clickFrameMs, "SRS answer controls should yield a paint frame quickly after click").toBeLessThan(650);
   await expect(page.locator("#app")).toContainText(/0 в очереди|0 in queue/i);
   await expect.poll(async () => page.evaluate(() => document.getSelection()?.toString() || "")).toBe("");
+});
+
+for (const width of [1440, 360, 390, 412]) {
+  test(`large progress: Home remains interactive across routes at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
+    await page.addInitScript(installPerformanceProbe, performanceProgress("power"));
+    const cdp = await page.context().newCDPSession(page);
+    if (width !== 1440) await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("./#dictionary");
+    await expect(page.locator("#app")).toHaveAttribute("aria-busy", "false");
+    await page.waitForTimeout(4500);
+    for (const route of ["textbooks", "review", "dictionary", "textbooks/hiragana/lesson-1", "textbooks/N5/n5-lesson-1", "about"]) {
+      await page.evaluate((hash) => { location.hash = hash; }, route);
+      await expect(page.locator("#app h1").first()).toBeVisible();
+      await page.waitForTimeout(900);
+      const result = await measureHome(page);
+      expect(result.timedOut, route).not.toBe(true);
+      expect(result.paintMs, `${route} visual response`).toBeLessThan(width === 1440 ? 300 : 650);
+      expect(result.interactiveMs, `${route} -> Home (700 cards with histories)`).toBeLessThan(width === 1440 ? 700 : 1500);
+      expect(result.maxTaskMs, `${route} main-thread stall`).toBeLessThan(1000);
+      expect(result.renders, `${route} render storm`).toBeLessThanOrEqual(2);
+      expect(result.calls["storage.getItem:flashKanji.progress.v2"] || 0).toBe(0);
+      expect(result.calls["storage.setItem:flashKanji.progress.v2"] || 0).toBe(0);
+      expect(result.requests.filter((url: string) => url.includes("/data/"))).toEqual([]);
+      await expect(page.locator("#app [data-route-error]")).toHaveCount(0);
+    }
+    expect(errors).toEqual([]);
+  });
+}
+
+test("20 warm Home/Textbooks cycles do not accumulate work or document listeners", async ({ page }) => {
+  await page.addInitScript(installPerformanceProbe, performanceProgress("power"));
+  await page.goto("./#dictionary");
+  await expect(page.locator("#app")).toHaveAttribute("aria-busy", "false");
+  await page.waitForTimeout(4500);
+  await measureHome(page);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("HeapProfiler.collectGarbage");
+  const before = await cdp.send("Memory.getDOMCounters");
+  const samples: number[] = [];
+  for (let i = 0; i < 20; i++) {
+    await page.evaluate(() => { location.hash = "textbooks"; });
+    await expect(page.locator(".textbooks-page")).toBeVisible();
+    const result = await measureHome(page);
+    expect(result.timedOut).not.toBe(true);
+    expect(result.interactiveMs).toBeLessThan(700);
+    samples.push(result.interactiveMs);
+  }
+  expect(samples[19]).toBeLessThan(Math.max(200, samples[0] * 3));
+  await cdp.send("HeapProfiler.collectGarbage");
+  const after = await cdp.send("Memory.getDOMCounters");
+  expect(after.jsEventListeners).toBeLessThanOrEqual(before.jsEventListeners + 2);
+  expect(after.nodes).toBeLessThanOrEqual(before.nodes + 100);
+});
+
+test("Eva Room statistics do not sort the entire study queue for every achievement", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(installPerformanceProbe, performanceProgress("power"));
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  await page.goto("./#dictionary");
+  await expect(page.locator("#app")).toHaveAttribute("aria-busy", "false");
+  await page.waitForTimeout(4500);
+  const result = await page.evaluate(() => new Promise<{ readyMs: number; maxTaskMs: number }>((resolve) => {
+    const tasks: number[] = [];
+    const start = performance.now();
+    const observer = new PerformanceObserver((list) => {
+      tasks.push(...list.getEntries().filter((entry) => entry.startTime >= start).map((entry) => entry.duration));
+    });
+    observer.observe({ type: "longtask" });
+    location.hash = "eva-room";
+    const check = () => {
+      if (!document.querySelector(".eva-room-page")) { requestAnimationFrame(check); return; }
+      const readyMs = performance.now() - start;
+      setTimeout(() => { observer.disconnect(); resolve({ readyMs, maxTaskMs: Math.max(0, ...tasks) }); }, 300);
+    };
+    requestAnimationFrame(check);
+  }));
+  expect(result.readyMs).toBeLessThan(1200);
+  expect(result.maxTaskMs).toBeLessThan(1000);
+  await expect(page.locator(".eva-room-page")).toBeVisible();
 });
