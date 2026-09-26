@@ -156,11 +156,16 @@ test("hiragana exercise checks accepted answers and persists progress without to
   await expect(page.locator("#app .study-card")).toContainText(/Осталось:|Remaining:/);
   await page.locator('[data-action="rate-kana-review"][data-rating="remember"]').click();
   await expect(page.locator('#app [data-review-kind="kana"]')).toBeVisible();
-  for (let index = 0; index < 4; index += 1) {
+  for (let index = 0; index < 3; index += 1) {
     await page.locator('[data-action="rate-kana-review"][data-rating="remember"]').click();
   }
   await expect(page.locator("#app .review-complete-card")).toContainText(/Повторение завершено|Review complete/);
   await expect(page.locator("#app .review-complete-card")).toContainText(/Помню|Remember/);
+  await expect(page.locator("[data-review-total-due]")).toHaveAttribute("data-review-total-due", "1");
+  await page.locator('[data-action="review-next-batch"]').click();
+  await page.locator('[data-action="rate-kana-review"][data-rating="remember"]').click();
+  await expect(page.locator("#app .review-complete-card")).toBeVisible();
+  await expect(page.locator("[data-review-total-due]")).toHaveAttribute("data-review-total-due", "0");
 
   await page.goto("./#textbooks/katakana");
   await expect(page.locator("#app .kana-course-page")).toBeVisible();

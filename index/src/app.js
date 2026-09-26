@@ -1,6 +1,8 @@
 import { NOT_FOUND_ROUTE, createRenderCoordinator, installHashRouter, isAppShellPathname, isRegisteredRoute, matchPathname, notFound, parseHash } from "./router";
-import { calculateNextProgress, createReviewSession, migrateCardProgress } from "./services/srs";
+import { calculateNextProgress, createReviewSession, dueReviewCards, enrollMissingCards, reconcileCardAliases, countCanonicalReviews, migrateCardProgress } from "./services/srs";
 import { readStoredProgress, writeStoredProgress, migrateCardMap } from "./services/storage";
+import { createResourceCache } from "./services/resource-cache";
+import { hasEnoughSentenceTiles } from "./services/sentence-eligibility";
 import { buildKanjiSpeechItems, pickKanjiSpeechItem, speakJapaneseReading } from "./services/kanjiTts";
 import {
     ensureKanaCourseProgress,
@@ -378,11 +380,27 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let metrikaInitialRoutePrimed = false;
     let reviewQueueCountRenderActive = false;
     let reviewQueueCountRenderCache = null;
-    let reviewQueueItemsRenderCache = null;
     let reviewLearningLaterCountRenderCache = null;
     let reviewTotalSrsCardCountRenderCache = null;
     let reviewPoolCardsRenderCache = null;
-    let reviewAllReadingExercisesRenderCache = null;
+    let reviewBacklogCache = null;
+    const jsonResources = createResourceCache();
+    const courseResources = createResourceCache();
+    let readingExercisesCache = null;
+    let sentenceExercisesCache = null;
+    let exampleReadingCache = null;
+    let cardLookupCache = null;
+    let reviewContentPromise = null;
+    let reviewContentReady = false;
+    // Per-snapshot/content checkpoints. Imports get a new snapshot; changed course
+    // content or completion facts invalidate only that course's enrollment repair.
+    const enrollmentCheckpoints = new WeakMap();
+    let canonicalCardAliases = new Map();
+    const normalizedCardProgress = new WeakSet();
+    const normalizedKanaReviews = new WeakSet();
+    const textbookExerciseIndexes = new Map();
+    const jlptCardLists = new Map();
+    const kanaCharacterIndexes = new WeakMap();
     let deferredPwaInstallPrompt = null;
     let notificationPromptTimer = 0;
     let skipPendingFocusOnce = false;
@@ -567,6 +585,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.i18n = i18n;
             state.rewards = rewards;
             const hadPriorVisit = hasFlashKanjiReturningSignals(state.progress);
+            pendingChangelogExistingUser = hadPriorVisit;
             hydrateProgress();
             clearLegacyFlashKanjiOnboardingState();
             hydrateCustomization();
@@ -582,6 +601,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             scheduleIdleTask(() => {
                 void loadBootAncillaryData({ hadPriorVisit }).catch((error) => console.warn("Boot ancillary data failed to load.", error));
             }, { timeout: 1500 });
+            if (state.route === "review" || hasSavedStudyProgress())
+                void ensureReviewContentData();
             loadDeferredEnhancements();
             scheduleDeferredDataLoad({ route: state.route, delay: deferredDataDelayForRoute(state.route) });
             registerServiceWorker();
@@ -630,6 +651,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
             state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
+            await Promise.all(["hiragana", "katakana"].filter((slug) => {
+                const progress = state.progress.kanaCourses?.courses?.[slug];
+                return Object.keys(progress?.lessons || {}).length || Object.keys(progress?.review || {}).length;
+            }).map((slug) => ensureKanaCourseData(slug)));
             state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
             state.evaSprites = evaSprites && typeof evaSprites === "object" && !Array.isArray(evaSprites) ? evaSprites : {};
             state.bootAncillaryLoaded = true;
@@ -896,7 +921,60 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     function routeNeedsDeferredData(route = state.route) {
+        // The overview and kana courses have their own small memoized loaders.
+        if (route === "textbooks" && !canonicalJlptLevel(state.activeTextbookLevel)) return false;
         return DEFERRED_DATA_ROUTES.has(route);
+    }
+    function hasSavedStudyProgress() {
+        return Boolean(state.progress && (
+            Object.values(state.progress.cards || {}).some((progress) => progress.state !== "New")
+            || LEVEL_ORDER.some((level) => {
+                const course = state.progress[`${level.toLowerCase()}Course`];
+                return Object.keys(course?.completedLessons || {}).length || Object.keys(course?.exerciseSrs || {}).length;
+            }) || Object.keys(state.progress.readingExercises || {}).length
+            || ["hiragana", "katakana"].some((slug) => {
+                const course = state.progress.kanaCourses?.courses?.[slug];
+                return Object.keys(course?.review || {}).length || Object.keys(course?.lessons || {}).length;
+            })));
+    }
+    async function ensureReviewContentData() {
+        if (reviewContentReady) return;
+        if (reviewContentPromise) return reviewContentPromise;
+        reviewContentPromise = (async () => {
+            // A new user has no queue to validate. For returning users load card entities
+            // and only their used courses, not dictionary metadata, strokes or all texts.
+            if (hasSavedStudyProgress()) {
+                if (!state.deferredDataLoaded) {
+                    const course = await loadCourse();
+                    if (!state.deferredDataLoaded) {
+                        state.lessons = course.lessons;
+                        state.cards = course.cards;
+                        applyN5CatalogToCards();
+                        applyN4CatalogToCards();
+                        applyN3CatalogToCards();
+                        applyN2CatalogToCards();
+                        applyN1CatalogToCards();
+                    }
+                }
+                await loadBootAncillaryData({ hadPriorVisit: pendingChangelogExistingUser });
+                const usedLevels = LEVEL_ORDER.filter((level) => {
+                    const course = state.progress[`${level.toLowerCase()}Course`];
+                    return Object.keys(course?.completedLessons || {}).length || Object.keys(course?.exerciseSrs || {}).length;
+                });
+                await Promise.all(usedLevels.map((level) => ensureJlptCourseData(level, { renderAfter: false })));
+                // Legacy reading exercises can refer to markdown passages as well.
+                if (Object.keys(state.progress.readingExercises || {}).length)
+                    await loadDeferredAppData({ renderAfter: false, route: "review" });
+                hydrateProgress();
+            }
+            reviewContentReady = true;
+            reviewBacklogCache = null;
+            if (state.route === "review" || state.route === "home") render();
+        })().catch((error) => {
+            reviewContentPromise = null;
+            console.warn("Review content failed to load.", error);
+        });
+        return reviewContentPromise;
     }
     function deferredDataDelayForRoute(route = state.route) {
         if (!routeNeedsDeferredData(route))
@@ -1377,6 +1455,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return textbookLessonsForLevel(canonical);
         if (!force && jlptCourseDataPromises.has(canonical))
             return jlptCourseDataPromises.get(canonical);
+        if (force) jlptCourseDataEntries(canonical).forEach(([, url]) => jsonResources.delete(url));
         markJlptCourseDataStatus(canonical, "loading");
         const promise = fetchJsonEntriesRequiredInBatches(jlptCourseDataEntries(canonical), canonical === "N5" ? 4 : 3)
             .then((payloads) => {
@@ -1384,7 +1463,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             assertJlptCourseDataIntegrity(canonical);
             markJlptCourseDataStatus(canonical, "ready");
             if (state.progress) {
-                hydrateProgress();
+                hydrateProgress({ level: canonical });
                 const studySessionChanged = normalizeJlptLessonStudySessionsForLevel(canonical);
                 const lessonCompletionChanged = normalizeJlptLessonCompletionsForLevel(canonical);
                 if (studySessionChanged || lessonCompletionChanged)
@@ -1466,6 +1545,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
     }
     async function loadCourse({ initialOnly = false } = {}) {
+        return courseResources.get(initialOnly ? "startup" : "all", () => loadCourseUncached({ initialOnly }));
+    }
+    async function loadCourseUncached({ initialOnly = false } = {}) {
         const manifest = await fetchJson(DATA_URLS.lessons);
         const lessonsSource = Array.isArray(manifest?.lessons) ? manifest.lessons : [];
         const lessonsToLoad = initialOnly ? startupLessons(lessonsSource) : lessonsSource;
@@ -1530,36 +1612,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return result;
     }
     async function fetchJson(url, fallback = null) {
-        const candidates = buildJsonUrlCandidates(url);
         let lastError = null;
-        for (const candidate of candidates) {
-            try {
-                const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-                const timeout = controller ? window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS) : 0;
-                try {
-                    const response = await fetch(candidate, { signal: controller?.signal });
-                    if (!response.ok) {
-                        lastError = new Error(`Cannot load ${candidate}`);
-                        continue;
-                    }
-                    const text = await response.text();
-                    try {
-                        return JSON.parse(text);
-                    }
-                    catch (parseError) {
-                        lastError = parseError;
-                        console.warn(`Invalid JSON from ${candidate}. Trying fallback paths.`, parseError);
-                    }
-                }
-                finally {
-                    if (timeout)
-                        window.clearTimeout(timeout);
-                }
-            }
-            catch (error) {
-                lastError = error;
-            }
-        }
+        try { return await fetchJsonRequired(url); }
+        catch (error) { lastError = error; }
         console.warn(`Falling back to empty data for ${url}.`, lastError);
         if (typeof fallback === "function")
             return fallback(lastError);
@@ -1811,6 +1866,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         };
     }
     async function fetchJsonRequired(url) {
+        return jsonResources.get(url, () => fetchJsonUncached(url));
+    }
+    async function fetchJsonUncached(url) {
         const candidates = buildJsonUrlCandidates(url);
         let lastError = null;
         for (const candidate of candidates) {
@@ -4432,6 +4490,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function saveProgress(options = {}) {
         if (!state.progress)
             return false;
+        if (state.route !== "review" || !state.reviewSession)
+            reviewBacklogCache = null;
         if (options?.immediate)
             return flushPendingProgressState();
         if (progressSaveQueued)
@@ -4587,7 +4647,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return `${action}:${target?.dataset?.id || ""}:${target?.dataset?.rating || target?.dataset?.value || target?.dataset?.question || ""}`;
         return "";
     }
-    function hydrateProgress() {
+    function hydrateProgress({ level = "" } = {}) {
+        reviewBacklogCache = null;
         Object.keys(state.progress.cards || {}).forEach((cardId) => getCardProgress(cardId));
             state.progress.level = calculateLevel(state.progress.xp);
             state.progress.totalMoonFragmentsEarned = Math.max(Number(state.progress.totalMoonFragmentsEarned || 0), Number(state.progress.moonFragments || 0), totalPositiveFragmentsFromHistory());
@@ -4599,21 +4660,17 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             ensureN2CourseProgress();
             if (typeof ensureN1CourseProgress === "function")
                 ensureN1CourseProgress();
-            const readingExerciseSyncChanged = seedReadingExerciseSrs();
-            const textbookExerciseSyncChanged = [
-            syncTextbookExerciseSrs(n5Course(), "N5"),
-            syncTextbookExerciseSrs(n4Course(), "N4"),
-            syncTextbookExerciseSrs(n3Course(), "N3"),
-            syncTextbookExerciseSrs(n2Course(), "N2"),
-            syncTextbookExerciseSrs(n1Course(), "N1"),
-            seedTextbookExercisesFromCourse(n5Course(), "N5"),
-            seedTextbookExercisesFromCourse(n4Course(), "N4"),
-            seedTextbookExercisesFromCourse(n3Course(), "N3"),
-            seedTextbookExercisesFromCourse(n2Course(), "N2"),
-            seedTextbookExercisesFromCourse(n1Course(), "N1")
-        ].some(Boolean);
-        [n5Course(), n4Course(), n3Course(), n2Course(), typeof n1Course === "function" ? n1Course() : null].filter(Boolean).forEach((course) => normalizeJlptCourseStudyMaps(course));
-        if (textbookExerciseSyncChanged || readingExerciseSyncChanged)
+        const levels = canonicalJlptLevel(level) ? [canonicalJlptLevel(level)] : LEVEL_ORDER;
+        const readingExerciseSyncChanged = seedReadingExerciseSrs(level);
+        let textbookExerciseSyncChanged = false;
+        for (const currentLevel of levels) {
+            const course = textbookCourseByLevel(currentLevel);
+            if (syncTextbookExerciseSrs(course, currentLevel)) textbookExerciseSyncChanged = true;
+            if (seedTextbookExercisesFromCourse(course, currentLevel)) textbookExerciseSyncChanged = true;
+            normalizeJlptCourseStudyMaps(course);
+        }
+        const enrollmentChanged = reconcileCompletedLessonEnrollment(levels);
+        if (textbookExerciseSyncChanged || readingExerciseSyncChanged || enrollmentChanged)
             saveProgress();
         ensureLearningPathProgress();
         const firstUnlocked = state.lessons.find((lesson) => isLessonUnlocked(lesson));
@@ -4648,7 +4705,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return stamp;
     }
     function ensureLearningPathProgress() {
-        state.progress.learningPath = mergeLearningPathProgress(defaultLearningPathProgress(), state.progress.learningPath || {});
+        state.progress.learningPath ||= defaultLearningPathProgress();
         const learningPath = state.progress.learningPath;
         const completedNodes = learningPath.completedNodes;
         const unlockedNodes = learningPath.unlockedNodes;
@@ -4672,7 +4729,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (learningPath.activeSession?.nodeId && completedNodes[learningPath.activeSession.nodeId]) {
             learningPath.activeSession = null;
         }
-        learningPath.lastUpdatedAt = new Date().toISOString();
     }
     function n5LessonNodeIds() {
         const loadedIds = (state.n5Textbook?.items || []).map((lesson) => String(lesson.id || "")).filter(Boolean);
@@ -5078,22 +5134,26 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return 0;
         const now = Date.now();
         const review = normalizeKanaReviewStorage(slug);
-        const cards = Object.entries(review).map(([cardId, progress]) => ({ cardId, ...migrateCardProgress(progress) }));
-        return createReviewSession(cards, now).initial.length;
+        const cards = Object.entries(review).filter(([cardId]) => {
+            const parsed = parseKanaReviewCardId(cardId, slug);
+            return parsed?.slug === slug && findKanaCharacter(slug, parsed.kana);
+        }).map(([cardId, progress]) => ({ cardId, ...progress }));
+        return dueReviewCards(cards, now).length;
     }
     function kanaCourseMasteredCount(slug) {
         if (!isKanaCourseSlug(slug))
             return 0;
-        return Object.values(normalizeKanaReviewStorage(slug))
-            .map((progress) => migrateCardProgress(progress))
-            .filter((progress) => progress.state === "Mastered").length;
+        const review = normalizeKanaReviewStorage(slug);
+        return (kanaCourseData(slug)?.base_characters || []).filter((item) => review[kanaCardNamespace(slug, item.kana)]?.state === "Mastered").length;
     }
     function kanaCourseTouchedCount(slug) {
         if (!isKanaCourseSlug(slug))
             return 0;
-        return Object.values(normalizeKanaReviewStorage(slug))
-            .map((progress) => migrateCardProgress(progress))
-            .filter((progress) => progress.state !== "New" || Number(progress.reviewCount || 0) > 0).length;
+        const review = normalizeKanaReviewStorage(slug);
+        return (kanaCourseData(slug)?.base_characters || []).filter((item) => {
+            const progress = review[kanaCardNamespace(slug, item.kana)];
+            return progress && (progress.state !== "New" || Number(progress.reviewCount || 0) > 0);
+        }).length;
     }
     function kanaHomeCourseItems() {
         const labels = kanaHomeLabels();
@@ -5342,6 +5402,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 history: []
             };
         }
+        if (normalizedCardProgress.has(state.progress.cards[id]))
+            return state.progress.cards[id];
         const progress = migrateCardProgress(state.progress.cards[id]);
         progress.successRate = calculateSuccessRate(progress);
         if (!Number.isFinite(Number(progress.srsStep)))
@@ -5349,6 +5411,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         else
             progress.srsStep = clamp(Math.trunc(Number(progress.srsStep)), -1, 63);
         state.progress.cards[id] = progress;
+        normalizedCardProgress.add(progress);
         return progress;
     }
     function markKanjiSeen(card, source = "seen") {
@@ -5594,6 +5657,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (!target)
             return;
         const action = target.dataset.action;
+        if (action === "review-next-batch") {
+            state.reviewSession = null;
+            reviewBacklogCache = null;
+            state.activeCardId = null;
+            clearReviewExerciseState();
+            resetReviewSession();
+            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.TOP });
+            return;
+        }
         const id = target.dataset.id;
         markActionPressed(target);
         if (!claimStudyAction(target))
@@ -6746,6 +6818,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     }
     function renderNow() {
         const renderContext = routeRenderCoordinator.begin(state.route);
+        // Stroke demos belong to the mounted writing canvas, not to the SPA shell.
+        cancelAnimationFrame(writingSession.demoAnimationId);
+        writingSession.demoAnimationId = 0;
         reviewQueueCountRenderActive = true;
         resetTransientReviewRenderCaches();
         destroyCharts();
@@ -6818,11 +6893,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     }
     function resetTransientReviewRenderCaches() {
         reviewQueueCountRenderCache = null;
-        reviewQueueItemsRenderCache = null;
         reviewLearningLaterCountRenderCache = null;
         reviewTotalSrsCardCountRenderCache = null;
         reviewPoolCardsRenderCache = null;
-        reviewAllReadingExercisesRenderCache = null;
     }
     function scheduleRender() {
         if (renderRaf)
@@ -9571,9 +9644,12 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }
         if (changed) {
             saveEvaState();
-            saveProgress();
-            if (state.route === "eva-room")
+            // Mood/emotion persist in the small Eva snapshot. Outside the room
+            // the timer does not change study, relationship or scheduling data.
+            if (state.route === "eva-room") {
+                saveProgress();
                 render();
+            }
         }
         return changed;
     }
@@ -12977,7 +13053,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const namespaced = value.match(/^kana:(hiragana|katakana):([0-9a-f]+)$/i);
         if (namespaced) {
             const codePoint = Number.parseInt(namespaced[2], 16);
-            if (!Number.isInteger(codePoint) || codePoint <= 0)
+            if (!Number.isInteger(codePoint) || codePoint <= 0 || codePoint > 0x10FFFF)
                 return null;
             return { slug: namespaced[1].toLowerCase(), kana: String.fromCodePoint(codePoint), id: kanaCardNamespace(namespaced[1], String.fromCodePoint(codePoint)) };
         }
@@ -12999,6 +13075,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return {};
         const progress = kanaCourseProgress(key);
         const source = progress.review && typeof progress.review === "object" ? progress.review : {};
+        if (normalizedKanaReviews.has(source))
+            return source;
         const normalized = {};
         let changed = false;
         Object.entries(source).forEach(([cardId, cardProgress]) => {
@@ -13019,14 +13097,24 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         });
         const previousKeys = Object.keys(source).sort().join("|");
         const nextKeys = Object.keys(normalized).sort().join("|");
+        progress.review = normalized;
+        normalizedKanaReviews.add(normalized);
         if (changed || previousKeys !== nextKeys)
-            progress.review = normalized;
+            saveProgress();
         return progress.review;
     }
     function findKanaCharacter(slug, kana) {
         const course = kanaCourseData(slug);
         const value = String(kana || "");
-        return course?.base_characters?.find((item) => item.kana === value) || null;
+        if (!course) return null;
+        if (!kanaCharacterIndexes.has(course)) {
+            const characters = new Map();
+            for (const item of [...(course.base_characters || []), ...(course.lessons || []).flatMap((lesson) => lesson.focus_characters || [])]) {
+                if (!characters.has(item.kana)) characters.set(item.kana, item);
+            }
+            kanaCharacterIndexes.set(course, characters);
+        }
+        return kanaCharacterIndexes.get(course).get(value) || null;
     }
     function kanaCourseReviewLabel(slug) {
         const course = kanaCourseData(slug) || kanaCatalogEntry(slug);
@@ -13195,14 +13283,54 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         rateActiveKanaCard(slug, cardId, rating);
     }
     function seedKanaReviewCards(course, characters = []) {
-        const progress = kanaCourseProgress(course.slug);
         const review = normalizeKanaReviewStorage(course.slug);
-        characters.forEach((item) => {
-            const cardId = kanaCardNamespace(course.slug, item.kana);
-            if (cardId)
-                review[cardId] ||= kanaReviewProgress(null, "remember");
-        });
-        progress.review = review;
+        return enrollMissingCards(review, characters.filter((item) => findKanaCharacter(course.slug, item.kana))
+            .map((item) => kanaCardNamespace(course.slug, item.kana)));
+    }
+    function reconcileCompletedLessonEnrollment(levels = LEVEL_ORDER) {
+        const checks = enrollmentCheckpoints.get(state.progress) || new Map();
+        enrollmentCheckpoints.set(state.progress, checks);
+        const needsCheck = (key, sources) => {
+            const previous = checks.get(key);
+            if (previous && sources.every((source, index) => source === previous[index])) return false;
+            checks.set(key, sources);
+            return true;
+        };
+        const catalogAliases = new Map();
+        for (const entry of [...state.n5KanjiCatalog, ...state.n4KanjiCatalog, ...state.n3KanjiCatalog, ...state.n2KanjiCatalog, ...state.n1KanjiCatalog]) {
+            catalogAliases.set(entry.kanji, [String(entry.id), String(entry.courseCardId)]);
+        }
+        let added = 0;
+        if (needsCheck("aliases-v1", [state.cards, state.n5KanjiCatalog, state.n4KanjiCatalog, state.n3KanjiCatalog, state.n2KanjiCatalog, state.n1KanjiCatalog])) {
+            const cards = state.cards.map((card) => ({ id: String(card.id),
+                aliases: [card.kanji, `kanji:${card.id}`, `card:${card.id}`, ...(catalogAliases.get(card.kanji) || [])] }));
+            canonicalCardAliases = new Map(cards.flatMap((card) => card.aliases.map((alias) => [alias, card.id])));
+            added = reconcileCardAliases(state.progress.cards, cards);
+        }
+        for (const level of levels) {
+            const spec = jlptLessonSpec(level);
+            const course = spec.course();
+            const completed = Object.keys(course.completedLessons || {}).filter((id) => course.completedLessons[id]).sort().join("|");
+            if (!needsCheck(`jlpt-enrollment-v1:${level}`, [state.cards, spec.lessons(), completed])) continue;
+            for (const lesson of spec.lessons()) {
+                if (isJlptLessonPersistedCompleted(level, course, lesson))
+                    added += enrollMissingCards(state.progress.cards, spec.cardsForLesson(lesson).map((card) => String(card.id)));
+            }
+        }
+        for (const slug of ["hiragana", "katakana"]) {
+            const course = kanaCourseData(slug);
+            if (!course) continue;
+            const progress = kanaCourseProgress(slug);
+            const passed = Object.keys(progress.lessons).filter((id) => progress.lessons[id]?.passed).sort().join("|");
+            if (!needsCheck(`kana-enrollment-v1:${slug}`, [course, passed])) continue;
+            for (const lesson of course.lessons || []) {
+                // completed means submitted; only passed satisfies kana completion rules.
+                if (progress.lessons[lesson.id]?.passed)
+                    added += seedKanaReviewCards(course, lesson.focus_characters || []);
+            }
+        }
+        if (added) reviewBacklogCache = null;
+        return added > 0;
     }
     function toggleKanaRomaji() {
         const viewportSnapshot = captureViewport();
@@ -13323,7 +13451,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     `;
     }
     function jlptLessonStudyProgress() {
-        state.progress.jlptLessonStudy = mergeJlptLessonStudyProgress(defaultJlptLessonStudyProgress(), state.progress.jlptLessonStudy || {});
+        state.progress.jlptLessonStudy ||= defaultJlptLessonStudyProgress();
         return state.progress.jlptLessonStudy;
     }
     function jlptLessonStudyKey(level, lessonId) {
@@ -13559,6 +13687,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const spec = jlptLessonSpec(level);
         if (!spec || !lesson || !course)
             return false;
+        if (enrollMissingCards(state.progress.cards, (cards || spec.cardsForLesson(lesson)).map((card) => String(card.id))))
+            reviewBacklogCache = null;
         const courseKey = jlptCourseProgressKey(spec.level);
         const canonicalCourse = (courseKey && state.progress?.[courseKey]) || course;
         if (courseKey && state.progress && !state.progress[courseKey])
@@ -14424,7 +14554,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     `;
     }
     function ensureN5CourseProgress() {
-        state.progress.n5Course = mergeN5CourseProgress(defaultN5CourseProgress(), state.progress.n5Course || {});
+        state.progress.n5Course ||= defaultN5CourseProgress();
         const lessons = n5Lessons();
         const active = n5LessonById(state.progress.n5Course.currentLessonId);
         if (!active && lessons[0])
@@ -14435,7 +14565,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return state.progress.n5Course;
     }
     function n5Course() {
-        return ensureN5CourseProgress();
+        return state.progress.n5Course || ensureN5CourseProgress();
     }
     function n5Lessons() {
         return state.n5Textbook?.items || [];
@@ -14455,6 +14585,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return (lesson?.kanji || []).map((kanji) => n5CardByKanji(kanji, lesson)).filter(Boolean);
     }
     function n5AllCards() {
+        return cachedJlptCardList("N5", buildN5AllCards);
+    }
+    function buildN5AllCards() {
         const seen = new Set();
         return n5Lessons().flatMap((lesson) => n5CardsForLesson(lesson)).filter((card) => {
             if (seen.has(card.kanji))
@@ -16422,7 +16555,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             };
     }
     function ensureN4CourseProgress() {
-        state.progress.n4Course = mergeN4CourseProgress(defaultN4CourseProgress(), state.progress.n4Course || {});
+        state.progress.n4Course ||= defaultN4CourseProgress();
         const lessons = n4Lessons();
         const active = n4LessonById(state.progress.n4Course.currentLessonId);
         if (!active && lessons[0])
@@ -16433,7 +16566,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return state.progress.n4Course;
     }
     function n4Course() {
-        return ensureN4CourseProgress();
+        return state.progress.n4Course || ensureN4CourseProgress();
     }
     function n4Lessons() {
         return state.n4Textbook?.items || [];
@@ -16453,6 +16586,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return (lesson?.kanji || []).map((kanji) => n4CardByKanji(kanji)).filter(Boolean);
     }
     function n4AllCards() {
+        return cachedJlptCardList("N4", buildN4AllCards);
+    }
+    function buildN4AllCards() {
         const seen = new Set();
         return (state.n4KanjiCatalog || []).map((detail) => n4CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
             if (seen.has(card.kanji))
@@ -18131,7 +18267,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             };
     }
     function ensureN3CourseProgress() {
-        state.progress.n3Course = mergeN3CourseProgress(defaultN3CourseProgress(), state.progress.n3Course || {});
+        state.progress.n3Course ||= defaultN3CourseProgress();
         const lessons = n3Lessons();
         const active = n3LessonById(state.progress.n3Course.currentLessonId);
         if (!active && lessons[0])
@@ -18142,7 +18278,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return state.progress.n3Course;
     }
     function n3Course() {
-        return ensureN3CourseProgress();
+        return state.progress.n3Course || ensureN3CourseProgress();
     }
     function n3Lessons() {
         return state.n3Textbook?.items || [];
@@ -18162,6 +18298,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return (lesson?.kanji || []).map((kanji) => n3CardByKanji(kanji)).filter(Boolean);
     }
     function n3AllCards() {
+        return cachedJlptCardList("N3", buildN3AllCards);
+    }
+    function buildN3AllCards() {
         const seen = new Set();
         return (state.n3KanjiCatalog || []).map((detail) => n3CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
             if (seen.has(card.kanji))
@@ -19842,7 +19981,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             };
     }
     function ensureN2CourseProgress() {
-        state.progress.n2Course = mergeN2CourseProgress(defaultN2CourseProgress(), state.progress.n2Course || {});
+        state.progress.n2Course ||= defaultN2CourseProgress();
         const lessons = n2Lessons();
         const active = n2LessonById(state.progress.n2Course.currentLessonId);
         if (!active && lessons[0])
@@ -19853,7 +19992,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return state.progress.n2Course;
     }
     function n2Course() {
-        return ensureN2CourseProgress();
+        return state.progress.n2Course || ensureN2CourseProgress();
     }
     function n2Lessons() {
         return state.n2Textbook?.items || [];
@@ -19873,6 +20012,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return (lesson?.kanji || []).map((kanji) => n2CardByKanji(kanji)).filter(Boolean);
     }
     function n2AllCards() {
+        return cachedJlptCardList("N2", buildN2AllCards);
+    }
+    function buildN2AllCards() {
         const seen = new Set();
         return (state.n2KanjiCatalog || []).map((detail) => n2CardByKanji(detail.kanji)).filter(Boolean).filter((card) => {
             if (seen.has(card.kanji))
@@ -21557,7 +21699,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             };
     }
     function ensureN1CourseProgress() {
-        state.progress.n1Course = mergeN1CourseProgress(defaultN1CourseProgress(), state.progress.n1Course || {});
+        state.progress.n1Course ||= defaultN1CourseProgress();
         const lessons = n1Lessons();
         const active = n1LessonById(state.progress.n1Course.currentLessonId);
         if (!active && lessons[0])
@@ -21568,7 +21710,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return state.progress.n1Course;
     }
     function n1Course() {
-        return ensureN1CourseProgress();
+        return state.progress.n1Course || ensureN1CourseProgress();
     }
     function n1Lessons() {
         return state.n1Textbook?.items || [];
@@ -21589,6 +21731,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return (lesson?.kanji || []).map((kanji) => n1CardByKanji(kanji, lookup)).filter(Boolean);
     }
     function n1AllCards() {
+        return cachedJlptCardList("N1", buildN1AllCards);
+    }
+    function buildN1AllCards() {
         const lookup = n1CardLookupMaps();
         const seen = new Set();
         return (state.n1KanjiCatalog || []).map((detail) => n1CardByKanji(detail.kanji, lookup)).filter(Boolean).filter((card) => {
@@ -22605,6 +22750,11 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         }).join("");
     }
     function renderReview() {
+        // Freeze a session only after its content can be validated, including saved kana.
+        if (!reviewContentReady) {
+            void ensureReviewContentData();
+            return renderLoading();
+        }
         const queue = normalizeReviewQueueItems(getReviewQueueItems());
         const active = selectReviewQueueItem(queue);
         const queueCount = queue.length;
@@ -22622,7 +22772,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                     : renderReviewExerciseItem(active))
             : renderNoReview();
         return `
-      <section class="page">
+      <section class="page" data-review-session-size="${state.reviewSession?.initialSize || 0}" data-review-total-due="${getReviewQueueCount()}">
         <div class="section-head">
           <div>
             <h1>${escapeHtml(t("review"))}</h1>
@@ -22934,16 +23084,28 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return lang() === "en" ? exercise?.translationEn || exercise?.translationRu || "" : exercise?.translationRu || exercise?.translationEn || "";
     }
     function allSentenceExercises(learned = getLearnedSentenceCards()) {
+        const customItems = sentencePracticeProgress().customSentences || [];
+        // Edits replace custom sentence objects; ratings do not alter content.
+        if (sentenceExercisesCache?.cards === state.cards
+            && sentenceExercisesCache.builtIn === state.sentenceExercises
+            && sentenceExercisesCache.learned.length === learned.length
+            && sentenceExercisesCache.learned.every((card, index) => card === learned[index])
+            && sentenceExercisesCache.custom.length === customItems.length
+            && sentenceExercisesCache.custom.every((item, index) => item === customItems[index]))
+            return sentenceExercisesCache.items;
         const custom = customSentenceExercises(learned);
         const dynamic = buildDynamicSentenceExercises(learned);
         const builtIn = Array.isArray(state.sentenceExercises) ? state.sentenceExercises : [];
         const seen = new Set();
-        return [...custom, ...dynamic, ...builtIn].filter((exercise) => {
+        const items = [...custom, ...dynamic, ...builtIn].filter((exercise) => {
             if (!exercise?.id || seen.has(exercise.id))
                 return false;
             seen.add(exercise.id);
             return true;
         });
+        sentenceExercisesCache = { cards: state.cards, builtIn: state.sentenceExercises,
+            learned: [...learned], custom: [...customItems], items };
+        return items;
     }
     function customSentenceExercises(learned = getLearnedSentenceCards()) {
         const practice = sentencePracticeProgress();
@@ -23029,7 +23191,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         };
     }
     function sentencePracticeProgress() {
-        state.progress.sentencePractice = mergeSentencePractice(defaultProgress().sentencePractice, state.progress.sentencePractice || {});
+        state.progress.sentencePractice ||= defaultProgress().sentencePractice;
         return state.progress.sentencePractice;
     }
     function resetSentencePractice(activeId) {
@@ -23064,9 +23226,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             if (!exercise?.id)
                 return false;
             const answer = flatSentenceAnswer(exercise);
-            if (!answer.length || answer.some((item) => !learnedKanji.has(item.kanji)))
-                return false;
-            return buildSentenceTiles(exercise, safeLearned).length >= Math.max(4, answer.length);
+            return hasEnoughSentenceTiles(answer, learnedKanji);
         });
     }
     function flatSentenceAnswer(exercise) {
@@ -23095,14 +23255,22 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             .filter((tile) => tile?.kanji && !answerKanji.has(tile.kanji) && learnedKanji.has(tile.kanji))
             .map((tile) => ({ kanji: tile.kanji, reading: tile.reading || sentenceReadingFromCard(tile.kanji) }))
             .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index);
+        const seenLearned = new Set();
         const learnedDistractors = safeLearned
-            .filter((card) => card.kanji && !answerKanji.has(card.kanji))
-            .map((card) => ({ kanji: card.kanji, reading: preferred.get(card.kanji) || sentenceReadingFromCard(card.kanji, card) }))
-            .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index)
-            .sort((a, b) => stableHash(`${exercise.id}:${a.kanji}`) - stableHash(`${exercise.id}:${b.kanji}`));
-        const distractors = [...exerciseDistractors, ...learnedDistractors]
-            .filter((tile) => !answerKanji.has(tile.kanji))
-            .filter((tile, index, items) => items.findIndex((item) => item.kanji === tile.kanji) === index);
+            .filter((card) => {
+                if (!card.kanji || answerKanji.has(card.kanji) || seenLearned.has(card.kanji)) return false;
+                seenLearned.add(card.kanji);
+                return true;
+            })
+            .map((card) => ({ card, hash: stableHash(`${exercise.id}:${card.kanji}`) }))
+            .sort((a, b) => a.hash - b.hash)
+            .map(({ card }) => ({ kanji: card.kanji, reading: preferred.get(card.kanji) || sentenceReadingFromCard(card.kanji, card) }));
+        const seenDistractors = new Set(answerKanji);
+        const distractors = [...exerciseDistractors, ...learnedDistractors].filter((tile) => {
+            if (seenDistractors.has(tile.kanji)) return false;
+            seenDistractors.add(tile.kanji);
+            return true;
+        });
         const targetCount = Math.min(Math.max(6, answerTiles.length + 2), answerTiles.length + distractors.length);
         return shuffleStable([...answerTiles, ...distractors.slice(0, targetCount - answerTiles.length)], exercise.id);
     }
@@ -23114,12 +23282,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const seenWords = new Set();
         const exercises = [];
         const examples = safeLearned.flatMap((card) => (card.examples || []).map((example) => ({ ...example, card })));
-        examples.forEach((example, index) => {
+        for (const [index, example] of examples.entries()) {
+            // The result has always been capped at 160. Do not generate the
+            // remaining thousands of exercises only to discard them afterward.
+            if (exercises.length >= 160) break;
             const word = normalizeSentenceText(example.word || "");
             if (!word || seenWords.has(word) || !containsKanji(word))
-                return;
+                continue;
             if (extractKanjiChars(word).some((kanji) => !learnedKanji.has(kanji)))
-                return;
+                continue;
             seenWords.add(word);
             const reading = toHiragana(example.reading || autoSentenceReading(word));
             const translation = example.translation || word;
@@ -23155,7 +23326,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }, safeLearned, { maxBlanks: 2, maxBlankChars: 4 });
             if (exercise)
                 exercises.push(exercise);
-        });
+        }
         return exercises.slice(0, 160);
     }
     function addCustomSentenceExercise() {
@@ -23369,13 +23540,16 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return chars.map((kanji) => sentenceReadingFromCard(kanji));
     }
     function lookupExampleReading(word) {
-        for (const card of state.cards) {
-            for (const example of card.examples || []) {
-                if (example.word === word && example.reading)
-                    return example.reading;
+        if (exampleReadingCache?.cards !== state.cards || exampleReadingCache?.length !== state.cards.length) {
+            const byWord = new Map();
+            for (const card of state.cards) {
+                for (const example of card.examples || []) {
+                    if (example.reading && !byWord.has(example.word)) byWord.set(example.word, example.reading);
+                }
             }
+            exampleReadingCache = { cards: state.cards, length: state.cards.length, byWord };
         }
-        return "";
+        return exampleReadingCache.byWord.get(word) || "";
     }
     function splitReadingByKanji(chars, reading) {
         const result = Array(chars.length).fill("");
@@ -24019,7 +24193,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return null;
         const review = normalizeKanaReviewStorage(parsed.slug);
         const progress = migrateCardProgress(item.progress || review[parsed.id] || null);
-        const character = item.character || findKanaCharacter(parsed.slug, parsed.kana) || {};
+        const character = item.character || findKanaCharacter(parsed.slug, parsed.kana);
+        if (!character)
+            return null;
         return {
             ...item,
             kind: "kana",
@@ -24296,6 +24472,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const remembered = Number(results.remember || 0);
         const forgotten = Number(results.forgot || 0);
         const reviewed = remembered + forgotten;
+        const backlog = getReviewQueueCount();
         const upcoming = (Array.isArray(results.items) ? results.items : [])
             .filter((item) => item?.dueAt)
             .sort((a, b) => (Date.parse(a.dueAt) || 0) - (Date.parse(b.dueAt) || 0))
@@ -24313,6 +24490,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
           ${upcoming.map((item) => `<li><strong>${escapeHtml(item.label || item.kind || "")}</strong><span>${escapeHtml(item.course || "")}</span><small>${escapeHtml(formatDue(item.dueAt))}</small></li>`).join("")}
         </ul>` : ""}
         <div class="actions" style="justify-content:center">
+          ${backlog ? `<button class="btn primary" type="button" data-action="review-next-batch">${escapeHtml(lang() === "ru" ? `Следующая короткая сессия · ещё ${backlog}` : `Next short session · ${backlog} still due`)}</button>` : ""}
           <button class="btn primary" type="button" data-action="route" data-route="textbooks">▶ ${escapeHtml(t("learn"))}</button>
           <button class="btn ghost" type="button" data-action="route" data-route="dictionary">典 ${escapeHtml(t("dictionary"))}</button>
         </div>
@@ -25532,7 +25710,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             }
         }
         state.reviewQueueLastKind = "card";
-        recordReviewSessionResult("kanji", rating, { label: card.kanji, level: card.jlpt, dueAt: after.dueAt, cardId: card.id });
+        recordReviewSessionResult("kanji", rating, { label: card.kanji, level: card.jlpt, dueAt: after.dueAt, state: after.state, cardId: card.id });
         removeReviewSessionItem(`card:${card.id}`);
         state.revealed = false;
         state.activeCardId = null;
@@ -25586,7 +25764,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             toast(dialogueText("eva", "correct"));
         }
         state.reviewQueueLastKind = "kana";
-        recordReviewSessionResult("kana", normalizedRating, { label: parsed.kana, course: kanaCourseReviewLabel(parsed.slug), dueAt: after.dueAt, cardId: parsed.id });
+        recordReviewSessionResult("kana", normalizedRating, { label: parsed.kana, course: kanaCourseReviewLabel(parsed.slug), dueAt: after.dueAt, state: after.state, cardId: parsed.id });
         removeReviewSessionItem(parsed.id);
         state.revealed = false;
         state.activeCardId = null;
@@ -25777,16 +25955,24 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const rawExerciseId = String(exerciseId || "");
         if (!builder || !canonical || !rawExerciseId)
             return null;
-        const lesson = textbookLessonByLevel(canonical, lessonId);
-        if (lesson) {
-            const match = builder(lesson).find((item) => String(item.id) === rawExerciseId);
-            if (match)
-                return match;
+        const lessons = textbookLessonsByLevel(canonical);
+        const lesson = lessonId ? textbookLessonByLevel(canonical, lessonId)
+            : lessons.find((item) => rawExerciseId.startsWith(`${item.id}-`));
+        const key = `${canonical}:${lang()}`;
+        let cache = textbookExerciseIndexes.get(key);
+        if (!cache || cache.lessons !== lessons || cache.cards !== state.cards) {
+            cache = { lessons, cards: state.cards, byLesson: new Map() };
+            textbookExerciseIndexes.set(key, cache);
         }
-        for (const candidate of textbookLessonsByLevel(canonical)) {
-            const match = builder(candidate).find((item) => String(item.id) === rawExerciseId);
-            if (match)
-                return match;
+        // Resolve the owning lesson first. A single saved answer is not a reason to
+        // generate distractors for every exercise in N1-N5.
+        for (const candidate of lesson ? [lesson] : lessons) {
+            if (!cache.byLesson.has(candidate.id)) {
+                cache.byLesson.set(candidate.id, new Map(builder(candidate).map((exercise) =>
+                    [String(exercise.id), { ...exercise, lessonId: candidate.id }])));
+            }
+            const match = cache.byLesson.get(candidate.id).get(rawExerciseId);
+            if (match) return match;
         }
         return null;
     }
@@ -25835,30 +26021,18 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const canonical = canonicalJlptLevel(level);
         if (!course || !canonical)
             return false;
-        const lessons = textbookLessonsByLevel(canonical);
-        const builder = textbookExerciseBuilderByLevel(canonical);
-        if (!builder?.length && !builder)
-            return false;
         course.exerciseSrs ||= {};
         const existingExerciseEntries = Object.entries(course.exerciseSrs);
         if (!existingExerciseEntries.length)
             return false;
-        const exercisesById = new Map();
-        lessons.forEach((lesson) => {
-            (builder(lesson) || []).forEach((exercise) => {
-                if (exercise?.id)
-                    exercisesById.set(String(exercise.id), { exercise, lesson });
-            });
-        });
         let changed = false;
         existingExerciseEntries.forEach(([exerciseId, progress]) => {
-            const match = exercisesById.get(String(exerciseId));
-            if (!match)
+            const exercise = findTextbookExerciseById(canonical, exerciseId, progress?.lessonId || "");
+            if (!exercise)
                 return;
-            const { exercise, lesson } = match;
             const normalized = normalizeTextbookExerciseProgress(progress, {
                 level: canonical,
-                lessonId: lesson.id,
+                lessonId: exercise.lessonId,
                 exerciseId: exercise.id,
                 cardId: exercise.cardId || "",
                 kanji: exercise.kanji || "",
@@ -27051,7 +27225,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const now = new Date();
         return getJlptReviewPoolCards()
             .filter((card) => {
-            const progress = getCardProgress(card.id);
+            const progress = state.progress.cards[String(card.id)];
+            if (!progress) return false;
             if (progress.state === "New")
                 return false;
             return progress.dueAt && new Date(progress.dueAt) <= now;
@@ -27076,7 +27251,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                     answer: progress?.answer || "",
                     answerLabel: progress?.answerLabel || ""
                 });
-                if (!normalized.dueAt)
+                if (!isReviewProgressDue(normalized, now))
                     return;
                 if (!textbookExerciseProgressHasUserActivity(normalized))
                     return;
@@ -27105,8 +27280,10 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return items.sort(compareReviewQueueItems);
     }
     function allReadingExercises() {
-        if (reviewQueueCountRenderActive && reviewAllReadingExercisesRenderCache)
-            return reviewAllReadingExercisesRenderCache;
+        const sources = [state.cards, state.n5Reading, state.n4Reading, state.n3Reading, state.n2Reading, state.n1Reading,
+            state.jlptReadingByLevel, state.jlptReadingTranslations, state.kanjiTranslations, lang()];
+        if (readingExercisesCache && sources.every((source, index) => source === readingExercisesCache.sources[index]))
+            return readingExercisesCache.items;
         const items = [];
         state.n5Reading.forEach((exercise) => {
             if (exercise?.id)
@@ -27142,8 +27319,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             });
         });
         const exercises = [...items, ...jlptReadingMarkdownExercises()];
-        if (reviewQueueCountRenderActive)
-            reviewAllReadingExercisesRenderCache = exercises;
+        readingExercisesCache = { sources, items: exercises };
         return exercises;
     }
     function findReadingExerciseById(exerciseId, level = "") {
@@ -27255,6 +27431,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return false;
         const canonical = canonicalJlptLevel(level);
         state.progress.readingExercises ||= {};
+        if (!Object.keys(state.progress.readingExercises).length)
+            return false;
         const exercisesById = new Map(allReadingExercises()
             .filter((exercise) => !canonical || canonicalJlptLevel(exercise.level) === canonical)
             .map((exercise) => [String(exercise.id), exercise]));
@@ -27276,6 +27454,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     }
     function getDueReadingExerciseItems() {
         const now = Date.now();
+        if (!Object.values(state.progress.readingExercises || {}).some((progress) => isReviewProgressDue(progress, now)))
+            return [];
         return allReadingExercises()
             .map((exercise) => {
             if (!isJlptReadingViewed(exercise.level))
@@ -27285,7 +27465,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 return null;
             const normalized = normalizeReadingExerciseProgress(stored, exercise);
             state.progress.readingExercises[String(exercise.id)] = normalized;
-            if (!readingProgressHasUserActivity(normalized))
+            if (!readingProgressHasUserActivity(normalized) || !isReviewProgressDue(normalized, now))
                 return null;
             const dueAt = normalized.dueAt ? new Date(normalized.dueAt).getTime() : 0;
             if (!dueAt || dueAt > now)
@@ -27314,7 +27494,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 return [];
             const review = normalizeKanaReviewStorage(slug);
             const cards = Object.entries(review).map(([cardId, progress]) => ({ cardId, ...migrateCardProgress(progress) }));
-            return createReviewSession(cards, now).initial.map((cardProgress) => {
+            return dueReviewCards(cards, now).map((cardProgress) => {
                 const parsed = parseKanaReviewCardId(cardProgress.cardId, slug);
                 if (!parsed?.id || parsed.slug !== slug)
                     return null;
@@ -27353,18 +27533,20 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return normalizeReviewQueueItems(interleaveReviewQueueItems(cardLikeItems, exercises, REVIEW_EXERCISE_CARD_GAP));
     }
     function currentReviewQueueItemsSnapshot() {
-        if (reviewQueueCountRenderActive && reviewQueueItemsRenderCache)
-            return reviewQueueItemsRenderCache;
-        const items = buildCurrentReviewQueueItems();
-        if (reviewQueueCountRenderActive) {
-            reviewQueueItemsRenderCache = items;
-            reviewQueueCountRenderCache = items.length;
+        if (!reviewBacklogCache || reviewBacklogCache.progress !== state.progress
+            || (state.route !== "review" && Date.now() >= reviewBacklogCache.expiresAt)) {
+            const items = buildCurrentReviewQueueItems();
+            reviewBacklogCache = { progress: state.progress, items: new Map(items.map((item) => [item.key, item])), expiresAt: Date.now() + 30_000 };
         }
-        return items;
+        return [...reviewBacklogCache.items.values()];
     }
     function resetReviewSession(items = currentReviewQueueItemsSnapshot()) {
-        const keys = Object.freeze(normalizeReviewQueueItems(items).map((item) => item.key).filter(Boolean));
-        state.reviewSession = { keys, initialSize: keys.length, startedAt: new Date().toISOString(), results: { remember: 0, forgot: 0, items: [] } };
+        const session = createReviewSession(items.map((item) => ({
+            cardId: item.key, state: item.progress.state, dueAt: new Date(item.dueAt).toISOString(), kind: item.kind, item
+        })));
+        state.reviewSession = { session, initialSize: session.initial.length, startedAt: new Date().toISOString(),
+            learningLater: getLearningLaterCount(), totalCards: getTotalSrsCardCount(),
+            results: { remember: 0, forgot: 0, items: [] } };
     }
     function removeReviewSessionItem(key) {
         if (state.route !== "review" || !state.reviewSession)
@@ -27372,35 +27554,26 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const normalizedKey = String(key || "").trim();
         if (!normalizedKey)
             return false;
-        const currentKeys = Array.isArray(state.reviewSession.keys) ? state.reviewSession.keys : [];
-        const nextKeys = currentKeys.filter((item) => item !== normalizedKey);
-        if (nextKeys.length === currentKeys.length)
-            return false;
-        state.reviewSession.keys = Object.freeze(nextKeys);
-        return true;
+        const session = state.reviewSession.session;
+        const previousCount = session.remainingCount;
+        session.complete(normalizedKey);
+        reviewBacklogCache?.items.delete(normalizedKey);
+        reviewQueueCountRenderCache = null;
+        return session.remainingCount < previousCount;
     }
     function reviewSessionHasRemainingItems() {
         if (state.route !== "review")
             return false;
-        const keys = Array.isArray(state.reviewSession?.keys) ? state.reviewSession.keys : null;
-        if (keys)
-            return keys.length > 0;
+        if (state.reviewSession)
+            return state.reviewSession.session.remainingCount > 0;
         return Boolean(state.activeCardId || state.activeExerciseReviewId);
     }
     function getReviewQueueItems() {
-        const current = currentReviewQueueItemsSnapshot();
         if (state.route !== "review")
-            return current;
+            return currentReviewQueueItemsSnapshot();
         if (!state.reviewSession)
-            resetReviewSession(current);
-        const currentByKey = new Map(current.map((item) => [item.key, item]));
-        const sessionKeys = Array.isArray(state.reviewSession?.keys) ? state.reviewSession.keys : [];
-        const sessionItems = sessionKeys.map((key) => currentByKey.get(key)).filter(Boolean);
-        if (!sessionKeys.length && current.length) {
-            resetReviewSession(current);
-            return current;
-        }
-        return normalizeReviewQueueItems(sessionItems);
+            resetReviewSession();
+        return state.reviewSession.session.remaining.map((entry) => entry.item);
     }
     function recordReviewSessionResult(kind, rating, item = {}) {
         if (state.route !== "review" || !state.reviewSession)
@@ -27416,11 +27589,14 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             rating: resultKey,
             label: String(item.label || item.kana || item.kanji || item.cardId || ""),
             course: String(item.course || item.level || ""),
-            dueAt: item.dueAt || null
+            dueAt: item.dueAt || null,
+            state: item.state || null
         });
         state.reviewSession.results = results;
     }
     function getLearningLaterCount() {
+        if (state.route === "review" && state.reviewSession)
+            return state.reviewSession.learningLater + state.reviewSession.results.items.filter((item) => item.state === "Learning").length;
         if (reviewQueueCountRenderActive && reviewLearningLaterCountRenderCache !== null)
             return reviewLearningLaterCountRenderCache;
         const now = Date.now();
@@ -27442,10 +27618,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return ["hiragana", "katakana"].flatMap((slug) => {
             if (!isKanaCourseSlug(slug))
                 return [];
-            return Object.values(normalizeKanaReviewStorage(slug)).map((progress) => migrateCardProgress(progress));
+            return Object.entries(normalizeKanaReviewStorage(slug)).filter(([id]) => {
+                const parsed = parseKanaReviewCardId(id, slug);
+                return parsed?.slug === slug && findKanaCharacter(slug, parsed.kana);
+            }).map(([, progress]) => progress);
         });
     }
     function getTotalSrsCardCount() {
+        if (state.route === "review" && state.reviewSession)
+            return state.reviewSession.totalCards;
         if (reviewQueueCountRenderActive && reviewTotalSrsCardCountRenderCache !== null)
             return reviewTotalSrsCardCountRenderCache;
         const count = getJlptReviewPoolCards().filter((card) => getCardProgress(card.id).state !== "New").length + getAllKanaSrsProgress().filter((progress) => progress.state !== "New").length;
@@ -27456,19 +27637,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     function getReviewQueueCount() {
         if (reviewQueueCountRenderActive && reviewQueueCountRenderCache !== null)
             return reviewQueueCountRenderCache;
-        const count = state.route === "review"
-            ? getReviewQueueItems().length
-            : currentReviewQueueItemsSnapshot().length;
+        if (!reviewBacklogCache || reviewBacklogCache.progress !== state.progress
+            || (state.route !== "review" && Date.now() >= reviewBacklogCache.expiresAt))
+            currentReviewQueueItemsSnapshot();
+        const count = reviewBacklogCache.items.size;
         if (reviewQueueCountRenderActive)
             reviewQueueCountRenderCache = count;
         return count;
-    }
-    function countReviewQueueItemsFast() {
-        const now = Date.now();
-        return countDueKanjiReviewItemsFast(now)
-            + countDueKanaReviewItemsFast(now)
-            + countDueTextbookExerciseItemsFast(now)
-            + countDueReadingExerciseItemsFast(now);
     }
     function isReviewProgressDue(progress, now = Date.now()) {
         if (!progress || typeof progress !== "object")
@@ -27477,63 +27652,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return false;
         const dueAt = progress.dueAt ? new Date(progress.dueAt).getTime() : 0;
         return Boolean(dueAt && dueAt <= now);
-    }
-    function countDueKanjiReviewItemsFast(now = Date.now()) {
-        return getJlptReviewPoolCards().reduce((count, card) => {
-            const progress = getCardProgress(card.id);
-            return count + (isReviewProgressDue(progress, now) ? 1 : 0);
-        }, 0);
-    }
-    function countDueKanaReviewItemsFast(now = Date.now()) {
-        return ["hiragana", "katakana"].reduce((count, slug) => {
-            if (!isKanaCourseSlug(slug))
-                return count;
-            const review = normalizeKanaReviewStorage(slug);
-            return count + Object.values(review).reduce((innerCount, progress) => {
-                const normalized = migrateCardProgress(progress);
-                return innerCount + (isReviewProgressDue(normalized, now) ? 1 : 0);
-            }, 0);
-        }, 0);
-    }
-    function countDueTextbookExerciseItemsFast(now = Date.now()) {
-        return LEVEL_ORDER.reduce((count, level) => {
-            const course = textbookCourseByLevel(level);
-            return count + Object.entries(course?.exerciseSrs || {}).reduce((innerCount, [exerciseId, progress]) => {
-                const normalized = normalizeTextbookExerciseProgress(progress, {
-                    level,
-                    exerciseId,
-                    lessonId: progress?.lessonId || "",
-                    cardId: progress?.cardId || "",
-                    kanji: progress?.kanji || "",
-                    type: progress?.type || "",
-                    title: progress?.title || null,
-                    prompt: progress?.prompt || "",
-                    answer: progress?.answer || "",
-                    answerLabel: progress?.answerLabel || ""
-                });
-                if (!isReviewProgressDue(normalized, now))
-                    return innerCount;
-                if (!textbookExerciseProgressHasUserActivity(normalized))
-                    return innerCount;
-                if (normalized.lessonId && !isJlptLessonViewed(level, normalized.lessonId))
-                    return innerCount;
-                return innerCount + 1;
-            }, 0);
-        }, 0);
-    }
-    function countDueReadingExerciseItemsFast(now = Date.now()) {
-        return Object.values(state.progress?.readingExercises || {}).reduce((count, progress) => {
-            const level = String(progress?.level || "").toUpperCase();
-            if (level && !isJlptReadingViewed(level))
-                return count;
-            const normalized = normalizeReadingExerciseProgress(progress, {
-                level,
-                id: progress?.exerciseId || progress?.id || ""
-            });
-            if (!readingProgressHasUserActivity(normalized))
-                return count;
-            return count + (isReviewProgressDue(normalized, now) ? 1 : 0);
-        }, 0);
     }
     function compareReviewQueueItems(a, b) {
         if (a.dueAt !== b.dueAt)
@@ -27569,7 +27687,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 cards.push(card);
             });
         });
-        const sorted = cards.sort(compareStudyCards);
+        // Consumers either count these cards or sort the due subset. Sorting the entire
+        // catalog here used to migrate/materialize thousands of unrelated New records.
+        const sorted = cards;
         if (reviewQueueCountRenderActive)
             reviewPoolCardsRenderCache = sorted;
         return sorted;
@@ -27624,12 +27744,22 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     }
     function getSummary() {
         const total = state.cards.length;
-        const learned = state.cards.filter((card) => getCardProgress(card.id).state !== "New").length;
-        const mastered = state.cards.filter((card) => getCardProgress(card.id).state === "Mastered").length;
-        return { total, learned, mastered, todayCards: getTodayCards().length, completion: progressWidth(mastered, total) };
+        let learned = 0, mastered = 0, todayCards = 0;
+        const end = endOfToday();
+        const lessons = new Map(state.lessons.map((lesson) => [lesson.id, lesson]));
+        for (const card of state.cards) {
+            const progress = getCardProgress(card.id);
+            if (progress.state !== "New") learned++;
+            if (progress.state === "Mastered") mastered++;
+            const lesson = lessons.get(card.lessonId);
+            if (lesson && !isLessonUnlocked(lesson)) continue;
+            if (progress.state === "New" || (progress.dueAt && new Date(progress.dueAt) <= end)) todayCards++;
+        }
+        // Statistics need a count, not getTodayCards()'s fully sorted study queue.
+        return { total, learned, mastered, todayCards, completion: progressWidth(mastered, total) };
     }
     function totalReviews() {
-        return Object.values(state.progress.cards).reduce((sum, progress) => sum + (progress.reviewCount || 0), 0);
+        return countCanonicalReviews(state.progress.cards, canonicalCardAliases);
     }
     function totalPositiveFragmentsFromHistory() {
         return (state.progress.transactions || []).reduce((sum, item) => sum + Math.max(0, Number(item.coins || 0)), 0);
@@ -27679,9 +27809,24 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const raw = String(id || "");
         if (!raw)
             return null;
-        return state.cards.find((card) => String(card.id) === raw
-            || String(card.kanji || "") === raw
-            || kanjiPublicSlug(card) === raw) || null;
+        if (!cardLookupCache || cardLookupCache.source !== state.cards || cardLookupCache.size !== state.cards.length) {
+            const index = new Map();
+            for (const card of state.cards) {
+                for (const key of [String(card.id), String(card.kanji || "")])
+                    if (!index.has(key)) index.set(key, card);
+            }
+            cardLookupCache = { source: state.cards, size: state.cards.length, index, slugs: null };
+        }
+        if (cardLookupCache.index.has(raw)) return cardLookupCache.index.get(raw);
+        if (!/^u[0-9a-f]+-/i.test(raw)) return null;
+        if (!cardLookupCache.slugs) {
+            cardLookupCache.slugs = new Map();
+            for (const card of state.cards) {
+                const slug = kanjiPublicSlug(card);
+                if (!cardLookupCache.slugs.has(slug)) cardLookupCache.slugs.set(slug, card);
+            }
+        }
+        return cardLookupCache.slugs.get(raw) || null;
     }
     function findCardByRouteParam(id) {
         return findCard(id);
@@ -28407,7 +28552,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         return state.kanaCourses?.[key] || null;
     }
     function kanaProgressRoot() {
-        state.progress.kanaCourses = mergeKanaProgress(state.progress.kanaCourses || null);
+        // loadProgress/import already migrate the tree. Reads must preserve object identity.
+        state.progress.kanaCourses ||= mergeKanaProgress(null);
         return state.progress.kanaCourses;
     }
     function kanaCourseProgress(slug) {
@@ -28446,6 +28592,9 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             .then((course) => {
             state.kanaCourses[key] = course;
             state.kanaCourseLoading[key] = null;
+            reviewBacklogCache = null;
+            if (reconcileCompletedLessonEnrollment())
+                saveProgress();
             return course;
         })
             .catch((error) => {
@@ -28778,6 +28927,15 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (!key)
             return [];
         return state.cards.filter((card) => String(card.jlpt || "").toUpperCase() === key);
+    }
+    function cachedJlptCardList(level, build) {
+        const prefix = level.toLowerCase();
+        const sources = [state.cards, state[`${prefix}KanjiCatalog`], state[`${prefix}Textbook`]];
+        const cached = jlptCardLists.get(level);
+        if (cached && sources.every((source, index) => source === cached.sources[index])) return cached.items;
+        const items = build();
+        jlptCardLists.set(level, { sources, items });
+        return items;
     }
     function jlptLessonExtraLabels() {
         return lang() === "ru"
@@ -29457,7 +29615,11 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         try {
             const parsed = JSON.parse(await file.text());
             state.progress = mergeProgress(defaultProgress(), parsed.progress || parsed);
+            reviewContentReady = false;
+            reviewContentPromise = null;
+            state.reviewSession = null;
             hydrateProgress();
+            void ensureReviewContentData();
             if (parsed.customization) {
                 state.customization = {
                     ...defaultCustomization(),

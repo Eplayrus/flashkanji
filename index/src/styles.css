@@ -1593,6 +1593,14 @@ textarea:focus-visible {
   contain-intrinsic-size: auto 820px;
 }
 
+/* Answer updates replace the lesson DOM while the user is scrolled inside it.
+   Skipping the entire new page collapses it to 820px, clamps window.scrollY and
+   races the scroll restoration. Keep interactive lesson roots fully laid out. */
+.textbooks-page:is(.n5-lesson-page, .n5-final-page, .kana-practice-page, .kana-review-page) {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
 .boot-screen {
   display: grid;
   align-items: start;
@@ -3753,6 +3761,7 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 
 .n5-course-page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   width: 100%;
   max-width: 100%;
@@ -4126,6 +4135,8 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 .n5-kanji-card,
 .n5-exercise-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 11px;
   padding: 14px;
 }
@@ -4255,7 +4266,9 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
 }
 
 .n5-input-row input {
-  min-width: min(100%, 180px);
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 44px;
   flex: 1 1 180px;
   border: 1px solid var(--line);
@@ -9565,6 +9578,47 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   background:
     radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--accent), transparent 76%), transparent 34%),
     linear-gradient(145deg, color-mix(in srgb, var(--surface), #000 12%), color-mix(in srgb, var(--accent), transparent 88%));
+}
+
+/* Intrinsic grid sizing + the 820px content-visibility placeholder used to
+   widen overview children while overflow:clip hid the broken layout. */
+.kana-course-page > *,
+.kana-course-page .section-head > *,
+.kana-course-page .lesson-card-main,
+.kana-course-page .kana-answer-row > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.kana-course-page .lesson-grid {
+  contain-intrinsic-width: none;
+}
+
+.kana-course-page :is(h1, h2, h3, p, .btn, .pill, label) {
+  overflow-wrap: anywhere;
+}
+
+.kana-course-page input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .kana-course-page .section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .kana-course-page .section-head .actions {
+    width: 100%;
+  }
+  .kana-course-page .actions .btn {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+  .kana-hero-symbol {
+    overflow-wrap: anywhere;
+  }
 }
 
 .kana-cover-symbol,

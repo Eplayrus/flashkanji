@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { performanceProgress, installPerformanceProbe, measureHome } from "./helpers/performance-fixture.mjs";
 
 test.use({ serviceWorkers: "block" });
 
@@ -65,4 +66,60 @@ test("Chart.js remains lazy until stats route", async ({ page }) => {
 
   await page.goto("./#stats");
   await expect.poll(() => requested.length).toBeGreaterThan(0);
+});
+
+test("unrelated deferred JSON cannot block Dictionary -> Home", async ({ page }) => {
+  await page.addInitScript(installPerformanceProbe, performanceProgress("fresh"));
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  let requested = false;
+  await page.route("**/data/vocabulary/index.json", async (route) => {
+    requested = true;
+    await gate;
+    await route.continue();
+  });
+  await page.goto("./#dictionary");
+  await expect.poll(() => requested).toBe(true);
+  try {
+    const result = await measureHome(page);
+    expect(result.timedOut).not.toBe(true);
+    expect(result.interactiveMs).toBeLessThan(700);
+    await expect(page.locator(".home-shell")).toBeVisible();
+  } finally { release(); }
+});
+
+test.describe("PWA performance (real Service Worker)", () => {
+  test.use({ serviceWorkers: "allow" });
+  test("activation and warm SPA navigation do not refresh the databases or reset storage", async ({ page, context }) => {
+    await page.addInitScript(installPerformanceProbe, performanceProgress("medium"));
+    const requests: string[] = [];
+    context.on("request", (request) => requests.push(request.url()));
+    await page.goto("./#dictionary");
+    await expect(page.locator("#app")).toHaveAttribute("aria-busy", "false");
+    await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+    await page.waitForTimeout(4500);
+    // Warm Home's images too: the runtime cache is legitimately created lazily
+    // on the first asset, not during Service Worker activation.
+    await measureHome(page);
+    const cacheNames = await page.evaluate(() => caches.keys());
+    expect(cacheNames.some((name) => name.startsWith("flash-kanji-"))).toBe(true);
+    requests.length = 0;
+    for (const route of ["textbooks", "review", "dictionary"]) {
+      await page.evaluate((hash) => { location.hash = hash; }, route);
+      await page.waitForTimeout(500);
+      const result = await measureHome(page);
+      expect(result.timedOut).not.toBe(true);
+      expect(result.interactiveMs).toBeLessThan(1200);
+      expect(result.calls["storage.setItem:flashKanji.progress.v2"] || 0).toBe(0);
+      expect(result.calls["storage.getItem:flashKanji.progress.v2"] || 0).toBe(0);
+    }
+    expect(requests.filter((url) => /\/data\/|service-worker\.js/.test(url))).toEqual([]);
+    expect(await page.evaluate(() => caches.keys())).toEqual(cacheNames);
+    await page.reload();
+    await expect(page.locator(".home-shell")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+    expect(await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem("flashKanji.progress.v2") || "{}").cards)
+      .filter((card: any) => card.reviewCount >= 8).length)).toBeGreaterThanOrEqual(160);
+  });
 });

@@ -91,21 +91,74 @@ export function calculateNextProgress(input: unknown, rating: SrsRating, display
 
 export interface ReviewCardLike { cardId: string; dueAt: string | null; state: SrsState; [key: string]: unknown }
 
-export function createReviewSession(cards: ReviewCardLike[], now = Date.now()) {
-  const unique = new Map<string, ReviewCardLike>();
+export const REVIEW_SESSION_POLICY = Object.freeze({ cards: 4, exercises: 1 });
+
+export function dueReviewCards<T extends ReviewCardLike>(cards: readonly T[], now = Date.now()): T[] {
+  const unique = new Map<string, T>();
   for (const card of cards) {
     if (!card.cardId || card.state === "New") continue;
     const due = card.dueAt ? Date.parse(card.dueAt) : Number.NaN;
-    if (Number.isFinite(due) && due <= now && !unique.has(card.cardId)) unique.set(card.cardId, { ...card });
+    if (Number.isFinite(due) && due <= now && !unique.has(card.cardId)) unique.set(card.cardId, card);
   }
-  const initial = Object.freeze([...unique.values()].sort((a, b) => Date.parse(a.dueAt || "") - Date.parse(b.dueAt || "")));
+  return [...unique.values()].sort((a, b) => Date.parse(a.dueAt || "") - Date.parse(b.dueAt || ""));
+}
+
+export function createReviewSession<T extends ReviewCardLike>(cards: readonly T[], now = Date.now()) {
+  const due = dueReviewCards(cards, now);
+  let cardCount = 0;
+  let exerciseCount = 0;
+  const initial = Object.freeze(due.filter((card) => card.kind === "exercise"
+    ? exerciseCount++ < REVIEW_SESSION_POLICY.exercises
+    : cardCount++ < REVIEW_SESSION_POLICY.cards).map((card) => Object.freeze({ ...card })));
+  const ids = new Set(initial.map((card) => card.cardId));
   const completed = new Set<string>();
   return {
     initial,
-    complete(cardId: string) { completed.add(cardId); },
+    totalDue: due.length,
+    complete(cardId: string) { if (ids.has(cardId)) completed.add(cardId); },
     get remaining() { return initial.filter((card) => !completed.has(card.cardId)); },
     get remainingCount() { return initial.length - completed.size; }
   };
+}
+
+/** Enrollment is not a review answer: preserve history and do not award a correct answer. */
+export function enrollMissingCards(progress: Record<string, CardProgress>, ids: readonly string[], now = new Date()): number {
+  let added = 0;
+  for (const id of new Set(ids.filter(Boolean))) {
+    const existing = progress[id];
+    // A default New record may have been materialized by a read before enrollment.
+    if (existing && (existing.state !== "New" || existing.reviewCount > 0 || existing.dueAt || existing.history?.length)) continue;
+    progress[id] = { ...migrateCardProgress(existing), state: "Learning", srsStep: 0,
+      intervalDays: 5 / 1440, dueAt: new Date(now.getTime() + 5 * 60_000).toISOString(), enrolledAt: now.toISOString() };
+    added += 1;
+  }
+  return added;
+}
+
+/** Resolve known legacy IDs without deleting the original record or overwriting active history. */
+export function reconcileCardAliases(progress: Record<string, CardProgress>, cards: readonly { id: string; aliases: string[] }[]): number {
+  let changed = 0;
+  for (const card of cards) {
+    const current = progress[card.id];
+    if (current && (current.state !== "New" || current.reviewCount || current.dueAt || current.history?.length)) continue;
+    const aliases = card.aliases.map((id) => progress[id]).filter((entry) => entry && entry.state !== "New");
+    aliases.sort((a, b) => (Date.parse(String(b.lastReviewedAt || "")) || 0) - (Date.parse(String(a.lastReviewedAt || "")) || 0)
+      || b.reviewCount - a.reviewCount);
+    if (aliases[0]) {
+      progress[card.id] = { ...aliases[0], history: [...aliases[0].history] };
+      changed += 1;
+    }
+  }
+  return changed;
+}
+
+/** Legacy records are retained for recovery, but must not inflate visible totals. */
+export function countCanonicalReviews(progress: Record<string, CardProgress>, aliases: ReadonlyMap<string, string>): number {
+  return Object.entries(progress).reduce((sum, [id, entry]) => {
+    const canonical = aliases.get(id);
+    if (canonical && canonical !== id && progress[canonical]?.state !== "New" && progress[canonical]) return sum;
+    return sum + (Number(entry.reviewCount) || 0);
+  }, 0);
 }
 
 function resolveDecision(progress: CardProgress, rating: SrsRating): "again" | "hard" | "good" | "easy" {
