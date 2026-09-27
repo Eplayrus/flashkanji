@@ -1,4 +1,4 @@
-const SW_BUILD_VERSION = "2026-08-29-contextual-study-scroll-v1";
+const SW_BUILD_VERSION = "local-1790527881488";
 const CACHE_PREFIX = "flash-kanji-";
 const STATIC_CACHE = `${CACHE_PREFIX}static-${SW_BUILD_VERSION}`;
 const DATA_CACHE = `${CACHE_PREFIX}data-${SW_BUILD_VERSION}`;

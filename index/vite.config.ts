@@ -204,6 +204,17 @@ function bundleSizeReportPlugin(): Plugin {
       const reportDir = path.join(outputDir, "reports");
       await mkdir(reportDir, { recursive: true });
       await writeFile(path.join(reportDir, "bundle-size.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+      // public/ is copied verbatim by Vite. Stamp the emitted worker, not its source,
+      // so every published build updates data/static caches as well as hashed JS.
+      const workerPath = path.join(outputDir, "service-worker.js");
+      const worker = await readFile(workerPath, "utf8");
+      if (!/^const SW_BUILD_VERSION = "[^"]+";/m.test(worker)) this.error("Service worker build marker is missing");
+      await writeFile(workerPath, worker.replace(/^const SW_BUILD_VERSION = "[^"]+";/m,
+        `const SW_BUILD_VERSION = ${JSON.stringify(buildId)};`), "utf8");
+      await writeFile(path.join(outputDir, "build-meta.json"), `${JSON.stringify({
+        buildId, commit: process.env.GITHUB_SHA || null, generatedAt: report.generatedAt,
+        entryAssets: entries.filter((entry) => entry.isEntry).map((entry) => entry.fileName)
+      }, null, 2)}\n`, "utf8");
       if (process.env.STRICT_PERF_BUDGETS === "1" && (!budgets.initialJsWithinBudget || !budgets.cssWithinBudget || !budgets.asyncChunksWithinBudget)) {
         this.error(`Flash Kanji performance budget exceeded. See ${path.join(reportDir, "bundle-size.json")}`);
       }

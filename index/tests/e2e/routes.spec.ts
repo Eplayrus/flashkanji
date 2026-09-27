@@ -845,22 +845,28 @@ test("review sentence practice keeps scroll while checking tiles", async ({ page
   await page.goto("./#review");
   const card = page.locator('#app .sentence-practice[data-section="sentence-practice"]');
   await expect(card).toBeVisible({ timeout: 15_000 });
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  const before = await page.evaluate(() => window.scrollY);
-  expect(before).toBeGreaterThan(100);
+  // A user first scrolls the intended control into view. Do not compare a
+  // bottom-of-page snapshot with Playwright's automatic pre-click scrolling.
+  const clickWithoutJump = async (button: import("@playwright/test").Locator) => {
+    await button.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(100);
+    await button.click();
+    await expectScrollPreserved(page, before);
+  };
 
   const blanks = await card.locator('.sentence-slot').count();
   const tiles = card.locator('button[data-action="insert-sentence-tile"]');
   const tileCount = await tiles.count();
   expect(tileCount).toBeGreaterThanOrEqual(blanks);
   for (let index = 0; index < blanks; index += 1) {
-    await tiles.nth(index).click({ force: true });
+    await clickWithoutJump(tiles.nth(index));
   }
 
-  await clickAtCenter(page, card.locator('button[data-action="check-sentence"]'));
+  await clickWithoutJump(card.locator('button[data-action="check-sentence"]'));
 
   await expect(card.locator(".sentence-feedback")).toBeVisible();
-  await expectScrollPreserved(page, before);
 });
 
 test("a slow previous-route response cannot overwrite Review", async ({ page }) => {

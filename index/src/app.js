@@ -384,6 +384,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let reviewTotalSrsCardCountRenderCache = null;
     let reviewPoolCardsRenderCache = null;
     let reviewBacklogCache = null;
+    let reviewDueTimer = 0;
     const jsonResources = createResourceCache();
     const courseResources = createResourceCache();
     let readingExercisesCache = null;
@@ -404,13 +405,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     let deferredPwaInstallPrompt = null;
     let notificationPromptTimer = 0;
     let skipPendingFocusOnce = false;
-    let lastSettledViewport = { scrollX: 0, scrollY: 0, at: Date.now() };
-    let lastObservedViewport = { scrollX: 0, scrollY: 0, at: Date.now() };
-    let lastViewportBeforeRecentScroll = null;
-    let lastViewportScrollAt = 0;
-    let viewportSettleTimer = 0;
-    let hasSettledViewport = false;
-    let sentencePracticeInteractionViewport = null;
     let notificationPromptAutoDockTimer = 0;
     const activeShopPurchases = new Set();
     let onboardingScheduleTimer = 0;
@@ -485,7 +479,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
     importInput.addEventListener("change", handleImportFile);
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handlePwaInstallAccepted);
-    window.addEventListener("scroll", recordViewportScroll, { passive: true });
     window.addEventListener("scroll", syncScrollToggleButton, { passive: true });
     window.addEventListener("resize", syncScrollToggleButton);
     window.addEventListener("eva:event", (event) => {
@@ -494,6 +487,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         handleEvaEvent(event.detail || {});
     });
     document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && state.progress) refreshReviewDueState();
         if (!document.hidden)
             maybeShowNotificationPrompt("usage");
         if (!document.hidden && state.route === "eva-room" && maybeRunEvaAutonomy("return")) {
@@ -628,26 +622,14 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             setAppBooting(false);
         }
     }
-    async function loadBootAncillaryData({ hadPriorVisit = false } = {}) {
-        if (state.bootAncillaryLoaded)
-            return;
-        if (bootAncillaryDataPromise)
-            return bootAncillaryDataPromise;
-        bootAncillaryDataPromise = (async () => {
-            const [dialogues, achievements, jlptCatalog, jlptLessons, kanaCatalog, customizationShop, evaSprites, changelogPayload] = await Promise.all([
-                fetchJson(DATA_URLS.dialogues),
-                fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
+    let studyCatalogPromise = null;
+    function loadStudyCatalogData() {
+        if (!studyCatalogPromise) studyCatalogPromise = (async () => {
+            const [jlptCatalog, jlptLessons, kanaCatalog] = await Promise.all([
                 fetchJson(DATA_URLS.jlptCatalog, () => ({ version: 1, generatedAt: null, items: [] })),
                 fetchJson(DATA_URLS.jlptLessons, () => ({ items: [] })),
-                fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] })),
-                fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
-                fetchJson(DATA_URLS.evaSprites, () => ({})),
-                fetchJson(DATA_URLS.changelog, () => null)
+                fetchJson(DATA_URLS.kanaCatalog, () => ({ schema_version: 1, content_version: "", courses: [] }))
             ]);
-            const achievementBundle = normalizeAchievementData(achievements, state.rewards?.achievements || []);
-            state.dialogues = dialogues;
-            state.achievements = achievementBundle.items;
-            state.achievementCategories = achievementBundle.categories;
             state.jlptCatalog = normalizeJlptCatalog(jlptCatalog);
             state.jlptLessons = normalizeJlptLessons(jlptLessons);
             state.kanaCatalog = normalizeKanaCatalog(kanaCatalog);
@@ -655,6 +637,27 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                 const progress = state.progress.kanaCourses?.courses?.[slug];
                 return Object.keys(progress?.lessons || {}).length || Object.keys(progress?.review || {}).length;
             }).map((slug) => ensureKanaCourseData(slug)));
+        })().catch((error) => { studyCatalogPromise = null; throw error; });
+        return studyCatalogPromise;
+    }
+    async function loadBootAncillaryData({ hadPriorVisit = false } = {}) {
+        if (state.bootAncillaryLoaded)
+            return;
+        if (bootAncillaryDataPromise)
+            return bootAncillaryDataPromise;
+        bootAncillaryDataPromise = (async () => {
+            const [dialogues, achievements, customizationShop, evaSprites, changelogPayload] = await Promise.all([
+                fetchJson(DATA_URLS.dialogues),
+                fetchJson(DATA_URLS.achievements, () => ({ achievements: [], categories: [] })),
+                fetchJson(DATA_URLS.customizationShop, () => ({ version: 1, currency: "Moon Fragments", categories: [], items: [] })),
+                fetchJson(DATA_URLS.evaSprites, () => ({})),
+                fetchJson(DATA_URLS.changelog, () => null),
+                loadStudyCatalogData()
+            ]);
+            const achievementBundle = normalizeAchievementData(achievements, state.rewards?.achievements || []);
+            state.dialogues = dialogues;
+            state.achievements = achievementBundle.items;
+            state.achievementCategories = achievementBundle.categories;
             state.customizationCatalog = normalizeCustomizationCatalog(customizationShop);
             state.evaSprites = evaSprites && typeof evaSprites === "object" && !Array.isArray(evaSprites) ? evaSprites : {};
             state.bootAncillaryLoaded = true;
@@ -956,15 +959,16 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
                         applyN1CatalogToCards();
                     }
                 }
-                await loadBootAncillaryData({ hadPriorVisit: pendingChangelogExistingUser });
+                await loadStudyCatalogData();
                 const usedLevels = LEVEL_ORDER.filter((level) => {
                     const course = state.progress[`${level.toLowerCase()}Course`];
                     return Object.keys(course?.completedLessons || {}).length || Object.keys(course?.exerciseSrs || {}).length;
                 });
                 await Promise.all(usedLevels.map((level) => ensureJlptCourseData(level, { renderAfter: false })));
-                // Legacy reading exercises can refer to markdown passages as well.
+                // Reading history needs reading sources, not vocabulary, strokes,
+                // monetization, every listening file and the entire deferred bundle.
                 if (Object.keys(state.progress.readingExercises || {}).length)
-                    await loadDeferredAppData({ renderAfter: false, route: "review" });
+                    await loadReviewReadingData();
                 hydrateProgress();
             }
             reviewContentReady = true;
@@ -975,6 +979,24 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             console.warn("Review content failed to load.", error);
         });
         return reviewContentPromise;
+    }
+    async function loadReviewReadingData() {
+        const saved = Object.entries(state.progress.readingExercises || {});
+        const levels = new Set(saved.map(([, progress]) => canonicalJlptLevel(progress.level)).filter(Boolean));
+        if (saved.some(([, progress]) => !canonicalJlptLevel(progress.level))) LEVEL_ORDER.forEach((level) => levels.add(level));
+        await Promise.all([...levels].map(async (level) => {
+            const key = `${level.toLowerCase()}Reading`;
+            const payload = await fetchJson(DATA_URLS[key]);
+            state[key] = level === "N5" ? normalizeN5ReadingCollection(payload) : normalizeN4Collection(payload);
+        }));
+        if (saved.some(([id]) => id.startsWith("jlpt-md-"))) {
+            const [markdown, translations] = await Promise.all([
+                fetchText(DATA_URLS.jlptReadingMarkdown), fetchJson(DATA_URLS.jlptReadingTranslations)
+            ]);
+            state.jlptReadingMarkdown = markdown;
+            state.jlptReadingByLevel = parseJlptReadingMarkdown(markdown);
+            state.jlptReadingTranslations = normalizeJlptReadingTranslations(translations);
+        }
     }
     function deferredDataDelayForRoute(route = state.route) {
         if (!routeNeedsDeferredData(route))
@@ -4492,6 +4514,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return false;
         if (state.route !== "review" || !state.reviewSession)
             reviewBacklogCache = null;
+        scheduleReviewDueRefresh();
         if (options?.immediate)
             return flushPendingProgressState();
         if (progressSaveQueued)
@@ -4543,53 +4566,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             scrollX: window.scrollX,
             scrollY: window.scrollY
         };
-    }
-    function captureTimestampedViewport() {
-        return {
-            ...captureViewport(),
-            at: Date.now()
-        };
-    }
-    function recordViewportScroll() {
-        if (typeof window === "undefined")
-            return;
-        const current = captureTimestampedViewport();
-        const previous = lastObservedViewport;
-        lastViewportScrollAt = current.at;
-        if (previous && (Math.abs(Number(current.scrollY || 0) - Number(previous.scrollY || 0)) > 4
-            || Math.abs(Number(current.scrollX || 0) - Number(previous.scrollX || 0)) > 4)) {
-            lastViewportBeforeRecentScroll = previous;
-        }
-        lastObservedViewport = current;
-        if (viewportSettleTimer)
-            window.clearTimeout(viewportSettleTimer);
-        viewportSettleTimer = window.setTimeout(() => {
-            lastSettledViewport = captureTimestampedViewport();
-            lastObservedViewport = lastSettledViewport;
-            lastViewportBeforeRecentScroll = null;
-            hasSettledViewport = true;
-            viewportSettleTimer = 0;
-        }, 30);
-    }
-    function captureSettledStudyViewport() {
-        const current = captureViewport();
-        const settled = lastViewportBeforeRecentScroll || lastSettledViewport || current;
-        const recentTransientScroll = Date.now() - lastViewportScrollAt < 90;
-        const movedSinceSettled = Math.abs(Number(current.scrollY || 0) - Number(settled.scrollY || 0)) > 4
-            || Math.abs(Number(current.scrollX || 0) - Number(settled.scrollX || 0)) > 4;
-        if ((hasSettledViewport || lastViewportBeforeRecentScroll) && recentTransientScroll && movedSinceSettled)
-            return settled;
-        return current;
-    }
-    function rememberSentencePracticeViewport() {
-        if (!sentencePracticeInteractionViewport)
-            sentencePracticeInteractionViewport = captureSettledStudyViewport();
-        return sentencePracticeInteractionViewport;
-    }
-    function consumeSentencePracticeViewport() {
-        const snapshot = sentencePracticeInteractionViewport || captureSettledStudyViewport();
-        sentencePracticeInteractionViewport = null;
-        return snapshot;
     }
     function renderStudyUpdate({ scrollPolicy = STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot = null } = {}) {
         if (scrollPolicy === STUDY_SCROLL_POLICY.TOP) {
@@ -6168,9 +6144,19 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         if (action === "n1-final-reset")
             resetN1FinalTest();
         if (action === "review-exercise-next") {
-            const viewportSnapshot = captureViewport();
+            const active = activeReviewExerciseItem();
+            const result = active && state.reviewExerciseResults?.[active.exerciseId];
+            if (!active || !result || (active.source === "reading" && !result.completed)) return;
+            const progress = active.source === "reading"
+                ? readingExerciseProgress(active.exercise)
+                : textbookCourseByLevel(active.level).exerciseSrs[active.exerciseId];
+            if (removeReviewSessionItem(active.key)) {
+                recordReviewSessionResult("exercise", result.correct ? "remember" : "forgot", {
+                    label: active.exerciseId, level: active.level, dueAt: progress?.dueAt, state: progress?.state
+                });
+            }
             clearReviewExerciseState();
-            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.TOP, viewportSnapshot });
+            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.TOP });
             return;
         }
         if (action === "play-kanji-audio") {
@@ -14979,6 +14965,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             return;
         const now = new Date().toISOString();
         const inReviewMode = isReviewExerciseActive(exercise.level, exercise.id, "reading");
+        if (inReviewMode && state.reviewExerciseResults?.[exercise.id]?.completed) return;
         const viewportSnapshot = captureViewport();
         const scrollPolicy = inReviewMode ? STUDY_SCROLL_POLICY.TOP : STUDY_SCROLL_POLICY.PRESERVE;
         const quietReward = Boolean(options.quietReward);
@@ -22846,7 +22833,7 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const prepared = ensureSentencePractice(available, learned);
         if (!prepared)
             return "";
-        const { exercise, tiles, selectedTiles, answerFlat, wrongIndexes, complete, awarded } = prepared;
+        const { exercise, tiles, selectedTiles, answerFlat, wrongIndexes, complete } = prepared;
         const selectedSet = new Set(state.progress.sentencePractice.selected);
         const result = state.progress.sentencePractice.result || {};
         const statusClass = state.progress.sentencePractice.checked ? (complete ? " is-success" : " is-error") : "";
@@ -22881,12 +22868,13 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             `;
         }).join("")}
         </div>
-        <div class="sentence-feedback">
-          ${escapeHtml(result.message || labels.tip.replace("{count}", answerFlat.length))}
-          ${complete && !awarded ? `<small>${escapeHtml(labels.completedBefore)}</small>` : ""}
+        <div class="sentence-feedback sentence-feedback-stable">
+          <span class="sentence-feedback-text">${escapeHtml(result.message || labels.tip.replace("{count}", answerFlat.length))}</span>
+          ${[labels.tip.replace("{count}", answerFlat.length), labels.fillAll, labels.correct, labels.wrong, labels.inserted, labels.removed]
+            .map((message) => `<span class="sentence-feedback-size" aria-hidden="true">${escapeHtml(message)}</span>`).join("")}
         </div>
         <div class="actions sentence-actions">
-          <button class="btn primary" type="button" data-action="check-sentence">${escapeHtml(labels.check)}</button>
+          <button class="btn primary" type="button" data-action="check-sentence" ${state.progress.sentencePractice.checked ? "disabled" : ""}>${escapeHtml(labels.check)}</button>
           <button class="btn" type="button" data-action="undo-sentence-tile" ${!state.progress.sentencePractice.selected.length || complete ? "disabled" : ""}>${escapeHtml(labels.undo)}</button>
           <button class="btn" type="button" data-action="clear-sentence" ${!state.progress.sentencePractice.selected.length || complete ? "disabled" : ""}>${escapeHtml(labels.clear)}</button>
           <button class="btn ghost" type="button" data-action="next-sentence">${escapeHtml(labels.next)}</button>
@@ -23627,6 +23615,27 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const [kanji, reading] = String(key || "").split("\t");
         return kanji ? { kanji, reading: reading || sentenceReadingFromCard(kanji) } : null;
     }
+    function updateSentencePracticeView() {
+        const current = app.querySelector('.sentence-practice[data-section="sentence-practice"]');
+        if (!current) return;
+        const template = document.createElement("template");
+        template.innerHTML = renderSentencePractice();
+        const next = template.content.firstElementChild;
+        if (!next) return;
+        current.className = next.className;
+        // Tile selection is not navigation. Keep ancestor geometry and focused
+        // controls mounted instead of starting page scroll-restoration timers.
+        for (const selector of [".sentence-line", ".sentence-feedback-text", ".sentence-head .tag-row"]) {
+            const target = current.querySelector(selector), source = next.querySelector(selector);
+            if (target && source) target.innerHTML = source.innerHTML;
+        }
+        const controls = next.querySelectorAll(".sentence-tiles button, .sentence-actions button");
+        current.querySelectorAll(".sentence-tiles button, .sentence-actions button").forEach((button, index) => {
+            if (!controls[index]) return;
+            button.className = controls[index].className;
+            button.disabled = controls[index].disabled;
+        });
+    }
     function insertSentenceTile(index) {
         const prepared = ensureSentencePractice();
         if (!prepared || !Number.isInteger(index))
@@ -23639,49 +23648,44 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             toast(labels.full);
             return;
         }
-        rememberSentencePracticeViewport();
-        const viewportSnapshot = captureViewport();
         practice.selected.push(index);
         practice.checked = false;
         practice.result = { correct: false, message: labels.inserted, wrongIndexes: [] };
         saveProgress();
-        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
+        updateSentencePracticeView();
     }
     function undoSentenceTile() {
         const practice = sentencePracticeProgress();
         if (!practice.selected.length || practice.result?.correct)
             return;
-        const viewportSnapshot = sentencePracticeInteractionViewport || captureViewport();
         practice.selected.pop();
         practice.checked = false;
         practice.result = { correct: false, message: sentencePracticeLabels().removed, wrongIndexes: [] };
         saveProgress();
-        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
+        updateSentencePracticeView();
     }
     function clearSentencePractice() {
         const practice = sentencePracticeProgress();
         if (practice.result?.correct)
             return;
-        const viewportSnapshot = sentencePracticeInteractionViewport || captureViewport();
-        sentencePracticeInteractionViewport = null;
         practice.selected = [];
         practice.checked = false;
         practice.result = null;
         saveProgress();
-        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
+        updateSentencePracticeView();
     }
     function checkSentencePractice() {
         const prepared = ensureSentencePractice();
         if (!prepared)
             return;
         const labels = sentencePracticeLabels();
-        const viewportSnapshot = consumeSentencePracticeViewport();
         const practice = state.progress.sentencePractice;
+        if (practice.checked) return;
         if (practice.selected.length < prepared.answerFlat.length) {
             practice.checked = true;
             practice.result = { correct: false, message: labels.fillAll, wrongIndexes: [] };
             saveProgress();
-            renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
+            updateSentencePracticeView();
             return;
         }
         const wrongIndexes = prepared.answerFlat
@@ -23712,7 +23716,8 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             playTone("again");
         }
         saveProgress();
-        renderStudyUpdate({ scrollPolicy: STUDY_SCROLL_POLICY.PRESERVE, viewportSnapshot });
+        updateSentencePracticeView();
+        syncChrome();
     }
     function awardSentencePractice(exercise, options = {}) {
         const practice = sentencePracticeProgress();
@@ -23741,7 +23746,6 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
         const available = getAvailableSentenceExercises(learned);
         if (!available.length)
             return;
-        sentencePracticeInteractionViewport = null;
         const currentId = state.progress.sentencePractice?.activeId;
         const current = available.find((exercise) => exercise?.id === currentId);
         if (current)
@@ -27537,8 +27541,30 @@ import { resolveJlptLessonCompletionState, resolveJlptLessonStudyState } from ".
             || (state.route !== "review" && Date.now() >= reviewBacklogCache.expiresAt)) {
             const items = buildCurrentReviewQueueItems();
             reviewBacklogCache = { progress: state.progress, items: new Map(items.map((item) => [item.key, item])), expiresAt: Date.now() + 30_000 };
+            scheduleReviewDueRefresh();
         }
         return [...reviewBacklogCache.items.values()];
+    }
+    function scheduleReviewDueRefresh() {
+        window.clearTimeout(reviewDueTimer);
+        if (!state.progress) return;
+        const maps = [state.progress.cards, state.progress.readingExercises,
+            ...LEVEL_ORDER.map((level) => state.progress[`${level.toLowerCase()}Course`]?.exerciseSrs),
+            ...["hiragana", "katakana"].map((slug) => state.progress.kanaCourses?.courses?.[slug]?.review)];
+        const now = Date.now();
+        let nextDue = Infinity;
+        for (const map of maps) for (const progress of Object.values(map || {})) {
+            const due = Date.parse(progress?.dueAt || "");
+            if (progress?.state !== "New" && due > now) nextDue = Math.min(nextDue, due);
+        }
+        // A due-date alarm, not polling or a delayed navigation/render workaround.
+        if (Number.isFinite(nextDue)) reviewDueTimer = window.setTimeout(refreshReviewDueState, Math.min(2_147_483_647, nextDue - now));
+    }
+    function refreshReviewDueState() {
+        reviewBacklogCache = null;
+        resetTransientReviewRenderCaches();
+        scheduleReviewDueRefresh();
+        if (state.route === "home" || state.route === "review") render();
     }
     function resetReviewSession(items = currentReviewQueueItemsSnapshot()) {
         const session = createReviewSession(items.map((item) => ({
