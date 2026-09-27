@@ -2980,6 +2980,16 @@ body.jlpt-eva-dock-expanded .scroll-position-toggle {
   color: var(--accent-2);
 }
 
+/* Reserve the tallest localized feedback, so short status text cannot shrink
+   a bottom-of-page exercise and clamp scrollY. No estimated placeholder size. */
+.sentence-feedback-stable > span {
+  grid-area: 1 / 1;
+}
+.sentence-feedback-size {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .reading-review-card {
   display: grid;
   gap: 12px;

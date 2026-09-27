@@ -208,6 +208,11 @@ self.addEventListener("fetch", (event) => {
   if (!isCacheableUrl(url)) return;
   const isDocument = request.destination === "document" || request.mode === "navigate";
 
+  if (/\/(?:build-meta\.json|reports\/bundle-size\.json)$/.test(url.pathname)) {
+    event.respondWith(networkFirst(request, [], STATIC_CACHE));
+    return;
+  }
+
   if (isDocument) {
     if (isDownloadDocumentUrl(url)) {
       event.respondWith(networkFirst(downloadDocumentRequest(), ["./download/index.html", "./download/", "./index.html", "./"]));
@@ -242,6 +247,10 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("message", (event) => {
   const type = event.data?.type;
+  if (type === "FLASH_KANJI_BUILD_INFO") {
+    event.ports[0]?.postMessage({ buildId: SW_BUILD_VERSION, staticCache: STATIC_CACHE, dataCache: DATA_CACHE });
+    return;
+  }
   if (type === "FLASH_KANJI_FORCE_CACHE_RESET") {
     event.waitUntil((async () => {
       const keys = await caches.keys();

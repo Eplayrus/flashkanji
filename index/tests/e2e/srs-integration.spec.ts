@@ -179,3 +179,103 @@ test("kana aliases deduplicate; stale glyphs, future cards and New cards are exc
   await expect(page.locator("[data-review-session-size]")).toHaveAttribute("data-review-total-due", "1");
   await expect(page.locator('[data-review-card-id="kana:hiragana:3042"]')).toBeVisible();
 });
+
+test("exercise feedback -> Next completes once, never loops, and requires an explicit next batch", async ({ page }) => {
+  const ids = ["n5-lesson-1-meaning-0", "n5-lesson-1-kanji-1", "n5-lesson-1-reading-2"];
+  await seed(page, { n5Course: { viewedLessons: { "n5-lesson-1": dueAt },
+    exerciseSrs: Object.fromEntries(ids.map((id) => [id, { ...existing, lessonId: "n5-lesson-1", exerciseId: id, level: "N5" }])) } });
+  await page.goto("./#review");
+  const seen = new Set<string>();
+  for (let index = 0; index < ids.length; index++) {
+    const exercise = page.locator("[data-review-exercise-id]");
+    await expect(exercise).toBeVisible();
+    const id = (await exercise.getAttribute("data-review-exercise-id"))!;
+    expect(seen.has(id)).toBe(false);
+    seen.add(id);
+    await expect(page.locator("[data-review-session-size]")).toHaveAttribute("data-review-session-size", "1");
+    const answer = exercise.locator('[data-action="n5-answer"]').first();
+    await answer.click();
+    const next = page.locator('[data-action="review-exercise-next"]');
+    await expect(next).toBeVisible();
+    const before = await saved(page);
+    await next.click();
+    await expect(page.locator(".review-complete-card")).toBeVisible();
+    await expect(page.locator("[data-review-exercise-id]")).toHaveCount(0);
+    // A stale repeated Next event must not complete/award anything else.
+    await page.evaluate(() => {
+      const button = document.createElement("button");
+      button.dataset.action = "review-exercise-next";
+      document.body.append(button); button.click(); button.remove();
+    });
+    const after = await saved(page);
+    expect(after.n5Course.exerciseSrs[id].reviewCount).toBe(existing.reviewCount + 1);
+    expect(after.xp).toBe(before.xp);
+    expect(after.moonFragments).toBe(before.moonFragments);
+    await expect(page.locator("[data-review-total-due]")).toHaveAttribute("data-review-total-due", String(2 - index));
+    if (index < 2) await page.locator('[data-action="review-next-batch"]').click();
+  }
+  await page.locator('[data-action="route"][data-route="home"]:visible').first().click();
+  await expect(page.locator(".home-shell")).toBeVisible();
+  await expect(page.locator('[data-tour="home-review"]')).toHaveCount(0);
+});
+
+test("Home updates when a stored card becomes due without reload or opening Review", async ({ page }) => {
+  const now = new Date();
+  await page.clock.install({ time: now });
+  await seed(page, { cards: { "1": { ...existing, dueAt: new Date(now.getTime() + 60_000).toISOString() } } });
+  await page.goto("./#home");
+  await expect(page.locator(".home-shell")).toBeVisible();
+  await page.clock.fastForward(61_000);
+  await expect(page.locator('[data-tour="home-review"]')).toHaveText("Повторить: 1");
+  await page.locator('[data-tour="home-review"]').click();
+  await page.locator('[data-action="show-answer"]').click();
+  await page.locator('[data-action="rate"][data-rating="remember"]').click();
+  await page.locator('[data-action="route"][data-route="home"]:visible').first().click();
+  await expect(page.locator(".home-shell")).toBeVisible();
+  await expect(page.locator('[data-tour="home-review"]')).toHaveCount(0);
+});
+
+test("cold Review with reading history does not wait for shop, dialogues or dictionary data", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(/\/data\/(?:dialogues|customization-shop)\.json|\/data\/vocabulary\//, async (route) => {
+    await blocked;
+    await route.continue().catch(() => {});
+  });
+  try {
+    await seed(page, { cards: { "1": existing }, viewedReadingLevels: { N5: dueAt },
+      readingExercises: { "jlpt-md-n5-reading-01": { ...existing, exerciseId: "jlpt-md-n5-reading-01", level: "N5" } } });
+    await page.goto("./#review", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("[data-review-session-size]")).toBeVisible();
+    await expect(page.locator("[data-review-total-due]")).toHaveAttribute("data-review-total-due", "2");
+    await expect(page.locator('[data-action="show-answer"]')).toBeVisible();
+    expect(errors).toEqual([]);
+  } finally { release(); }
+});
+
+test("reading cloze advances once and preserves history after repeated Check and Next", async ({ page }) => {
+  const id = "sentence-n5-001";
+  await seed(page, { viewedReadingLevels: { N5: dueAt }, readingExercises: {
+    [id]: { ...existing, exerciseId: id, level: "N5" }
+  } });
+  await page.goto("./#review");
+  const exercise = page.locator(`[data-review-exercise-id="${id}"]`);
+  await expect(exercise).toBeVisible();
+  for (const glyph of ["学", "校"]) await exercise.locator('[data-action="reading-review-tile"]').filter({ hasText: glyph }).click();
+  await exercise.locator('[data-action="reading-review-check"]').click();
+  const afterAnswer = await saved(page);
+  expect(afterAnswer.readingExercises[id].reviewCount).toBe(existing.reviewCount + 1);
+  expect(afterAnswer.readingExercises[id].history[0]).toEqual(existing.history[0]);
+  await page.evaluate(() => {
+    const button = document.createElement("button");
+    button.dataset.action = "reading-review-check";
+    document.body.append(button); button.click(); button.remove();
+  });
+  expect((await saved(page)).readingExercises[id]).toEqual(afterAnswer.readingExercises[id]);
+  await page.locator('[data-action="review-exercise-next"]').click();
+  await expect(page.locator(".review-complete-card")).toBeVisible();
+  await expect(page.locator("[data-review-total-due]")).toHaveAttribute("data-review-total-due", "0");
+  expect((await saved(page)).xp).toBe(afterAnswer.xp);
+});
